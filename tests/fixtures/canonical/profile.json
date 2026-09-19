@@ -1,0 +1,179 @@
+{
+  "$comment": "Cross-language fixtures for the canonical JSON profile and its digest (Technical Specification 5.3, 6.3). A second implementation must reproduce every canonical string and every sha256 exactly. Numbers are given as source literals because JSON cannot carry negative zero.",
+  "numbers": [
+    {
+      "literal": "0",
+      "canonical": "0"
+    },
+    {
+      "literal": "-0",
+      "canonical": "0"
+    },
+    {
+      "literal": "1",
+      "canonical": "1"
+    },
+    {
+      "literal": "-1",
+      "canonical": "-1"
+    },
+    {
+      "literal": "42",
+      "canonical": "42"
+    },
+    {
+      "literal": "0.5",
+      "canonical": "0.5"
+    },
+    {
+      "literal": "-0.5",
+      "canonical": "-0.5"
+    },
+    {
+      "literal": "0.1",
+      "canonical": "0.1"
+    },
+    {
+      "literal": "1e-7",
+      "canonical": "0.0000001"
+    },
+    {
+      "literal": "1e21",
+      "canonical": "1000000000000000000000"
+    },
+    {
+      "literal": "1e30",
+      "canonical": "1000000000000000000000000000000"
+    },
+    {
+      "literal": "123.456",
+      "canonical": "123.456"
+    },
+    {
+      "literal": "9007199254740991",
+      "canonical": "9007199254740991"
+    },
+    {
+      "literal": "-1e-9",
+      "canonical": "-0.000000001"
+    },
+    {
+      "literal": "0.000025",
+      "canonical": "0.000025"
+    }
+  ],
+  "strings": [
+    {
+      "value": "",
+      "canonical": "\"\""
+    },
+    {
+      "value": "plain",
+      "canonical": "\"plain\""
+    },
+    {
+      "value": "quote\"here",
+      "canonical": "\"quote\\\"here\""
+    },
+    {
+      "value": "back\\slash",
+      "canonical": "\"back\\\\slash\""
+    },
+    {
+      "value": "tab\thing",
+      "canonical": "\"tab\\thing\""
+    },
+    {
+      "value": "line\nbreak",
+      "canonical": "\"line\\nbreak\""
+    },
+    {
+      "value": "nul\u0000",
+      "canonical": "\"nul\\u0000\""
+    },
+    {
+      "value": "é☃",
+      "canonical": "\"é☃\""
+    },
+    {
+      "value": "🚀",
+      "canonical": "\"🚀\""
+    },
+    {
+      "value": "\ud800",
+      "canonical": "\"\\ud800\""
+    }
+  ],
+  "documents": [
+    {
+      "value": {
+        "b": 1,
+        "a": 2
+      },
+      "canonical": "{\"a\":2,\"b\":1}",
+      "sha256": "d3626ac30a87e6f7a6428233b3c68299976865fa5508e4267c5415c76af7a772"
+    },
+    {
+      "value": {
+        "nested": {
+          "z": [
+            3,
+            2,
+            1
+          ],
+          "a": null
+        },
+        "empty": {},
+        "list": []
+      },
+      "canonical": "{\"empty\":{},\"list\":[],\"nested\":{\"a\":null,\"z\":[3,2,1]}}",
+      "sha256": "89e2ee46ae47d2b1fd58937bfbe96400c8c8db690c0e43e9328f9ca771469c96"
+    },
+    {
+      "value": [
+        1,
+        "two",
+        true,
+        null
+      ],
+      "canonical": "[1,\"two\",true,null]",
+      "sha256": "9c3451332bcb617e836c21463d53bd1c3639f64432397c4364b64d86bae19219"
+    },
+    {
+      "value": {
+        "é": 1,
+        "e": 2,
+        "Z": 3
+      },
+      "canonical": "{\"Z\":3,\"e\":2,\"é\":1}",
+      "sha256": "296eddcfab96cda8a8310adbc82430c08592083c6fcc7f74873df6ce62b35e2f"
+    },
+    {
+      "value": {
+        "ratio": 0.3333333333333333,
+        "tiny": 1e-7,
+        "big": 1e+21
+      },
+      "canonical": "{\"big\":1000000000000000000000,\"ratio\":0.3333333333333333,\"tiny\":0.0000001}",
+      "sha256": "b9c3fa2df92a30d19fe88bd2cf2bdccae7838e277cc0c0cd9baf09f88428bc72"
+    }
+  ],
+  "digests": [
+    {
+      "value": "",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "value": "abc",
+      "sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    },
+    {
+      "value": "Galactic Soup",
+      "sha256": "f92dfd4c3f64dab7dc703939f33674fcca147a49e6da3c8f96704bd3a79fe18c"
+    },
+    {
+      "value": "ünïcøde ☃",
+      "sha256": "1b979b8a368c55b68289bd4be3faa4c4e7eba4b92678bc28193a1edb97397caa"
+    }
+  ]
+}

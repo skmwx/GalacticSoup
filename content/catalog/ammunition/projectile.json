@@ -1,0 +1,40 @@
+{
+  "kind": "ammunition",
+  "$comment": "Charges for small projectile turrets.",
+  "definitions": [
+    {
+      "id": "ammo.projectile.small.fusion",
+      "nameKey": "content.ammo.projectile.small.fusion.name",
+      "descriptionKey": "content.ammo.projectile.small.fusion.description",
+      "group": "small-projectile",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 0,
+        "kinetic": 3,
+        "explosive": 9
+      },
+      "optimalRangeMultiplier": 0.75,
+      "falloffMultiplier": 1.0,
+      "trackingMultiplier": 1.0,
+      "volumeCubicMetres": 0.002,
+      "referenceValueCredits": 9
+    },
+    {
+      "id": "ammo.projectile.small.phased",
+      "nameKey": "content.ammo.projectile.small.phased.name",
+      "descriptionKey": "content.ammo.projectile.small.phased.description",
+      "group": "small-projectile",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 9,
+        "kinetic": 3,
+        "explosive": 0
+      },
+      "optimalRangeMultiplier": 1.5,
+      "falloffMultiplier": 1.2,
+      "trackingMultiplier": 1.0,
+      "volumeCubicMetres": 0.002,
+      "referenceValueCredits": 14
+    }
+  ]
+}

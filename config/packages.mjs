@@ -9,10 +9,9 @@
  * 4.3 (source layout). A package is a stable boundary: code outside a package
  * may only reach it through its public index, addressed by the alias below.
  *
- * Later phases add packages (engine/domain, engine/simulation, engine/ports,
- * engine/projections, adapters/persistence, adapters/content) by adding an
- * entry here plus the matching tsconfig path. Nothing is declared before the
- * phase that owns it.
+ * Later phases add packages (engine/domain, engine/simulation,
+ * engine/projections, adapters/persistence) by adding an entry here plus the
+ * matching tsconfig path. Nothing is declared before the phase that owns it.
  */
 
 /**
@@ -28,6 +27,13 @@
  * @property {boolean} [testOnly]    Production code must never import this package.
  * @property {string} purpose
  */
+
+/**
+ * The compiled content bundle is supplied by the build as a virtual module
+ * (config/contentPlugin.mjs), so the content adapter never reads the file
+ * system and the engine never depends on a bundler feature.
+ */
+export const CONTENT_BUNDLE_MODULE = 'virtual:galactic-soup/content-bundle';
 
 /** @type {Record<string, PackageRule>} */
 export const PACKAGES = {
@@ -45,23 +51,37 @@ export const PACKAGES = {
     platform: 'pure',
     purpose: 'Versioned command, query, response and error contracts.',
   },
+  '@engine/ports': {
+    dir: 'src/engine/ports',
+    mayImport: ['@shared'],
+    externals: [],
+    platform: 'pure',
+    purpose: 'Interfaces the engine owns and adapters implement.',
+  },
   '@engine/application': {
     dir: 'src/engine/application',
-    mayImport: ['@shared', '@protocol'],
+    mayImport: ['@shared', '@protocol', '@engine/ports'],
     externals: [],
     platform: 'pure',
     purpose: 'Request handling and transaction orchestration.',
   },
   '@engine': {
     dir: 'src/engine',
-    mayImport: ['@shared', '@protocol', '@engine/application'],
+    mayImport: ['@shared', '@protocol', '@engine/application', '@engine/ports'],
     externals: [],
     platform: 'pure',
     purpose: 'Public engine API used by the hosting adapter.',
   },
+  '@adapters/content': {
+    dir: 'src/adapters/content',
+    mayImport: ['@shared', '@engine/ports'],
+    externals: [CONTENT_BUNDLE_MODULE],
+    platform: 'pure',
+    purpose: 'Content bundle loading, integrity checking and indexing.',
+  },
   '@adapters/worker': {
     dir: 'src/adapters/worker',
-    mayImport: ['@shared', '@protocol', '@engine'],
+    mayImport: ['@shared', '@protocol', '@engine', '@adapters/content'],
     externals: [],
     platform: 'browser',
     purpose: 'Worker host and message dispatch.',
@@ -75,7 +95,14 @@ export const PACKAGES = {
   },
   '@gateway/direct': {
     dir: 'src/gateway/direct',
-    mayImport: ['@shared', '@protocol', '@gateway', '@engine', '@adapters/worker'],
+    mayImport: [
+      '@shared',
+      '@protocol',
+      '@gateway',
+      '@engine',
+      '@adapters/content',
+      '@adapters/worker',
+    ],
     externals: [],
     platform: 'browser',
     testOnly: true,

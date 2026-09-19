@@ -1,6 +1,9 @@
+import { ContentIntegrityError, ContentLookupError, type ContentRepository } from '@engine/ports';
 import {
   type EngineResponse,
   type RequestType,
+  createEngineError,
+  contentErrorMessageKey,
   failureResponse,
   findTransportViolation,
   internalError,
@@ -10,7 +13,12 @@ import {
   validateClientRequest,
 } from '@protocol';
 
-import { handleCapabilities, handleHealth, type HandlerContext } from './handlers';
+import {
+  handleCapabilities,
+  handleContentSummary,
+  handleHealth,
+  type HandlerContext,
+} from './handlers';
 import { ENGINE_VERSION } from './version';
 
 /**
@@ -31,14 +39,21 @@ export interface EngineHost {
 }
 
 export interface EngineHostOptions {
+  /**
+   * Authored content. The engine cannot run without it, so the host takes it
+   * rather than discovering it: the worker supplies the compiled bundle and a
+   * test supplies whichever pack the case needs.
+   */
+  readonly content: ContentRepository;
   /** Overridable so tests can assert version reporting without a rebuild. */
   readonly engineVersion?: string;
 }
 
-export function createEngineHost(options: EngineHostOptions = {}): EngineHost {
+export function createEngineHost(options: EngineHostOptions): EngineHost {
   const context: HandlerContext = {
     engineVersion: options.engineVersion ?? ENGINE_VERSION,
     protocolVersion: PROTOCOL_VERSION,
+    content: options.content,
   };
 
   return {
@@ -61,8 +76,8 @@ function dispatch(context: HandlerContext, message: unknown): EngineResponse<unk
   let response: EngineResponse<unknown>;
   try {
     response = successResponse(requestId, NO_CAMPAIGN_REVISION, execute(context, type));
-  } catch {
-    return failureResponse(requestId, internalError({ type }));
+  } catch (error: unknown) {
+    return failureResponse(requestId, describeFailure(type, error));
   }
 
   const violation = findTransportViolation(response);
@@ -76,12 +91,37 @@ function dispatch(context: HandlerContext, message: unknown): EngineResponse<unk
   return response;
 }
 
+/**
+ * Turns a thrown engine error into its protocol code. A missing definition and
+ * an untrustworthy bundle are expected, explainable failures, not internal
+ * ones (Technical Specification 5.4).
+ */
+function describeFailure(type: RequestType, error: unknown): ReturnType<typeof internalError> {
+  if (error instanceof ContentLookupError) {
+    return createEngineError('NOT_FOUND', 'error.notFound', {
+      type,
+      kind: error.kind,
+      definitionId: error.definitionId,
+    });
+  }
+  if (error instanceof ContentIntegrityError) {
+    return createEngineError('CONTENT_ERROR', contentErrorMessageKey('structure'), {
+      type,
+      reason: error.reason,
+      path: error.path,
+    });
+  }
+  return internalError({ type });
+}
+
 function execute(context: HandlerContext, type: RequestType): unknown {
   switch (type) {
     case 'system.health':
       return handleHealth(context);
     case 'system.capabilities':
       return handleCapabilities(context);
+    case 'content.summary':
+      return handleContentSummary(context);
     default:
       return assertUnreachable(type);
   }

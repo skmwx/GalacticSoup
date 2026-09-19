@@ -1,4 +1,4 @@
-import type { MessageParams, MessageParamValue } from './types';
+import type { MessageParams, MessageParamValue } from './types.ts';
 
 /**
  * Named-parameter substitution for message templates.

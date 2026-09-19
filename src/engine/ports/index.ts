@@ -1,0 +1,63 @@
+/**
+ * Ports the engine depends on (Technical Specification 4.1, 4.3).
+ *
+ * A port is an interface the engine owns and an adapter implements. The
+ * direction never reverses: the engine does not import an adapter, and an
+ * adapter does not reach into the engine's domain.
+ */
+export {
+  DAMAGE_TYPES,
+  DEFENSE_LAYERS,
+  HARDPOINT_KINDS,
+  ITEM_CATEGORIES,
+  MARKET_SUPPLY_KINDS,
+  MODULE_CATEGORIES,
+  NPC_ROLES,
+  SITE_KINDS,
+  SLOT_KINDS,
+  STATION_SERVICES,
+} from './content/definitions.ts';
+export type {
+  AmmunitionDefinition,
+  CapacitorModuleDefinition,
+  DamageProfile,
+  DamageType,
+  DefenseLayer,
+  EncounterDefinition,
+  EncounterSpawnDefinition,
+  HardpointKind,
+  HullDefinition,
+  ItemCategory,
+  ItemDefinition,
+  LayerDefinition,
+  LootEntryDefinition,
+  LootTableDefinition,
+  MarketListingDefinition,
+  MarketSupplyKind,
+  ModuleCategory,
+  ModuleDefinition,
+  NpcProfileDefinition,
+  NpcRole,
+  PropulsionModuleDefinition,
+  RepairModuleDefinition,
+  ResistanceModuleDefinition,
+  ResistanceProfile,
+  SiteDefinition,
+  SiteKind,
+  SlotKind,
+  StationDefinition,
+  StationService,
+  SystemDefinition,
+  TradeableDefinition,
+  TurretModuleDefinition,
+} from './content/definitions.ts';
+export { ContentIntegrityError, ContentLookupError } from './content/repository.ts';
+export type { ContentIdentity, ContentRepository } from './content/repository.ts';
+export { RULE_GROUPS } from './content/rules.ts';
+export type {
+  CombatRules,
+  EconomyRules,
+  RuleGroup,
+  RulesContent,
+  TimeRules,
+} from './content/rules.ts';

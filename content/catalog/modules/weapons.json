@@ -1,0 +1,60 @@
+{
+  "kind": "modules",
+  "$comment": "Weapon-slot modules. Short range against long range.",
+  "definitions": [
+    {
+      "id": "module.turret.autocannon.small",
+      "nameKey": "content.module.turret.autocannon.small.name",
+      "descriptionKey": "content.module.turret.autocannon.small.description",
+      "slot": "weapon",
+      "fitting": {
+        "powerUse": 5,
+        "processingUse": 6
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 12000,
+      "category": "turret",
+      "hardpoint": "turret",
+      "activation": {
+        "capacitorPerCycle": 0,
+        "cycleSeconds": 2.5
+      },
+      "turret": {
+        "optimalRangeKm": 2.5,
+        "falloffKm": 6,
+        "trackingRadiansPerSecond": 0.45,
+        "signatureResolutionMetres": 40,
+        "damageMultiplier": 1,
+        "magazineSize": 20,
+        "ammunitionGroup": "small-projectile"
+      }
+    },
+    {
+      "id": "module.turret.railgun.small",
+      "nameKey": "content.module.turret.railgun.small.name",
+      "descriptionKey": "content.module.turret.railgun.small.description",
+      "slot": "weapon",
+      "fitting": {
+        "powerUse": 8,
+        "processingUse": 12
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 16000,
+      "category": "turret",
+      "hardpoint": "turret",
+      "activation": {
+        "capacitorPerCycle": 4,
+        "cycleSeconds": 3.2
+      },
+      "turret": {
+        "optimalRangeKm": 9,
+        "falloffKm": 4,
+        "trackingRadiansPerSecond": 0.22,
+        "signatureResolutionMetres": 40,
+        "damageMultiplier": 1.15,
+        "magazineSize": 25,
+        "ammunitionGroup": "small-hybrid"
+      }
+    }
+  ]
+}

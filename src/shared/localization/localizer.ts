@@ -1,10 +1,10 @@
-import { formatMessage } from './format';
+import { formatMessage } from './format.ts';
 import type {
   LocalizationIssueHandler,
   MessageCatalog,
   MessageKey,
   MessageParams,
-} from './types';
+} from './types.ts';
 
 /**
  * Resolves message keys against one locale's catalog.

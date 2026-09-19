@@ -4,6 +4,8 @@ import { attachEngineHost, type MessageEventLike, type MessageTargetLike } from 
 import { createEngineHost, type EngineHost } from '@engine';
 import { EMPTY_PAYLOAD, PROTOCOL_VERSION, type EngineResponse } from '@protocol';
 
+import { shippedContent } from '../support/content.ts';
+
 /**
  * The dispatcher must answer every message and must never let an exception
  * escape the engine host into the transport (Technical Specification 4.2, 5.4).
@@ -62,7 +64,7 @@ async function settle(): Promise<void> {
 describe('worker dispatcher', () => {
   it('answers a valid request on the same target [TECH-4.2]', async () => {
     const target = createFakeTarget();
-    attachEngineHost(target, createEngineHost());
+    attachEngineHost(target, createEngineHost({ content: shippedContent() }));
 
     target.deliver(healthRequest);
     await settle();
@@ -73,7 +75,7 @@ describe('worker dispatcher', () => {
 
   it('answers a malformed message instead of staying silent [TECH-4.2, TECH-5.4]', async () => {
     const target = createFakeTarget();
-    attachEngineHost(target, createEngineHost());
+    attachEngineHost(target, createEngineHost({ content: shippedContent() }));
 
     target.deliver('nonsense');
     await settle();
@@ -105,7 +107,7 @@ describe('worker dispatcher', () => {
 
   it('reports a response that the transport refuses to carry [TECH-4.2]', async () => {
     const target = createFakeTarget();
-    attachEngineHost(target, createEngineHost());
+    attachEngineHost(target, createEngineHost({ content: shippedContent() }));
     target.failNextPost();
 
     target.deliver(healthRequest);
@@ -121,7 +123,7 @@ describe('worker dispatcher', () => {
 
   it('stops answering after it is detached [TECH-4.2]', async () => {
     const target = createFakeTarget();
-    const detach = attachEngineHost(target, createEngineHost());
+    const detach = attachEngineHost(target, createEngineHost({ content: shippedContent() }));
 
     detach();
     target.deliver(healthRequest);

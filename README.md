@@ -53,12 +53,40 @@ src/
   gateway/    transport-independent client API (plus test-only in-process gateways)
   protocol/   versioned envelope, request catalogue, error model
   engine/     headless authoritative engine
-  adapters/   worker host and message dispatch
+    ports/    interfaces the engine owns and adapters implement
+  adapters/   worker host and message dispatch, content loading
   shared/     dependency-free primitives
-schemas/      JSON Schemas for the protocol (content and saves follow)
+content/      authored game data: rules, catalog, universe, economy, encounters
+schemas/      JSON Schemas for the protocol and for content (saves follow)
 tests/        unit, integration, component, browser and accessibility levels
 scripts/      architecture, content and traceability checks
 ```
+
+## Content
+
+Everything the functional specification calls a value — prices, hit points, ranges, bounties, drop
+rates — is authored as JSON under `content/` and validated against `schemas/content`. Engine code
+holds the algorithms and the structural enumerations (the four damage types, the slot kinds); it
+does not hold balance numbers.
+
+The build compiles `content/` into one canonical bundle: definitions sorted by stable id, authoring
+comments stripped, and a SHA-256 of the canonical bytes recorded as `contentHash`, with
+`contentVersion` derived from it. `config/contentPlugin.mjs` runs that compilation when the
+development server starts, when the test run starts and when the production build runs, and any
+content error stops all three, naming the file and the JSON path. The engine reads the bundle only
+through its content port, so a future Java engine can read the same schemas and bundle.
+
+`npm run validate:content` runs the same compiler and writes the compiled bundle to
+`reports/content-bundle.json` for inspection.
+
+Three properties keep the data portable: definition ids are authored and namespaced
+(`hull.independent.starter`), authored units are converted once at the boundary (cubic metres
+become whole cubic-decimetre units), and the canonical JSON profile that feeds every checksum is
+pinned by cross-language fixtures in `tests/fixtures/canonical/profile.json`.
+
+Modules under `src/shared` use explicit `.ts` import specifiers so the build tooling can import the
+engine's own primitives directly. The content compiler therefore canonicalises and hashes with the
+same code the engine runs, instead of a second implementation that could drift.
 
 ## Traceability
 

@@ -1,0 +1,40 @@
+{
+  "kind": "ammunition",
+  "$comment": "Charges for small hybrid turrets.",
+  "definitions": [
+    {
+      "id": "ammo.hybrid.small.iron",
+      "nameKey": "content.ammo.hybrid.small.iron.name",
+      "descriptionKey": "content.ammo.hybrid.small.iron.description",
+      "group": "small-hybrid",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 4,
+        "kinetic": 6,
+        "explosive": 0
+      },
+      "optimalRangeMultiplier": 1.25,
+      "falloffMultiplier": 1.0,
+      "trackingMultiplier": 1.0,
+      "volumeCubicMetres": 0.002,
+      "referenceValueCredits": 11
+    },
+    {
+      "id": "ammo.hybrid.small.plasma",
+      "nameKey": "content.ammo.hybrid.small.plasma.name",
+      "descriptionKey": "content.ammo.hybrid.small.plasma.description",
+      "group": "small-hybrid",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 11,
+        "kinetic": 2,
+        "explosive": 0
+      },
+      "optimalRangeMultiplier": 0.7,
+      "falloffMultiplier": 1.0,
+      "trackingMultiplier": 1.0,
+      "volumeCubicMetres": 0.002,
+      "referenceValueCredits": 16
+    }
+  ]
+}

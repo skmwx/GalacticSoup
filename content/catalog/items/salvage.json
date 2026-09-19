@@ -1,0 +1,30 @@
+{
+  "kind": "items",
+  "$comment": "Wreck contents the player sells at a station.",
+  "definitions": [
+    {
+      "id": "item.salvage.alloy",
+      "nameKey": "content.item.salvage.alloy.name",
+      "descriptionKey": "content.item.salvage.alloy.description",
+      "category": "salvage",
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 2500
+    },
+    {
+      "id": "item.salvage.circuitry",
+      "nameKey": "content.item.salvage.circuitry.name",
+      "descriptionKey": "content.item.salvage.circuitry.description",
+      "category": "salvage",
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 4200
+    },
+    {
+      "id": "item.commodity.coolant",
+      "nameKey": "content.item.commodity.coolant.name",
+      "descriptionKey": "content.item.commodity.coolant.description",
+      "category": "commodity",
+      "volumeCubicMetres": 0.05,
+      "referenceValueCredits": 300
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "stations",
+  "definitions": [
+    {
+      "id": "station.test.dock",
+      "nameKey": "content.station.test.dock.name",
+      "descriptionKey": "content.station.test.dock.description",
+      "systemId": "system.test",
+      "siteId": "site.test.station",
+      "services": [
+        "market",
+        "fitting",
+        "repair",
+        "insurance"
+      ],
+      "serviceModifier": 1,
+      "neutralAccess": true
+    }
+  ]
+}

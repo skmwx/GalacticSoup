@@ -1,0 +1,30 @@
+{
+  "kind": "systems",
+  "definitions": [
+    {
+      "id": "system.test",
+      "nameKey": "content.system.test.name",
+      "dangerRating": 1,
+      "sites": [
+        {
+          "id": "site.test.station",
+          "nameKey": "content.site.test.station.name",
+          "kind": "station",
+          "position": {
+            "xKm": 0,
+            "yKm": 0
+          }
+        },
+        {
+          "id": "site.test.field",
+          "nameKey": "content.site.test.field.name",
+          "kind": "combat",
+          "position": {
+            "xKm": 20000,
+            "yKm": 5000
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "kind": "modules",
+  "$comment": "Active and passive defence, propulsion and capacitor support.",
+  "definitions": [
+    {
+      "id": "module.propulsion.afterburner.small",
+      "nameKey": "content.module.propulsion.afterburner.small.name",
+      "descriptionKey": "content.module.propulsion.afterburner.small.description",
+      "slot": "system",
+      "fitting": {
+        "powerUse": 6,
+        "processingUse": 15
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 9500,
+      "category": "propulsion",
+      "activation": {
+        "capacitorPerCycle": 3,
+        "cycleSeconds": 10
+      },
+      "propulsion": {
+        "speedBonusFraction": 0.75,
+        "signatureRadiusPenaltyFraction": 0
+      }
+    },
+    {
+      "id": "module.repair.armor.small",
+      "nameKey": "content.module.repair.armor.small.name",
+      "descriptionKey": "content.module.repair.armor.small.description",
+      "slot": "system",
+      "fitting": {
+        "powerUse": 4,
+        "processingUse": 18
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 8000,
+      "category": "armorRepairer",
+      "activation": {
+        "capacitorPerCycle": 12,
+        "cycleSeconds": 6
+      },
+      "repair": {
+        "layer": "armor",
+        "amountHitPoints": 45
+      }
+    },
+    {
+      "id": "module.shield.booster.small",
+      "nameKey": "content.module.shield.booster.small.name",
+      "descriptionKey": "content.module.shield.booster.small.description",
+      "slot": "system",
+      "fitting": {
+        "powerUse": 5,
+        "processingUse": 22
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 8500,
+      "category": "shieldBooster",
+      "activation": {
+        "capacitorPerCycle": 15,
+        "cycleSeconds": 4
+      },
+      "repair": {
+        "layer": "shield",
+        "amountHitPoints": 40
+      }
+    },
+    {
+      "id": "module.plating.armor.small",
+      "nameKey": "content.module.plating.armor.small.name",
+      "descriptionKey": "content.module.plating.armor.small.description",
+      "slot": "engineering",
+      "fitting": {
+        "powerUse": 1,
+        "processingUse": 5
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 4000,
+      "category": "resistancePlating",
+      "resistance": {
+        "layer": "armor",
+        "bonuses": {
+          "electromagnetic": 0.1,
+          "thermal": 0.1,
+          "kinetic": 0.1,
+          "explosive": 0.1
+        }
+      }
+    },
+    {
+      "id": "module.capacitor.battery.small",
+      "nameKey": "content.module.capacitor.battery.small.name",
+      "descriptionKey": "content.module.capacitor.battery.small.description",
+      "slot": "engineering",
+      "fitting": {
+        "powerUse": 1,
+        "processingUse": 8
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 6000,
+      "category": "capacitorBattery",
+      "capacitorSupport": {
+        "capacityBonus": 120,
+        "rechargeBonusFraction": 0
+      }
+    }
+  ]
+}

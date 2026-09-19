@@ -1,0 +1,32 @@
+{
+  "kind": "modules",
+  "definitions": [
+    {
+      "id": "module.test.turret",
+      "nameKey": "content.module.test.turret.name",
+      "descriptionKey": "content.module.test.turret.description",
+      "slot": "weapon",
+      "hardpoint": "turret",
+      "category": "turret",
+      "fitting": {
+        "powerUse": 5,
+        "processingUse": 6
+      },
+      "activation": {
+        "capacitorPerCycle": 0,
+        "cycleSeconds": 2.5
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 12000,
+      "turret": {
+        "optimalRangeKm": 3,
+        "falloffKm": 6,
+        "trackingRadiansPerSecond": 0.4,
+        "signatureResolutionMetres": 40,
+        "damageMultiplier": 1,
+        "magazineSize": 20,
+        "ammunitionGroup": "test-group"
+      }
+    }
+  ]
+}

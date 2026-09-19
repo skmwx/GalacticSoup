@@ -11,6 +11,8 @@ import {
   type HealthData,
 } from '@protocol';
 
+import { shippedContent } from '../support/content.ts';
+
 /**
  * The same engine, reached two ways, must answer identically
  * (Technical Specification 7.1, 15.1, 17). The direct gateway calls the host in
@@ -27,7 +29,7 @@ afterEach(() => {
 });
 
 function transports(): { name: string; gateway: ClientGateway }[] {
-  const host = createEngineHost({ engineVersion: '1.2.3' });
+  const host = createEngineHost({ content: shippedContent(), engineVersion: '1.2.3' });
 
   const direct = createDirectGateway({ host, defaultTimeoutMs: 2_000 });
   disposers.push(() => direct.dispose());
@@ -66,6 +68,7 @@ describe('transport parity', () => {
 
     expect(withoutRequestId(first)).toEqual(withoutRequestId(second));
     expect(first.ok && (first.data as CapabilitiesData).requestTypes).toEqual([
+      'content.summary',
       'system.capabilities',
       'system.health',
     ]);

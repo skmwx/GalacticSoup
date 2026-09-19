@@ -1,0 +1,149 @@
+{
+  "kind": "hulls",
+  "definitions": [
+    {
+      "id": "hull.test.starter",
+      "nameKey": "content.hull.test.starter.name",
+      "descriptionKey": "content.hull.test.starter.description",
+      "playerUsable": true,
+      "defenses": {
+        "shield": {
+          "hitPoints": 100,
+          "resistances": {
+            "electromagnetic": 0,
+            "thermal": 0.2,
+            "kinetic": 0.4,
+            "explosive": 0.5
+          }
+        },
+        "armor": {
+          "hitPoints": 100,
+          "resistances": {
+            "electromagnetic": 0.5,
+            "thermal": 0.35,
+            "kinetic": 0.25,
+            "explosive": 0.1
+          }
+        },
+        "hull": {
+          "hitPoints": 100,
+          "resistances": {
+            "electromagnetic": 0.0,
+            "thermal": 0.0,
+            "kinetic": 0.0,
+            "explosive": 0.0
+          }
+        }
+      },
+      "shieldRechargeSeconds": 600,
+      "capacitor": {
+        "capacity": 200,
+        "rechargeSeconds": 180
+      },
+      "movement": {
+        "maxSpeedKmPerSecond": 0.3,
+        "accelerationKmPerSecondSquared": 0.075,
+        "brakingKmPerSecondSquared": 0.15,
+        "turnRateRadiansPerSecond": 0.8,
+        "warpSpeedKmPerSecond": 4000
+      },
+      "signatureRadiusMetres": 38,
+      "targeting": {
+        "scanResolution": 600,
+        "maxLockRangeKm": 30,
+        "maxLockedTargets": 3
+      },
+      "cargoCapacityCubicMetres": 100,
+      "slots": {
+        "weapon": 2,
+        "system": 2,
+        "engineering": 2,
+        "utility": 0
+      },
+      "hardpoints": {
+        "turret": 2,
+        "launcher": 0,
+        "mining": 0
+      },
+      "fitting": {
+        "powerOutput": 40,
+        "processingOutput": 140
+      },
+      "referenceValueCredits": 10000,
+      "insuranceClass": "light",
+      "traitKeys": []
+    },
+    {
+      "id": "hull.test.pirate",
+      "nameKey": "content.hull.test.pirate.name",
+      "descriptionKey": "content.hull.test.pirate.description",
+      "playerUsable": false,
+      "defenses": {
+        "shield": {
+          "hitPoints": 100,
+          "resistances": {
+            "electromagnetic": 0,
+            "thermal": 0.2,
+            "kinetic": 0.4,
+            "explosive": 0.5
+          }
+        },
+        "armor": {
+          "hitPoints": 100,
+          "resistances": {
+            "electromagnetic": 0.5,
+            "thermal": 0.35,
+            "kinetic": 0.25,
+            "explosive": 0.1
+          }
+        },
+        "hull": {
+          "hitPoints": 100,
+          "resistances": {
+            "electromagnetic": 0.0,
+            "thermal": 0.0,
+            "kinetic": 0.0,
+            "explosive": 0.0
+          }
+        }
+      },
+      "shieldRechargeSeconds": 600,
+      "capacitor": {
+        "capacity": 200,
+        "rechargeSeconds": 180
+      },
+      "movement": {
+        "maxSpeedKmPerSecond": 0.3,
+        "accelerationKmPerSecondSquared": 0.075,
+        "brakingKmPerSecondSquared": 0.15,
+        "turnRateRadiansPerSecond": 0.8,
+        "warpSpeedKmPerSecond": 4000
+      },
+      "signatureRadiusMetres": 38,
+      "targeting": {
+        "scanResolution": 600,
+        "maxLockRangeKm": 30,
+        "maxLockedTargets": 3
+      },
+      "cargoCapacityCubicMetres": 100,
+      "slots": {
+        "weapon": 2,
+        "system": 2,
+        "engineering": 2,
+        "utility": 0
+      },
+      "hardpoints": {
+        "turret": 2,
+        "launcher": 0,
+        "mining": 0
+      },
+      "fitting": {
+        "powerOutput": 40,
+        "processingOutput": 140
+      },
+      "referenceValueCredits": 10000,
+      "insuranceClass": "light",
+      "traitKeys": []
+    }
+  ]
+}

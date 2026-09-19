@@ -1,0 +1,13 @@
+{
+  "kind": "items",
+  "definitions": [
+    {
+      "id": "item.test.salvage",
+      "nameKey": "content.item.test.salvage.name",
+      "descriptionKey": "content.item.test.salvage.description",
+      "category": "salvage",
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 2000
+    }
+  ]
+}

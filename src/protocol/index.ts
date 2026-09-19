@@ -5,6 +5,9 @@
 export { failureResponse, isSuccess, successResponse } from './envelope';
 export type { ClientRequest, EngineFailure, EngineResponse, EngineSuccess } from './envelope';
 export {
+  contentError,
+  contentErrorMessageKey,
+  CONTENT_ERROR_REASONS,
   createEngineError,
   ENGINE_ERROR_CODES,
   ENGINE_ERROR_MESSAGE_KEYS,
@@ -14,10 +17,18 @@ export {
   INVALID_REQUEST_REASONS,
   PROTOCOL_MESSAGE_KEYS,
 } from './errors';
-export type { EngineError, EngineErrorCode, ErrorParams, InvalidRequestReason } from './errors';
+export type {
+  ContentErrorReason,
+  ContentIssue,
+  EngineError,
+  EngineErrorCode,
+  ErrorParams,
+  InvalidRequestReason,
+} from './errors';
 export { EMPTY_PAYLOAD, isRequestType, REQUEST_TYPES } from './requests';
 export type {
   CapabilitiesData,
+  ContentSummaryData,
   EmptyPayload,
   HealthData,
   ProtocolContract,

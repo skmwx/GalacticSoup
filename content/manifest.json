@@ -1,0 +1,9 @@
+{
+  "kind": "manifest",
+  "$comment": "Authored identity of the content set. The build appends the content hash.",
+  "version": "0.1.0",
+  "defaultLocale": "en",
+  "locales": [
+    "en"
+  ]
+}

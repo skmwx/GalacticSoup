@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/rules.time.schema.json",
+  "title": "Time rules",
+  "description": "Simulation clock constants. Functional Specification 3.3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "values"
+  ],
+  "properties": {
+    "kind": {
+      "const": "rules.time"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "values": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxCatchUpMs",
+        "simulationQuantumMs",
+        "timeRates"
+      ],
+      "properties": {
+        "simulationQuantumMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000
+        },
+        "timeRates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 8
+          }
+        },
+        "maxCatchUpMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400000
+        }
+      }
+    }
+  }
+}

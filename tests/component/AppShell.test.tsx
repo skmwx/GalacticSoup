@@ -6,6 +6,8 @@ import { createDirectGateway } from '@gateway/direct';
 import type { LocalizationIssue } from '@shared';
 import { AppShell, LocalizationProvider } from '@ui';
 
+import { shippedContent } from '../support/content.ts';
+
 /**
  * The shell shows what the engine reported and nothing else: no authoritative
  * value is computed or stored in the interface (Technical Specification 12.1).
@@ -13,7 +15,7 @@ import { AppShell, LocalizationProvider } from '@ui';
 
 function renderShell(options: { onIssue?: (issue: LocalizationIssue) => void } = {}) {
   const gateway = createDirectGateway({
-    host: createEngineHost({ engineVersion: '4.5.6' }),
+    host: createEngineHost({ content: shippedContent(), engineVersion: '4.5.6' }),
     defaultTimeoutMs: 2_000,
   });
 
@@ -41,7 +43,19 @@ describe('application shell', () => {
 
     expect(await screen.findByText('4.5.6')).toBeInTheDocument();
     expect(screen.getByText('direct')).toBeInTheDocument();
-    expect(screen.getByText('2 request types')).toBeInTheDocument();
+    expect(screen.getByText('3 request types')).toBeInTheDocument();
+
+    gateway.dispose();
+  });
+
+  it('shows the identity of the content the engine loaded [TECH-6.3, TECH-12.1]', async () => {
+    const { gateway } = renderShell();
+    const content = shippedContent();
+
+    expect(await screen.findByText(content.contentVersion)).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Content' }),
+    ).toBeInTheDocument();
 
     gateway.dispose();
   });

@@ -91,6 +91,33 @@ export function AppShell({ gateway }: AppShellProps): JSX.Element {
           ) : null}
         </section>
 
+        {status.kind === 'ready' ? (
+          <section className={styles['panel']} aria-labelledby="content-status-heading">
+            <h2 id="content-status-heading" className={styles['panelHeading']}>
+              {translate('shell.content.sectionLabel')}
+            </h2>
+
+            <dl className={styles['facts']}>
+              <div className={styles['fact']}>
+                <dt>{translate('shell.content.version')}</dt>
+                <dd>{status.content.contentVersion}</dd>
+              </div>
+              <div className={styles['fact']}>
+                <dt>{translate('shell.content.definitions')}</dt>
+                <dd>
+                  {translate('shell.content.definitionCount', {
+                    count: Object.values(status.content.definitionCounts).reduce(
+                      (total, count) => total + count,
+                      0,
+                    ),
+                    kinds: Object.keys(status.content.definitionCounts).length,
+                  })}
+                </dd>
+              </div>
+            </dl>
+          </section>
+        ) : null}
+
         <p className={styles['note']}>{translate('shell.note.noCampaign')}</p>
       </main>
     </div>

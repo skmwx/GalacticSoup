@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/stations.schema.json",
+  "title": "Station definitions",
+  "description": "Stations and the services they offer. Functional Specification 10.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "definitions"
+  ],
+  "properties": {
+    "kind": {
+      "const": "stations"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "definitions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "descriptionKey",
+          "id",
+          "nameKey",
+          "neutralAccess",
+          "serviceModifier",
+          "services",
+          "siteId",
+          "systemId"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/stationId"
+          },
+          "nameKey": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+          },
+          "descriptionKey": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+          },
+          "systemId": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/systemId"
+          },
+          "siteId": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/siteId"
+          },
+          "services": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "market",
+                "fitting",
+                "repair",
+                "insurance"
+              ]
+            }
+          },
+          "serviceModifier": {
+            "type": "number",
+            "minimum": 0.75,
+            "maximum": 1.5
+          },
+          "neutralAccess": {
+            "type": "boolean"
+          },
+          "$comment": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

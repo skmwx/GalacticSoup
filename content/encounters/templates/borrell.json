@@ -1,0 +1,72 @@
+{
+  "kind": "encounters",
+  "$comment": "The three repeatable MVP sites. MVP Scope 4.2.",
+  "definitions": [
+    {
+      "id": "encounter.borrell.pirate-scout",
+      "nameKey": "content.encounter.borrell.pirate-scout.name",
+      "descriptionKey": "content.encounter.borrell.pirate-scout.description",
+      "rewardSummaryKey": "content.encounter.borrell.pirate-scout.reward",
+      "tier": 1,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.verge",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.scout",
+          "count": 1,
+          "spawnDistanceKm": 12
+        }
+      ]
+    },
+    {
+      "id": "encounter.borrell.pirate-patrol",
+      "nameKey": "content.encounter.borrell.pirate-patrol.name",
+      "descriptionKey": "content.encounter.borrell.pirate-patrol.description",
+      "rewardSummaryKey": "content.encounter.borrell.pirate-patrol.reward",
+      "tier": 2,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.derelict-lane",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.scout",
+          "count": 2,
+          "spawnDistanceKm": 18
+        },
+        {
+          "npcProfileId": "npc.pirate.marksman",
+          "count": 1,
+          "spawnDistanceKm": 32
+        }
+      ]
+    },
+    {
+      "id": "encounter.borrell.pirate-base",
+      "nameKey": "content.encounter.borrell.pirate-base.name",
+      "descriptionKey": "content.encounter.borrell.pirate-base.description",
+      "rewardSummaryKey": "content.encounter.borrell.pirate-base.reward",
+      "tier": 3,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.outpost-cradle",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.gunner",
+          "count": 2,
+          "spawnDistanceKm": 9
+        },
+        {
+          "npcProfileId": "npc.pirate.marksman",
+          "count": 1,
+          "spawnDistanceKm": 38
+        },
+        {
+          "npcProfileId": "npc.pirate.warden",
+          "count": 1,
+          "spawnDistanceKm": 22
+        }
+      ]
+    }
+  ]
+}

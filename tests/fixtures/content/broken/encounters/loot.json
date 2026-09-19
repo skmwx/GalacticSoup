@@ -1,0 +1,16 @@
+{
+  "kind": "loot.tables",
+  "definitions": [
+    {
+      "id": "loot.test.pirate",
+      "entries": [
+        {
+          "itemId": "item.test.salvage",
+          "chance": 0.5,
+          "quantityMinimum": 1,
+          "quantityMaximum": 2
+        }
+      ]
+    }
+  ]
+}

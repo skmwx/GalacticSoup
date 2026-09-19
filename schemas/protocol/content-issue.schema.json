@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/content-issue.schema.json",
+  "title": "ContentIssue",
+  "description": "One reason a content bundle was rejected, located by authored file and JSON path (Technical Specification 6.2). The build prints these; the engine reports the same vocabulary as CONTENT_ERROR parameters.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reason", "file", "path", "detail"],
+  "properties": {
+    "reason": {
+      "enum": [
+        "invalidJson",
+        "tooLarge",
+        "structure",
+        "unknownKind",
+        "missingKind",
+        "duplicateKind",
+        "schema",
+        "duplicateId",
+        "unresolvedReference",
+        "invalidValue",
+        "catalogRelationship",
+        "missingLocalization",
+        "digestMismatch"
+      ]
+    },
+    "file": { "type": "string" },
+    "path": { "type": "string" },
+    "detail": { "type": "string", "minLength": 1 }
+  }
+}

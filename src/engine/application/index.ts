@@ -4,6 +4,6 @@
  */
 export { createEngineHost } from './engineHost';
 export type { EngineHost, EngineHostOptions } from './engineHost';
-export { handleCapabilities, handleHealth } from './handlers';
+export { handleCapabilities, handleContentSummary, handleHealth } from './handlers';
 export type { HandlerContext } from './handlers';
 export { ENGINE_VERSION } from './version';

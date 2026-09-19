@@ -1,0 +1,24 @@
+{
+  "kind": "rules.economy",
+  "$comment": "Constants of Functional Specification 10 and 11.1-11.2.",
+  "values": {
+    "scarcityMinimum": -1,
+    "scarcityMaximum": 2,
+    "midPriceMultiplierMinimum": 0.4,
+    "midPriceMultiplierMaximum": 2.5,
+    "effectiveSpreadMinimum": 0.02,
+    "effectiveSpreadMaximum": 0.25,
+    "elasticityMinimum": 0.1,
+    "elasticityMaximum": 0.6,
+    "baseSpreadMinimum": 0.04,
+    "baseSpreadMaximum": 0.15,
+    "minimumUnitPriceCredits": 1,
+    "repairArmorFraction": 0.02,
+    "repairHullFraction": 0.05,
+    "stationServiceModifierMinimum": 0.75,
+    "stationServiceModifierMaximum": 1.5,
+    "basicInsurancePayoutFraction": 0.3,
+    "enhancedInsurancePremiumFraction": 0.15,
+    "enhancedInsurancePayoutFraction": 0.7
+  }
+}

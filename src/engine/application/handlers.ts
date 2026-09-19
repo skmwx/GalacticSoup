@@ -1,4 +1,5 @@
-import type { CapabilitiesData, HealthData, RequestType } from '@protocol';
+import type { ContentRepository } from '@engine/ports';
+import type { CapabilitiesData, ContentSummaryData, HealthData } from '@protocol';
 import { REQUEST_TYPES } from '@protocol';
 
 /**
@@ -11,11 +12,9 @@ import { REQUEST_TYPES } from '@protocol';
 export interface HandlerContext {
   readonly engineVersion: string;
   readonly protocolVersion: number;
+  /** The engine reaches authored content only through this port. */
+  readonly content: ContentRepository;
 }
-
-export type RequestHandler<TType extends RequestType> = (
-  context: HandlerContext,
-) => TType extends 'system.health' ? HealthData : CapabilitiesData;
 
 export function handleHealth(context: HandlerContext): HealthData {
   return {
@@ -30,5 +29,23 @@ export function handleCapabilities(context: HandlerContext): CapabilitiesData {
     protocolVersion: context.protocolVersion,
     engineVersion: context.engineVersion,
     requestTypes: [...REQUEST_TYPES],
+  };
+}
+
+/**
+ * Reports which content the engine is running on. The version and hash are
+ * the values a save records, so the interface and a bug report name exactly
+ * the same build (Technical Specification 6.3).
+ *
+ * @implements TECH-6.3
+ */
+export function handleContentSummary(context: HandlerContext): ContentSummaryData {
+  const { content } = context;
+  return {
+    contentVersion: content.contentVersion,
+    contentHash: content.contentHash,
+    defaultLocale: content.defaultLocale,
+    locales: [...content.locales],
+    definitionCounts: content.definitionCounts(),
   };
 }

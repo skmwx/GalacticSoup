@@ -1,0 +1,11 @@
+{
+  "kind": "rules.time",
+  "$comment": "Functional Specification 3.3. The MVP offers pause and 1x only, and never advances the simulation while the game is closed.",
+  "values": {
+    "simulationQuantumMs": 100,
+    "timeRates": [
+      1
+    ],
+    "maxCatchUpMs": 0
+  }
+}

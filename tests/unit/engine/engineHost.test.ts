@@ -12,6 +12,10 @@ import {
   type HealthData,
 } from '@protocol';
 
+import { shippedContent } from '../../support/content.ts';
+
+const content = shippedContent();
+
 function request(type: string, overrides: Record<string, unknown> = {}): unknown {
   return {
     protocolVersion: PROTOCOL_VERSION,
@@ -24,7 +28,7 @@ function request(type: string, overrides: Record<string, unknown> = {}): unknown
 
 describe('engine host', () => {
   it('reports its health without a campaign [TECH-7.1]', async () => {
-    const response = await createEngineHost().handle(request('system.health'));
+    const response = await createEngineHost({ content }).handle(request('system.health'));
 
     expect(response.ok).toBe(true);
     if (!response.ok) {
@@ -40,7 +44,7 @@ describe('engine host', () => {
   });
 
   it('reports the request types it accepts [TECH-7.1]', async () => {
-    const response = await createEngineHost({ engineVersion: '9.9.9' }).handle(
+    const response = await createEngineHost({ content, engineVersion: '9.9.9' }).handle(
       request('system.capabilities'),
     );
 
@@ -56,13 +60,13 @@ describe('engine host', () => {
   });
 
   it('answers every request with a transport-safe response [TECH-4.2]', async () => {
-    const response = await createEngineHost().handle(request('system.capabilities'));
+    const response = await createEngineHost({ content }).handle(request('system.capabilities'));
 
     expect(isTransportValue(response)).toBe(true);
   });
 
   it('returns a stable error instead of throwing on malformed input [TECH-5.4]', async () => {
-    const host = createEngineHost();
+    const host = createEngineHost({ content });
     const malformed: unknown[] = [
       undefined,
       null,
@@ -89,13 +93,13 @@ describe('engine host', () => {
   });
 
   it('correlates a failure that carries no request id with the unknown id [TECH-7.1]', async () => {
-    const response = await createEngineHost().handle('nonsense');
+    const response = await createEngineHost({ content }).handle('nonsense');
 
     expect(response.requestId).toBe(UNKNOWN_REQUEST_ID);
   });
 
   it('never resolves a state-changing revision above zero before campaigns exist [TECH-7.1]', async () => {
-    const response = await createEngineHost().handle(request('system.health'));
+    const response = await createEngineHost({ content }).handle(request('system.health'));
 
     expect(response.ok && response.revision).toBe(NO_CAMPAIGN_REVISION);
   });

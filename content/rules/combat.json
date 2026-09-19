@@ -1,0 +1,22 @@
+{
+  "kind": "rules.combat",
+  "$comment": "Constants of Functional Specification 9.2-9.12.",
+  "values": {
+    "resistanceMaximum": 0.9,
+    "damageVariationMinimum": 0.75,
+    "damageVariationMaximum": 1.25,
+    "criticalHitChance": 0.01,
+    "criticalHitMultiplier": 2,
+    "lockTimeCoefficient": 4,
+    "lockTimeMinimumSeconds": 0.75,
+    "lockTimeMaximumSeconds": 20,
+    "lockReferenceScanResolution": 100,
+    "lockReferenceSignatureMetres": 40,
+    "lockRangeGraceSeconds": 2,
+    "reloadSeconds": 5,
+    "absoluteRangeFalloffMultiples": 3,
+    "npcWreckLifetimeSeconds": 1800,
+    "playerWreckLifetimeSeconds": 7200,
+    "destructionItemSurvivalChance": 0.5
+  }
+}

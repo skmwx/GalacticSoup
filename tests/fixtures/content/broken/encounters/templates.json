@@ -1,0 +1,23 @@
+{
+  "kind": "encounters",
+  "definitions": [
+    {
+      "id": "encounter.test.skirmish",
+      "nameKey": "content.encounter.test.skirmish.name",
+      "descriptionKey": "content.encounter.test.skirmish.description",
+      "rewardSummaryKey": "content.encounter.test.skirmish.reward",
+      "tier": 1,
+      "systemId": "system.test",
+      "siteId": "site.test.field",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.test.nonexistent",
+          "count": 1,
+          "spawnDistanceKm": 10
+        }
+      ]
+    }
+  ],
+  "$comment": "Deliberately broken: this pack must never compile. It proves that a content error stops the development server, the test run and the production build."
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "manifest",
+  "version": "9.9.9",
+  "defaultLocale": "en",
+  "locales": [
+    "en"
+  ]
+}

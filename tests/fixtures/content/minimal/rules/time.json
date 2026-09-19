@@ -1,0 +1,10 @@
+{
+  "kind": "rules.time",
+  "values": {
+    "simulationQuantumMs": 100,
+    "timeRates": [
+      1
+    ],
+    "maxCatchUpMs": 0
+  }
+}

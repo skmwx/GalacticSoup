@@ -1,3 +1,4 @@
+import { loadBundledContent } from '@adapters/content';
 import { attachEngineHost, type MessageTargetLike } from '@adapters/worker';
 import { createEngineHost, type EngineHost } from '@engine';
 import { createPortGateway, type ClientGateway, type MessagePortLike } from '@gateway';
@@ -25,7 +26,7 @@ export interface ChannelGateway {
 }
 
 export function createChannelGateway(options: ChannelGatewayOptions = {}): ChannelGateway {
-  const host = options.host ?? createEngineHost();
+  const host = options.host ?? createEngineHost({ content: loadBundledContent() });
   const channel = new MessageChannel();
 
   const detach = attachEngineHost(channel.port2 as unknown as MessageTargetLike, host);

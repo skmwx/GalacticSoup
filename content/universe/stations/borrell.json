@@ -1,0 +1,21 @@
+{
+  "kind": "stations",
+  "$comment": "One neutral-access station. It never refuses docking.",
+  "definitions": [
+    {
+      "id": "station.borrell.harbour",
+      "nameKey": "content.station.borrell.harbour.name",
+      "descriptionKey": "content.station.borrell.harbour.description",
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.station",
+      "services": [
+        "market",
+        "fitting",
+        "repair",
+        "insurance"
+      ],
+      "serviceModifier": 1,
+      "neutralAccess": true
+    }
+  ]
+}

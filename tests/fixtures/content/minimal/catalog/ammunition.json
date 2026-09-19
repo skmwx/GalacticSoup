@@ -1,0 +1,22 @@
+{
+  "kind": "ammunition",
+  "definitions": [
+    {
+      "id": "ammo.test.charge",
+      "nameKey": "content.ammo.test.charge.name",
+      "descriptionKey": "content.ammo.test.charge.description",
+      "group": "test-group",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 0,
+        "kinetic": 4,
+        "explosive": 4
+      },
+      "optimalRangeMultiplier": 1,
+      "falloffMultiplier": 1,
+      "trackingMultiplier": 1,
+      "volumeCubicMetres": 0.002,
+      "referenceValueCredits": 10
+    }
+  ]
+}

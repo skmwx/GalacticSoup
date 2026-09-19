@@ -1,0 +1,19 @@
+{
+  "kind": "npc.profiles",
+  "definitions": [
+    {
+      "id": "npc.test.pirate",
+      "nameKey": "content.npc.test.pirate.name",
+      "role": "brawler",
+      "hullId": "hull.test.pirate",
+      "loadout": {
+        "modules": [
+          "module.test.turret"
+        ],
+        "ammunitionId": "ammo.test.charge"
+      },
+      "bountyCredits": 3000,
+      "lootTableId": "loot.test.pirate"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "kind": "localization",
+  "locale": "en",
+  "messages": {
+    "content.ammo.test.charge.description": "A test charge.",
+    "content.ammo.test.charge.name": "Test Charge",
+    "content.encounter.test.skirmish.description": "A test encounter.",
+    "content.encounter.test.skirmish.name": "Test Skirmish",
+    "content.encounter.test.skirmish.reward": "Test bounty.",
+    "content.hull.test.pirate.description": "Test Pirate test hull.",
+    "content.hull.test.pirate.name": "Test Pirate",
+    "content.hull.test.starter.description": "Test Starter test hull.",
+    "content.hull.test.starter.name": "Test Starter",
+    "content.item.test.salvage.description": "Test salvage.",
+    "content.item.test.salvage.name": "Test Salvage",
+    "content.module.test.turret.description": "A test turret.",
+    "content.module.test.turret.name": "Test Turret",
+    "content.npc.test.pirate.name": "Test Pirate",
+    "content.site.test.field.name": "Test Field",
+    "content.site.test.station.name": "Test Dock",
+    "content.station.test.dock.description": "A test station.",
+    "content.station.test.dock.name": "Test Dock",
+    "content.system.test.name": "Test System"
+  }
+}

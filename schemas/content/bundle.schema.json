@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/bundle.schema.json",
+  "title": "Compiled content bundle",
+  "description": "The canonical artefact the build produces from content/ and the engine loads through the content port. Definitions are sorted by stable id and authoring-only metadata is stripped. Technical Specification 6.3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contentVersion",
+    "contentHash",
+    "defaultLocale",
+    "locales",
+    "rules",
+    "definitions",
+    "listings",
+    "localization"
+  ],
+  "properties": {
+    "contentVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+\\+[0-9a-f]{12}$",
+      "description": "Authored version plus the leading digits of the content hash."
+    },
+    "contentHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "defaultLocale": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+    },
+    "locales": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "time",
+        "combat",
+        "economy"
+      ],
+      "properties": {
+        "time": {
+          "$ref": "https://galactic-soup.local/schemas/content/rules.time.schema.json#/properties/values"
+        },
+        "combat": {
+          "$ref": "https://galactic-soup.local/schemas/content/rules.combat.schema.json#/properties/values"
+        },
+        "economy": {
+          "$ref": "https://galactic-soup.local/schemas/content/rules.economy.schema.json#/properties/values"
+        }
+      }
+    },
+    "definitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hulls",
+        "modules",
+        "ammunition",
+        "items",
+        "systems",
+        "stations",
+        "npc.profiles",
+        "loot.tables",
+        "encounters"
+      ],
+      "properties": {
+        "hulls": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/hulls.schema.json#/properties/definitions/items"
+          }
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/modules.schema.json#/properties/definitions/items"
+          }
+        },
+        "ammunition": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/ammunition.schema.json#/properties/definitions/items"
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/items.schema.json#/properties/definitions/items"
+          }
+        },
+        "systems": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/systems.schema.json#/properties/definitions/items"
+          }
+        },
+        "stations": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/stations.schema.json#/properties/definitions/items"
+          }
+        },
+        "npc.profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/npc.profiles.schema.json#/properties/definitions/items"
+          }
+        },
+        "loot.tables": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/loot.tables.schema.json#/properties/definitions/items"
+          }
+        },
+        "encounters": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/encounters.schema.json#/properties/definitions/items"
+          }
+        }
+      }
+    },
+    "listings": {
+      "type": "array",
+      "description": "Every station listing, flattened and sorted by station then item id.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stationId",
+          "itemId",
+          "supply",
+          "basePriceCredits",
+          "regionalPriceFactor",
+          "targetStock",
+          "initialStock",
+          "elasticity",
+          "baseSpread",
+          "productionPerHour",
+          "consumptionPerHour"
+        ],
+        "properties": {
+          "stationId": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/stationId"
+          },
+          "itemId": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/definitionId"
+          },
+          "supply": {
+            "enum": [
+              "dynamic",
+              "fixed"
+            ]
+          },
+          "basePriceCredits": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+          },
+          "regionalPriceFactor": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+          },
+          "targetStock": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+          },
+          "initialStock": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/count"
+          },
+          "elasticity": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 0.6
+          },
+          "baseSpread": {
+            "type": "number",
+            "minimum": 0.04,
+            "maximum": 0.15
+          },
+          "productionPerHour": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+          },
+          "consumptionPerHour": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+          },
+          "$comment": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "localization": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+        },
+        "additionalProperties": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      }
+    }
+  }
+}

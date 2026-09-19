@@ -1,0 +1,69 @@
+{
+  "kind": "loot.tables",
+  "$comment": "Wreck contents. Drop rates are provisional tuning values.",
+  "definitions": [
+    {
+      "id": "loot.pirate.scout",
+      "entries": [
+        {
+          "itemId": "item.salvage.alloy",
+          "chance": 0.6,
+          "quantityMinimum": 1,
+          "quantityMaximum": 2
+        },
+        {
+          "itemId": "ammo.projectile.small.fusion",
+          "chance": 0.35,
+          "quantityMinimum": 10,
+          "quantityMaximum": 40
+        }
+      ]
+    },
+    {
+      "id": "loot.pirate.patrol",
+      "entries": [
+        {
+          "itemId": "item.salvage.alloy",
+          "chance": 0.65,
+          "quantityMinimum": 1,
+          "quantityMaximum": 3
+        },
+        {
+          "itemId": "item.salvage.circuitry",
+          "chance": 0.3,
+          "quantityMinimum": 1,
+          "quantityMaximum": 2
+        },
+        {
+          "itemId": "module.plating.armor.small",
+          "chance": 0.12,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        }
+      ]
+    },
+    {
+      "id": "loot.pirate.base",
+      "entries": [
+        {
+          "itemId": "item.salvage.circuitry",
+          "chance": 0.7,
+          "quantityMinimum": 2,
+          "quantityMaximum": 4
+        },
+        {
+          "itemId": "module.capacitor.battery.small",
+          "chance": 0.25,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        },
+        {
+          "itemId": "module.turret.railgun.small",
+          "chance": 0.18,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        }
+      ]
+    }
+  ]
+}

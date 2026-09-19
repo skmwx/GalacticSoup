@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/localization.schema.json",
+  "title": "Content localization",
+  "description": "Player-visible text for content message keys. Technical Specification 12.5.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "locale",
+    "messages"
+  ],
+  "properties": {
+    "kind": {
+      "const": "localization"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+    },
+    "messages": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 8192,
+      "propertyNames": {
+        "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+      }
+    }
+  }
+}

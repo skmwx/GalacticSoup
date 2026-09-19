@@ -6,7 +6,13 @@ import {
   type ClientGateway,
   type TransportKind,
 } from '@gateway';
-import { EMPTY_PAYLOAD, type CapabilitiesData, type ErrorParams, type HealthData } from '@protocol';
+import {
+  EMPTY_PAYLOAD,
+  type CapabilitiesData,
+  type ContentSummaryData,
+  type ErrorParams,
+  type HealthData,
+} from '@protocol';
 import type { MessageKey } from '@shared';
 
 /**
@@ -23,6 +29,7 @@ export type EngineStatus =
       readonly transport: TransportKind;
       readonly health: HealthData;
       readonly capabilities: CapabilitiesData;
+      readonly content: ContentSummaryData;
     }
   | {
       readonly kind: 'failed';
@@ -47,11 +54,17 @@ export function useEngineStatus(gateway: ClientGateway): EngineStatus {
         return toFailure(capabilities.error.messageKey, capabilities.error.params);
       }
 
+      const content = await gateway.request('content.summary', EMPTY_PAYLOAD);
+      if (!content.ok) {
+        return toFailure(content.error.messageKey, content.error.params);
+      }
+
       return {
         kind: 'ready',
         transport: gateway.transport,
         health: health.data,
         capabilities: capabilities.data,
+        content: content.data,
       };
     };
 

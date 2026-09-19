@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/loot.tables.schema.json",
+  "title": "Loot tables",
+  "description": "What a destroyed ship may leave in its wreck. Functional Specification 9.11.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "definitions"
+  ],
+  "properties": {
+    "kind": {
+      "const": "loot.tables"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "definitions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entries",
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/lootTableId"
+          },
+          "entries": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "chance",
+                "itemId",
+                "quantityMaximum",
+                "quantityMinimum"
+              ],
+              "properties": {
+                "itemId": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/definitionId"
+                },
+                "chance": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 1
+                },
+                "quantityMinimum": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+                },
+                "quantityMaximum": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+                }
+              }
+            }
+          },
+          "$comment": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

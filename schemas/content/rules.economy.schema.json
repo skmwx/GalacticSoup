@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/rules.economy.schema.json",
+  "title": "Economy rules",
+  "description": "Tunable constants of Functional Specification 10 and 11.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "values"
+  ],
+  "properties": {
+    "kind": {
+      "const": "rules.economy"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "values": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baseSpreadMaximum",
+        "baseSpreadMinimum",
+        "basicInsurancePayoutFraction",
+        "effectiveSpreadMaximum",
+        "effectiveSpreadMinimum",
+        "elasticityMaximum",
+        "elasticityMinimum",
+        "enhancedInsurancePayoutFraction",
+        "enhancedInsurancePremiumFraction",
+        "midPriceMultiplierMaximum",
+        "midPriceMultiplierMinimum",
+        "minimumUnitPriceCredits",
+        "repairArmorFraction",
+        "repairHullFraction",
+        "scarcityMaximum",
+        "scarcityMinimum",
+        "stationServiceModifierMaximum",
+        "stationServiceModifierMinimum"
+      ],
+      "properties": {
+        "scarcityMinimum": {
+          "type": "number"
+        },
+        "scarcityMaximum": {
+          "type": "number"
+        },
+        "midPriceMultiplierMinimum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "midPriceMultiplierMaximum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "effectiveSpreadMinimum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "effectiveSpreadMaximum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "elasticityMinimum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "elasticityMaximum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "baseSpreadMinimum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "baseSpreadMaximum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "minimumUnitPriceCredits": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+        },
+        "repairArmorFraction": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "repairHullFraction": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "stationServiceModifierMinimum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "stationServiceModifierMaximum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "basicInsurancePayoutFraction": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "enhancedInsurancePremiumFraction": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "enhancedInsurancePayoutFraction": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        }
+      }
+    }
+  }
+}

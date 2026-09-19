@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/rules.combat.schema.json",
+  "title": "Combat rules",
+  "description": "Tunable constants of Functional Specification 9.2-9.12.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "values"
+  ],
+  "properties": {
+    "kind": {
+      "const": "rules.combat"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "values": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "absoluteRangeFalloffMultiples",
+        "criticalHitChance",
+        "criticalHitMultiplier",
+        "damageVariationMaximum",
+        "damageVariationMinimum",
+        "destructionItemSurvivalChance",
+        "lockRangeGraceSeconds",
+        "lockReferenceScanResolution",
+        "lockReferenceSignatureMetres",
+        "lockTimeCoefficient",
+        "lockTimeMaximumSeconds",
+        "lockTimeMinimumSeconds",
+        "npcWreckLifetimeSeconds",
+        "playerWreckLifetimeSeconds",
+        "reloadSeconds",
+        "resistanceMaximum"
+      ],
+      "properties": {
+        "resistanceMaximum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "damageVariationMinimum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "damageVariationMaximum": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "criticalHitChance": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "criticalHitMultiplier": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "lockTimeCoefficient": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "lockTimeMinimumSeconds": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "lockTimeMaximumSeconds": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "lockReferenceScanResolution": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "lockReferenceSignatureMetres": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "lockRangeGraceSeconds": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+        },
+        "reloadSeconds": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "absoluteRangeFalloffMultiples": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "npcWreckLifetimeSeconds": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+        },
+        "playerWreckLifetimeSeconds": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+        },
+        "destructionItemSurvivalChance": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        }
+      }
+    }
+  }
+}

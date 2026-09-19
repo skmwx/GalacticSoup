@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/hulls.schema.json",
+  "title": "Hull definitions",
+  "description": "Player-usable and NPC hulls. Functional Specification 8.1-8.2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "definitions"
+  ],
+  "properties": {
+    "kind": {
+      "const": "hulls"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "definitions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capacitor",
+          "cargoCapacityCubicMetres",
+          "defenses",
+          "descriptionKey",
+          "fitting",
+          "hardpoints",
+          "id",
+          "insuranceClass",
+          "movement",
+          "nameKey",
+          "playerUsable",
+          "referenceValueCredits",
+          "shieldRechargeSeconds",
+          "signatureRadiusMetres",
+          "slots",
+          "targeting",
+          "traitKeys"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hullId"
+          },
+          "nameKey": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+          },
+          "descriptionKey": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+          },
+          "playerUsable": {
+            "type": "boolean"
+          },
+          "defenses": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "armor",
+              "hull",
+              "shield"
+            ],
+            "properties": {
+              "shield": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "hitPoints",
+                  "resistances"
+                ],
+                "properties": {
+                  "hitPoints": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "resistances": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/resistanceProfile"
+                  }
+                }
+              },
+              "armor": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "hitPoints",
+                  "resistances"
+                ],
+                "properties": {
+                  "hitPoints": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "resistances": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/resistanceProfile"
+                  }
+                }
+              },
+              "hull": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "hitPoints",
+                  "resistances"
+                ],
+                "properties": {
+                  "hitPoints": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "resistances": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/resistanceProfile"
+                  }
+                }
+              }
+            }
+          },
+          "shieldRechargeSeconds": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+          },
+          "capacitor": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "capacity",
+              "rechargeSeconds"
+            ],
+            "properties": {
+              "capacity": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "rechargeSeconds": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              }
+            }
+          },
+          "movement": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "accelerationKmPerSecondSquared",
+              "brakingKmPerSecondSquared",
+              "maxSpeedKmPerSecond",
+              "turnRateRadiansPerSecond",
+              "warpSpeedKmPerSecond"
+            ],
+            "properties": {
+              "maxSpeedKmPerSecond": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "accelerationKmPerSecondSquared": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "brakingKmPerSecondSquared": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "turnRateRadiansPerSecond": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "warpSpeedKmPerSecond": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              }
+            }
+          },
+          "signatureRadiusMetres": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+          },
+          "targeting": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "maxLockRangeKm",
+              "maxLockedTargets",
+              "scanResolution"
+            ],
+            "properties": {
+              "scanResolution": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "maxLockRangeKm": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "maxLockedTargets": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+              }
+            }
+          },
+          "cargoCapacityCubicMetres": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+          },
+          "slots": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "engineering",
+              "system",
+              "utility",
+              "weapon"
+            ],
+            "properties": {
+              "weapon": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/count"
+              },
+              "system": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/count"
+              },
+              "engineering": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/count"
+              },
+              "utility": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/count"
+              }
+            }
+          },
+          "hardpoints": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "launcher",
+              "mining",
+              "turret"
+            ],
+            "properties": {
+              "turret": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/count"
+              },
+              "launcher": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/count"
+              },
+              "mining": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/count"
+              }
+            }
+          },
+          "fitting": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "powerOutput",
+              "processingOutput"
+            ],
+            "properties": {
+              "powerOutput": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "processingOutput": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              }
+            }
+          },
+          "referenceValueCredits": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+          },
+          "insuranceClass": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "maxLength": 32
+          },
+          "traitKeys": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+            }
+          },
+          "$comment": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

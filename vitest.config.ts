@@ -2,8 +2,14 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
 import { aliasEntries } from './config/aliases.mjs';
+import { contentPlugin } from './config/contentPlugin.mjs';
 
 const alias = aliasEntries();
+
+// Every project compiles and validates the authored content when it starts, so
+// an invalid content set fails the test run rather than one assertion
+// (Technical Specification 6.2).
+const content = (): ReturnType<typeof contentPlugin> => contentPlugin();
 
 // Three named projects back the `test:unit`, `test:integration` and
 // `test:component` entry points (Technical Specification 15.1).
@@ -13,6 +19,7 @@ export default defineConfig({
   test: {
     projects: [
       {
+        plugins: [content()],
         resolve: { alias },
         test: {
           name: 'unit',
@@ -21,6 +28,7 @@ export default defineConfig({
         },
       },
       {
+        plugins: [content()],
         resolve: { alias },
         test: {
           name: 'integration',
@@ -29,7 +37,7 @@ export default defineConfig({
         },
       },
       {
-        plugins: [react()],
+        plugins: [content(), react()],
         resolve: { alias },
         test: {
           name: 'component',

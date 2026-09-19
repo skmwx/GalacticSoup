@@ -67,6 +67,58 @@ export function invalidRequestMessageKey(reason: InvalidRequestReason): MessageK
   return `error.invalidRequest.${reason}`;
 }
 
+/**
+ * Why a content bundle was rejected (Technical Specification 6.2, 14).
+ *
+ * The same vocabulary serves the build-time compiler and the load-time guard,
+ * so a failure reported by `npm run validate:content` and the same failure
+ * detected while loading a bundle name the same reason.
+ */
+export const CONTENT_ERROR_REASONS = [
+  'invalidJson',
+  'tooLarge',
+  'structure',
+  'unknownKind',
+  'missingKind',
+  'duplicateKind',
+  'schema',
+  'duplicateId',
+  'unresolvedReference',
+  'invalidValue',
+  'catalogRelationship',
+  'missingLocalization',
+  'digestMismatch',
+] as const;
+
+export type ContentErrorReason = (typeof CONTENT_ERROR_REASONS)[number];
+
+export function contentErrorMessageKey(reason: ContentErrorReason): MessageKey {
+  return `error.contentError.${reason}`;
+}
+
+/**
+ * One content problem, in a shape that crosses the engine boundary and can be
+ * printed by the build. `file` and `path` locate it precisely: the authored
+ * file and the JSON path inside it (Technical Specification 6.2).
+ */
+export interface ContentIssue {
+  readonly reason: ContentErrorReason;
+  /** Repository-relative authored file, or `''` for a whole-bundle problem. */
+  readonly file: string;
+  /** JSON path inside that file, or `''` for the document itself. */
+  readonly path: string;
+  /** Developer-facing English detail. Player-facing text uses `messageKey`. */
+  readonly detail: string;
+}
+
+export function contentError(issue: ContentIssue): EngineError {
+  return createEngineError('CONTENT_ERROR', contentErrorMessageKey(issue.reason), {
+    file: issue.file,
+    path: issue.path,
+    detail: issue.detail,
+  });
+}
+
 export function createEngineError(
   code: EngineErrorCode,
   messageKey: MessageKey,
@@ -92,4 +144,5 @@ export function internalError(params?: ErrorParams): EngineError {
 export const PROTOCOL_MESSAGE_KEYS: readonly MessageKey[] = [
   ...Object.values(ENGINE_ERROR_MESSAGE_KEYS),
   ...INVALID_REQUEST_REASONS.map(invalidRequestMessageKey),
+  ...CONTENT_ERROR_REASONS.map(contentErrorMessageKey),
 ].sort();

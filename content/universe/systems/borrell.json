@@ -1,0 +1,49 @@
+{
+  "kind": "systems",
+  "$comment": "The single MVP system. Galaxy travel and gates are deferred.",
+  "definitions": [
+    {
+      "id": "system.borrell",
+      "nameKey": "content.system.borrell.name",
+      "dangerRating": 1,
+      "sites": [
+        {
+          "id": "site.borrell.station",
+          "nameKey": "content.site.borrell.station.name",
+          "kind": "station",
+          "position": {
+            "xKm": 0,
+            "yKm": 0
+          }
+        },
+        {
+          "id": "site.borrell.verge",
+          "nameKey": "content.site.borrell.verge.name",
+          "kind": "combat",
+          "position": {
+            "xKm": 28000,
+            "yKm": -12000
+          }
+        },
+        {
+          "id": "site.borrell.derelict-lane",
+          "nameKey": "content.site.borrell.derelict-lane.name",
+          "kind": "combat",
+          "position": {
+            "xKm": 42000,
+            "yKm": 33000
+          }
+        },
+        {
+          "id": "site.borrell.outpost-cradle",
+          "nameKey": "content.site.borrell.outpost-cradle.name",
+          "kind": "combat",
+          "position": {
+            "xKm": -51000,
+            "yKm": 24000
+          }
+        }
+      ]
+    }
+  ]
+}

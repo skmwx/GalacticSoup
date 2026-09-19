@@ -18,8 +18,9 @@ describe('headless engine', () => {
 
   it('imports and answers a request in that environment [TECH-2, TECH-4.1]', async () => {
     const { createEngineHost } = await import('@engine');
+    const { shippedContent } = await import('../../support/content.ts');
 
-    const response = await createEngineHost().handle({
+    const response = await createEngineHost({ content: shippedContent() }).handle({
       protocolVersion: PROTOCOL_VERSION,
       requestId: 'headless-1',
       type: 'system.health',

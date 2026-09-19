@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/common.schema.json",
+  "title": "Shared content definitions",
+  "description": "Reusable shapes for authored content. Technical Specification 5.1, 5.2, 6.2.",
+  "$defs": {
+    "definitionId": {
+      "type": "string",
+      "maxLength": 96,
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z0-9][a-z0-9-]*)+$",
+      "description": "Stable, namespaced authored id. Never derived from a display name."
+    },
+    "hullId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^hull\\.",
+      "type": "string"
+    },
+    "moduleId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^module\\.",
+      "type": "string"
+    },
+    "ammunitionId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^ammo\\.",
+      "type": "string"
+    },
+    "systemId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^system\\.",
+      "type": "string"
+    },
+    "siteId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^site\\.",
+      "type": "string"
+    },
+    "stationId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^station\\.",
+      "type": "string"
+    },
+    "npcProfileId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^npc\\.",
+      "type": "string"
+    },
+    "lootTableId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^loot\\.",
+      "type": "string"
+    },
+    "encounterId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^encounter\\.",
+      "type": "string"
+    },
+    "messageKey": {
+      "type": "string",
+      "maxLength": 128,
+      "pattern": "^content\\.[a-z0-9]+(\\.[a-zA-Z0-9-]+)+$",
+      "description": "Localization key. Authored text never appears in a definition."
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "positiveCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "credits": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "nonNegativeNumber": {
+      "type": "number",
+      "minimum": 0
+    },
+    "positiveNumber": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "fraction": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "resistance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.9,
+      "description": "Functional Specification 4.2 clamps resistances to 0-90%."
+    },
+    "cubicMetres": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Authored volume. Converted to whole cubic-decimetre units on load."
+    },
+    "damageProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "electromagnetic",
+        "thermal",
+        "kinetic",
+        "explosive"
+      ],
+      "properties": {
+        "electromagnetic": {
+          "$ref": "#/$defs/nonNegativeNumber"
+        },
+        "thermal": {
+          "$ref": "#/$defs/nonNegativeNumber"
+        },
+        "kinetic": {
+          "$ref": "#/$defs/nonNegativeNumber"
+        },
+        "explosive": {
+          "$ref": "#/$defs/nonNegativeNumber"
+        }
+      }
+    },
+    "resistanceProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "electromagnetic",
+        "thermal",
+        "kinetic",
+        "explosive"
+      ],
+      "properties": {
+        "electromagnetic": {
+          "$ref": "#/$defs/resistance"
+        },
+        "thermal": {
+          "$ref": "#/$defs/resistance"
+        },
+        "kinetic": {
+          "$ref": "#/$defs/resistance"
+        },
+        "explosive": {
+          "$ref": "#/$defs/resistance"
+        }
+      }
+    },
+    "defenseLayer": {
+      "enum": [
+        "shield",
+        "armor",
+        "hull"
+      ]
+    },
+    "slotKind": {
+      "enum": [
+        "weapon",
+        "system",
+        "engineering",
+        "utility"
+      ]
+    },
+    "hardpointKind": {
+      "enum": [
+        "turret",
+        "launcher",
+        "mining"
+      ]
+    },
+    "ammunitionGroup": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "maxLength": 48
+    }
+  }
+}

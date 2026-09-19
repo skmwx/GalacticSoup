@@ -1,0 +1,516 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/modules.schema.json",
+  "title": "Module definitions",
+  "description": "Fittable modules. Functional Specification 8.3-8.4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "definitions"
+  ],
+  "properties": {
+    "kind": {
+      "const": "modules"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "definitions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "activation",
+              "category",
+              "descriptionKey",
+              "fitting",
+              "hardpoint",
+              "id",
+              "nameKey",
+              "referenceValueCredits",
+              "slot",
+              "turret",
+              "volumeCubicMetres"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/moduleId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "slot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/slotKind"
+              },
+              "hardpoint": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "fitting": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "powerUse",
+                  "processingUse"
+                ],
+                "properties": {
+                  "powerUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "processingUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "activation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "capacitorPerCycle",
+                  "cycleSeconds"
+                ],
+                "properties": {
+                  "capacitorPerCycle": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "cycleSeconds": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "category": {
+                "const": "turret"
+              },
+              "turret": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "ammunitionGroup",
+                  "damageMultiplier",
+                  "falloffKm",
+                  "magazineSize",
+                  "optimalRangeKm",
+                  "signatureResolutionMetres",
+                  "trackingRadiansPerSecond"
+                ],
+                "properties": {
+                  "optimalRangeKm": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "falloffKm": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "trackingRadiansPerSecond": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "signatureResolutionMetres": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "damageMultiplier": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "magazineSize": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+                  },
+                  "ammunitionGroup": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/ammunitionGroup"
+                  }
+                }
+              },
+              "$comment": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "activation",
+              "category",
+              "descriptionKey",
+              "fitting",
+              "id",
+              "nameKey",
+              "propulsion",
+              "referenceValueCredits",
+              "slot",
+              "volumeCubicMetres"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/moduleId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "slot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/slotKind"
+              },
+              "hardpoint": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "fitting": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "powerUse",
+                  "processingUse"
+                ],
+                "properties": {
+                  "powerUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "processingUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "activation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "capacitorPerCycle",
+                  "cycleSeconds"
+                ],
+                "properties": {
+                  "capacitorPerCycle": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "cycleSeconds": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "category": {
+                "const": "propulsion"
+              },
+              "propulsion": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "signatureRadiusPenaltyFraction",
+                  "speedBonusFraction"
+                ],
+                "properties": {
+                  "speedBonusFraction": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "signatureRadiusPenaltyFraction": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "$comment": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "activation",
+              "category",
+              "descriptionKey",
+              "fitting",
+              "id",
+              "nameKey",
+              "referenceValueCredits",
+              "repair",
+              "slot",
+              "volumeCubicMetres"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/moduleId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "slot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/slotKind"
+              },
+              "hardpoint": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "fitting": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "powerUse",
+                  "processingUse"
+                ],
+                "properties": {
+                  "powerUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "processingUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "activation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "capacitorPerCycle",
+                  "cycleSeconds"
+                ],
+                "properties": {
+                  "capacitorPerCycle": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "cycleSeconds": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "category": {
+                "enum": [
+                  "shieldBooster",
+                  "armorRepairer"
+                ]
+              },
+              "repair": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "amountHitPoints",
+                  "layer"
+                ],
+                "properties": {
+                  "layer": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/defenseLayer"
+                  },
+                  "amountHitPoints": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "$comment": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "category",
+              "descriptionKey",
+              "fitting",
+              "id",
+              "nameKey",
+              "referenceValueCredits",
+              "resistance",
+              "slot",
+              "volumeCubicMetres"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/moduleId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "slot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/slotKind"
+              },
+              "hardpoint": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "fitting": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "powerUse",
+                  "processingUse"
+                ],
+                "properties": {
+                  "powerUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "processingUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "activation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "capacitorPerCycle",
+                  "cycleSeconds"
+                ],
+                "properties": {
+                  "capacitorPerCycle": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "cycleSeconds": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "category": {
+                "const": "resistancePlating"
+              },
+              "resistance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "bonuses",
+                  "layer"
+                ],
+                "properties": {
+                  "layer": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/defenseLayer"
+                  },
+                  "bonuses": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/resistanceProfile"
+                  }
+                }
+              },
+              "$comment": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "capacitorSupport",
+              "category",
+              "descriptionKey",
+              "fitting",
+              "id",
+              "nameKey",
+              "referenceValueCredits",
+              "slot",
+              "volumeCubicMetres"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/moduleId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "slot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/slotKind"
+              },
+              "hardpoint": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "fitting": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "powerUse",
+                  "processingUse"
+                ],
+                "properties": {
+                  "powerUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "processingUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "activation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "capacitorPerCycle",
+                  "cycleSeconds"
+                ],
+                "properties": {
+                  "capacitorPerCycle": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "cycleSeconds": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "category": {
+                "const": "capacitorBattery"
+              },
+              "capacitorSupport": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "capacityBonus",
+                  "rechargeBonusFraction"
+                ],
+                "properties": {
+                  "capacityBonus": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "rechargeBonusFraction": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "$comment": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

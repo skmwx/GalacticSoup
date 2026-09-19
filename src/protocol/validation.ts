@@ -125,7 +125,7 @@ export function validateClientRequest(message: unknown): EnvelopeValidation {
   return { ok: true, request: envelope as unknown as ClientRequest<RequestType, unknown> };
 }
 
-/** Per-type payload rules. Both version 1 requests take an empty object. */
+/** Per-type payload rules. Every version 1 request takes an empty object. */
 export function validatePayload(type: RequestType, payload: unknown): EngineError | null {
   if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
     return invalidRequest('payload', { type, reason: 'notAnObject' });
@@ -133,7 +133,8 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
 
   switch (type) {
     case 'system.health':
-    case 'system.capabilities': {
+    case 'system.capabilities':
+    case 'content.summary': {
       const keys = Object.keys(payload as Record<string, unknown>);
       const unexpected = keys[0];
       if (unexpected !== undefined) {

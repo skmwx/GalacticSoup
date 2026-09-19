@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/market.listings.schema.json",
+  "title": "Market listings",
+  "description": "Buy and sell quotes one station offers. Functional Specification 11.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "stationId",
+    "listings"
+  ],
+  "properties": {
+    "kind": {
+      "const": "market.listings"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "stationId": {
+      "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/stationId"
+    },
+    "listings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2048,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "basePriceCredits",
+          "baseSpread",
+          "consumptionPerHour",
+          "elasticity",
+          "initialStock",
+          "itemId",
+          "productionPerHour",
+          "regionalPriceFactor",
+          "supply",
+          "targetStock"
+        ],
+        "properties": {
+          "itemId": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/definitionId"
+          },
+          "supply": {
+            "enum": [
+              "dynamic",
+              "fixed"
+            ]
+          },
+          "basePriceCredits": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+          },
+          "regionalPriceFactor": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+          },
+          "targetStock": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+          },
+          "initialStock": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/count"
+          },
+          "elasticity": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 0.6
+          },
+          "baseSpread": {
+            "type": "number",
+            "minimum": 0.04,
+            "maximum": 0.15
+          },
+          "productionPerHour": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+          },
+          "consumptionPerHour": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+          },
+          "$comment": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

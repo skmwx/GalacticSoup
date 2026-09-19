@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/manifest.schema.json",
+  "title": "Content manifest",
+  "description": "Identity of the authored content set. Exactly one manifest file exists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "version", "defaultLocale", "locales"],
+  "properties": {
+    "kind": { "const": "manifest" },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Authored version. The build appends the content hash to form contentVersion."
+    },
+    "defaultLocale": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" },
+    "locales": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" }
+    },
+    "$comment": { "type": "string" }
+  }
+}

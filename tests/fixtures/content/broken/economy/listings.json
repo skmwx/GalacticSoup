@@ -1,0 +1,54 @@
+{
+  "kind": "market.listings",
+  "stationId": "station.test.dock",
+  "listings": [
+    {
+      "itemId": "hull.test.starter",
+      "supply": "fixed",
+      "basePriceCredits": 10000,
+      "regionalPriceFactor": 1,
+      "targetStock": 10,
+      "initialStock": 10,
+      "elasticity": 0.3,
+      "baseSpread": 0.08,
+      "productionPerHour": 0,
+      "consumptionPerHour": 0
+    },
+    {
+      "itemId": "module.test.turret",
+      "supply": "fixed",
+      "basePriceCredits": 12000,
+      "regionalPriceFactor": 1,
+      "targetStock": 20,
+      "initialStock": 20,
+      "elasticity": 0.3,
+      "baseSpread": 0.08,
+      "productionPerHour": 0,
+      "consumptionPerHour": 0
+    },
+    {
+      "itemId": "ammo.test.charge",
+      "supply": "fixed",
+      "basePriceCredits": 10,
+      "regionalPriceFactor": 1,
+      "targetStock": 1000,
+      "initialStock": 1000,
+      "elasticity": 0.3,
+      "baseSpread": 0.08,
+      "productionPerHour": 0,
+      "consumptionPerHour": 0
+    },
+    {
+      "itemId": "item.test.salvage",
+      "supply": "dynamic",
+      "basePriceCredits": 2000,
+      "regionalPriceFactor": 1,
+      "targetStock": 50,
+      "initialStock": 20,
+      "elasticity": 0.3,
+      "baseSpread": 0.08,
+      "productionPerHour": 0,
+      "consumptionPerHour": 1
+    }
+  ]
+}

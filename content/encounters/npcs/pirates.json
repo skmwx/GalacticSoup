@@ -1,0 +1,67 @@
+{
+  "kind": "npc.profiles",
+  "$comment": "Roles differ by range behaviour, not only by hit points.",
+  "definitions": [
+    {
+      "id": "npc.pirate.scout",
+      "nameKey": "content.npc.pirate.scout.name",
+      "role": "skirmisher",
+      "hullId": "hull.pirate.scout",
+      "loadout": {
+        "modules": [
+          "module.turret.autocannon.small"
+        ],
+        "ammunitionId": "ammo.projectile.small.fusion"
+      },
+      "bountyCredits": 3000,
+      "lootTableId": "loot.pirate.scout"
+    },
+    {
+      "id": "npc.pirate.marksman",
+      "nameKey": "content.npc.pirate.marksman.name",
+      "role": "sniper",
+      "hullId": "hull.pirate.scout",
+      "loadout": {
+        "modules": [
+          "module.turret.railgun.small"
+        ],
+        "ammunitionId": "ammo.hybrid.small.iron"
+      },
+      "bountyCredits": 4800,
+      "lootTableId": "loot.pirate.patrol"
+    },
+    {
+      "id": "npc.pirate.gunner",
+      "nameKey": "content.npc.pirate.gunner.name",
+      "role": "brawler",
+      "hullId": "hull.pirate.raider",
+      "loadout": {
+        "modules": [
+          "module.turret.autocannon.small",
+          "module.turret.autocannon.small",
+          "module.plating.armor.small"
+        ],
+        "ammunitionId": "ammo.projectile.small.fusion"
+      },
+      "bountyCredits": 5200,
+      "lootTableId": "loot.pirate.patrol"
+    },
+    {
+      "id": "npc.pirate.warden",
+      "nameKey": "content.npc.pirate.warden.name",
+      "role": "brawler",
+      "hullId": "hull.pirate.raider",
+      "loadout": {
+        "modules": [
+          "module.turret.railgun.small",
+          "module.turret.railgun.small",
+          "module.plating.armor.small",
+          "module.capacitor.battery.small"
+        ],
+        "ammunitionId": "ammo.hybrid.small.plasma"
+      },
+      "bountyCredits": 9000,
+      "lootTableId": "loot.pirate.base"
+    }
+  ]
+}
