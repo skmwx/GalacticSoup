@@ -8,3 +8,13 @@ Read docs\human-input and create a full-game design brief from the concept. It s
 # 002 Codex chat Sol EH
 Game design brief is generated, please review it and fix as necessary.
 Make sure it doesn't overstep its boundaries, and it isn't too verbose. I think it's a bit too detailed for what game design brief is supposed to be.
+
+# 003 Codex VSCode Sol EH
+Read 
+docs\human-input
+docs\GameDesignBrief.md
+
+Create a full-game functional specification.
+
+# 004 Codex Chat Sol EH
+Functional spec is done, could you please review it and fix as necessary?
