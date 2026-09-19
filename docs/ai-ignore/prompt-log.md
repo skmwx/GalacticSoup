@@ -18,3 +18,11 @@ Create a full-game functional specification.
 
 # 004 Codex Chat Sol EH
 Functional spec is done, could you please review it and fix as necessary?
+
+# 005 Codex VSCode Sol EH
+Read the documents in docs\ root folder and docs\human-input
+
+Create a full-game technical specification.
+
+# 006 Codex Chat Sol EH
+Technical spec is done, could you please review it and fix as necessary?
