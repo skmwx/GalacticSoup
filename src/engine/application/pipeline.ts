@@ -1,0 +1,147 @@
+import type { CampaignState } from '@engine/domain';
+import type { ContentRepository } from '@engine/ports';
+import {
+  type AdvanceTimePayload,
+  type CommandResultData,
+  type CommandType,
+  type CreateCampaignPayload,
+  type EngineError,
+  type SetTimePayload,
+  internalError,
+  invariantFailure,
+  NO_CAMPAIGN_REVISION,
+} from '@protocol';
+
+import {
+  handleAdvanceTime,
+  handleCreateCampaign,
+  handleResetCampaign,
+  handleSetTime,
+} from './commands';
+import {
+  beginTransaction,
+  commit,
+  InvariantFailure,
+  type CommandOutcome,
+  type CommitResult,
+  type Transaction,
+} from './transaction';
+
+/**
+ * The command pipeline (Technical Specification 7.2).
+ *
+ * One command at a time runs the specified steps in order: the envelope and
+ * payload were validated by the protocol, the campaign and expected revision
+ * were verified by the host, and what remains happens here - preconditions,
+ * apply to the draft, validate invariants, commit and increment the revision
+ * once, then publish events and invalidations with the result.
+ *
+ * Nothing outside a committed transaction changes: a rejected command, an
+ * invariant failure and an unexpected defect all leave state, revision,
+ * ordinals and random streams untouched.
+ *
+ * @implements TECH-7.2
+ */
+
+export interface CommandRequest {
+  readonly campaign: CampaignState | null;
+  readonly content: ContentRepository;
+  readonly type: CommandType;
+  readonly payload: unknown;
+}
+
+export type CommandResult =
+  | {
+      readonly kind: 'committed';
+      readonly campaign: CampaignState | null;
+      readonly data: CommandResultData;
+    }
+  | { readonly kind: 'unchanged'; readonly data: CommandResultData }
+  | { readonly kind: 'failed'; readonly error: EngineError };
+
+export function runCommand(request: CommandRequest): CommandResult {
+  const transaction = beginTransaction(request.campaign, request.content);
+
+  let outcome: CommandOutcome;
+  try {
+    outcome = apply(transaction, request);
+  } catch (error: unknown) {
+    return { kind: 'failed', error: describeDefect(error) };
+  }
+
+  if (outcome.kind === 'rejected') {
+    return { kind: 'failed', error: outcome.error };
+  }
+
+  if (outcome.kind === 'unchanged') {
+    return { kind: 'unchanged', data: unchangedResult(request.campaign) };
+  }
+
+  let committed: CommitResult;
+  try {
+    committed = commit(transaction);
+  } catch (error: unknown) {
+    return { kind: 'failed', error: describeDefect(error) };
+  }
+
+  return {
+    kind: 'committed',
+    campaign: committed.campaign,
+    data: {
+      campaignId: committed.campaign?.campaignId ?? null,
+      revision: committed.campaign?.revision ?? NO_CAMPAIGN_REVISION,
+      simulationTimeMs: committed.campaign?.time.simulationTimeMs ?? 0,
+      committed: true,
+      invalidations: [...committed.invalidations],
+      events: committed.events.map((event) => ({ ...event })),
+    },
+  };
+}
+
+function apply(transaction: Transaction, request: CommandRequest): CommandOutcome {
+  switch (request.type) {
+    case 'campaign.create':
+      return handleCreateCampaign(transaction, request.payload as CreateCampaignPayload);
+    case 'campaign.reset':
+      return handleResetCampaign(transaction);
+    case 'time.set':
+      return handleSetTime(transaction, request.payload as SetTimePayload);
+    case 'time.advance':
+      return handleAdvanceTime(transaction, request.payload as AdvanceTimePayload);
+    default:
+      return assertUnreachable(request.type);
+  }
+}
+
+function unchangedResult(campaign: CampaignState | null): CommandResultData {
+  return {
+    campaignId: campaign?.campaignId ?? null,
+    revision: campaign?.revision ?? NO_CAMPAIGN_REVISION,
+    simulationTimeMs: campaign?.time.simulationTimeMs ?? 0,
+    committed: false,
+    invalidations: [],
+    events: [],
+  };
+}
+
+/**
+ * An invariant failure is a defect in the rules, not a player mistake. The
+ * transaction is abandoned, the previous state stands, and the failing rule
+ * and path are reported so the problem is diagnosable
+ * (Technical Specification 5.4, 15.3).
+ */
+function describeDefect(error: unknown): EngineError {
+  if (error instanceof InvariantFailure) {
+    const first = error.issues[0];
+    return invariantFailure({
+      count: error.issues.length,
+      rule: first?.rule ?? 'unknown',
+      path: first?.path ?? '',
+    });
+  }
+  return internalError({ stage: 'command' });
+}
+
+function assertUnreachable(type: never): never {
+  throw new Error(`Unhandled command type: ${String(type)}`);
+}

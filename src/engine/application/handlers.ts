@@ -1,12 +1,21 @@
+import type { CampaignState } from '@engine/domain';
 import type { ContentRepository } from '@engine/ports';
-import type { CapabilitiesData, ContentSummaryData, HealthData } from '@protocol';
+import { frameProjection, sessionProjection, stateHashProjection } from '@engine/projections';
+import type {
+  CapabilitiesData,
+  ContentSummaryData,
+  FrameData,
+  HealthData,
+  SessionData,
+  StateHashData,
+} from '@protocol';
 import { REQUEST_TYPES } from '@protocol';
 
 /**
- * Version 1 request handlers (Technical Specification 7.2).
+ * Read-only query handlers (Technical Specification 7.3).
  *
- * Handlers are pure functions of the host context. No request in this version
- * changes state, so none of them opens a transaction or advances a revision.
+ * A query takes no random draw, advances no time and changes no revision. It
+ * returns a projection built from the campaign the session currently holds.
  */
 
 export interface HandlerContext {
@@ -14,6 +23,8 @@ export interface HandlerContext {
   readonly protocolVersion: number;
   /** The engine reaches authored content only through this port. */
   readonly content: ContentRepository;
+  /** The open campaign, or `null` when none is open. */
+  readonly campaign: CampaignState | null;
 }
 
 export function handleHealth(context: HandlerContext): HealthData {
@@ -48,4 +59,16 @@ export function handleContentSummary(context: HandlerContext): ContentSummaryDat
     locales: [...content.locales],
     definitionCounts: content.definitionCounts(),
   };
+}
+
+export function handleSession(context: HandlerContext): SessionData {
+  return sessionProjection(context.campaign, context.content, context.engineVersion);
+}
+
+export function handleFrame(context: HandlerContext): FrameData {
+  return frameProjection(context.campaign, context.content);
+}
+
+export function handleStateHash(context: HandlerContext): StateHashData {
+  return stateHashProjection(context.campaign, context.content);
 }

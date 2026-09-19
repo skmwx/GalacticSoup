@@ -70,7 +70,7 @@ describe('client request validation', () => {
       'error.invalidRequest.requestId',
     ],
     ['a missing type', { type: '' }, 'error.invalidRequest.requestType'],
-    ['an unknown type', { type: 'campaign.create' }, 'error.invalidRequest.unsupportedRequestType'],
+    ['an unknown type', { type: 'campaign.summon' }, 'error.invalidRequest.unsupportedRequestType'],
     ['an empty campaign id', { campaignId: '' }, 'error.invalidRequest.campaignId'],
     ['a fractional revision', { expectedRevision: 1.5 }, 'error.invalidRequest.expectedRevision'],
     ['a negative revision', { expectedRevision: -1 }, 'error.invalidRequest.expectedRevision'],
@@ -111,4 +111,61 @@ describe('request id extraction', () => {
   ])('falls back to the unknown correlation id for %s [TECH-7.1]', (_label, message) => {
     expect(readRequestId(message)).toBe(UNKNOWN_REQUEST_ID);
   });
+});
+
+describe('command payload validation', () => {
+  const seed = '0123456789abcdef0123456789abcdef';
+
+  function create(payload: Record<string, unknown>): ReturnType<typeof validateClientRequest> {
+    return validateClientRequest(envelope({ type: 'campaign.create', payload }));
+  }
+
+  it('accepts a well-formed campaign.create payload [TECH-7.1, FUNC-3.1]', () => {
+    expect(create({ displayName: 'Vela', seed, createdAtRealMs: 0 }).ok).toBe(true);
+  });
+
+  it.each([
+    ['a missing field', { displayName: 'Vela', seed }],
+    ['an unexpected field', { displayName: 'Vela', seed, createdAtRealMs: 0, extra: 1 }],
+    ['a blank display name', { displayName: '   ', seed, createdAtRealMs: 0 }],
+    ['an over-long display name', { displayName: 'x'.repeat(49), seed, createdAtRealMs: 0 }],
+    ['a control character in the name', { displayName: 'a\tb', seed, createdAtRealMs: 0 }],
+    ['a short seed', { displayName: 'Vela', seed: 'abc', createdAtRealMs: 0 }],
+    ['an upper-case seed', { displayName: 'Vela', seed: seed.toUpperCase(), createdAtRealMs: 0 }],
+    ['a fractional timestamp', { displayName: 'Vela', seed, createdAtRealMs: 1.5 }],
+  ])('rejects campaign.create with %s [TECH-7.1, TECH-5.4]', (_label, payload) => {
+    const result = create(payload);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.messageKey).toBe('error.invalidRequest.payload');
+    }
+  });
+
+  it.each([
+    ['a well-formed setting', { paused: false, rate: 1 }, true],
+    ['pause', { paused: true, rate: 1 }, true],
+    ['a missing rate', { paused: true }, false],
+    ['a zero rate', { paused: false, rate: 0 }, false],
+    ['a non-boolean pause', { paused: 'yes', rate: 1 }, false],
+  ])('validates time.set with %s [TECH-7.1, FUNC-3.3]', (_label, payload, expected) => {
+    expect(validateClientRequest(envelope({ type: 'time.set', payload })).ok).toBe(expected);
+  });
+
+  it.each([
+    ['a whole delta', { elapsedRealMs: 16 }, true],
+    ['a zero delta', { elapsedRealMs: 0 }, true],
+    ['a fractional delta', { elapsedRealMs: 16.7 }, false],
+    ['a negative delta', { elapsedRealMs: -1 }, false],
+  ])('validates time.advance with %s [TECH-7.1, TECH-9.1]', (_label, payload, expected) => {
+    expect(validateClientRequest(envelope({ type: 'time.advance', payload })).ok).toBe(expected);
+  });
+
+  it.each(['campaign.reset', 'campaign.session', 'campaign.frame', 'diagnostics.stateHash'])(
+    'requires an empty payload for %s [TECH-7.1]',
+    (type) => {
+      expect(validateClientRequest(envelope({ type, payload: EMPTY_PAYLOAD })).ok).toBe(true);
+      expect(validateClientRequest(envelope({ type, payload: { extra: 1 } })).ok).toBe(false);
+    },
+  );
 });

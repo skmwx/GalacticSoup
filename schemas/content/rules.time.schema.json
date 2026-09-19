@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galactic-soup.local/schemas/content/rules.time.schema.json",
   "title": "Time rules",
-  "description": "Simulation clock constants. Functional Specification 3.3.",
+  "description": "Simulation clock constants. Functional Specification 3.3; Technical Specification 9.1.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -20,7 +20,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "maxCatchUpMs",
+        "maxFrameDeltaMs",
         "simulationQuantumMs",
         "timeRates"
       ],
@@ -40,10 +40,10 @@
             "maximum": 8
           }
         },
-        "maxCatchUpMs": {
+        "maxFrameDeltaMs": {
           "type": "integer",
-          "minimum": 0,
-          "maximum": 86400000
+          "minimum": 1,
+          "maximum": 60000
         }
       }
     }

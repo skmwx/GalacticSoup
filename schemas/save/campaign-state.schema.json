@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/save/campaign-state.schema.json",
+  "title": "CampaignState",
+  "description": "The authoritative campaign payload of a save snapshot, state version 1 (Technical Specification 8.1, 11.2). The snapshot envelope that wraps it - format version, engine and protocol versions, content version and hash, save kind and checksum - is added by the persistence phase. Every value here is plain JSON: no derived index, no cache and no wall-clock delta is stored.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "stateVersion",
+    "campaignId",
+    "displayName",
+    "seed",
+    "createdAtRealMs",
+    "revision",
+    "nextEntityOrdinal",
+    "nextEventOrdinal",
+    "time",
+    "random",
+    "scheduler"
+  ],
+  "properties": {
+    "stateVersion": {
+      "const": 1
+    },
+    "campaignId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}$"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 48
+    },
+    "seed": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "createdAtRealMs": {
+      "description": "Display only. Excluded from the authoritative state hash.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "nextEntityOrdinal": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "nextEventOrdinal": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "simulationTimeMs",
+        "paused",
+        "rate",
+        "accumulatorMs"
+      ],
+      "properties": {
+        "simulationTimeMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000000
+        },
+        "paused": {
+          "type": "boolean"
+        },
+        "rate": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 8
+        },
+        "accumulatorMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60000
+        }
+      }
+    },
+    "random": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "combat",
+        "economy",
+        "encounter",
+        "loot",
+        "world"
+      ],
+      "properties": {
+        "combat": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "s0",
+            "s1",
+            "s2",
+            "s3",
+            "drawIndex"
+          ],
+          "properties": {
+            "s0": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "drawIndex": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "economy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "s0",
+            "s1",
+            "s2",
+            "s3",
+            "drawIndex"
+          ],
+          "properties": {
+            "s0": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "drawIndex": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "encounter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "s0",
+            "s1",
+            "s2",
+            "s3",
+            "drawIndex"
+          ],
+          "properties": {
+            "s0": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "drawIndex": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "loot": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "s0",
+            "s1",
+            "s2",
+            "s3",
+            "drawIndex"
+          ],
+          "properties": {
+            "s0": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "drawIndex": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "world": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "s0",
+            "s1",
+            "s2",
+            "s3",
+            "drawIndex"
+          ],
+          "properties": {
+            "s0": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "s3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "drawIndex": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        }
+      }
+    },
+    "scheduler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entries",
+        "nextInsertionOrdinal"
+      ],
+      "properties": {
+        "nextInsertionOrdinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "entryId",
+              "kind",
+              "dueAtMs",
+              "priority",
+              "insertionOrdinal",
+              "ownerId"
+            ],
+            "properties": {
+              "entryId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+              },
+              "kind": {
+                "type": "string",
+                "minLength": 1
+              },
+              "dueAtMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "priority": {
+                "type": "integer"
+              },
+              "insertionOrdinal": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "ownerId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

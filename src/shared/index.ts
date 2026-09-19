@@ -13,13 +13,16 @@ export {
 } from './canonical/index.ts';
 export type { CanonicalValue } from './canonical/index.ts';
 export {
+  CloneError,
   compareStable,
+  deepClone,
   deepFreeze,
   indexBy,
   sortedBy,
   sortedEntries,
   sortedKeys,
 } from './collections/index.ts';
+export type { Mutable } from './collections/index.ts';
 export {
   asDefinitionId,
   DEFINITION_ID_PATTERN,

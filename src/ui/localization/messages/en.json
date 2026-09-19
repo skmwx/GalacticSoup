@@ -1,7 +1,6 @@
 {
   "app.title": "Galactic Soup",
   "app.tagline": "A single-player space trading, exploration and combat game.",
-
   "shell.engine.sectionLabel": "Engine",
   "shell.engine.connecting": "Connecting to the engine…",
   "shell.engine.ready": "Engine ready over {transport}.",
@@ -19,11 +18,9 @@
   "shell.transport.direct": "the in-process host",
   "shell.status.label": "Engine status",
   "shell.note.noCampaign": "No campaign systems are installed yet. This build verifies the application shell, the engine worker and the protocol gateway.",
-
   "compatibility.heading": "Galactic Soup cannot start",
   "compatibility.detail": "The game runs its engine in a dedicated browser worker. Without one it cannot keep your campaign correct, so it will not continue.",
   "compatibility.advice": "Use a current desktop version of a Chromium-based browser or Firefox, and allow the page to run scripts and workers.",
-
   "error.compatibility.workerUnsupported": "This browser does not provide the dedicated worker the engine needs.",
   "error.compatibility.workerFailed": "The engine worker could not be started.",
   "error.gateway.timeout": "The engine did not answer in time.",
@@ -31,7 +28,6 @@
   "error.gateway.disposed": "The connection to the engine was closed.",
   "error.gateway.duplicateRequestId": "A request with the same identifier is already in flight.",
   "error.gateway.malformedResponse": "The engine sent a response that could not be read.",
-
   "error.invalidRequest": "The request was not valid.",
   "error.invalidRequest.notAnObject": "The request was not a protocol message.",
   "error.invalidRequest.protocolVersion": "The request used protocol version {received}; this engine speaks version {expected}.",
@@ -46,6 +42,10 @@
   "error.staleRevision": "The campaign changed while the action was being prepared.",
   "error.stalePreview": "The preview is out of date and must be recalculated.",
   "error.ruleViolation": "That action is not allowed right now.",
+  "error.ruleViolation.campaignAlreadyOpen": "A campaign is already open. Reset it before starting a new one.",
+  "error.ruleViolation.noCampaignOpen": "There is no open campaign to act on.",
+  "error.ruleViolation.campaignMismatch": "That request was meant for a different campaign.",
+  "error.ruleViolation.unsupportedTimeRate": "This game does not offer a time rate of {rate}x.",
   "error.notFound": "The requested entity or definition does not exist.",
   "error.contentError": "The installed game content is not valid.",
   "error.contentError.invalidJson": "A content file is not valid JSON ({file}).",
@@ -64,5 +64,6 @@
   "error.saveError": "The campaign could not be saved.",
   "error.quotaError": "There is not enough local storage space to save the campaign.",
   "error.integrityError": "The saved campaign failed its integrity check.",
-  "error.internalError": "The engine stopped an action to protect the campaign."
+  "error.internalError": "The engine stopped an action to protect the campaign.",
+  "error.internalError.invariant": "The change could not be made safely and was abandoned. The campaign is unchanged ({rule})."
 }

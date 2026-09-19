@@ -9,9 +9,8 @@
  * 4.3 (source layout). A package is a stable boundary: code outside a package
  * may only reach it through its public index, addressed by the alias below.
  *
- * Later phases add packages (engine/domain, engine/simulation,
- * engine/projections, adapters/persistence) by adding an entry here plus the
- * matching tsconfig path. Nothing is declared before the phase that owns it.
+ * Later phases add packages (adapters/persistence) by adding an entry here plus
+ * the matching tsconfig path. Nothing is declared before the phase that owns it.
  */
 
 /**
@@ -58,16 +57,52 @@ export const PACKAGES = {
     platform: 'pure',
     purpose: 'Interfaces the engine owns and adapters implement.',
   },
+  '@engine/domain': {
+    dir: 'src/engine/domain',
+    mayImport: ['@shared', '@engine/ports'],
+    externals: [],
+    platform: 'pure',
+    purpose: 'Campaign aggregates, value objects and rules.',
+  },
+  '@engine/simulation': {
+    dir: 'src/engine/simulation',
+    mayImport: ['@shared', '@engine/ports', '@engine/domain'],
+    externals: [],
+    platform: 'pure',
+    purpose: 'Authoritative clock, scheduler and ordered systems.',
+  },
+  '@engine/projections': {
+    dir: 'src/engine/projections',
+    mayImport: ['@shared', '@protocol', '@engine/ports', '@engine/domain'],
+    externals: [],
+    platform: 'pure',
+    purpose: 'Domain-to-view-model builders.',
+  },
   '@engine/application': {
     dir: 'src/engine/application',
-    mayImport: ['@shared', '@protocol', '@engine/ports'],
+    mayImport: [
+      '@shared',
+      '@protocol',
+      '@engine/ports',
+      '@engine/domain',
+      '@engine/simulation',
+      '@engine/projections',
+    ],
     externals: [],
     platform: 'pure',
     purpose: 'Request handling and transaction orchestration.',
   },
   '@engine': {
     dir: 'src/engine',
-    mayImport: ['@shared', '@protocol', '@engine/application', '@engine/ports'],
+    mayImport: [
+      '@shared',
+      '@protocol',
+      '@engine/application',
+      '@engine/domain',
+      '@engine/ports',
+      '@engine/projections',
+      '@engine/simulation',
+    ],
     externals: [],
     platform: 'pure',
     purpose: 'Public engine API used by the hosting adapter.',

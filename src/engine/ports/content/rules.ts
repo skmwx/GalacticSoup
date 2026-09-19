@@ -13,12 +13,19 @@
  */
 
 export interface TimeRules {
-  /** Fixed simulation quantum in milliseconds (Functional Specification 3.3). */
+  /**
+   * Fixed simulation quantum in milliseconds
+   * (Technical Specification 9.1; Functional Specification 3.3).
+   */
   readonly simulationQuantumMs: number;
   /** Time rates the MVP offers. Pause is not a rate; it stops the clock. */
   readonly timeRates: readonly number[];
-  /** Largest elapsed real interval folded into one resume. */
-  readonly maxCatchUpMs: number;
+  /**
+   * Largest single elapsed real delta the engine accepts. Anything above it is
+   * discarded rather than replayed, so a suspended tab produces no catch-up
+   * (Technical Specification 9.1).
+   */
+  readonly maxFrameDeltaMs: number;
 }
 
 export interface CombatRules {

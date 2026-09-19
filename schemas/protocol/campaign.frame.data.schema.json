@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/campaign.frame.data.schema.json",
+  "title": "FrameData",
+  "description": "Revisioned simulation frame (Technical Specification 7.3).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "revision",
+    "simulationTimeMs",
+    "paused",
+    "rate",
+    "scheduledBoundaryCount",
+    "nextBoundaryAtMs"
+  ],
+  "properties": {
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "simulationTimeMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "paused": {
+      "type": "boolean"
+    },
+    "rate": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "scheduledBoundaryCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "nextBoundaryAtMs": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

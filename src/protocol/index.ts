@@ -14,8 +14,13 @@ export {
   internalError,
   invalidRequest,
   invalidRequestMessageKey,
+  invariantFailure,
   INVALID_REQUEST_REASONS,
   PROTOCOL_MESSAGE_KEYS,
+  ruleViolation,
+  ruleViolationMessageKey,
+  RULE_VIOLATION_REASONS,
+  staleRevision,
 } from './errors';
 export type {
   ContentErrorReason,
@@ -24,17 +29,35 @@ export type {
   EngineErrorCode,
   ErrorParams,
   InvalidRequestReason,
+  RuleViolationReason,
 } from './errors';
-export { EMPTY_PAYLOAD, isRequestType, REQUEST_TYPES } from './requests';
+export {
+  COMMAND_TYPES,
+  EMPTY_PAYLOAD,
+  isCommandType,
+  isRequestType,
+  REQUEST_TYPES,
+} from './requests';
 export type {
+  AdvanceTimePayload,
+  CampaignIdentityData,
   CapabilitiesData,
+  CommandResultData,
+  CommandType,
   ContentSummaryData,
+  CreateCampaignPayload,
+  DomainEventData,
   EmptyPayload,
+  FrameData,
   HealthData,
   ProtocolContract,
   RequestPayload,
   RequestType,
   ResponseData,
+  SessionData,
+  SetTimePayload,
+  StateHashData,
+  TimeControlData,
 } from './requests';
 export { findTransportViolation, isTransportValue } from './transport';
 export type { TransportValue, TransportViolation, TransportViolationReason } from './transport';

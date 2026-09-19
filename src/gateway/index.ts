@@ -19,6 +19,8 @@ export type {
 } from './clientGateway';
 export { buildClientRequest, createRequestIdFactory } from './envelope';
 export type { EnvelopeFields } from './envelope';
+export { createFrameDriver } from './frameDriver';
+export type { FrameDriver, FrameDriverOptions } from './frameDriver';
 export { createPortGateway, DEFAULT_REQUEST_TIMEOUT_MS } from './portGateway';
 export type { MessagePortLike, PortGateway, PortGatewayOptions } from './portGateway';
 export { createWorkerGateway } from './workerGateway';

@@ -34,6 +34,10 @@ let validateResponse: Validator;
 let validateHealthData: Validator;
 let validateCapabilitiesData: Validator;
 let validateContentSummaryData: Validator;
+let validateCommandResultData: Validator;
+let validateSessionData: Validator;
+let validateFrameData: Validator;
+let validateStateHashData: Validator;
 
 const content = shippedContent();
 
@@ -45,6 +49,7 @@ function loadSchema(name: string): object {
 beforeAll(() => {
   const ajv = new AjvConstructor({ allErrors: true, strict: true });
   ajv.addSchema(loadSchema('engine-error.schema.json'));
+  ajv.addSchema(loadSchema('domain-event.schema.json'));
   validateRequest = ajv.compile(loadSchema('client-request.schema.json')) as Validator;
   validateResponse = ajv.compile(loadSchema('engine-response.schema.json')) as Validator;
   validateHealthData = ajv.compile(loadSchema('system.health.data.schema.json')) as Validator;
@@ -53,6 +58,14 @@ beforeAll(() => {
   ) as Validator;
   validateContentSummaryData = ajv.compile(
     loadSchema('content.summary.data.schema.json'),
+  ) as Validator;
+  validateCommandResultData = ajv.compile(
+    loadSchema('command-result.data.schema.json'),
+  ) as Validator;
+  validateSessionData = ajv.compile(loadSchema('campaign.session.data.schema.json')) as Validator;
+  validateFrameData = ajv.compile(loadSchema('campaign.frame.data.schema.json')) as Validator;
+  validateStateHashData = ajv.compile(
+    loadSchema('diagnostics.stateHash.data.schema.json'),
   ) as Validator;
 });
 
@@ -86,8 +99,88 @@ const JSON_FIXTURES: readonly { readonly label: string; readonly message: unknow
     message: {
       protocolVersion: PROTOCOL_VERSION,
       requestId: 'r',
-      type: 'campaign.create',
+      type: 'campaign.summon',
       payload: {},
+    },
+  },
+  {
+    label: 'a well-formed campaign.create',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.create',
+      payload: {
+        displayName: 'Vela',
+        seed: '0123456789abcdef0123456789abcdef',
+        createdAtRealMs: 1,
+      },
+    },
+  },
+  {
+    label: 'a campaign.create with a malformed seed',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.create',
+      payload: { displayName: 'Vela', seed: 'nope', createdAtRealMs: 1 },
+    },
+  },
+  {
+    label: 'a campaign.create with a blank display name',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.create',
+      payload: {
+        displayName: '  ',
+        seed: '0123456789abcdef0123456789abcdef',
+        createdAtRealMs: 1,
+      },
+    },
+  },
+  {
+    label: 'a well-formed time.set',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'time.set',
+      payload: { paused: false, rate: 1 },
+    },
+  },
+  {
+    label: 'a time.set with a zero rate',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'time.set',
+      payload: { paused: false, rate: 0 },
+    },
+  },
+  {
+    label: 'a well-formed time.advance',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'time.advance',
+      payload: { elapsedRealMs: 16 },
+    },
+  },
+  {
+    label: 'a time.advance with a fractional delta',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'time.advance',
+      payload: { elapsedRealMs: 16.5 },
+    },
+  },
+  {
+    label: 'a query carrying payload fields',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.session',
+      payload: { verbose: true },
     },
   },
   {
@@ -207,5 +300,59 @@ describe('protocol schema parity', () => {
 
     expect(failure.ok).toBe(false);
     expect(validateResponse(failure)).toBe(true);
+  });
+});
+
+describe('campaign protocol schema parity', () => {
+  const seed = 'aa11bb22cc33dd44ee55ff6677889900';
+
+  async function ask(
+    host: ReturnType<typeof createEngineHost>,
+    type: string,
+    payload: unknown,
+    requestId: string,
+  ): Promise<unknown> {
+    return host.handle({ protocolVersion: PROTOCOL_VERSION, requestId, type, payload });
+  }
+
+  it('publishes a schema for every campaign response shape [TECH-7.1, TECH-17]', async () => {
+    const host = createEngineHost({ content });
+
+    const created = await ask(
+      host,
+      'campaign.create',
+      { displayName: 'Vela', seed, createdAtRealMs: 1_700_000_000_000 },
+      'req-create',
+    );
+    const running = await ask(host, 'time.set', { paused: false, rate: 1 }, 'req-run');
+    const advanced = await ask(host, 'time.advance', { elapsedRealMs: 120 }, 'req-advance');
+    const session = await ask(host, 'campaign.session', EMPTY_PAYLOAD, 'req-session');
+    const frame = await ask(host, 'campaign.frame', EMPTY_PAYLOAD, 'req-frame');
+    const hash = await ask(host, 'diagnostics.stateHash', EMPTY_PAYLOAD, 'req-hash');
+
+    for (const response of [created, running, advanced, session, frame, hash]) {
+      expect(validateResponse(response)).toBe(true);
+    }
+
+    const dataOf = (response: unknown): unknown => (response as { data: unknown }).data;
+
+    expect(validateCommandResultData(dataOf(created))).toBe(true);
+    expect(validateCommandResultData(dataOf(running))).toBe(true);
+    expect(validateCommandResultData(dataOf(advanced))).toBe(true);
+    expect(validateSessionData(dataOf(session))).toBe(true);
+    expect(validateFrameData(dataOf(frame))).toBe(true);
+    expect(validateStateHashData(dataOf(hash))).toBe(true);
+  });
+
+  it('validates the no-campaign projections against their schemas [TECH-7.1, TECH-7.3]', async () => {
+    const host = createEngineHost({ content });
+
+    const session = await ask(host, 'campaign.session', EMPTY_PAYLOAD, 'req-session');
+    const frame = await ask(host, 'campaign.frame', EMPTY_PAYLOAD, 'req-frame');
+    const hash = await ask(host, 'diagnostics.stateHash', EMPTY_PAYLOAD, 'req-hash');
+
+    expect(validateSessionData((session as { data: unknown }).data)).toBe(true);
+    expect(validateFrameData((frame as { data: unknown }).data)).toBe(true);
+    expect(validateStateHashData((hash as { data: unknown }).data)).toBe(true);
   });
 });

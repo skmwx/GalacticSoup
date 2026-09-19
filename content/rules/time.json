@@ -1,11 +1,11 @@
 {
   "kind": "rules.time",
-  "$comment": "Functional Specification 3.3. The MVP offers pause and 1x only, and never advances the simulation while the game is closed.",
+  "$comment": "Functional Specification 3.3 and Technical Specification 9.1. The MVP offers pause and 1x only. One real delta is capped at maxFrameDeltaMs and accumulated into fixed simulationQuantumMs quanta; time the browser did not deliver is discarded rather than replayed.",
   "values": {
-    "simulationQuantumMs": 100,
+    "simulationQuantumMs": 50,
     "timeRates": [
       1
     ],
-    "maxCatchUpMs": 0
+    "maxFrameDeltaMs": 250
   }
 }

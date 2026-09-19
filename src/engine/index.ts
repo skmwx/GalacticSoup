@@ -5,8 +5,86 @@
  * tests, and depends on no DOM, React, storage or network facility
  * (Technical Specification 2, 4.1, 16).
  */
-export { createEngineHost, ENGINE_VERSION } from '@engine/application';
-export type { EngineHost, EngineHostOptions } from '@engine/application';
+export {
+  beginTransaction,
+  commit,
+  createEngineHost,
+  createRecentRequests,
+  ENGINE_VERSION,
+  InvariantFailure,
+  NoCampaignError,
+  RECENT_REQUEST_LIMIT,
+  runCommand,
+} from '@engine/application';
+export type {
+  CommandRequest,
+  CommandResult,
+  CommitResult,
+  EngineHost,
+  EngineHostOptions,
+  RecentRequests,
+  Transaction,
+} from '@engine/application';
+export {
+  authoritativeView,
+  CAMPAIGN_ID_PATTERN,
+  CAMPAIGN_SEED_PATTERN,
+  CAMPAIGN_STATE_VERSION,
+  campaignStateHash,
+  createCampaign,
+  deriveCampaignId,
+  draftOf,
+  drawChance,
+  drawIntegerInRange,
+  drawUnitInterval,
+  entityIdOf,
+  isCampaignId,
+  isEntityId,
+  MAX_DISPLAY_NAME_LENGTH,
+  MAX_SCHEDULE_HORIZON_MS,
+  MAX_SIMULATION_TIME_MS,
+  PROJECTION_TOPICS,
+  RANDOM_STREAMS,
+  seedStreams,
+  validateCampaign,
+} from '@engine/domain';
+export type {
+  CampaignDraft,
+  CampaignId,
+  MutableRandomStreams,
+  CampaignState,
+  DomainEvent,
+  DomainEventKind,
+  DomainEventParams,
+  EntityId,
+  InvariantIssue,
+  ProjectionTopic,
+  RandomStreamName,
+  RandomStreams,
+  SchedulerEntry,
+  SchedulerState,
+  TimeState,
+} from '@engine/domain';
+export {
+  frameProjection,
+  sessionProjection,
+  stateHashProjection,
+} from '@engine/projections';
+export {
+  advanceTime,
+  cancelBoundariesOwnedBy,
+  cancelBoundary,
+  nextBoundary,
+  scheduleBoundary,
+  takeBoundaryDue,
+} from '@engine/simulation';
+export type {
+  AdvanceOutcome,
+  BoundaryResolver,
+  BoundaryResolvers,
+  ScheduleRequest,
+  SimulationContext,
+} from '@engine/simulation';
 export {
   ContentIntegrityError,
   ContentLookupError,

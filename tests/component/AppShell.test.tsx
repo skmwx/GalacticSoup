@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createEngineHost } from '@engine';
 import { createDirectGateway } from '@gateway/direct';
+import { REQUEST_TYPES } from '@protocol';
 import type { LocalizationIssue } from '@shared';
 import { AppShell, LocalizationProvider } from '@ui';
 
@@ -43,7 +44,9 @@ describe('application shell', () => {
 
     expect(await screen.findByText('4.5.6')).toBeInTheDocument();
     expect(screen.getByText('direct')).toBeInTheDocument();
-    expect(screen.getByText('3 request types')).toBeInTheDocument();
+    expect(
+      screen.getByText(`${String(REQUEST_TYPES.length)} request types`),
+    ).toBeInTheDocument();
 
     gateway.dispose();
   });

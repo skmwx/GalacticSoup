@@ -68,6 +68,32 @@ export function invalidRequestMessageKey(reason: InvalidRequestReason): MessageK
 }
 
 /**
+ * Why a legal request was refused by the rules
+ * (Technical Specification 5.4).
+ *
+ * A rule violation is an expected, explainable outcome: the request was
+ * well-formed and the engine simply did not permit it. The interface must be
+ * able to say why, so every reason has a message key
+ * (Functional Specification 22.10).
+ */
+export const RULE_VIOLATION_REASONS = [
+  'campaignAlreadyOpen',
+  'noCampaignOpen',
+  'campaignMismatch',
+  'unsupportedTimeRate',
+] as const;
+
+export type RuleViolationReason = (typeof RULE_VIOLATION_REASONS)[number];
+
+export function ruleViolationMessageKey(reason: RuleViolationReason): MessageKey {
+  return `error.ruleViolation.${reason}`;
+}
+
+export function ruleViolation(reason: RuleViolationReason, params?: ErrorParams): EngineError {
+  return createEngineError('RULE_VIOLATION', ruleViolationMessageKey(reason), params);
+}
+
+/**
  * Why a content bundle was rejected (Technical Specification 6.2, 14).
  *
  * The same vocabulary serves the build-time compiler and the load-time guard,
@@ -138,6 +164,21 @@ export function internalError(params?: ErrorParams): EngineError {
 }
 
 /**
+ * An invariant failed while a transaction was applying. The transaction is
+ * abandoned and the previous state stands; the player is told that the
+ * campaign could not be changed rather than being shown a corrupted result
+ * (Technical Specification 5.4, 15.3).
+ */
+export function invariantFailure(params?: ErrorParams): EngineError {
+  return createEngineError('INTERNAL_ERROR', 'error.internalError.invariant', params);
+}
+
+/** The revision the caller expected is not the revision the campaign is at. */
+export function staleRevision(params?: ErrorParams): EngineError {
+  return createEngineError('STALE_REVISION', ENGINE_ERROR_MESSAGE_KEYS.STALE_REVISION, params);
+}
+
+/**
  * Every message key the protocol can emit. The shipped catalog must cover all
  * of them (tests/unit/ui/messageCatalog.test.ts).
  */
@@ -145,4 +186,6 @@ export const PROTOCOL_MESSAGE_KEYS: readonly MessageKey[] = [
   ...Object.values(ENGINE_ERROR_MESSAGE_KEYS),
   ...INVALID_REQUEST_REASONS.map(invalidRequestMessageKey),
   ...CONTENT_ERROR_REASONS.map(contentErrorMessageKey),
+  ...RULE_VIOLATION_REASONS.map(ruleViolationMessageKey),
+  'error.internalError.invariant',
 ].sort();

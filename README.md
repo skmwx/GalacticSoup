@@ -48,19 +48,43 @@ public index.
 
 ```text
 src/
-  app/        bootstrap and top-level composition
-  ui/         React views, SVG renderers, localization, styles
-  gateway/    transport-independent client API (plus test-only in-process gateways)
-  protocol/   versioned envelope, request catalogue, error model
-  engine/     headless authoritative engine
-    ports/    interfaces the engine owns and adapters implement
-  adapters/   worker host and message dispatch, content loading
-  shared/     dependency-free primitives
-content/      authored game data: rules, catalog, universe, economy, encounters
-schemas/      JSON Schemas for the protocol and for content (saves follow)
-tests/        unit, integration, component, browser and accessibility levels
-scripts/      architecture, content and traceability checks
+  app/            bootstrap and top-level composition
+  ui/             React views, SVG renderers, localization, styles
+  gateway/        transport-independent client API and the frame driver
+                  (plus test-only in-process gateways)
+  protocol/       versioned envelope, request catalogue, error model
+  engine/         headless authoritative engine
+    application/  command pipeline, transactions, request dispatch
+    domain/       campaign aggregate, identity, randomness, invariants
+    simulation/   authoritative clock, scheduler, ordered systems
+    projections/  domain-to-view-model builders
+    ports/        interfaces the engine owns and adapters implement
+  adapters/       worker host and message dispatch, content loading
+  shared/         dependency-free primitives
+content/          authored game data: rules, catalog, universe, economy, encounters
+schemas/          JSON Schemas for the protocol, for content and for saved state
+tests/            unit, integration, component, browser and accessibility levels
+scripts/          architecture, content and traceability checks
 ```
+
+## The campaign and its clock
+
+A campaign is created from a client-supplied 128-bit seed. The engine has no clock and no entropy of
+its own, so both arrive with the command: the campaign id and every named random stream are derived
+from that seed, which is what makes a replay reproducible. A command changes a deep copy of
+`CampaignState`, the invariants run on the result, and only then does the transaction commit and
+move the revision once. A rejected command, a failed invariant and a command that decided to do
+nothing all leave the campaign untouched, down to the draw index of each random stream.
+
+Simulation time advances only because the main thread measures real elapsed time between frames and
+sends it as `time.advance`. The engine caps one delta, scales it by the selected rate and
+accumulates fixed quanta; a suspended tab produces no delta and therefore no progress, and nothing
+is ever replayed as catch-up. Scheduled work is a queue entry ordered by due time, priority and
+insertion ordinal — never a `setTimeout`.
+
+`schemas/save/campaign-state.schema.json` is the contract for the authoritative payload a snapshot
+stores, and `diagnostics.stateHash` returns its canonical SHA-256 so replay tests can compare
+checkpoints across transports.
 
 ## Content
 

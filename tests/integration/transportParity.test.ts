@@ -6,6 +6,7 @@ import { createChannelGateway, createDirectGateway } from '@gateway/direct';
 import {
   EMPTY_PAYLOAD,
   PROTOCOL_VERSION,
+  REQUEST_TYPES,
   type CapabilitiesData,
   type EngineResponse,
   type HealthData,
@@ -68,9 +69,7 @@ describe('transport parity', () => {
 
     expect(withoutRequestId(first)).toEqual(withoutRequestId(second));
     expect(first.ok && (first.data as CapabilitiesData).requestTypes).toEqual([
-      'content.summary',
-      'system.capabilities',
-      'system.health',
+      ...REQUEST_TYPES,
     ]);
   });
 
@@ -80,7 +79,7 @@ describe('transport parity', () => {
       {
         protocolVersion: PROTOCOL_VERSION,
         requestId: 'parity-unknown',
-        type: 'campaign.create',
+        type: 'campaign.summon',
         payload: {},
       },
       'error.invalidRequest.unsupportedRequestType',

@@ -125,30 +125,125 @@ export function validateClientRequest(message: unknown): EnvelopeValidation {
   return { ok: true, request: envelope as unknown as ClientRequest<RequestType, unknown> };
 }
 
-/** Per-type payload rules. Every version 1 request takes an empty object. */
+/**
+ * Per-type payload rules.
+ *
+ * Payload validation is structural only: it decides whether the request is
+ * well-formed protocol data, never whether the rules permit it. A legal
+ * request that the campaign refuses comes back as `RULE_VIOLATION` from the
+ * engine, with a reason the interface can explain
+ * (Technical Specification 7.2, steps 1 and 4).
+ */
 export function validatePayload(type: RequestType, payload: unknown): EngineError | null {
   if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
     return invalidRequest('payload', { type, reason: 'notAnObject' });
   }
 
+  const fields = payload as Record<string, unknown>;
+
   switch (type) {
     case 'system.health':
     case 'system.capabilities':
-    case 'content.summary': {
-      const keys = Object.keys(payload as Record<string, unknown>);
-      const unexpected = keys[0];
-      if (unexpected !== undefined) {
-        return invalidRequest('payload', {
-          type,
-          reason: 'unexpectedField',
-          field: unexpected,
-        });
+    case 'content.summary':
+    case 'campaign.reset':
+    case 'campaign.session':
+    case 'campaign.frame':
+    case 'diagnostics.stateHash':
+      return expectNoFields(type, fields);
+
+    case 'campaign.create': {
+      const unexpected = unexpectedField(fields, ['displayName', 'seed', 'createdAtRealMs']);
+      if (unexpected !== null) {
+        return payloadField(type, unexpected, 'unexpectedField');
+      }
+      const displayName = fields['displayName'];
+      if (
+        typeof displayName !== 'string' ||
+        displayName.trim().length === 0 ||
+        displayName.length > MAX_DISPLAY_NAME_LENGTH ||
+        hasControlCharacter(displayName)
+      ) {
+        return payloadField(type, 'displayName', 'format');
+      }
+      if (typeof fields['seed'] !== 'string' || !CAMPAIGN_SEED_PATTERN.test(fields['seed'])) {
+        return payloadField(type, 'seed', 'format');
+      }
+      if (!isWholeNonNegative(fields['createdAtRealMs'])) {
+        return payloadField(type, 'createdAtRealMs', 'format');
       }
       return null;
     }
+
+    case 'time.set': {
+      const unexpected = unexpectedField(fields, ['paused', 'rate']);
+      if (unexpected !== null) {
+        return payloadField(type, unexpected, 'unexpectedField');
+      }
+      if (typeof fields['paused'] !== 'boolean') {
+        return payloadField(type, 'paused', 'format');
+      }
+      const rate = fields['rate'];
+      if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) {
+        return payloadField(type, 'rate', 'format');
+      }
+      return null;
+    }
+
+    case 'time.advance': {
+      const unexpected = unexpectedField(fields, ['elapsedRealMs']);
+      if (unexpected !== null) {
+        return payloadField(type, unexpected, 'unexpectedField');
+      }
+      if (!isWholeNonNegative(fields['elapsedRealMs'])) {
+        return payloadField(type, 'elapsedRealMs', 'format');
+      }
+      return null;
+    }
+
     default:
       return invalidRequest('unsupportedRequestType', { type });
   }
+}
+
+/**
+ * The display-name bound is duplicated from the domain deliberately: the
+ * protocol must reject an oversized payload before any engine code runs, and
+ * `@protocol` may not import the engine. The two values are checked against
+ * each other in tests.
+ */
+const MAX_DISPLAY_NAME_LENGTH = 48;
+
+const CAMPAIGN_SEED_PATTERN = /^[0-9a-f]{32}$/;
+
+/** Rejects C0 controls and DEL without embedding them in a pattern. */
+function hasControlCharacter(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code < 0x20 || code === 0x7f) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function expectNoFields(type: RequestType, fields: Record<string, unknown>): EngineError | null {
+  const unexpected = Object.keys(fields)[0];
+  return unexpected === undefined ? null : payloadField(type, unexpected, 'unexpectedField');
+}
+
+function unexpectedField(
+  fields: Record<string, unknown>,
+  allowed: readonly string[],
+): string | null {
+  return Object.keys(fields).find((key) => !allowed.includes(key)) ?? null;
+}
+
+function payloadField(type: RequestType, field: string, reason: string): EngineError {
+  return invalidRequest('payload', { type, field, reason });
+}
+
+function isWholeNonNegative(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
 function fail(requestId: string, error: EngineError): EnvelopeValidation {

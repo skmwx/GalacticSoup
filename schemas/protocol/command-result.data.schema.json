@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/command-result.data.schema.json",
+  "title": "CommandResultData",
+  "description": "What every command answers with (Technical Specification 7.2).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "campaignId",
+    "revision",
+    "simulationTimeMs",
+    "committed",
+    "invalidations",
+    "events"
+  ],
+  "properties": {
+    "campaignId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "simulationTimeMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "committed": {
+      "type": "boolean"
+    },
+    "invalidations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "https://galacticsoup.invalid/schemas/protocol/domain-event.schema.json"
+      }
+    }
+  }
+}

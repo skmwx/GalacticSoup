@@ -1,9 +1,9 @@
 /**
  * Protocol version 1 request catalogue (Technical Specification 7.1, 18).
  *
- * Version 1 exposes engine health, capability reporting and content identity.
- * Gameplay command and query families are declared by the phases that
- * implement them.
+ * Version 1 exposes engine health, capability reporting, content identity, the
+ * campaign session, time control and a diagnostic state hash. Gameplay command
+ * and query families are declared by the phases that implement them.
  *
  * A request type is added to a version rather than incrementing it while no
  * released client exists: `system.capabilities` reports the accepted types, so
@@ -45,10 +45,133 @@ export interface ContentSummaryData {
   readonly definitionCounts: Readonly<Record<string, number>>;
 }
 
+/** Payload of `campaign.create` (Functional Specification 3.1). */
+export interface CreateCampaignPayload {
+  readonly displayName: string;
+  /**
+   * 128 bits of client randomness as lowercase hexadecimal. The engine is
+   * deterministic and has no entropy source of its own, so the seed - and
+   * through it the campaign identity and every random stream - arrives with
+   * the command (Technical Specification 9.4).
+   */
+  readonly seed: string;
+  /** Wall-clock creation time, kept for display only and never read by a rule. */
+  readonly createdAtRealMs: number;
+}
+
+/** Payload of `time.set` (Functional Specification 3.3). */
+export interface SetTimePayload {
+  readonly paused: boolean;
+  /** One of the rates the content rules offer. Pausing does not change it. */
+  readonly rate: number;
+}
+
+/**
+ * Payload of `time.advance` (Technical Specification 9.1).
+ *
+ * The main thread supplies monotonic elapsed frame deltas. The engine caps a
+ * single delta, scales it by the selected rate and accumulates fixed quanta;
+ * it never derives simulation time from a real timestamp.
+ */
+export interface AdvanceTimePayload {
+  readonly elapsedRealMs: number;
+}
+
+/** One published domain event (Technical Specification 7.2, step 8). */
+export interface DomainEventData {
+  readonly ordinal: number;
+  readonly kind: string;
+  readonly simulationTimeMs: number;
+  readonly params?: Readonly<Record<string, string | number | boolean>>;
+}
+
+/**
+ * What every command answers with (Technical Specification 7.2, step 9).
+ *
+ * `committed` is false when the command was legal but changed nothing - an
+ * elapsed delta while paused, for example. Nothing was written, no revision
+ * was consumed and no projection went stale.
+ */
+export interface CommandResultData {
+  readonly campaignId: string | null;
+  readonly revision: number;
+  readonly simulationTimeMs: number;
+  readonly committed: boolean;
+  /** Projection topics whose cached view models are now stale. */
+  readonly invalidations: readonly string[];
+  readonly events: readonly DomainEventData[];
+}
+
+export interface TimeControlData {
+  readonly paused: boolean;
+  readonly rate: number;
+  /** Rates the content rules offer, ascending. Pause is always available. */
+  readonly availableRates: readonly number[];
+  readonly quantumMs: number;
+}
+
+export interface CampaignIdentityData {
+  readonly campaignId: string;
+  readonly displayName: string;
+  readonly createdAtRealMs: number;
+  readonly stateVersion: number;
+}
+
+/**
+ * The persistent frame's slow-changing view model
+ * (Functional Specification 19.1; Technical Specification 7.3).
+ *
+ * It answers what campaign is open, how time is configured and what build is
+ * running - values that change only when the player changes them. Where the
+ * clock currently stands belongs to `FrameData`, which is republished as
+ * simulation time moves; duplicating it here would make this projection stale
+ * on every frame and defeat topic-based invalidation.
+ */
+export interface SessionData {
+  /** `null` while no campaign is open. */
+  readonly campaign: CampaignIdentityData | null;
+  readonly time: TimeControlData;
+  readonly engineVersion: string;
+  readonly contentVersion: string;
+  readonly contentHash: string;
+}
+
+/** The revisioned frame published as simulation time moves (Technical Specification 7.3). */
+export interface FrameData {
+  readonly revision: number;
+  readonly simulationTimeMs: number;
+  readonly paused: boolean;
+  readonly rate: number;
+  readonly scheduledBoundaryCount: number;
+  /** Simulation timestamp of the next scheduled boundary, or `null`. */
+  readonly nextBoundaryAtMs: number | null;
+}
+
+/**
+ * Canonical hash of authoritative state (Technical Specification 9.5).
+ *
+ * Read-only and free of side effects. Replay tests compare it at checkpoints,
+ * and the development diagnostics panel shows it.
+ */
+export interface StateHashData {
+  readonly campaignId: string | null;
+  readonly revision: number;
+  readonly simulationTimeMs: number;
+  readonly stateHash: string | null;
+  readonly contentHash: string;
+}
+
 export interface ProtocolContract {
   'system.health': { payload: EmptyPayload; data: HealthData };
   'system.capabilities': { payload: EmptyPayload; data: CapabilitiesData };
   'content.summary': { payload: EmptyPayload; data: ContentSummaryData };
+  'campaign.create': { payload: CreateCampaignPayload; data: CommandResultData };
+  'campaign.reset': { payload: EmptyPayload; data: CommandResultData };
+  'campaign.session': { payload: EmptyPayload; data: SessionData };
+  'campaign.frame': { payload: EmptyPayload; data: FrameData };
+  'time.set': { payload: SetTimePayload; data: CommandResultData };
+  'time.advance': { payload: AdvanceTimePayload; data: CommandResultData };
+  'diagnostics.stateHash': { payload: EmptyPayload; data: StateHashData };
 }
 
 export type RequestType = keyof ProtocolContract;
@@ -58,11 +181,36 @@ export type ResponseData<TType extends RequestType> = ProtocolContract[TType]['d
 
 /** Sorted so capability reports and fixtures are order-stable. */
 export const REQUEST_TYPES = [
+  'campaign.create',
+  'campaign.frame',
+  'campaign.reset',
+  'campaign.session',
   'content.summary',
+  'diagnostics.stateHash',
   'system.capabilities',
   'system.health',
+  'time.advance',
+  'time.set',
 ] as const satisfies readonly RequestType[];
+
+/**
+ * Request types that change campaign state. They run through the command
+ * pipeline, may consume a revision and are covered by the duplicate-request
+ * cache; every other type is a read-only query (Technical Specification 7.2).
+ */
+export const COMMAND_TYPES = [
+  'campaign.create',
+  'campaign.reset',
+  'time.advance',
+  'time.set',
+] as const satisfies readonly RequestType[];
+
+export type CommandType = (typeof COMMAND_TYPES)[number];
 
 export function isRequestType(value: string): value is RequestType {
   return (REQUEST_TYPES as readonly string[]).includes(value);
+}
+
+export function isCommandType(value: string): value is CommandType {
+  return (COMMAND_TYPES as readonly string[]).includes(value);
 }
