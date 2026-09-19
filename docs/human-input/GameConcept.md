@@ -58,3 +58,6 @@ It should be possible with relative ease to change this "client-side only Typesc
 
 ## Settings and constants
 Game constants should be grouped logically and stored in a human-readable format, they should be separated from the engine code.
+
+# The world
+Same as in EVE Online, the world consistes of stellar systems connected by gates. The stellar systems have objects like planets, space stations, asteroid belts and anomalies.
