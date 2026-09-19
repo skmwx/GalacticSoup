@@ -1,0 +1,1 @@
+Use this folder and its subfolders to communicate with human operator and other agents.
