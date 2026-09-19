@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/system.health.data.schema.json",
+  "title": "HealthData",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "engineVersion", "protocolVersion"],
+  "properties": {
+    "status": { "const": "ready" },
+    "engineVersion": { "type": "string", "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$" },
+    "protocolVersion": { "type": "integer", "minimum": 1 }
+  }
+}

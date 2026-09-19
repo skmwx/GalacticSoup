@@ -1,0 +1,48 @@
+{
+  "name": "galactic-soup",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Galactic Soup - single-player space trading, exploration and combat game (MVP).",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "preview": "vite preview",
+    "build": "npm run typecheck && vite build",
+    "typecheck": "tsc --noEmit",
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "validate:content": "node scripts/validate-content.mjs",
+    "traceability": "node scripts/traceability.mjs",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:component": "vitest run --project component",
+    "test:browser": "playwright test --project=browser",
+    "test:accessibility": "playwright test --project=accessibility",
+    "verify": "npm run typecheck && npm run check:architecture && npm run validate:content && npm run test:unit && npm run test:integration && npm run test:component && npm run traceability && npm run build"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/node": "24.13.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "jsdom": "30.1.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.0",
+    "vitest": "5.0.1"
+  }
+}

@@ -1,0 +1,57 @@
+/**
+ * Presentation tokens (Technical Specification 12.2, 12.3).
+ *
+ * Interface scale and text scale are independent variables so later phases can
+ * expose them as settings without touching component code. Contrast and motion
+ * preferences are honoured here rather than in individual views.
+ */
+:root {
+  --gs-ui-scale: 1;
+  --gs-text-scale: 1;
+
+  --gs-space-1: calc(0.25rem * var(--gs-ui-scale));
+  --gs-space-2: calc(0.5rem * var(--gs-ui-scale));
+  --gs-space-3: calc(1rem * var(--gs-ui-scale));
+  --gs-space-4: calc(1.5rem * var(--gs-ui-scale));
+  --gs-space-5: calc(2.5rem * var(--gs-ui-scale));
+
+  --gs-font-body: calc(1rem * var(--gs-text-scale));
+  --gs-font-small: calc(0.875rem * var(--gs-text-scale));
+  --gs-font-heading: calc(1.75rem * var(--gs-text-scale));
+  --gs-font-stack: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --gs-font-mono: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+
+  --gs-color-background: #05070d;
+  --gs-color-surface: #0d1320;
+  --gs-color-surface-raised: #141c2e;
+  --gs-color-border: #2a3550;
+  --gs-color-text: #e8edf7;
+  --gs-color-text-muted: #a9b5cc;
+  --gs-color-accent: #6fd3ff;
+  --gs-color-ok: #7ee08a;
+  --gs-color-warn: #ffc470;
+  --gs-color-danger: #ff8d8d;
+  --gs-color-focus: #ffffff;
+
+  --gs-radius: calc(4px * var(--gs-ui-scale));
+  --gs-border: 1px solid var(--gs-color-border);
+  --gs-transition: 160ms ease;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --gs-color-background: #000000;
+    --gs-color-surface: #000000;
+    --gs-color-surface-raised: #0a0a0a;
+    --gs-color-border: #ffffff;
+    --gs-color-text: #ffffff;
+    --gs-color-text-muted: #f0f0f0;
+    --gs-color-accent: #8fe2ff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --gs-transition: 0ms;
+  }
+}

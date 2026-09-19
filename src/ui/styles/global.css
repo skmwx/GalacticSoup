@@ -1,0 +1,37 @@
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--gs-color-background);
+  color: var(--gs-color-text);
+  font-family: var(--gs-font-stack);
+  font-size: var(--gs-font-body);
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gs-color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

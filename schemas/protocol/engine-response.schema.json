@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/engine-response.schema.json",
+  "title": "EngineResponse",
+  "description": "Response envelope returned by the engine host (Technical Specification 7.1).",
+  "oneOf": [{ "$ref": "#/$defs/success" }, { "$ref": "#/$defs/failure" }],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "ok", "revision", "data"],
+      "properties": {
+        "requestId": { "type": "string", "maxLength": 128 },
+        "ok": { "const": true },
+        "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "data": {}
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "ok", "error"],
+      "properties": {
+        "requestId": { "type": "string", "maxLength": 128 },
+        "ok": { "const": false },
+        "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "error": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/engine-error.schema.json"
+        }
+      }
+    }
+  }
+}

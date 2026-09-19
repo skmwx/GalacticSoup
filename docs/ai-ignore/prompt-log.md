@@ -41,3 +41,8 @@ Review the MVP Scope document and fix as necessary. It should not repeat or over
 Read the documents in docs\ root folder and docs\human-input 
 
 Review the MVP Scope document and create MVP Implementation Plan. Implementation plan should define the phases of MVP implementation in such a way that each phase can be done by a coding agent (Claude Code Opus or Codex Sol) in one session. Do not repeat what is already defined in MVP Scope document or in specifications.
+
+# 010 Claude Opus EH
+Read the documents in docs\ root folder and docs\human-input .
+
+Implement phase 1 of the MVP.

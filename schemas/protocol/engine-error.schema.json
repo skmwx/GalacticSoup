@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/engine-error.schema.json",
+  "title": "EngineError",
+  "description": "Stable error code with a localization key and named parameters (Technical Specification 5.4).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["code", "messageKey"],
+  "properties": {
+    "code": {
+      "enum": [
+        "INVALID_REQUEST",
+        "STALE_REVISION",
+        "STALE_PREVIEW",
+        "RULE_VIOLATION",
+        "NOT_FOUND",
+        "CONTENT_ERROR",
+        "SAVE_ERROR",
+        "QUOTA_ERROR",
+        "INTEGRITY_ERROR",
+        "INTERNAL_ERROR"
+      ]
+    },
+    "messageKey": { "type": "string", "minLength": 1 },
+    "params": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [{ "type": "string" }, { "type": "number" }, { "type": "boolean" }]
+      }
+    }
+  }
+}

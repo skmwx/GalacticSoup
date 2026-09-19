@@ -1,0 +1,32 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--gs-space-4);
+  background: var(--gs-color-background);
+}
+
+.dialog {
+  max-width: 38rem;
+  background: var(--gs-color-surface);
+  border: 2px solid var(--gs-color-danger);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-4);
+}
+
+.heading {
+  margin: 0 0 var(--gs-space-3);
+  font-size: var(--gs-font-heading);
+  color: var(--gs-color-danger);
+}
+
+.reason {
+  margin: 0 0 var(--gs-space-3);
+  font-weight: 600;
+}
+
+.detail {
+  margin: 0 0 var(--gs-space-2);
+  color: var(--gs-color-text-muted);
+}

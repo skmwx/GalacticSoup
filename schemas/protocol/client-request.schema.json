@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/client-request.schema.json",
+  "title": "ClientRequest",
+  "description": "Versioned request envelope for protocol version 1 (Technical Specification 7.1). Generated independently of the TypeScript types so a future non-TypeScript engine can validate the same contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "requestId", "type", "payload"],
+  "properties": {
+    "protocolVersion": { "const": 1 },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "campaignId": { "type": "string", "minLength": 1 },
+    "expectedRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "type": { "enum": ["system.capabilities", "system.health"] },
+    "payload": { "$ref": "#/$defs/emptyPayload" }
+  },
+  "$defs": {
+    "emptyPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    }
+  }
+}
