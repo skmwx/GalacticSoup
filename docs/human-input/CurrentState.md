@@ -2,5 +2,7 @@
 This file describes the current state of the game development.
 
 # Current state
-Initial set of game defining documents, we are defining the scope of the MVP.
+Initial set of game defining documents,  the scope of MVP is defined.
+
+We are working on MVP implementation plan.
 

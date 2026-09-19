@@ -26,3 +26,13 @@ Create a full-game technical specification.
 
 # 006 Codex Chat Sol EH
 Technical spec is done, could you please review it and fix as necessary?
+
+# 007 Codex VSC Sol EH
+Read the documents in docs\ root folder and docs\human-input 
+
+Create MVP Scope document, it should define the scope for the MVP, but not the technical details of the implementation and not the implementation steps; these will be defined later.
+
+# 007 Codex VSC Sol EH
+Read the documents in docs\ root folder and docs\human-input 
+
+Review the MVP Scope document and fix as necessary. It should not repeat or override more authoritative brief and specs, and it should be sufficient for the coding agent to perform the next step: the making of the phased MVP implementation plan.
