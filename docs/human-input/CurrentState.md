@@ -2,5 +2,5 @@
 This file describes the current state of the game development.
 
 # Current state
-The development has not been started.
-We are working on the initial set of game defining documents.
+Initial set of game defining documents, we are defining the scope of the MVP.
+

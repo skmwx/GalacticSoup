@@ -1,0 +1,1 @@
+This folder is for human input, documents here should not be edited by coding agents.
