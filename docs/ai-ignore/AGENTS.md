@@ -1,0 +1,1 @@
+This folder contains prompt log and other files that should not be considered by coding agents, ignore it, it is for human consumption and editing only.

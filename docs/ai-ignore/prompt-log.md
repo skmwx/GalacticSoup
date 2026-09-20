@@ -50,6 +50,10 @@ Phase 1 is implemented, implement phase 2 of the MVP.
 Phase 1 and 2 are implemented, implement phase 3 of the MVP.
 Phase 1 through 3 are implemented, implement phase 4 of the MVP.
 
+1-4: Opus EH
+5: Astra EH
+6: Opus EH
+
 # 011 Codex Astra EH
 Read the documents in docs\ root folder and docs\human-input .
 
