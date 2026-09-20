@@ -18,7 +18,7 @@ import type { StructuralLimits } from '@shared';
  */
 
 /** Shape version of the save envelope (Technical Specification 11.2). */
-export const SAVE_FORMAT_VERSION = 2;
+export const SAVE_FORMAT_VERSION = 3;
 
 /** Identifier of the single campaign slot the MVP exposes (MVP Scope 6). */
 export const DEFAULT_SLOT_ID = 'slot-1';

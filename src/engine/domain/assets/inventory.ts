@@ -2,8 +2,9 @@ import type { ContentRepository } from '@engine/ports';
 import { deepClone, type DefinitionId, type Mutable } from '@shared';
 import { entityIdOf, MAX_ORDINAL, type EntityId } from '../campaign/identity';
 import { compatibleStacks, mergeProvenance, positiveQuantity, safeCount, splitProvenance } from './stack';
-import { InventoryError, type AssetDraft, type AssetState, type CapacityPolicy,
-  type Inventory, type InventoryId, type InventoryLocation, type ItemStack, type Provenance } from './types';
+import { InventoryError, PLAIN_STATE, type AssetDraft, type AssetState, type CapacityPolicy,
+  type Inventory, type InventoryId, type InventoryLocation, type ItemStack, type Provenance,
+  type StackState } from './types';
 
 /** The sole writer of physical stacks/locations. Every operation, including a failed
  * reservation/release, is atomic even when called without an application transaction.
@@ -48,7 +49,8 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
     work.assets.stacks[stack.id] = deepClone({ ...stack, inventoryId });
     return stack.id;
   }
-  function move(work: AssetDraft, stackId: string, destination: string, quantity: number): EntityId {
+  function move(work: AssetDraft, stackId: string, destination: string, quantity: number,
+                state?: StackState): EntityId {
     const stack = requireStack(work.assets, stackId);
     const to = requireInventory(work.assets, destination);
     if (stack.inventoryId === to.id) throw new InventoryError('sameInventory');
@@ -58,7 +60,8 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
     if (!shared && quantity > maximumThatFits(work.assets, content, to.id, stack.definitionId)) {
       throw new InventoryError('insufficientCapacity');
     }
-    return put(work, take(work, stackId, quantity), to.id, true);
+    const moved = take(work, stackId, quantity);
+    return put(work, state === undefined ? moved : { ...moved, state }, to.id, true);
   }
   return {
     create(location: InventoryLocation, capacity: CapacityPolicy): InventoryId {
@@ -89,12 +92,15 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
           throw new InventoryError('insufficientCapacity');
         }
         return put(work, { id: allocate(work), inventoryId: inventory.id, definitionId,
-          quantity, state: 'plain', provenance }, inventory.id, true);
+          quantity, state: PLAIN_STATE, provenance }, inventory.id, true);
       });
     },
     split(stackId: string, quantity: number): EntityId {
       return atomic((work) => {
         const source = requireStack(work.assets, stackId);
+        // A fitted module and a loaded magazine belong to one slot, so they
+        // are not divisible in place (Functional Specification 8.4).
+        if (source.state.kind !== 'plain') throw new InventoryError('stackNotDivisible');
         if (quantity >= source.quantity) throw new InventoryError('invalidQuantity');
         return put(work, take(work, stackId, quantity), source.inventoryId, false);
       });
@@ -113,7 +119,22 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
       });
     },
     transfer(stackId: string, destination: string, quantity: number): EntityId {
-      return atomic((work) => move(work, stackId, destination, quantity));
+      return atomic((work) => move(work, stackId, destination, quantity, PLAIN_STATE));
+    },
+    /**
+     * Moves units and gives them their new operational state in one step, so a
+     * module never exists both as cargo and as a fitted instance
+     * (Functional Specification 8.4, 22.3).
+     */
+    transferAs(stackId: string, destination: string, quantity: number, state: StackState): EntityId {
+      return atomic((work) => move(work, stackId, destination, quantity, state));
+    },
+    /** Changes what a stack is doing without moving it, for an online toggle. */
+    setState(stackId: string, state: StackState): void {
+      atomic((work) => {
+        const stack = requireStack(work.assets, stackId);
+        work.assets.stacks[stackId] = { ...stack, state: deepClone(state) };
+      });
     },
     reserve(stackId: string, quantity: number, ownerId: EntityId): InventoryId {
       return atomic((work) => {

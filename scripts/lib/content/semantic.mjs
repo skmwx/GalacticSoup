@@ -126,6 +126,7 @@ export function validateSemantics(collected) {
         }
       }
     }
+    issues.push(...checkStartingFit(start, hull, { modules, ammunition }));
   }
 
   const ammunitionGroups = new Set(
@@ -707,6 +708,106 @@ function checkMarket(collected, { stations, sellable }) {
  * hull, its basic modules and compatible ammunition at fixed prices, so a
  * recovered player can always fly again.
  */
+/**
+ * The authored starting fit must be a legal fit of the starter hull, assembled
+ * only from the granted starting items (Functional Specification 3.1, 8.4).
+ *
+ * A campaign that cannot assemble its own fit would fail at creation rather
+ * than at validation, so the build refuses the content instead.
+ */
+function checkStartingFit(start, hull, { modules, ammunition }) {
+  const issues = [];
+  const entries = start.values.startingFit ?? [];
+  const at = (index, field) => `values.startingFit[${index}].${field}`;
+
+  const granted = new Map(
+    (start.values.startingItems ?? []).map((item) => [item.definitionId, item.quantity]),
+  );
+  const used = new Map();
+  const taken = new Set();
+  const hardpoints = new Map();
+  let power = 0;
+  let processing = 0;
+
+  for (const [index, entry] of entries.entries()) {
+    const module = modules.get(entry.moduleId);
+    if (module === undefined) {
+      issues.push(issue('unresolvedReference', start.file, at(index, 'moduleId'),
+        `"${entry.moduleId}" is not a module definition`));
+      continue;
+    }
+    used.set(entry.moduleId, (used.get(entry.moduleId) ?? 0) + 1);
+
+    if (module.slot !== entry.slot) {
+      issues.push(issue('catalogRelationship', start.file, at(index, 'slot'),
+        `"${entry.moduleId}" occupies a ${module.slot} slot, not a ${entry.slot} slot`));
+    }
+    const key = `${entry.slot}:${entry.index}`;
+    if (taken.has(key)) {
+      issues.push(issue('catalogRelationship', start.file, at(index, 'index'),
+        `slot ${key} is fitted twice`));
+    }
+    taken.add(key);
+
+    if (hull !== undefined) {
+      const available = hull.slots[entry.slot] ?? 0;
+      if (entry.index >= available) {
+        issues.push(issue('catalogRelationship', start.file, at(index, 'index'),
+          `the starter hull has ${String(available)} ${entry.slot} slot(s)`));
+      }
+      if (module.hardpoint !== undefined) {
+        const count = (hardpoints.get(module.hardpoint) ?? 0) + 1;
+        hardpoints.set(module.hardpoint, count);
+        if (count > (hull.hardpoints[module.hardpoint] ?? 0)) {
+          issues.push(issue('catalogRelationship', start.file, at(index, 'moduleId'),
+            `the starter hull has too few ${module.hardpoint} hardpoints`));
+        }
+      }
+    }
+
+    if (entry.online) {
+      power += module.fitting.powerUse;
+      processing += module.fitting.processingUse;
+    }
+
+    if (entry.ammunitionId === undefined) {
+      continue;
+    }
+    const charge = ammunition.get(entry.ammunitionId);
+    used.set(entry.ammunitionId, (used.get(entry.ammunitionId) ?? 0) + 1);
+    if (charge === undefined) {
+      issues.push(issue('unresolvedReference', start.file, at(index, 'ammunitionId'),
+        `"${entry.ammunitionId}" is not an ammunition definition`));
+    } else if (module.category !== 'turret') {
+      issues.push(issue('catalogRelationship', start.file, at(index, 'ammunitionId'),
+        `a ${module.category} module takes no charge`));
+    } else if (charge.group !== module.turret.ammunitionGroup) {
+      issues.push(issue('catalogRelationship', start.file, at(index, 'ammunitionId'),
+        `"${entry.ammunitionId}" is not in the "${module.turret.ammunitionGroup}" group`));
+    }
+  }
+
+  for (const [definitionId, count] of used) {
+    if ((granted.get(definitionId) ?? 0) < count) {
+      issues.push(issue('catalogRelationship', start.file, 'values.startingFit',
+        `the starting fit uses "${definitionId}" but the starting items do not supply it`));
+    }
+  }
+
+  if (hull !== undefined) {
+    if (power > hull.fitting.powerOutput) {
+      issues.push(issue('catalogRelationship', start.file, 'values.startingFit',
+        `the online starting fit draws ${String(power)} power of ${String(hull.fitting.powerOutput)}`));
+    }
+    if (processing > hull.fitting.processingOutput) {
+      issues.push(issue('catalogRelationship', start.file, 'values.startingFit',
+        `the online starting fit uses ${String(processing)} processing of ${String(hull.fitting.processingOutput)}`));
+    }
+  }
+
+  return issues;
+}
+
 function checkStarterReachability(collected, { stations, hulls, modules }) {
   const issues = [];
   const neutral = collected.definitions.stations.filter((entry) => entry.value.neutralAccess);

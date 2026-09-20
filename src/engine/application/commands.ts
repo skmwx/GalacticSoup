@@ -63,6 +63,8 @@ export function handleCreateCampaign(
   transaction.invalidate('assets');
   transaction.invalidate('inventory');
   transaction.invalidate('wallet');
+  transaction.invalidate('ship');
+  transaction.invalidate('fitting');
   // A new campaign must be resumable before the player touches anything
   // (Functional Specification 3.4).
   transaction.requestAutosave();
@@ -93,6 +95,8 @@ export function handleResumeCampaign(
   transaction.invalidate('assets');
   transaction.invalidate('inventory');
   transaction.invalidate('wallet');
+  transaction.invalidate('ship');
+  transaction.invalidate('fitting');
   return APPLIED;
 }
 
@@ -115,6 +119,8 @@ export function handleCloseCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('assets');
   transaction.invalidate('inventory');
   transaction.invalidate('wallet');
+  transaction.invalidate('ship');
+  transaction.invalidate('fitting');
   return APPLIED;
 }
 
@@ -137,6 +143,8 @@ export function handleResetCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('assets');
   transaction.invalidate('inventory');
   transaction.invalidate('wallet');
+  transaction.invalidate('ship');
+  transaction.invalidate('fitting');
   return APPLIED;
 }
 

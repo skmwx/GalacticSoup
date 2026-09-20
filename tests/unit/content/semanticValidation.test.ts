@@ -190,6 +190,83 @@ describe('catalog relationships', () => {
     ).toBe(true);
   });
 
+  it.each([
+    [
+      'a slot the starter hull does not have',
+      (values: Record<string, unknown>) => {
+        (values['startingFit'] as Record<string, unknown>[])[0]!['index'] = 5;
+      },
+      'slot',
+    ],
+    [
+      'a module of the wrong slot kind',
+      (values: Record<string, unknown>) => {
+        (values['startingFit'] as Record<string, unknown>[])[0]!['slot'] = 'engineering';
+      },
+      'slot',
+    ],
+    [
+      'a module the starting items do not supply',
+      (values: Record<string, unknown>) => {
+        values['startingItems'] = [{ definitionId: 'ammo.test.charge', quantity: 30 }];
+      },
+      'starting items do not supply',
+    ],
+    [
+      'a module that is not in the catalogue',
+      (values: Record<string, unknown>) => {
+        (values['startingFit'] as Record<string, unknown>[])[0]!['moduleId'] = 'module.test.missing';
+      },
+      'is not a module definition',
+    ],
+    [
+      'a charge from another ammunition group',
+      (values: Record<string, unknown>) => {
+        (values['startingFit'] as Record<string, unknown>[])[0]!['ammunitionId'] = 'ammo.test.other';
+      },
+      'is not an ammunition definition',
+    ],
+  ])(
+    'rejects a starting fit with %s [TECH-6.2, FUNC-3.1, FUNC-8.4]',
+    (_label, mutate, detail) => {
+      const issues = issuesFor(
+        editDocument(minimalPack(), 'rules/economy.json', (document) => {
+          mutate(document['values'] as Record<string, unknown>);
+        }),
+      );
+
+      expect(
+        issues.some((entry) => entry.detail.includes(detail as string)),
+        JSON.stringify(issues),
+      ).toBe(true);
+    },
+  );
+
+  it('rejects a starting fit that needs more power than the hull supplies [TECH-6.2, FUNC-8.4]', () => {
+    const pack = editDocument(
+      editDocument(minimalPack(), 'rules/economy.json', (document) => {
+        const values = document['values'] as Record<string, unknown>;
+        values['startingItems'] = [
+          { definitionId: 'module.test.turret', quantity: 2 },
+          { definitionId: 'ammo.test.charge', quantity: 30 },
+        ];
+        values['startingFit'] = [
+          { slot: 'weapon', index: 0, moduleId: 'module.test.turret', online: true },
+          { slot: 'weapon', index: 1, moduleId: 'module.test.turret', online: true },
+        ];
+      }),
+      'catalog/hulls.json',
+      (document) => {
+        const fitting = definitionsOf(document)[0]?.['fitting'] as Record<string, unknown>;
+        fitting['powerOutput'] = 6;
+      },
+    );
+
+    expect(
+      issuesFor(pack).some((entry) => entry.detail.includes('online starting fit draws')),
+    ).toBe(true);
+  });
+
   it('rejects turrets loaded with ammunition of another group [TECH-6.2, FUNC-9.4]', () => {
     const issues = issuesFor(
       editDocument(minimalPack(), 'catalog/ammunition.json', (document) => {

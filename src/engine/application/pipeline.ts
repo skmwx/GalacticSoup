@@ -1,4 +1,5 @@
 import type { CampaignState } from '@engine/domain';
+import { handleFittingCommand } from './fittingCommands';
 import { handleInventoryCommand } from './inventoryCommands';
 import type { ContentRepository } from '@engine/ports';
 import {
@@ -108,6 +109,12 @@ export function runCommand(request: CommandRequest): CommandResult {
 
 function apply(transaction: Transaction, request: CommandRequest): CommandOutcome {
   switch (request.type) {
+    case 'fitting.begin':
+    case 'fitting.set':
+    case 'fitting.clear':
+    case 'fitting.revert':
+    case 'fitting.commit':
+      return handleFittingCommand(transaction, request.type, request.payload);
     case 'inventory.transfer':
     case 'inventory.split':
     case 'inventory.merge':

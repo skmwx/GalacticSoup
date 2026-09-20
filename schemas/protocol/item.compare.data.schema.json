@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/item.compare.data.schema.json",
+  "title": "ComparisonData",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "revision",
+    "left",
+    "right",
+    "comparable",
+    "entries"
+  ],
+  "properties": {
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "left": {
+      "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+    },
+    "right": {
+      "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+    },
+    "comparable": {
+      "type": "boolean"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "labelKey",
+          "group",
+          "left",
+          "right",
+          "difference",
+          "direction"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "labelKey": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "left": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "right": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "direction": {
+            "enum": [
+              "better",
+              "worse",
+              "equal",
+              "neutral"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

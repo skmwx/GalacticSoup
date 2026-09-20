@@ -8,6 +8,8 @@ export function isLocalInventory(assets: AssetState, inventory: Inventory): bool
     const ship = assets.ships[location.shipId];
     return ship !== undefined && ship.location.stationId === assets.location.stationId;
   }
-  // A reserve is private to the engine operation that owns it.
+  // A fitting store is reached through fitting commands and a reserve is
+  // private to the engine operation that owns it. Neither is a place the
+  // player moves goods to or from directly (Functional Specification 8.4).
   return false;
 }

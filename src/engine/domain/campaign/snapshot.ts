@@ -1,5 +1,6 @@
 import { isDefinitionId, type DefinitionId } from '@shared';
 import { isAssetState } from '../assets/validation';
+import { parseSlotKey } from '../fitting/types';
 
 import { isCampaignId, isCampaignSeed, isEntityId, MAX_ORDINAL } from './identity';
 import { isRandomStreams } from '../random/streams';
@@ -101,6 +102,7 @@ export function readCampaignState(value: unknown): CampaignReadResult {
 
   readScheduler(value['scheduler'], add);
   if (!isAssetState(value['assets'])) add('assetShape', 'state.assets', 'Saved assets are missing or malformed.');
+  readFittingDraft(value['fitting'], add);
 
   if (issues.length > 0) {
     return { ok: false, issues };
@@ -133,6 +135,10 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
     if (inventory.location.kind === 'hangar') references.push(inventory.location.stationId);
   }
   for (const stack of Object.values(state.assets.stacks)) references.push(stack.definitionId);
+  for (const planned of Object.values(state.fitting?.slots ?? {})) {
+    references.push(planned.moduleId);
+    if (planned.ammunitionId !== null) references.push(planned.ammunitionId);
+  }
   for (const entry of state.scheduler.entries) {
     // A boundary kind is an engine enumeration rather than a definition id.
     // Only a kind that names a definition is collected, which is the seam a
@@ -146,6 +152,7 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
 
 const STATE_FIELDS: readonly string[] = [
   'assets',
+  'fitting',
   'stateVersion',
   'campaignId',
   'displayName',
@@ -158,6 +165,64 @@ const STATE_FIELDS: readonly string[] = [
   'random',
   'scheduler',
 ];
+
+const FITTING_FIELDS: readonly string[] = ['shipId', 'baseRevision', 'slots'];
+
+const PLANNED_SLOT_FIELDS: readonly string[] = ['moduleId', 'online', 'ammunitionId'];
+
+/** The saved fitting draft, which is `null` while the player has none open. */
+function readFittingDraft(value: unknown, add: Report): void {
+  if (value === null) {
+    return;
+  }
+  if (!isRecord(value)) {
+    add('shape', 'state.fitting', 'The saved fitting draft is neither an object nor null.');
+    return;
+  }
+  for (const key of Object.keys(value)) {
+    if (!FITTING_FIELDS.includes(key)) {
+      add('shape', `state.fitting.${key}`, 'Unknown field in the saved fitting draft.');
+    }
+  }
+  if (!isEntityId(value['shipId'])) {
+    add('fittingConsistency', 'state.fitting.shipId', 'A fitting draft names the ship it belongs to.');
+  }
+  if (!isCount(value['baseRevision'])) {
+    add('fittingConsistency', 'state.fitting.baseRevision', 'The base revision is malformed.');
+  }
+
+  const slots = value['slots'];
+  if (!isRecord(slots)) {
+    add('shape', 'state.fitting.slots', 'The saved fitting draft has no slot table.');
+    return;
+  }
+  for (const key of Object.keys(slots)) {
+    const path = `state.fitting.slots.${key}`;
+    if (parseSlotKey(key) === null) {
+      add('fittingConsistency', path, 'Unknown slot key.');
+    }
+    const planned = slots[key];
+    if (!isRecord(planned)) {
+      add('shape', path, 'A planned slot is not an object.');
+      continue;
+    }
+    for (const field of Object.keys(planned)) {
+      if (!PLANNED_SLOT_FIELDS.includes(field)) {
+        add('shape', `${path}.${field}`, 'Unknown field in a planned slot.');
+      }
+    }
+    if (!isDefinitionId(planned['moduleId'])) {
+      add('fittingConsistency', `${path}.moduleId`, 'A planned slot names a module definition.');
+    }
+    if (typeof planned['online'] !== 'boolean') {
+      add('shape', `${path}.online`, 'A planned slot records whether the module is online.');
+    }
+    const ammunitionId = planned['ammunitionId'];
+    if (ammunitionId !== null && !isDefinitionId(ammunitionId)) {
+      add('fittingConsistency', `${path}.ammunitionId`, 'A planned charge names an ammunition definition or null.');
+    }
+  }
+}
 
 const TIME_FIELDS: readonly string[] = ['simulationTimeMs', 'paused', 'rate', 'accumulatorMs'];
 

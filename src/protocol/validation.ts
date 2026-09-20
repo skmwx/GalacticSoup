@@ -1,5 +1,5 @@
 import type { ClientRequest } from './envelope';
-import { isDefinitionIdIn } from '@shared';
+import { isDefinitionId, isDefinitionIdIn } from '@shared';
 import { type EngineError, invalidRequest } from './errors';
 import { isRequestType, SAVE_KIND_NAMES, type RequestType } from './requests';
 import { findTransportViolation } from './transport';
@@ -144,6 +144,9 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
 
   switch (type) {
     case 'assets.list':
+    case 'fitting.draft':
+    case 'fitting.revert':
+    case 'fitting.commit':
     case 'wallet.get':
     case 'system.health':
     case 'system.capabilities':
@@ -177,10 +180,50 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
         if (key === 'quantity') {
           if (!isWholeNonNegative(value) || value === 0) return payloadField(type, key, 'format');
         } else {
-          const valid = key === 'stationId' ? isDefinitionIdIn(value, 'station')
-            : typeof value === 'string' && value.length <= 128 && /^c[0-9a-f]{24}-e[1-9][0-9]*$/.test(value);
+          const valid = key === 'stationId' ? isDefinitionIdIn(value, 'station') : isEntityId(value);
           if (!valid) return payloadField(type, key, 'format');
         }
+      }
+      return null;
+    }
+
+    case 'ship.get':
+    case 'ship.undockValidity':
+    case 'fitting.begin': {
+      const unexpected = unexpectedField(fields, ['shipId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      return isEntityId(fields['shipId']) ? null : payloadField(type, 'shipId', 'format');
+    }
+
+    case 'fitting.set':
+    case 'fitting.clear': {
+      const allowed =
+        type === 'fitting.clear'
+          ? ['slotKind', 'slotIndex']
+          : ['slotKind', 'slotIndex', 'moduleId', 'online', 'ammunitionId'];
+      const unexpected = unexpectedField(fields, allowed);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (!SLOT_KIND_NAMES.includes(fields['slotKind'] as string)) {
+        return payloadField(type, 'slotKind', 'format');
+      }
+      if (!isIndex(fields['slotIndex'])) return payloadField(type, 'slotIndex', 'format');
+      if (type === 'fitting.clear') return null;
+      if (!isDefinitionIdIn(fields['moduleId'], 'module')) {
+        return payloadField(type, 'moduleId', 'format');
+      }
+      if (typeof fields['online'] !== 'boolean') return payloadField(type, 'online', 'format');
+      if ('ammunitionId' in fields && !isDefinitionIdIn(fields['ammunitionId'], 'ammo')) {
+        return payloadField(type, 'ammunitionId', 'format');
+      }
+      return null;
+    }
+
+    case 'item.compare': {
+      const keys = ['definitionId', 'againstDefinitionId'];
+      const unexpected = unexpectedField(fields, keys);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      for (const key of keys) {
+        if (!isDefinitionId(fields[key])) return payloadField(type, key, 'format');
       }
       return null;
     }
@@ -273,6 +316,26 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
 const MAX_DISPLAY_NAME_LENGTH = 48;
 
 const CAMPAIGN_SEED_PATTERN = /^[0-9a-f]{32}$/;
+
+/**
+ * Slot kinds and the entity-id shape are duplicated from the engine for the
+ * same reason the display-name bound is: the protocol must reject a malformed
+ * payload before any engine code runs, and `@protocol` may not import the
+ * engine. Tests check the two against each other.
+ */
+const SLOT_KIND_NAMES: readonly string[] = ['weapon', 'system', 'engineering', 'utility'];
+
+const MAX_SLOT_INDEX = 15;
+
+const ENTITY_ID_PATTERN = /^c[0-9a-f]{24}-e[1-9][0-9]*$/;
+
+function isEntityId(value: unknown): value is string {
+  return typeof value === 'string' && value.length <= 128 && ENTITY_ID_PATTERN.test(value);
+}
+
+function isIndex(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= MAX_SLOT_INDEX;
+}
 
 /** Rejects C0 controls and DEL without embedding them in a pattern. */
 function hasControlCharacter(value: string): boolean {

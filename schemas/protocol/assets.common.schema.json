@@ -96,7 +96,7 @@
           "maximum": 9007199254740991
         },
         "state": {
-          "const": "plain"
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/stackState"
         },
         "provenance": {
           "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/provenance"
@@ -160,6 +160,23 @@
               "properties": {
                 "kind": {
                   "const": "cargo"
+                },
+                "shipId": {
+                  "type": "string",
+                  "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "shipId"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "fitting"
                 },
                 "shipId": {
                   "type": "string",
@@ -248,6 +265,7 @@
         "id",
         "hullId",
         "cargoInventoryId",
+        "fittingInventoryId",
         "location",
         "nameKey",
         "active"
@@ -295,8 +313,87 @@
         },
         "active": {
           "type": "boolean"
+        },
+        "fittingInventoryId": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
         }
       }
+    },
+    "slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "index"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "weapon",
+            "system",
+            "engineering",
+            "utility"
+          ]
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        }
+      }
+    },
+    "stackState": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "plain"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "slot",
+            "online"
+          ],
+          "properties": {
+            "kind": {
+              "const": "fitted"
+            },
+            "slot": {
+              "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/slot"
+            },
+            "online": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "slot"
+          ],
+          "properties": {
+            "kind": {
+              "const": "charge"
+            },
+            "slot": {
+              "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/slot"
+            }
+          }
+        }
+      ]
     }
   }
 }

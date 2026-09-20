@@ -8,6 +8,7 @@ describe('starting asset content', () => {
       const values = document['values'] as Record<string, unknown>;
       values['startingCredits'] = 1234;
       values['startingItems'] = [{ definitionId: 'ammo.test.charge', quantity: 123 }];
+      values['startingFit'] = [];
     });
     const content = fixtureRepository(pack);
     const campaign = { ...createCampaign({ displayName: 'Content Pilot', seed: '0123456789abcdef0123456789abcdef', createdAtRealMs: 1, initialRate: 1 }, content), revision: 1 };

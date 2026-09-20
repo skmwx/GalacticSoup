@@ -80,5 +80,6 @@ export type {
   EconomyRules,
   RuleGroup,
   RulesContent,
+  StartingFitEntry,
   TimeRules,
 } from './content/rules.ts';

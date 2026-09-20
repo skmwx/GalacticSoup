@@ -98,7 +98,7 @@ campaign are serialised and therefore finish in revision order.
 A save is a self-describing JSON envelope: the build and content it was written against, the
 campaign and revision it holds, the canonical `CampaignState` payload, and a SHA-256 over
 everything else in it. `schemas/save/save-envelope.schema.json` is its published contract and
-`tests/fixtures/saves/format-2.json` is the golden artefact that pins the format, its canonical
+`tests/fixtures/saves/format-3.json` is the golden artefact that pins the format, its canonical
 serialisation and its digest. Loading walks the steps the technical specification prescribes —
 bounds, checksum, shape, migrations, content compatibility, invariants — and nothing in that path
 writes, so a save that cannot be opened is left exactly as it was found and the loader falls back to
@@ -115,26 +115,55 @@ and answers any autosave trigger a command reports back.
 
 ## Wallet and physical assets
 
-Phase 5 adds the headless asset foundation. Starting credits, hull, station and item grants are
-authored in `content/rules/economy.json`. A campaign owns one unfitted starter ship, its empty
-cargo hold and a station hangar containing the basic turret, shield booster and ammunition.
-Phase 6 assembles the fit; station screens arrive in Phase 8.
+Starting credits, hull, station, item grants and the starting fit are authored in
+`content/rules/economy.json`. A campaign owns one starter ship wearing that fit, its empty cargo
+hold, a station hangar with what the fit did not take, and the ship's own fitting store. Station
+screens arrive in Phase 8.
 
 `src/engine/domain/assets` owns inventory and wallet operations. Physical stacks move only through
-the inventory service, which provides atomic split, merge, transfer, reserve/release and capacity
-changes. Reservations occupy explicit inventories and retain their share of source capacity.
-Quantities, credits and cargo volume use safe integers; acquisition quantities and credit totals
-survive splitting and merging without loss.
+the inventory service, which provides atomic split, merge, transfer, reserve/release, state change
+and capacity changes. Reservations occupy explicit inventories and retain their share of source
+capacity. Quantities, credits and cargo volume use safe integers; acquisition quantities and credit
+totals survive splitting and merging without loss.
 
-Protocol version 2 exposes `inventory.transfer`, `inventory.split`, `inventory.merge`,
-`inventory.maximum`, `inventory.hangar`, `inventory.cargo`, `assets.list`, `wallet.get` and
-`item.inspect`. The engine checks locality and returns immutable projections. Reservation and
-wallet mutations remain domain operations for the gameplay handlers that need them.
+The engine checks locality and returns immutable projections. Reservation and wallet mutations
+remain domain operations for the gameplay handlers that need them.
 
-Campaign state and save format are version 2. Previous development saves are rejected without
+## Fitting and derived attributes
+
+A fitted module is not a copy of a module: it is the same physical stack, moved into the ship's
+fitting store and carrying the slot it occupies. A loaded magazine is the same. That is why a
+module can never be both fitted and in a hold, and why reading a fit cannot disagree with the
+inventory.
+
+Fitting happens in a draft (`src/engine/domain/fitting`). `fitting.begin` copies the fit the ship
+wears, `fitting.set` and `fitting.clear` replace one slot at a time, `fitting.revert` discards the
+draft and `fitting.commit` performs every move at once. The draft names definitions rather than
+stacks, so a purchase or a transfer while it is open cannot invalidate it, and it is authoritative
+state: closing the game with a draft open finds it waiting. A preview is the commit run against a
+copy of the assets, so the player cannot be shown one result and given another.
+
+A change that could not physically exist - a module in a slot the hull lacks, a charge in a weapon
+that does not take it - is refused when it is made, naming the constraint it breaks. A fit that
+merely over-commits the power grid is allowed to exist and blocks undocking instead, which is what
+the functional specification asks for.
+
+Every ship statistic comes from one pipeline (`src/engine/domain/attributes`): the hull's base
+value, then flat modifiers, then fitted percentages diminished by direction at 100/87/57/28/10%,
+then undiminished hull, ammunition and self-operation effects, then the clamps. Content declares
+modifiers; it never declares an expression, and the three reviewed operators (`add`, `percent`,
+`resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
+trace that produced it, so the interface can explain a number instead of asserting it.
+
+Protocol version 3 exposes `ship.get`, `ship.undockValidity`, `fitting.draft`, `fitting.begin`,
+`fitting.set`, `fitting.clear`, `fitting.revert`, `fitting.commit` and `item.compare` alongside the
+version 2 inventory contracts.
+
+Campaign state and save format are version 3. Previous development saves are rejected without
 modification; start a new campaign after upgrading. No pre-release migration is required by the
-MVP plan. The migration runner remains covered by fixture registries, and the old format-1 fixture
-is retained to verify rejection. See `docs/agent-comm/status/phase-05-completion.md` for the handoff.
+MVP plan. The migration runner remains covered by fixture registries, and the old format-1 and
+format-2 fixtures are retained to verify rejection. See
+`docs/agent-comm/status/phase-06-completion.md` for the handoff.
 
 ## Content
 

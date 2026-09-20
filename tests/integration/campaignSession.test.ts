@@ -78,7 +78,9 @@ describe('campaign session over a transport', () => {
       const created = await create(gateway);
       expect(created.committed).toBe(true);
       expect(created.revision).toBe(1);
-      expect(created.invalidations).toEqual(['assets', 'frame', 'inventory', 'saves', 'session', 'wallet']);
+      expect(created.invalidations).toEqual(
+        ['assets', 'fitting', 'frame', 'inventory', 'saves', 'session', 'ship', 'wallet'],
+      );
 
       const running = await gateway.request('time.set', { paused: false, rate: 1 });
       expect(running.ok).toBe(true);

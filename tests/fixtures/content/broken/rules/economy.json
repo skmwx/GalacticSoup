@@ -31,6 +31,15 @@
         "definitionId": "ammo.test.charge",
         "quantity": 20
       }
+    ],
+    "startingFit": [
+      {
+        "slot": "weapon",
+        "index": 0,
+        "moduleId": "module.test.turret",
+        "online": true,
+        "ammunitionId": "ammo.test.charge"
+      }
     ]
   }
 }

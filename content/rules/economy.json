@@ -34,7 +34,22 @@
       },
       {
         "definitionId": "ammo.projectile.small.fusion",
-        "quantity": 20
+        "quantity": 60
+      }
+    ],
+    "startingFit": [
+      {
+        "slot": "weapon",
+        "index": 0,
+        "moduleId": "module.turret.autocannon.small",
+        "online": true,
+        "ammunitionId": "ammo.projectile.small.fusion"
+      },
+      {
+        "slot": "system",
+        "index": 0,
+        "moduleId": "module.shield.booster.small",
+        "online": true
       }
     ]
   }

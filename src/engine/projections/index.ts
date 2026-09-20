@@ -5,6 +5,13 @@
  * changes state, consumes randomness or advances time.
  */
 export * from './assets';
+export { itemDataOf } from './items';
+export { comparisonProjection } from './comparison';
+export {
+  fittingDraftProjection,
+  shipProjection,
+  undockValidityProjection,
+} from './ship';
 export {
   frameProjection,
   sessionProjection,

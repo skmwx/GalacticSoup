@@ -3,6 +3,7 @@ import { capacityRoot, isLocalInventory, maximumThatFits, requireInventory, requ
 import type { ContentRepository } from '@engine/ports';
 import type { AssetsData, InventoryData, ItemInspectionData, MaximumInventoryData, StackData, WalletData } from '@protocol';
 import { deepClone, deepFreeze } from '@shared';
+import { itemDataOf } from './items';
 
 /** Inspection never exposes mutable domain objects or changes authority.
  * @implements TECH-7.3, FUNC-6.1, FUNC-6.2, MVP-AC-02, MVP-AC-06
@@ -11,12 +12,9 @@ export function walletProjection(state: CampaignState): WalletData {
   return deepFreeze({ revision: state.revision, credits: state.assets.credits });
 }
 function stackProjection(stack: ItemStack, content: ContentRepository): StackData {
-  const d = content.requireTradeable(stack.definitionId);
-  return { id: stack.id, inventoryId: stack.inventoryId, quantity: stack.quantity, state: stack.state,
-    provenance: deepClone(stack.provenance), item: { definitionId: d.id, nameKey: d.nameKey,
-      descriptionKey: d.descriptionKey, referenceValueCredits: d.referenceValueCredits,
-      unitVolumeCubicDecimetres: d.volumeCubicDecimetres,
-      kind: content.module(d.id) ? 'module' : content.ammunition(d.id) ? 'ammunition' : 'item' } };
+  return { id: stack.id, inventoryId: stack.inventoryId, quantity: stack.quantity,
+    state: deepClone(stack.state), provenance: deepClone(stack.provenance),
+    item: itemDataOf(content.requireTradeable(stack.definitionId), content) };
 }
 export function inventoryProjection(state: CampaignState, content: ContentRepository, id: string): InventoryData {
   const inventory = requireInventory(state.assets, id);
@@ -34,7 +32,9 @@ export function assetsProjection(state: CampaignState, content: ContentRepositor
   return deepFreeze({ ...walletProjection(state), location: deepClone(state.assets.location), activeShipId: state.assets.activeShipId,
     ships: Object.keys(state.assets.ships).sort().map((id) => {
       const ship = state.assets.ships[id]!;
-      return { ...deepClone(ship), nameKey: content.requireHull(ship.hullId).nameKey, active: ship.id === state.assets.activeShipId };
+      return { id: ship.id, hullId: ship.hullId, cargoInventoryId: ship.cargoInventoryId,
+        fittingInventoryId: ship.fittingInventoryId, location: deepClone(ship.location),
+        nameKey: content.requireHull(ship.hullId).nameKey, active: ship.id === state.assets.activeShipId };
     }),
     inventories: Object.keys(state.assets.inventories).sort().map((id) => inventoryProjection(state, content, id)) });
 }

@@ -1,3 +1,5 @@
+import type { SlotKind } from './definitions.ts';
+
 /**
  * Grouped tunable constants (Technical Specification 6.1).
  *
@@ -53,11 +55,28 @@ export interface CombatRules {
   readonly destructionItemSurvivalChance: number;
 }
 
+/**
+ * One slot of the fit a new campaign starts with
+ * (Functional Specification 3.1, 8.4).
+ *
+ * The modules and charges it names must be among the granted starting items:
+ * a campaign fits what it was given rather than conjuring equipment.
+ */
+export interface StartingFitEntry {
+  readonly slot: SlotKind;
+  readonly index: number;
+  readonly moduleId: string;
+  readonly online: boolean;
+  /** Loaded into the module when it accepts a charge. */
+  readonly ammunitionId?: string;
+}
+
 export interface EconomyRules {
   readonly startingCredits: number;
   readonly startingStationId: string;
   readonly starterHullId: string;
   readonly startingItems: readonly { readonly definitionId: string; readonly quantity: number }[];
+  readonly startingFit: readonly StartingFitEntry[];
   readonly scarcityMinimum: number;
   readonly scarcityMaximum: number;
   readonly midPriceMultiplierMinimum: number;

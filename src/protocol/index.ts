@@ -5,11 +5,18 @@
 export { failureResponse, isSuccess, successResponse } from './envelope';
 export type { ClientRequest, EngineFailure, EngineResponse, EngineSuccess } from './envelope';
 export * from './assets';
+export * from './fitting';
 export {
   contentError,
   contentErrorMessageKey,
   CONTENT_ERROR_REASONS,
   createEngineError,
+  FIT_VIOLATION_CODES,
+  FIT_WARNING_CODES,
+  fitViolationError,
+  fitViolationMessageKey,
+  fitWarningMessageKey,
+  UNDOCK_INVALID_FIT_KEY,
   ENGINE_ERROR_CODES,
   ENGINE_ERROR_MESSAGE_KEYS,
   internalError,
@@ -33,6 +40,8 @@ export type {
   ContentErrorReason,
   ContentIssue,
   EngineError,
+  FitViolationCodeName,
+  FitWarningCodeName,
   EngineErrorCode,
   ErrorParams,
   InvalidRequestReason,

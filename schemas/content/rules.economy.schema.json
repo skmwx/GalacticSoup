@@ -36,12 +36,13 @@
         "repairHullFraction",
         "scarcityMaximum",
         "scarcityMinimum",
-        "stationServiceModifierMaximum",
-        "stationServiceModifierMinimum",
-        "startingCredits",
-        "startingStationId",
         "starterHullId",
-        "startingItems"
+        "startingCredits",
+        "startingFit",
+        "startingItems",
+        "startingStationId",
+        "stationServiceModifierMaximum",
+        "stationServiceModifierMinimum"
       ],
       "properties": {
         "scarcityMinimum": {
@@ -130,6 +131,46 @@
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 9007199254740991
+              }
+            }
+          }
+        },
+        "startingFit": {
+          "description": "The fit a new campaign assembles from its granted items (Functional Specification 3.1, 8.4).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "slot",
+              "index",
+              "moduleId",
+              "online"
+            ],
+            "properties": {
+              "slot": {
+                "enum": [
+                  "weapon",
+                  "system",
+                  "engineering",
+                  "utility"
+                ]
+              },
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "moduleId": {
+                "type": "string",
+                "pattern": "^module\\."
+              },
+              "online": {
+                "type": "boolean"
+              },
+              "ammunitionId": {
+                "type": "string",
+                "pattern": "^ammo\\."
               }
             }
           }

@@ -43,13 +43,13 @@ describe.each(['direct', 'channel'] as const)('inventory through %s transport', 
     expect(await ask(gateway, 'inventory.hangar', { stationId: assets.location.stationId })).toEqual(hangar);
     expect(await ask(gateway, 'inventory.cargo', { shipId: assets.activeShipId })).toEqual(cargo);
     expect((await ask(gateway, 'item.inspect', { stackId: ammo.id })).stack).toEqual(ammo);
-    expect((await ask(gateway, 'inventory.maximum', { stackId: ammo.id, destinationInventoryId: cargo.id })).maximumQuantity).toBe(20);
+    expect((await ask(gateway, 'inventory.maximum', { stackId: ammo.id, destinationInventoryId: cargo.id })).maximumQuantity).toBe(40);
     const result = await ask(gateway, 'inventory.transfer', { stackId: ammo.id, destinationInventoryId: cargo.id, quantity: 12 });
     expect(result.invalidations).toEqual(['assets', 'inventory']);
     expect(result.events[0]!.kind).toBe('inventory.changed');
     const moved = await ask(gateway, 'assets.list', {});
     expect(moved.inventories.find((i) => i.id === cargo.id)!.stacks[0]!.quantity).toBe(12);
-    expect(moved.inventories.find((i) => i.id === hangar.id)!.stacks.find((s) => s.id === ammo.id)!.quantity).toBe(8);
+    expect(moved.inventories.find((i) => i.id === hangar.id)!.stacks.find((s) => s.id === ammo.id)!.quantity).toBe(28);
     const hash = await ask(gateway, 'diagnostics.stateHash', {});
     await ask(gateway, 'campaign.close', { savedAtRealMs: 999999999 });
     const reopened = session(kind, store);
@@ -68,7 +68,7 @@ describe.each(['direct', 'channel'] as const)('inventory through %s transport', 
     const stale = await gateway.sendEnvelope({ protocolVersion: PROTOCOL_VERSION, requestId: 'stale-transfer',
       type: 'inventory.transfer', expectedRevision: 0, payload });
     expect(!stale.ok && stale.error.code).toBe('STALE_REVISION');
-    const missing = await gateway.request('inventory.transfer', { ...payload, quantity: 21 });
+    const missing = await gateway.request('inventory.transfer', { ...payload, quantity: 41 });
     expect(!missing.ok && missing.error.messageKey).toBe('error.ruleViolation.insufficientItems');
     expect(await ask(gateway, 'diagnostics.stateHash', {})).toEqual(hash);
     const envelope = { protocolVersion: PROTOCOL_VERSION, requestId: 'one-transfer', type: 'inventory.transfer', expectedRevision: 1, payload };

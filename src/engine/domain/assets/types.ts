@@ -1,5 +1,7 @@
+import type { DefenseLayer } from '@engine/ports';
 import type { DefinitionId, HullId, StationId, SystemId, Mutable } from '@shared';
 import type { CampaignId, EntityId } from '../campaign/identity';
+import type { SlotRef } from '../fitting/types';
 
 declare const inventoryBrand: unique symbol;
 export type InventoryId = EntityId & { readonly [inventoryBrand]: 'inventory' };
@@ -13,6 +15,7 @@ export interface DockedLocation {
 export type InventoryLocation =
   | { readonly kind: 'hangar'; readonly stationId: StationId }
   | { readonly kind: 'cargo'; readonly shipId: EntityId }
+  | { readonly kind: 'fitting'; readonly shipId: EntityId }
   | { readonly kind: 'reserve'; readonly sourceInventoryId: InventoryId; readonly ownerId: EntityId };
 
 export type CapacityPolicy =
@@ -32,20 +35,53 @@ export interface Provenance {
   readonly purchasedQuantity: number;
   readonly purchaseCostCredits: number;
 }
+
+/**
+ * What a physical stack is currently doing (Functional Specification 8.4).
+ *
+ * A fitted module and a loaded charge are the same physical units as the ones
+ * that sat in the hangar: the state records the slot they occupy rather than
+ * copying them into a second place. Two stacks merge only when their state is
+ * identical, so a module in one slot can never be confused with the same
+ * module in another.
+ */
+export type StackState =
+  | { readonly kind: 'plain' }
+  | { readonly kind: 'fitted'; readonly slot: SlotRef; readonly online: boolean }
+  | { readonly kind: 'charge'; readonly slot: SlotRef };
+
+export const PLAIN_STATE: StackState = { kind: 'plain' };
+
 export interface ItemStack {
   readonly id: EntityId;
   readonly definitionId: DefinitionId;
   readonly quantity: number;
   readonly inventoryId: InventoryId;
-  /** Phase 6 introduces operational instances; these items are all unfitted. */
-  readonly state: 'plain';
+  readonly state: StackState;
   readonly provenance: Provenance;
 }
+
+/**
+ * Damage taken and capacitor charge (Functional Specification 8.2, 9.7-9.8).
+ *
+ * Damage is stored as hit points lost rather than as hit points remaining, so
+ * changing the fit changes the maximum without silently healing or destroying
+ * the ship. Charge is stored directly and is clamped whenever the derived
+ * capacity changes.
+ */
+export interface ShipCondition {
+  readonly damage: Readonly<Record<DefenseLayer, number>>;
+  readonly capacitorCharge: number;
+}
+
 export interface ShipIdentity {
   readonly id: EntityId;
   readonly hullId: HullId;
   readonly cargoInventoryId: InventoryId;
+  /** Holds the physical units of every fitted module and loaded charge. */
+  readonly fittingInventoryId: InventoryId;
   readonly location: DockedLocation;
+  readonly condition: ShipCondition;
 }
 export interface AssetState {
   readonly credits: number;
@@ -64,7 +100,7 @@ export interface AssetDraft {
 export const INVENTORY_FAILURES = [
   'inventoryNotFound', 'itemNotFound', 'invalidQuantity', 'insufficientItems',
   'insufficientCapacity', 'incompatibleStacks', 'sameInventory', 'inventoryUnavailable',
-  'invalidReservation', 'numericOverflow', 'insufficientCredits',
+  'invalidReservation', 'numericOverflow', 'insufficientCredits', 'stackNotDivisible',
 ] as const;
 export type InventoryFailure = (typeof INVENTORY_FAILURES)[number];
 export class InventoryError extends Error {

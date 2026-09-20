@@ -79,7 +79,11 @@ export function invalidRequestMessageKey(reason: InvalidRequestReason): MessageK
 export const RULE_VIOLATION_REASONS = [
   'inventoryNotFound', 'itemNotFound', 'invalidQuantity', 'insufficientItems',
   'insufficientCapacity', 'incompatibleStacks', 'sameInventory', 'inventoryUnavailable',
-  'invalidReservation', 'numericOverflow', 'insufficientCredits',
+  'invalidReservation', 'numericOverflow', 'insufficientCredits', 'stackNotDivisible',
+  'fittingDraftClosed',
+  'fittingDraftOpen',
+  'fittingUnavailable',
+  'fittingItemsMissing',
   'campaignAlreadyOpen',
   'noCampaignOpen',
   'campaignMismatch',
@@ -96,6 +100,57 @@ export function ruleViolationMessageKey(reason: RuleViolationReason): MessageKey
 export function ruleViolation(reason: RuleViolationReason, params?: ErrorParams): EngineError {
   return createEngineError('RULE_VIOLATION', ruleViolationMessageKey(reason), params);
 }
+
+/**
+ * Why a fit may not be undocked with, and the advice that stops short of that
+ * (Functional Specification 8.4-8.5).
+ *
+ * The lists are duplicated from the engine for the same reason the display-name
+ * bound is: `@protocol` may not import the engine, and the interface needs a
+ * message key for every code the engine can report. Tests check the two
+ * vocabularies against each other.
+ */
+export const FIT_VIOLATION_CODES = [
+  'moduleUnknown',
+  'ammunitionUnknown',
+  'slotUnavailable',
+  'slotKindMismatch',
+  'hardpointUnavailable',
+  'hardpointMismatch',
+  'ammunitionMismatch',
+  'chargeNotAccepted',
+  'magazineExceeded',
+  'powerExceeded',
+  'processingExceeded',
+] as const;
+
+export type FitViolationCodeName = (typeof FIT_VIOLATION_CODES)[number];
+
+export const FIT_WARNING_CODES = [
+  'noWeapon',
+  'noAmmunition',
+  'moduleOffline',
+  'capacitorUnstable',
+  'uncoveredDamageType',
+] as const;
+
+export type FitWarningCodeName = (typeof FIT_WARNING_CODES)[number];
+
+export function fitViolationMessageKey(code: string): MessageKey {
+  return `fitting.violation.${code}`;
+}
+
+export function fitWarningMessageKey(code: string): MessageKey {
+  return `fitting.warning.${code}`;
+}
+
+/** A fitting change the rules refuse, named by the constraint it breaks. */
+export function fitViolationError(code: string, params?: ErrorParams): EngineError {
+  return createEngineError('RULE_VIOLATION', fitViolationMessageKey(code), params);
+}
+
+/** Why undocking is unavailable while the active fit is invalid. */
+export const UNDOCK_INVALID_FIT_KEY: MessageKey = 'fitting.undock.invalidFit';
 
 /**
  * Why a content bundle was rejected (Technical Specification 6.2, 14).
@@ -262,5 +317,8 @@ export const PROTOCOL_MESSAGE_KEYS: readonly MessageKey[] = [
   ...RULE_VIOLATION_REASONS.map(ruleViolationMessageKey),
   ...SAVE_LOAD_REASONS.map(saveLoadMessageKey),
   ...SAVE_WRITE_REASONS.map(saveWriteMessageKey),
+  ...FIT_VIOLATION_CODES.map(fitViolationMessageKey),
+  ...FIT_WARNING_CODES.map(fitWarningMessageKey),
+  UNDOCK_INVALID_FIT_KEY,
   'error.internalError.invariant',
 ].sort();

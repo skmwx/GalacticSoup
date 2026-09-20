@@ -24,11 +24,14 @@ import {
  * adds the numbered checks for the state it introduces; the list below names
  * the specification checks covered so the gap stays visible.
  *
- * Covered here: 1 (bounded values), 2-5 (asset references, ownership, capacity,
- * reservations and active-ship location), 7 and 12 (scheduler entries, and the
- * absence of a real timestamp as a completion condition), 11 (streams,
- * simulation time, revisions and ordinals). Content-dependent asset checks run
- * at commit, before persistence and on load with the installed repository.
+ * Covered here: 1 (bounded values, including stored damage and capacitor
+ * charge), 2-5 (asset references, ownership, capacity, reservations and
+ * active-ship location), 6 (fitting slot, hardpoint and online-resource
+ * consistency; no MVP item has a skill requirement), 7 and 12 (scheduler
+ * entries, and the absence of a real timestamp as a completion condition),
+ * 11 (streams, simulation time, revisions and ordinals). Content-dependent
+ * asset checks run at commit, before persistence and on load with the
+ * installed repository.
  *
  * @implements TECH-15.3
  */

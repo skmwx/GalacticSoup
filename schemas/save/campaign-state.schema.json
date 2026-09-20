@@ -2,26 +2,27 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/save/campaign-state.schema.json",
   "title": "CampaignState",
-  "description": "Authoritative campaign state version 2: wallet, ships and physical inventories (Technical Specification 8, 11).",
+  "description": "Authoritative campaign state version 3: wallet, ships, physical inventories, fitted modules and the open fitting draft (Technical Specification 8, 11).",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "stateVersion",
+    "assets",
     "campaignId",
-    "displayName",
-    "seed",
     "createdAtRealMs",
-    "revision",
+    "displayName",
+    "fitting",
     "nextEntityOrdinal",
     "nextEventOrdinal",
-    "time",
     "random",
+    "revision",
     "scheduler",
-    "assets"
+    "seed",
+    "stateVersion",
+    "time"
   ],
   "properties": {
     "stateVersion": {
-      "const": 2
+      "const": 3
     },
     "campaignId": {
       "type": "string",
@@ -412,7 +413,9 @@
               "id",
               "hullId",
               "cargoInventoryId",
-              "location"
+              "fittingInventoryId",
+              "location",
+              "condition"
             ],
             "properties": {
               "id": {
@@ -449,6 +452,48 @@
                     "type": "string",
                     "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
                     "maxLength": 96
+                  }
+                }
+              },
+              "fittingInventoryId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+              },
+              "condition": {
+                "description": "Hit points lost per layer and the current capacitor charge.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "damage",
+                  "capacitorCharge"
+                ],
+                "properties": {
+                  "damage": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "shield",
+                      "armor",
+                      "hull"
+                    ],
+                    "properties": {
+                      "shield": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "armor": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "hull": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  "capacitorCharge": {
+                    "type": "number",
+                    "minimum": 0
                   }
                 }
               }
@@ -504,6 +549,23 @@
                     "properties": {
                       "kind": {
                         "const": "cargo"
+                      },
+                      "shipId": {
+                        "type": "string",
+                        "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "shipId"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "fitting"
                       },
                       "shipId": {
                         "type": "string",
@@ -626,7 +688,97 @@
                 "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
               },
               "state": {
-                "const": "plain"
+                "description": "What the units are doing: stored, fitted in a slot, or loaded as a charge.",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "plain"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "slot",
+                      "online"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "fitted"
+                      },
+                      "slot": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "kind",
+                          "index"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "weapon",
+                              "system",
+                              "engineering",
+                              "utility"
+                            ]
+                          },
+                          "index": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 15
+                          }
+                        }
+                      },
+                      "online": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "slot"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "charge"
+                      },
+                      "slot": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "kind",
+                          "index"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "weapon",
+                              "system",
+                              "engineering",
+                              "utility"
+                            ]
+                          },
+                          "index": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 15
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
               },
               "provenance": {
                 "type": "object",
@@ -658,6 +810,72 @@
           }
         }
       }
+    },
+    "fitting": {
+      "description": "The open fitting draft, or null when the player has none (Functional Specification 8.4).",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "shipId",
+            "baseRevision",
+            "slots"
+          ],
+          "properties": {
+            "shipId": {
+              "type": "string",
+              "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+            },
+            "baseRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "slots": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "pattern": "^(weapon|system|engineering|utility):(0|[1-9][0-9]?)$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "moduleId",
+                  "online",
+                  "ammunitionId"
+                ],
+                "properties": {
+                  "moduleId": {
+                    "type": "string",
+                    "pattern": "^module(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                    "maxLength": 96
+                  },
+                  "online": {
+                    "type": "boolean"
+                  },
+                  "ammunitionId": {
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^ammo(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                        "maxLength": 96
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

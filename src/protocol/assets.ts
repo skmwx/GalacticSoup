@@ -10,7 +10,14 @@ export interface LocationData { readonly kind: 'station'; readonly stationId: st
 export type InventoryLocationData =
   | { readonly kind: 'hangar'; readonly stationId: string }
   | { readonly kind: 'cargo'; readonly shipId: string }
+  | { readonly kind: 'fitting'; readonly shipId: string }
   | { readonly kind: 'reserve'; readonly sourceInventoryId: string; readonly ownerId: string };
+/** Which slot a fitted module or a loaded charge occupies. */
+export interface SlotRefData { readonly kind: string; readonly index: number }
+export type StackStateData =
+  | { readonly kind: 'plain' }
+  | { readonly kind: 'fitted'; readonly slot: SlotRefData; readonly online: boolean }
+  | { readonly kind: 'charge'; readonly slot: SlotRefData };
 export interface ProvenanceData {
   readonly grantedQuantity: number; readonly purchasedQuantity: number; readonly purchaseCostCredits: number;
 }
@@ -21,7 +28,7 @@ export interface ItemData {
 }
 export interface StackData {
   readonly id: string; readonly inventoryId: string; readonly quantity: number;
-  readonly state: 'plain'; readonly provenance: ProvenanceData; readonly item: ItemData;
+  readonly state: StackStateData; readonly provenance: ProvenanceData; readonly item: ItemData;
 }
 export interface InventoryData {
   readonly revision: number; readonly id: string; readonly location: InventoryLocationData;
@@ -32,6 +39,7 @@ export interface InventoryData {
 export interface ShipAssetData {
   readonly id: string; readonly hullId: string; readonly nameKey: string;
   readonly active: boolean; readonly location: LocationData; readonly cargoInventoryId: string;
+  readonly fittingInventoryId: string;
 }
 export interface WalletData { readonly revision: number; readonly credits: number }
 export interface AssetsData extends WalletData {

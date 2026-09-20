@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/client-request.schema.json",
   "title": "ClientRequest",
-  "description": "Protocol version 2 request envelope and payloads.",
+  "description": "Protocol version 3 request envelope and payloads.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 2
+      "const": 3
     },
     "requestId": {
       "type": "string",
@@ -42,13 +42,22 @@
         "campaign.session",
         "content.summary",
         "diagnostics.stateHash",
+        "fitting.begin",
+        "fitting.clear",
+        "fitting.commit",
+        "fitting.draft",
+        "fitting.revert",
+        "fitting.set",
         "inventory.cargo",
         "inventory.hangar",
         "inventory.maximum",
         "inventory.merge",
         "inventory.split",
         "inventory.transfer",
+        "item.compare",
         "item.inspect",
+        "ship.get",
+        "ship.undockValidity",
         "system.capabilities",
         "system.health",
         "time.advance",
@@ -605,6 +614,282 @@
                 "type": "string",
                 "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
                 "maxLength": 128
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "fitting.draft"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/emptyPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "fitting.revert"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/emptyPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "fitting.commit"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/emptyPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "ship.get"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "shipId"
+            ],
+            "properties": {
+              "shipId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "ship.undockValidity"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "shipId"
+            ],
+            "properties": {
+              "shipId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "fitting.begin"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "shipId"
+            ],
+            "properties": {
+              "shipId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "fitting.set"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "slotKind",
+              "slotIndex",
+              "moduleId",
+              "online"
+            ],
+            "properties": {
+              "slotKind": {
+                "enum": [
+                  "weapon",
+                  "system",
+                  "engineering",
+                  "utility"
+                ]
+              },
+              "slotIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "moduleId": {
+                "type": "string",
+                "pattern": "^module(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                "maxLength": 96
+              },
+              "online": {
+                "type": "boolean"
+              },
+              "ammunitionId": {
+                "type": "string",
+                "pattern": "^ammo(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                "maxLength": 96
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "fitting.clear"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "slotKind",
+              "slotIndex"
+            ],
+            "properties": {
+              "slotKind": {
+                "enum": [
+                  "weapon",
+                  "system",
+                  "engineering",
+                  "utility"
+                ]
+              },
+              "slotIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "item.compare"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "definitionId",
+              "againstDefinitionId"
+            ],
+            "properties": {
+              "definitionId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                "maxLength": 96
+              },
+              "againstDefinitionId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                "maxLength": 96
               }
             }
           }

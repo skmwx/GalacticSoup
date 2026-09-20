@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/fitting.draft.data.schema.json",
+  "title": "FittingDraftData",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "revision",
+    "draft"
+  ],
+  "properties": {
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "draft": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "shipId",
+            "baseRevision",
+            "changed",
+            "slots",
+            "missing",
+            "committable",
+            "blockedReason",
+            "preview"
+          ],
+          "properties": {
+            "shipId": {
+              "type": "string",
+              "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+            },
+            "baseRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "changed": {
+              "type": "boolean"
+            },
+            "slots": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "slot",
+                  "module",
+                  "online",
+                  "charge"
+                ],
+                "properties": {
+                  "slot": {
+                    "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/slot"
+                  },
+                  "module": {
+                    "anyOf": [
+                      {
+                        "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "online": {
+                    "type": "boolean"
+                  },
+                  "charge": {
+                    "anyOf": [
+                      {
+                        "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "missing": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "definitionId",
+                  "nameKey",
+                  "required",
+                  "available"
+                ],
+                "properties": {
+                  "definitionId": {
+                    "type": "string"
+                  },
+                  "nameKey": {
+                    "type": "string"
+                  },
+                  "required": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "available": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                }
+              }
+            },
+            "committable": {
+              "type": "boolean"
+            },
+            "blockedReason": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "preview": {
+              "anyOf": [
+                {
+                  "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/ship"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

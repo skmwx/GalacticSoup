@@ -1,7 +1,9 @@
 import { InventoryError, type CampaignState } from '@engine/domain';
 import { assetsProjection, walletProjection, hangarProjection, cargoProjection,
-  itemInspectionProjection, maximumInventoryProjection } from '@engine/projections';
-import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload } from '@protocol';
+  itemInspectionProjection, maximumInventoryProjection, comparisonProjection,
+  fittingDraftProjection, shipProjection, undockValidityProjection } from '@engine/projections';
+import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload,
+  ComparePayload, ShipPayload } from '@protocol';
 import {
   ContentIntegrityError,
   ContentLookupError,
@@ -369,8 +371,12 @@ function checkCampaign(
   return null;
 }
 
+/** Queries that read a campaign and therefore need one to be open. */
 function isAssetQuery(type: RequestType): boolean {
-  return ['assets.list', 'wallet.get', 'inventory.hangar', 'inventory.cargo', 'item.inspect', 'inventory.maximum'].includes(type);
+  return [
+    'assets.list', 'wallet.get', 'inventory.hangar', 'inventory.cargo', 'item.inspect',
+    'inventory.maximum', 'ship.get', 'ship.undockValidity', 'fitting.draft', 'item.compare',
+  ].includes(type);
 }
 
 function query(session: Session, type: RequestType, payload: unknown): unknown {
@@ -390,6 +396,14 @@ function query(session: Session, type: RequestType, payload: unknown): unknown {
     case 'inventory.maximum': {
       const p = payload as MaximumInventoryPayload;
       return maximumInventoryProjection(session.campaign!, session.content, p.stackId, p.destinationInventoryId);
+    }
+    case 'ship.get': return shipProjection(session.campaign!, session.content, (payload as ShipPayload).shipId);
+    case 'ship.undockValidity':
+      return undockValidityProjection(session.campaign!, session.content, (payload as ShipPayload).shipId);
+    case 'fitting.draft': return fittingDraftProjection(session.campaign!, session.content);
+    case 'item.compare': {
+      const p = payload as ComparePayload;
+      return comparisonProjection(session.campaign!, session.content, p.definitionId, p.againstDefinitionId);
     }
     case 'system.health':
       return handleHealth(context);

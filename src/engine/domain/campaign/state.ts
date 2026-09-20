@@ -2,6 +2,7 @@ import { canonicalJson, deepClone, sha256Hex, type Mutable } from '@shared';
 import type { ContentRepository } from '@engine/ports';
 import { startingAssets } from '../assets/start';
 import type { AssetState } from '../assets/types';
+import type { FittingDraft } from '../fitting/types';
 
 import { deriveCampaignId, type CampaignId } from './identity';
 import { emptyScheduler, type SchedulerState } from './scheduler';
@@ -23,7 +24,7 @@ import { seedStreams, type RandomStreams } from '../random/streams';
  */
 
 /** Shape version of the authoritative payload, carried by every snapshot. */
-export const CAMPAIGN_STATE_VERSION = 2;
+export const CAMPAIGN_STATE_VERSION = 3;
 
 /** Upper bound on simulation time, about 31 simulated years. */
 export const MAX_SIMULATION_TIME_MS = 1_000_000_000_000;
@@ -42,6 +43,13 @@ export interface TimeState {
 
 export interface CampaignState {
   readonly assets: AssetState;
+  /**
+   * The fitting draft the player has open, or `null` when none is
+   * (Functional Specification 8.4-8.5). It is authoritative: closing the game
+   * with a draft open must not lose it, and reverting must restore the fit the
+   * ship wore when the draft was opened.
+   */
+  readonly fitting: FittingDraft | null;
   readonly stateVersion: number;
   readonly campaignId: CampaignId;
   readonly displayName: string;
@@ -84,6 +92,7 @@ export function createCampaign(input: CreateCampaignInput, content: ContentRepos
   const starting = startingAssets(deriveCampaignId(input.seed), content);
   return {
     assets: starting.assets,
+    fitting: null,
     stateVersion: CAMPAIGN_STATE_VERSION,
     campaignId: deriveCampaignId(input.seed),
     displayName: input.displayName,

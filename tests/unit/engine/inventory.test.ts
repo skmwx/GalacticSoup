@@ -12,8 +12,9 @@ function setup() {
   const hangar = Object.values(draft.assets.inventories).find((i) => i.location.kind === 'hangar')!.id;
   const cargo = draft.assets.ships[draft.assets.activeShipId]!.cargoInventoryId;
   const service = inventoryService(draft, content);
+  const fitting = draft.assets.ships[draft.assets.activeShipId]!.fittingInventoryId;
   const stack = stacksIn(draft.assets, hangar).find((s) => s.definitionId === ammo)!.id;
-  return { draft, hangar, cargo, service, stack };
+  return { draft, hangar, cargo, fitting, service, stack };
 }
 function totals(draft: CampaignDraft) {
   const totals: Record<string, number[]> = {};
@@ -27,20 +28,22 @@ function totals(draft: CampaignDraft) {
 describe('physical inventories', () => {
   it('changes cargo capacity atomically without discarding reserved or stored units [FUNC-6.2, FUNC-22.2, TECH-8.3]', () => {
     const { draft, service, stack, cargo } = setup();
-    service.transfer(stack, cargo, 20);
+    service.transfer(stack, cargo, 40);
     service.reserve(stack, 5, draft.assets.activeShipId);
     const before = canonicalJson(draft);
-    expect(() => service.setCapacity(cargo, 39)).toThrow('insufficientCapacity');
+    expect(() => service.setCapacity(cargo, 79)).toThrow('insufficientCapacity');
     expect(canonicalJson(draft)).toBe(before);
-    service.setCapacity(cargo, 40);
+    service.setCapacity(cargo, 80);
     expect(maximumThatFits(draft.assets, content, cargo, ammo)).toBe(0);
     expect(validateCampaign(draft, content)).toEqual([]);
   });
-  it('starts with a wallet, one unfitted ship, unlimited hangar and empty cargo [FUNC-3.1, TECH-8.2, MVP-AC-02]', () => {
-    const { draft, hangar, cargo } = setup();
+  it('starts with a wallet, one fitted ship, unlimited hangar and empty cargo [FUNC-3.1, TECH-8.2, MVP-AC-02]', () => {
+    const { draft, hangar, cargo, fitting } = setup();
     expect(draft.assets.credits).toBe(20000);
     expect(Object.values(draft.assets.ships)).toHaveLength(1);
-    expect(stacksIn(draft.assets, hangar).map((s) => s.quantity).sort((a, b) => a - b)).toEqual([1, 1, 20]);
+    // The granted modules are fitted; what the magazine did not take stays behind.
+    expect(stacksIn(draft.assets, hangar).map((s) => s.quantity)).toEqual([40]);
+    expect(stacksIn(draft.assets, fitting).map((s) => s.state.kind).sort()).toEqual(['charge', 'fitted', 'fitted']);
     expect(stacksIn(draft.assets, cargo)).toEqual([]);
     expect(draft.assets.inventories[hangar]!.capacity).toEqual({ kind: 'unlimited' });
     expect(validateCampaign(draft, content)).toEqual([]);
@@ -61,23 +64,23 @@ describe('physical inventories', () => {
     const { draft, service, hangar, stack } = setup();
     service.add(hangar, ammo, 3, { grantedQuantity: 0, purchasedQuantity: 3, purchaseCostCredits: 10 });
     const before = totals(draft);
-    const split = service.split(stack, 8);
-    expect(draft.assets.stacks[split]!.provenance).toEqual({ grantedQuantity: 7, purchasedQuantity: 1, purchaseCostCredits: 3 });
+    const split = service.split(stack, 15);
+    expect(draft.assets.stacks[split]!.provenance).toEqual({ grantedQuantity: 14, purchasedQuantity: 1, purchaseCostCredits: 3 });
     service.merge(split, stack);
     expect(totals(draft)).toEqual(before);
-    expect(draft.assets.stacks[stack]!.quantity).toBe(23);
+    expect(draft.assets.stacks[stack]!.quantity).toBe(43);
   });
   it('moves reservations into private locations and keeps their cargo capacity occupied [TECH-8.3, FUNC-22.3]', () => {
     const { draft, service, cargo, stack } = setup();
-    service.transfer(stack, cargo, 20);
+    service.transfer(stack, cargo, 40);
     const before = totals(draft);
     const reserve = service.reserve(stack, 7, draft.assets.activeShipId);
-    expect(stacksIn(draft.assets, cargo)[0]!.quantity).toBe(13);
+    expect(stacksIn(draft.assets, cargo)[0]!.quantity).toBe(33);
     expect(stacksIn(draft.assets, reserve)[0]!.quantity).toBe(7);
-    expect(usedVolume(draft.assets, content, cargo)).toBe(40);
-    expect(maximumThatFits(draft.assets, content, cargo, ammo)).toBe(67480);
+    expect(usedVolume(draft.assets, content, cargo)).toBe(80);
+    expect(maximumThatFits(draft.assets, content, cargo, ammo)).toBe(67460);
     const snapshot = canonicalJson(draft);
-    expect(() => service.reserve(stack, 14, draft.assets.activeShipId)).toThrow('insufficientItems');
+    expect(() => service.reserve(stack, 34, draft.assets.activeShipId)).toThrow('insufficientItems');
     expect(() => service.release(reserve, entityIdOf(draft.campaignId, 999))).toThrow('invalidReservation');
     expect(canonicalJson(draft)).toBe(snapshot);
     service.release(reserve, draft.assets.activeShipId);
@@ -93,10 +96,14 @@ describe('physical inventories', () => {
     expect(canonicalJson(draft)).toBe(before);
   });
   it('rejects incompatible merges, same-location transfers and overflow atomically [FUNC-6.2, TECH-8.3]', () => {
-    const { draft, service, hangar, stack } = setup();
-    const module = stacksIn(draft.assets, hangar).find((s) => s.definitionId !== ammo)!;
+    const { draft, service, hangar, stack, fitting } = setup();
+    const module = stacksIn(draft.assets, fitting).find((s) => s.state.kind === 'fitted')!;
+    const charge = stacksIn(draft.assets, fitting).find((s) => s.state.kind === 'charge')!;
     const before = canonicalJson(draft);
     expect(() => service.merge(stack, module.id)).toThrow('incompatibleStacks');
+    expect(() => service.merge(stack, charge.id)).toThrow('incompatibleStacks');
+    // A fitted module and a loaded magazine belong to their slot.
+    expect(() => service.split(charge.id, 5)).toThrow('stackNotDivisible');
     expect(() => service.merge(stack, stack)).toThrow('incompatibleStacks');
     expect(() => service.transfer(stack, hangar, 1)).toThrow('sameInventory');
     expect(() => service.add(hangar, ammo, Number.MAX_SAFE_INTEGER, {
@@ -114,7 +121,10 @@ describe('physical inventories', () => {
       let random = seed;
       const draw = (max: number) => { random = (Math.imul(random, 1664525) + 1013904223) >>> 0; return random % max; };
       for (let i = 0; i < 40; i++) {
-        const all = Object.values(draft.assets.stacks).filter((s) => s.definitionId === ammo);
+        // Only unfitted units take part: a fitted module and a loaded magazine
+        // are moved by the fitting commands, not by inventory operations.
+        const all = Object.values(draft.assets.stacks)
+          .filter((s) => s.definitionId === ammo && s.state.kind === 'plain');
         const stack = all[draw(all.length)]!;
         const before = canonicalJson(draft);
         try {

@@ -1,0 +1,610 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json",
+  "title": "Fitting view models",
+  "description": "Shapes shared by the ship, fitting-draft and undock-validity responses.",
+  "$defs": {
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "messageKey",
+        "slot",
+        "params"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "messageKey": {
+          "type": "string"
+        },
+        "slot": {
+          "anyOf": [
+            {
+              "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/slot"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId",
+        "sourceKey",
+        "operation",
+        "stage",
+        "value",
+        "stackingMultiplier",
+        "effectiveValue",
+        "result"
+      ],
+      "properties": {
+        "sourceId": {
+          "type": "string"
+        },
+        "sourceKey": {
+          "type": "string"
+        },
+        "operation": {
+          "enum": [
+            "add",
+            "percent",
+            "resistance"
+          ]
+        },
+        "stage": {
+          "enum": [
+            "flat",
+            "fitted",
+            "intrinsic"
+          ]
+        },
+        "value": {
+          "type": "number"
+        },
+        "stackingMultiplier": {
+          "type": "number"
+        },
+        "effectiveValue": {
+          "type": "number"
+        },
+        "result": {
+          "type": "number"
+        }
+      }
+    },
+    "stat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attribute",
+        "labelKey",
+        "base",
+        "value",
+        "clamped",
+        "steps"
+      ],
+      "properties": {
+        "attribute": {
+          "type": "string"
+        },
+        "labelKey": {
+          "type": "string"
+        },
+        "base": {
+          "type": "number"
+        },
+        "value": {
+          "type": "number"
+        },
+        "clamped": {
+          "type": "boolean"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/step"
+          }
+        }
+      }
+    },
+    "resourceUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "used",
+        "available"
+      ],
+      "properties": {
+        "used": {
+          "type": "number"
+        },
+        "available": {
+          "type": "number"
+        }
+      }
+    },
+    "fittedSlot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot",
+        "module",
+        "online",
+        "charge",
+        "stackId",
+        "powerUse",
+        "processingUse",
+        "category",
+        "hardpoint"
+      ],
+      "properties": {
+        "slot": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/slot"
+        },
+        "module": {
+          "anyOf": [
+            {
+              "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "online": {
+          "type": "boolean"
+        },
+        "charge": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "item",
+                "quantity",
+                "stackId"
+              ],
+              "properties": {
+                "item": {
+                  "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "stackId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stackId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "powerUse": {
+          "type": "number"
+        },
+        "processingUse": {
+          "type": "number"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hardpoint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "weapon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot",
+        "moduleId",
+        "online",
+        "ammunitionId",
+        "loadedRounds",
+        "magazineSize",
+        "optimalRangeKm",
+        "falloffKm",
+        "absoluteRangeKm",
+        "trackingRadiansPerSecond",
+        "signatureResolutionMetres",
+        "cycleSeconds",
+        "capacitorPerCycle",
+        "damagePerShot",
+        "volleyDamage",
+        "damagePerSecond"
+      ],
+      "properties": {
+        "slot": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/slot"
+        },
+        "moduleId": {
+          "type": "string"
+        },
+        "online": {
+          "type": "boolean"
+        },
+        "ammunitionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "loadedRounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "magazineSize": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "optimalRangeKm": {
+          "type": "number"
+        },
+        "falloffKm": {
+          "type": "number"
+        },
+        "absoluteRangeKm": {
+          "type": "number"
+        },
+        "trackingRadiansPerSecond": {
+          "type": "number"
+        },
+        "signatureResolutionMetres": {
+          "type": "number"
+        },
+        "cycleSeconds": {
+          "type": "number"
+        },
+        "capacitorPerCycle": {
+          "type": "number"
+        },
+        "damagePerShot": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "volleyDamage": {
+          "type": "number"
+        },
+        "damagePerSecond": {
+          "type": "number"
+        }
+      }
+    },
+    "capacitor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "charge",
+        "capacity",
+        "rechargeSeconds",
+        "rechargePerSecond",
+        "drainPerSecond",
+        "stable",
+        "enduranceSeconds"
+      ],
+      "properties": {
+        "charge": {
+          "type": "number"
+        },
+        "capacity": {
+          "type": "number"
+        },
+        "rechargeSeconds": {
+          "type": "number"
+        },
+        "rechargePerSecond": {
+          "type": "number"
+        },
+        "drainPerSecond": {
+          "type": "number"
+        },
+        "stable": {
+          "type": "boolean"
+        },
+        "enduranceSeconds": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layer",
+        "hitPoints",
+        "maximumHitPoints",
+        "resistances"
+      ],
+      "properties": {
+        "layer": {
+          "enum": [
+            "shield",
+            "armor",
+            "hull"
+          ]
+        },
+        "hitPoints": {
+          "type": "number"
+        },
+        "maximumHitPoints": {
+          "type": "number"
+        },
+        "resistances": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "damageType",
+              "value"
+            ],
+            "properties": {
+              "damageType": {
+                "enum": [
+                  "electromagnetic",
+                  "thermal",
+                  "kinetic",
+                  "explosive"
+                ]
+              },
+              "value": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "id",
+        "hullId",
+        "nameKey",
+        "descriptionKey",
+        "traitKeys",
+        "active",
+        "location",
+        "cargoInventoryId",
+        "fittingInventoryId",
+        "slots",
+        "slotUse",
+        "hardpointUse",
+        "power",
+        "processing",
+        "attributes",
+        "layers",
+        "capacitor",
+        "weapons",
+        "defense",
+        "violations",
+        "warnings",
+        "undockable"
+      ],
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "hullId": {
+          "type": "string",
+          "pattern": "^hull(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "descriptionKey": {
+          "type": "string"
+        },
+        "traitKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "location": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "stationId",
+            "systemId"
+          ],
+          "properties": {
+            "kind": {
+              "const": "station"
+            },
+            "stationId": {
+              "type": "string",
+              "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            },
+            "systemId": {
+              "type": "string",
+              "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            }
+          }
+        },
+        "cargoInventoryId": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "fittingInventoryId": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/fittedSlot"
+          }
+        },
+        "slotUse": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/resourceUse"
+          }
+        },
+        "hardpointUse": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/resourceUse"
+          }
+        },
+        "power": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/resourceUse"
+        },
+        "processing": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/resourceUse"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/stat"
+          }
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/layer"
+          }
+        },
+        "capacitor": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/capacitor"
+        },
+        "weapons": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/weapon"
+          }
+        },
+        "defense": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "burstHitPoints",
+            "sustainedHitPointsPerSecond"
+          ],
+          "properties": {
+            "burstHitPoints": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "sustainedHitPointsPerSecond": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/issue"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/issue"
+          }
+        },
+        "undockable": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

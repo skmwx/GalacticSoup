@@ -7,6 +7,8 @@
  * content only through the content port.
  */
 export * from './assets';
+export * from './attributes';
+export * from './fitting';
 export {
   authoritativeView,
   CAMPAIGN_STATE_VERSION,

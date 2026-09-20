@@ -1,9 +1,14 @@
-import type { ItemStack, Provenance } from './types';
+import { canonicalJson } from '@shared';
+import type { ItemStack, Provenance, StackState } from './types';
 import { InventoryError } from './types';
 
 /** @implements TECH-8.3, FUNC-6.2 */
 export function compatibleStacks(a: ItemStack, b: ItemStack): boolean {
-  return a.definitionId === b.definitionId && a.state === b.state;
+  return a.definitionId === b.definitionId && sameState(a.state, b.state);
+}
+/** Two states are the same when their canonical forms are identical. */
+export function sameState(a: StackState, b: StackState): boolean {
+  return a.kind === b.kind && canonicalJson(a) === canonicalJson(b);
 }
 export function safeCount(value: number): number {
   if (!Number.isSafeInteger(value) || value < 0) throw new InventoryError('numericOverflow');

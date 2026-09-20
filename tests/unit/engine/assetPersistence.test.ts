@@ -63,12 +63,15 @@ describe('asset persistence and ownership', () => {
     expect(!result.ok && result.error.messageKey).toBe('error.saveLoad.contentIncompatible');
     expect(!result.ok && result.error.params!['firstMissing']).toBe('item.missing');
   });
-  it('rejects the unreleased previous save shape with no migration obligation [TECH-11.4]', () => {
-    const old = JSON.parse(readFileSync('tests/fixtures/saves/format-1.json', 'utf8')) as unknown;
-    const before = canonicalJson(old);
-    expect(loadSave(old, { content }).ok).toBe(false);
-    expect(canonicalJson(old)).toBe(before);
-  });
+  it.each(['format-1.json', 'format-2.json'])(
+    'rejects the unreleased %s save shape with no migration obligation [TECH-11.4]',
+    (fixture) => {
+      const old = JSON.parse(readFileSync(`tests/fixtures/saves/${fixture}`, 'utf8')) as unknown;
+      const before = canonicalJson(old);
+      expect(loadSave(old, { content }).ok).toBe(false);
+      expect(canonicalJson(old)).toBe(before);
+    },
+  );
   it('matches the save schema when nested fields are missing, unexpected or malformed [TECH-11.2, TECH-14]', () => {
     for (const field of ['ships', 'inventories', 'stacks'] as const) {
       for (const bad of [null, [], 1]) {

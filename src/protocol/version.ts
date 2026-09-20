@@ -1,10 +1,11 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
- * Version 2 includes the wallet, asset and inventory contracts alongside the
+ * Version 3 adds ship inspection, the fitting draft and item comparison to the
+ * wallet, asset and inventory contracts of version 2, alongside the
  * campaign/session, time and persistence requests.
  */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

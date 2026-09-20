@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/ship.get.data.schema.json",
+  "title": "ShipData",
+  "$ref": "https://galacticsoup.invalid/schemas/protocol/fitting.common.schema.json#/$defs/ship"
+}

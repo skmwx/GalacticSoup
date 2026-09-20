@@ -60,7 +60,7 @@ describe('campaign creation', () => {
       accumulatorMs: 0,
     });
     expect(state.revision).toBe(0);
-    expect(state.nextEntityOrdinal).toBe(7);
+    expect(state.nextEntityOrdinal).toBe(9);
     expect(state.nextEventOrdinal).toBe(1);
     expect(state.scheduler.entries).toEqual([]);
   });

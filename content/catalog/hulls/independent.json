@@ -67,8 +67,8 @@
         "mining": 0
       },
       "fitting": {
-        "powerOutput": 42,
-        "processingOutput": 145
+        "powerOutput": 24,
+        "processingOutput": 70
       },
       "referenceValueCredits": 12000,
       "insuranceClass": "light",
