@@ -3,6 +3,8 @@ import type { ContentRepository } from '@engine/ports';
 import { startingAssets } from '../assets/start';
 import type { AssetState } from '../assets/types';
 import type { FittingDraft } from '../fitting/types';
+import { startingEconomy } from '../economy/state';
+import type { EconomyState } from '../economy/types';
 
 import { deriveCampaignId, type CampaignId } from './identity';
 import { emptyScheduler, type SchedulerState } from './scheduler';
@@ -24,7 +26,7 @@ import { seedStreams, type RandomStreams } from '../random/streams';
  */
 
 /** Shape version of the authoritative payload, carried by every snapshot. */
-export const CAMPAIGN_STATE_VERSION = 3;
+export const CAMPAIGN_STATE_VERSION = 4;
 
 /** Upper bound on simulation time, about 31 simulated years. */
 export const MAX_SIMULATION_TIME_MS = 1_000_000_000_000;
@@ -43,6 +45,7 @@ export interface TimeState {
 
 export interface CampaignState {
   readonly assets: AssetState;
+  readonly economy: EconomyState;
   /**
    * The fitting draft the player has open, or `null` when none is
    * (Functional Specification 8.4-8.5). It is authoritative: closing the game
@@ -89,12 +92,14 @@ export interface CreateCampaignInput {
  * player has not asked for it (Functional Specification 3.3).
  */
 export function createCampaign(input: CreateCampaignInput, content: ContentRepository): CampaignState {
-  const starting = startingAssets(deriveCampaignId(input.seed), content);
+  const campaignId = deriveCampaignId(input.seed);
+  const starting = startingAssets(campaignId, content);
   return {
     assets: starting.assets,
+    economy: startingEconomy(content),
     fitting: null,
     stateVersion: CAMPAIGN_STATE_VERSION,
-    campaignId: deriveCampaignId(input.seed),
+    campaignId,
     displayName: input.displayName,
     seed: input.seed,
     createdAtRealMs: input.createdAtRealMs,

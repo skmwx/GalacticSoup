@@ -4,6 +4,7 @@ import { type EngineError, invalidRequest } from './errors';
 import { isRequestType, SAVE_KIND_NAMES, type RequestType } from './requests';
 import { findTransportViolation } from './transport';
 import { MAX_REQUEST_ID_LENGTH, PROTOCOL_VERSION, UNKNOWN_REQUEST_ID } from './version';
+import { ECONOMIC_ACTIONS } from './economy';
 
 /**
  * Envelope and payload validation (Technical Specification 7.2, step 1).
@@ -228,6 +229,49 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
       return null;
     }
 
+    case 'station.services':
+    case 'market.listings': {
+      const unexpected = unexpectedField(fields, ['stationId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      return isDefinitionIdIn(fields['stationId'], 'station')
+        ? null : payloadField(type, 'stationId', 'format');
+    }
+
+    case 'market.previewBuy': {
+      const unexpected = unexpectedField(fields, ['stationId', 'itemId', 'quantity', 'destinationInventoryId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (!isDefinitionIdIn(fields['stationId'], 'station')) return payloadField(type, 'stationId', 'format');
+      if (!isDefinitionId(fields['itemId'])) return payloadField(type, 'itemId', 'format');
+      if (!isPositiveWhole(fields['quantity'])) return payloadField(type, 'quantity', 'format');
+      if ('destinationInventoryId' in fields && !isEntityId(fields['destinationInventoryId'])) {
+        return payloadField(type, 'destinationInventoryId', 'format');
+      }
+      return null;
+    }
+
+    case 'market.previewSell': {
+      const unexpected = unexpectedField(fields, ['stationId', 'stackId', 'quantity']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (!isDefinitionIdIn(fields['stationId'], 'station')) return payloadField(type, 'stationId', 'format');
+      if (!isEntityId(fields['stackId'])) return payloadField(type, 'stackId', 'format');
+      return isPositiveWhole(fields['quantity']) ? null : payloadField(type, 'quantity', 'format');
+    }
+
+    case 'repair.preview':
+    case 'resupply.preview':
+    case 'insurance.preview': {
+      const unexpected = unexpectedField(fields, ['shipId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      return isEntityId(fields['shipId']) ? null : payloadField(type, 'shipId', 'format');
+    }
+
+    case 'market.confirmBuy':
+    case 'market.confirmSell':
+    case 'repair.confirm':
+    case 'resupply.confirm':
+    case 'insurance.confirm':
+      return validatePreviewToken(type, fields);
+
     case 'campaign.create': {
       const unexpected = unexpectedField(fields, ['displayName', 'seed', 'createdAtRealMs']);
       if (unexpected !== null) {
@@ -366,6 +410,37 @@ function payloadField(type: RequestType, field: string, reason: string): EngineE
 
 function isWholeNonNegative(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+
+function isPositiveWhole(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+}
+
+function validatePreviewToken(type: RequestType, fields: Record<string, unknown>): EngineError | null {
+  const unexpected = unexpectedField(fields, ['token']);
+  if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+  const token = fields['token'];
+  if (typeof token !== 'object' || token === null || Array.isArray(token)) {
+    return payloadField(type, 'token', 'format');
+  }
+  const values = token as Record<string, unknown>;
+  const tokenUnexpected = unexpectedField(values,
+    ['action', 'canonicalParameters', 'campaignRevision', 'relevantVersions', 'valuesHash']);
+  if (tokenUnexpected !== null) return payloadField(type, `token.${tokenUnexpected}`, 'unexpectedField');
+  if (!(ECONOMIC_ACTIONS as readonly unknown[]).includes(values['action'])) {
+    return payloadField(type, 'token.action', 'format');
+  }
+  if (typeof values['canonicalParameters'] !== 'string' || values['canonicalParameters'].length === 0 ||
+      values['canonicalParameters'].length > 4096) return payloadField(type, 'token.canonicalParameters', 'format');
+  if (!isWholeNonNegative(values['campaignRevision'])) return payloadField(type, 'token.campaignRevision', 'format');
+  const versions = values['relevantVersions'];
+  if (typeof versions !== 'object' || versions === null || Array.isArray(versions) ||
+      Object.keys(versions).length === 0 || Object.keys(versions).length > 128 ||
+      !Object.values(versions).every(isWholeNonNegative)) {
+    return payloadField(type, 'token.relevantVersions', 'format');
+  }
+  return typeof values['valuesHash'] === 'string' && /^[0-9a-f]{64}$/.test(values['valuesHash'])
+    ? null : payloadField(type, 'token.valuesHash', 'format');
 }
 
 function fail(requestId: string, error: EngineError): EnvelopeValidation {

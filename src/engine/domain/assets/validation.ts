@@ -62,16 +62,23 @@ function condition(value: unknown): boolean {
   const damage = value['damage'];
   return shape(damage, [...DEFENSE_LAYERS]) && Object.values(damage).every(isNonNegativeNumber);
 }
+function insurance(value: unknown): boolean {
+  return shape(value, ['coverage', 'premiumPaidCredits']) &&
+    (value['coverage'] === 'basic' || value['coverage'] === 'enhanced') &&
+    isCount(value['premiumPaidCredits']);
+}
 /** Strict runtime counterpart of the save schema; runs before dereferencing any stored entity. */
 export function isAssetState(value: unknown): value is AssetState {
-  if (!shape(value, ['credits', 'location', 'activeShipId', 'ships', 'inventories', 'stacks']) ||
-      !isCount(value['credits']) || !docked(value['location']) || !isEntityId(value['activeShipId'])) return false;
+  if (!shape(value, ['version', 'credits', 'location', 'activeShipId', 'ships', 'inventories', 'stacks']) ||
+      !isCount(value['version']) || value['version'] === 0 || !isCount(value['credits']) ||
+      !docked(value['location']) || !isEntityId(value['activeShipId'])) return false;
   const ships = value['ships'], inventories = value['inventories'], stacks = value['stacks'];
   if (!record(ships) || !record(inventories) || !record(stacks)) return false;
   if (![ships, inventories, stacks].every((map) => Object.keys(map).every(isEntityId))) return false;
-  if (!Object.values(ships).every((ship) => shape(ship, ['id', 'hullId', 'cargoInventoryId', 'fittingInventoryId', 'location', 'condition']) &&
+  if (!Object.values(ships).every((ship) => shape(ship, ['id', 'hullId', 'cargoInventoryId', 'fittingInventoryId', 'location', 'condition', 'insurance']) &&
     isEntityId(ship['id']) && definition(ship['hullId'], 'hull') && isEntityId(ship['cargoInventoryId']) &&
-    isEntityId(ship['fittingInventoryId']) && docked(ship['location']) && condition(ship['condition']))) return false;
+    isEntityId(ship['fittingInventoryId']) && docked(ship['location']) && condition(ship['condition']) &&
+    insurance(ship['insurance']))) return false;
   if (!Object.values(inventories).every((inv) => shape(inv, ['id', 'location', 'capacity']) &&
     isEntityId(inv['id']) && location(inv['location']) && capacity(inv['capacity']))) return false;
   return Object.values(stacks).every((s) => {

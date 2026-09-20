@@ -1,6 +1,7 @@
 import { isDefinitionId, type DefinitionId } from '@shared';
 import { isAssetState } from '../assets/validation';
 import { parseSlotKey } from '../fitting/types';
+import { isEconomyState } from '../economy/validation';
 
 import { isCampaignId, isCampaignSeed, isEntityId, MAX_ORDINAL } from './identity';
 import { isRandomStreams } from '../random/streams';
@@ -102,6 +103,7 @@ export function readCampaignState(value: unknown): CampaignReadResult {
 
   readScheduler(value['scheduler'], add);
   if (!isAssetState(value['assets'])) add('assetShape', 'state.assets', 'Saved assets are missing or malformed.');
+  if (!isEconomyState(value['economy'])) add('economyShape', 'state.economy', 'Saved station economies are missing or malformed.');
   readFittingDraft(value['fitting'], add);
 
   if (issues.length > 0) {
@@ -139,19 +141,16 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
     references.push(planned.moduleId);
     if (planned.ammunitionId !== null) references.push(planned.ammunitionId);
   }
-  for (const entry of state.scheduler.entries) {
-    // A boundary kind is an engine enumeration rather than a definition id.
-    // Only a kind that names a definition is collected, which is the seam a
-    // later phase extends.
-    if (isDefinitionId(entry.kind)) {
-      references.push(entry.kind);
-    }
+  for (const station of Object.values(state.economy.stations)) {
+    references.push(station.stationId);
+    for (const listing of Object.values(station.listings)) references.push(listing.itemId);
   }
   return [...new Set(references)].sort();
 }
 
 const STATE_FIELDS: readonly string[] = [
   'assets',
+  'economy',
   'fitting',
   'stateVersion',
   'campaignId',

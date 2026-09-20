@@ -27,6 +27,10 @@
       "additionalProperties": {
         "anyOf": [{ "type": "string" }, { "type": "number" }, { "type": "boolean" }]
       }
+    },
+    "replacementPreview": {
+      "description": "Current authoritative preview returned with STALE_PREVIEW.",
+      "type": "object"
     }
   }
 }

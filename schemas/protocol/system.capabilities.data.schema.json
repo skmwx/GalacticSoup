@@ -11,7 +11,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 3
+      "const": 4
     },
     "engineVersion": {
       "type": "string",

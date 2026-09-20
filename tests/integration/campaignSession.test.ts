@@ -79,7 +79,8 @@ describe('campaign session over a transport', () => {
       expect(created.committed).toBe(true);
       expect(created.revision).toBe(1);
       expect(created.invalidations).toEqual(
-        ['assets', 'fitting', 'frame', 'inventory', 'saves', 'session', 'ship', 'wallet'],
+        ['assets', 'fitting', 'frame', 'insurance', 'inventory', 'market', 'repair', 'resupply',
+          'saves', 'session', 'ship', 'station', 'wallet'],
       );
 
       const running = await gateway.request('time.set', { paused: false, rate: 1 });
@@ -90,8 +91,8 @@ describe('campaign session over a transport', () => {
 
       const frame = await gateway.request('campaign.frame', EMPTY_PAYLOAD);
       expect(frame.ok && (frame.data as FrameData).paused).toBe(false);
-      expect(frame.ok && (frame.data as FrameData).scheduledBoundaryCount).toBe(0);
-      expect(frame.ok && (frame.data as FrameData).nextBoundaryAtMs).toBeNull();
+      expect(frame.ok && (frame.data as FrameData).scheduledBoundaryCount).toBe(1);
+      expect(frame.ok && (frame.data as FrameData).nextBoundaryAtMs).toBe(3_600_000);
 
       const reset = await gateway.request('campaign.reset', EMPTY_PAYLOAD);
       expect(reset.ok && reset.data.campaignId).toBeNull();

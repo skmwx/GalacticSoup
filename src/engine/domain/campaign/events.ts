@@ -20,6 +20,10 @@ export const DOMAIN_EVENT_KINDS = [
   'fitting.draftOpened',
   'fitting.draftReverted',
   'inventory.changed',
+  'market.transactionCommitted',
+  'repair.completed',
+  'resupply.completed',
+  'insurance.enhancedPurchased',
   'campaign.closed',
   'campaign.created',
   'campaign.reset',
@@ -46,6 +50,7 @@ export interface DomainEvent {
  */
 export const PROJECTION_TOPICS = [
   'session', 'frame', 'saves', 'assets', 'inventory', 'wallet', 'ship', 'fitting',
+  'station', 'market', 'repair', 'resupply', 'insurance',
 ] as const;
 
 export type ProjectionTopic = (typeof PROJECTION_TOPICS)[number];

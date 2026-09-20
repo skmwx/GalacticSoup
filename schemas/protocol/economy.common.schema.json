@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json",
+  "title": "Economy protocol common values",
+  "$defs": {
+    "formulaTrace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formulaKey", "operands", "unroundedResult", "displayResult"],
+      "properties": {
+        "formulaKey": { "type": "string", "minLength": 1 },
+        "operands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "value"],
+            "properties": {
+              "key": { "type": "string", "minLength": 1 },
+              "value": { "type": "number" }
+            }
+          }
+        },
+        "unroundedResult": { "type": "number" },
+        "displayResult": { "type": "number" }
+      }
+    },
+    "marketItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definitionId", "nameKey", "descriptionKey", "kind", "unitVolumeCubicDecimetres", "referenceValueCredits"],
+      "properties": {
+        "definitionId": { "type": "string", "minLength": 1 },
+        "nameKey": { "type": "string", "minLength": 1 },
+        "descriptionKey": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["hull", "module", "ammunition", "item"] },
+        "unitVolumeCubicDecimetres": { "type": "integer", "minimum": 0 },
+        "referenceValueCredits": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "previewToken": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "canonicalParameters", "campaignRevision", "relevantVersions", "valuesHash"],
+      "properties": {
+        "action": { "enum": ["market.buy", "market.sell", "repair", "resupply", "insurance.enhance"] },
+        "canonicalParameters": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "campaignRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "relevantVersions": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 128,
+          "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+        },
+        "valuesHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    }
+  }
+}

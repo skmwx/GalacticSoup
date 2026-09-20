@@ -45,16 +45,9 @@ Review the MVP Scope document and create MVP Implementation Plan. Implementation
 # 010 Claude Opus EH
 Read the documents in docs\ root folder and docs\human-input .
 
-Implement phase 1 of the MVP.
-Phase 1 is implemented, implement phase 2 of the MVP.
-Phase 1 and 2 are implemented, implement phase 3 of the MVP.
-Phase 1 through 3 are implemented, implement phase 4 of the MVP.
+Phase 1 through 6 are implemented, implement phase 7 of the MVP.
 
 1-4: Opus EH
 5: Astra EH
 6: Opus EH
-
-# 011 Codex Astra EH
-Read the documents in docs\ root folder and docs\human-input .
-
-Phase 1 through 4 are implemented, implement phase 5 of the MVP.
+7: Sol EH

@@ -31,6 +31,7 @@ export function startingAssets(campaignId: CampaignId, content: ContentRepositor
     campaignId,
     nextEntityOrdinal: 2,
     assets: {
+      version: 0,
       credits: rules.startingCredits,
       location,
       activeShipId: shipId,
@@ -58,6 +59,7 @@ export function startingAssets(campaignId: CampaignId, content: ContentRepositor
       damage: { shield: 0, armor: 0, hull: 0 },
       capacitorCharge: 0,
     },
+    insurance: { coverage: 'basic', premiumPaidCredits: 0 },
   };
 
   for (const item of [...rules.startingItems].sort(byDefinitionId)) {
@@ -88,6 +90,10 @@ export function startingAssets(campaignId: CampaignId, content: ContentRepositor
       condition: { ...ship.condition, capacitorCharge: attributeValue(derived, 'capacitorCapacity') },
     };
   }
+
+  // Creation uses the ordinary inventory writer several times; consumers need
+  // only one initial aggregate version, independent of how the fit was assembled.
+  draft.assets.version = 1;
 
   return draft;
 }

@@ -1,5 +1,5 @@
 import { createCampaign, type CampaignState } from '@engine/domain';
-import { advanceTime, type BoundaryResolvers } from '@engine/simulation';
+import { advanceTime, resolveEconomyHour, scheduleBoundary, type BoundaryResolvers } from '@engine/simulation';
 import type { AdvanceTimePayload, CreateCampaignPayload, SetTimePayload } from '@protocol';
 
 import {
@@ -24,12 +24,13 @@ import {
 /**
  * Boundary resolvers installed in the shipped engine.
  *
- * This phase implements the clock and the queue, not a gameplay system, so
- * nothing is registered yet. A queued boundary with no resolver is reported
- * as `scheduler.boundaryUnhandled` rather than dropped, and each later phase
- * registers the kinds it owns.
+ * Domain event kinds stay outside the scheduler; each system registers its
+ * resolver here. A queued boundary with no resolver is reported as
+ * `scheduler.boundaryUnhandled` rather than dropped.
  */
-export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {};
+export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {
+  'economy.hour': resolveEconomyHour,
+};
 
 /**
  * The internal payload of `campaign.resume`. The protocol request carries no
@@ -56,6 +57,7 @@ export function handleCreateCampaign(
   }, transaction.content);
 
   transaction.openCampaign(state);
+  scheduleBoundary(transaction.requireDraft(), { kind: 'economy.hour', dueAtMs: 3_600_000 });
   transaction.publish('campaign.created', { campaignId: state.campaignId });
   transaction.invalidate('session');
   transaction.invalidate('frame');
@@ -65,6 +67,11 @@ export function handleCreateCampaign(
   transaction.invalidate('wallet');
   transaction.invalidate('ship');
   transaction.invalidate('fitting');
+  transaction.invalidate('station');
+  transaction.invalidate('market');
+  transaction.invalidate('repair');
+  transaction.invalidate('resupply');
+  transaction.invalidate('insurance');
   // A new campaign must be resumable before the player touches anything
   // (Functional Specification 3.4).
   transaction.requestAutosave();
@@ -97,6 +104,11 @@ export function handleResumeCampaign(
   transaction.invalidate('wallet');
   transaction.invalidate('ship');
   transaction.invalidate('fitting');
+  transaction.invalidate('station');
+  transaction.invalidate('market');
+  transaction.invalidate('repair');
+  transaction.invalidate('resupply');
+  transaction.invalidate('insurance');
   return APPLIED;
 }
 
@@ -121,6 +133,11 @@ export function handleCloseCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('wallet');
   transaction.invalidate('ship');
   transaction.invalidate('fitting');
+  transaction.invalidate('station');
+  transaction.invalidate('market');
+  transaction.invalidate('repair');
+  transaction.invalidate('resupply');
+  transaction.invalidate('insurance');
   return APPLIED;
 }
 
@@ -145,6 +162,11 @@ export function handleResetCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('wallet');
   transaction.invalidate('ship');
   transaction.invalidate('fitting');
+  transaction.invalidate('station');
+  transaction.invalidate('market');
+  transaction.invalidate('repair');
+  transaction.invalidate('resupply');
+  transaction.invalidate('insurance');
   return APPLIED;
 }
 

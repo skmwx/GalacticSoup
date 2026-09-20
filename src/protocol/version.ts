@@ -1,11 +1,10 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
- * Version 3 adds ship inspection, the fitting draft and item comparison to the
- * wallet, asset and inventory contracts of version 2, alongside the
- * campaign/session, time and persistence requests.
+ * Version 4 adds local market, repair, resupply and insurance previews and
+ * confirmations to the station preparation contracts of version 3.
  */
-export const PROTOCOL_VERSION = 3;
+export const PROTOCOL_VERSION = 4;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

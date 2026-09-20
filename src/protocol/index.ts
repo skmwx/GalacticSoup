@@ -6,6 +6,7 @@ export { failureResponse, isSuccess, successResponse } from './envelope';
 export type { ClientRequest, EngineFailure, EngineResponse, EngineSuccess } from './envelope';
 export * from './assets';
 export * from './fitting';
+export * from './economy';
 export {
   contentError,
   contentErrorMessageKey,
@@ -35,6 +36,7 @@ export {
   saveWriteError,
   saveWriteMessageKey,
   staleRevision,
+  stalePreview,
 } from './errors';
 export type {
   ContentErrorReason,

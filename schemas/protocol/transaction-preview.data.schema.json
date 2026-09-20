@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/transaction-preview.data.schema.json",
+  "title": "TransactionPreviewData",
+  "description": "State-bound local market, repair, resupply or insurance preview (Technical Specification 7.4).",
+  "type": "object",
+  "required": ["action", "available", "unavailableReason", "token", "walletDeltaCredits", "totalCredits", "traces"],
+  "properties": {
+    "action": { "enum": ["market.buy", "market.sell", "repair", "resupply", "insurance.enhance"] },
+    "available": { "type": "boolean" },
+    "unavailableReason": { "type": ["string", "null"] },
+    "token": {
+      "anyOf": [
+        { "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/previewToken" },
+        { "type": "null" }
+      ]
+    },
+    "walletDeltaCredits": { "type": "integer" },
+    "totalCredits": { "type": "integer", "minimum": 0 },
+    "traces": {
+      "type": "array",
+      "items": { "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/formulaTrace" }
+    }
+  },
+  "additionalProperties": true
+}

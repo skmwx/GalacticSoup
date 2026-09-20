@@ -7,6 +7,7 @@
  */
 export { advanceTime, MAX_BOUNDARIES_PER_QUANTUM } from './clock';
 export type { AdvanceOutcome, BoundaryResolver, BoundaryResolvers } from './clock';
+export { resolveEconomyHour } from './economy';
 export type { SimulationContext } from './context';
 export {
   cancelBoundariesOwnedBy,

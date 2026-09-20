@@ -1,5 +1,5 @@
 /**
- * Protocol version 3 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 4 request catalogue (Technical Specification 7.1, 18).
  *
  * Adds ship inspection, the fitting draft and item comparison to the physical
  * inventory of version 2. Capabilities list the accepted request types. Older
@@ -13,6 +13,19 @@ import type { AssetsData, WalletData, InventoryData, ItemInspectionData, Maximum
   StackPayload, HangarPayload, CargoPayload } from './assets';
 import type { BeginFittingPayload, ClearFittingSlotPayload, ComparePayload, ComparisonData,
   FittingDraftData, SetFittingSlotPayload, ShipData, ShipPayload, UndockValidityData } from './fitting';
+import type {
+  ConfirmPreviewPayload,
+  InsurancePreviewData,
+  MarketBuyPreviewPayload,
+  MarketListingsData,
+  MarketSellPreviewPayload,
+  MarketTransactionPreviewData,
+  RepairPreviewData,
+  ResupplyPreviewData,
+  ShipEconomicPayload,
+  StationPayload,
+  StationServicesData,
+} from './economy';
 
 /** Payload for requests that take no arguments. */
 export type EmptyPayload = Record<string, never>;
@@ -264,6 +277,18 @@ export interface ProtocolContract {
   'fitting.revert': { payload: EmptyPayload; data: CommandResultData };
   'fitting.commit': { payload: EmptyPayload; data: CommandResultData };
   'item.compare': { payload: ComparePayload; data: ComparisonData };
+  'station.services': { payload: StationPayload; data: StationServicesData };
+  'market.listings': { payload: StationPayload; data: MarketListingsData };
+  'market.previewBuy': { payload: MarketBuyPreviewPayload; data: MarketTransactionPreviewData };
+  'market.confirmBuy': { payload: ConfirmPreviewPayload; data: CommandResultData };
+  'market.previewSell': { payload: MarketSellPreviewPayload; data: MarketTransactionPreviewData };
+  'market.confirmSell': { payload: ConfirmPreviewPayload; data: CommandResultData };
+  'repair.preview': { payload: ShipEconomicPayload; data: RepairPreviewData };
+  'repair.confirm': { payload: ConfirmPreviewPayload; data: CommandResultData };
+  'resupply.preview': { payload: ShipEconomicPayload; data: ResupplyPreviewData };
+  'resupply.confirm': { payload: ConfirmPreviewPayload; data: CommandResultData };
+  'insurance.preview': { payload: ShipEconomicPayload; data: InsurancePreviewData };
+  'insurance.confirm': { payload: ConfirmPreviewPayload; data: CommandResultData };
   'wallet.get': { payload: EmptyPayload; data: WalletData };
   'inventory.hangar': { payload: HangarPayload; data: InventoryData };
   'inventory.cargo': { payload: CargoPayload; data: InventoryData };
@@ -320,8 +345,20 @@ export const REQUEST_TYPES = [
   'inventory.transfer',
   'item.compare',
   'item.inspect',
+  'insurance.confirm',
+  'insurance.preview',
+  'market.confirmBuy',
+  'market.confirmSell',
+  'market.listings',
+  'market.previewBuy',
+  'market.previewSell',
+  'repair.confirm',
+  'repair.preview',
+  'resupply.confirm',
+  'resupply.preview',
   'ship.get',
   'ship.undockValidity',
+  'station.services',
   'system.capabilities',
   'system.health',
   'time.advance',
@@ -343,6 +380,11 @@ export const COMMAND_TYPES = [
   'inventory.merge',
   'inventory.split',
   'inventory.transfer',
+  'insurance.confirm',
+  'market.confirmBuy',
+  'market.confirmSell',
+  'repair.confirm',
+  'resupply.confirm',
   'campaign.close',
   'campaign.create',
   'campaign.reset',

@@ -63,7 +63,7 @@ describe('asset persistence and ownership', () => {
     expect(!result.ok && result.error.messageKey).toBe('error.saveLoad.contentIncompatible');
     expect(!result.ok && result.error.params!['firstMissing']).toBe('item.missing');
   });
-  it.each(['format-1.json', 'format-2.json'])(
+  it.each(['format-1.json', 'format-2.json', 'format-3.json'])(
     'rejects the unreleased %s save shape with no migration obligation [TECH-11.4]',
     (fixture) => {
       const old = JSON.parse(readFileSync(`tests/fixtures/saves/${fixture}`, 'utf8')) as unknown;

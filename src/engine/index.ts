@@ -51,6 +51,7 @@ export {
   CAMPAIGN_SEED_PATTERN,
   CAMPAIGN_STATE_VERSION,
   campaignStateHash,
+  bulkQuote,
   createCampaign,
   deriveCampaignId,
   draftOf,
@@ -63,10 +64,12 @@ export {
   MAX_DISPLAY_NAME_LENGTH,
   MAX_SCHEDULE_HORIZON_MS,
   MAX_SIMULATION_TIME_MS,
+  listingDefinition,
   PROJECTION_TOPICS,
   RANDOM_STREAMS,
   readCampaignState,
   seedStreams,
+  unitQuote,
   validateCampaign,
 } from '@engine/domain';
 export type {
@@ -89,6 +92,12 @@ export type {
   SchedulerEntry,
   SchedulerState,
   TimeState,
+  BulkQuote,
+  EconomyState,
+  FormulaTrace,
+  MarketListingState,
+  StationEconomyState,
+  UnitQuote,
 } from '@engine/domain';
 export {
   frameProjection,
@@ -100,6 +109,7 @@ export {
   cancelBoundariesOwnedBy,
   cancelBoundary,
   nextBoundary,
+  resolveEconomyHour,
   scheduleBoundary,
   takeBoundaryDue,
 } from '@engine/simulation';

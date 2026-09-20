@@ -1,9 +1,13 @@
-import { InventoryError, type CampaignState } from '@engine/domain';
+import { EconomyError, InventoryError, type CampaignState } from '@engine/domain';
 import { assetsProjection, walletProjection, hangarProjection, cargoProjection,
   itemInspectionProjection, maximumInventoryProjection, comparisonProjection,
   fittingDraftProjection, shipProjection, undockValidityProjection } from '@engine/projections';
+import { insurancePreview, marketBuyPreview, marketListingsProjection, marketSellPreview,
+  repairPreview, resupplyPreview, stationServicesProjection } from '@engine/projections';
 import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload,
   ComparePayload, ShipPayload } from '@protocol';
+import type { MarketBuyPreviewPayload, MarketSellPreviewPayload, ShipEconomicPayload,
+  StationPayload } from '@protocol';
 import {
   ContentIntegrityError,
   ContentLookupError,
@@ -376,6 +380,8 @@ function isAssetQuery(type: RequestType): boolean {
   return [
     'assets.list', 'wallet.get', 'inventory.hangar', 'inventory.cargo', 'item.inspect',
     'inventory.maximum', 'ship.get', 'ship.undockValidity', 'fitting.draft', 'item.compare',
+    'station.services', 'market.listings', 'market.previewBuy', 'market.previewSell',
+    'repair.preview', 'resupply.preview', 'insurance.preview',
   ].includes(type);
 }
 
@@ -405,6 +411,20 @@ function query(session: Session, type: RequestType, payload: unknown): unknown {
       const p = payload as ComparePayload;
       return comparisonProjection(session.campaign!, session.content, p.definitionId, p.againstDefinitionId);
     }
+    case 'station.services':
+      return stationServicesProjection(session.campaign!, session.content, (payload as StationPayload).stationId);
+    case 'market.listings':
+      return marketListingsProjection(session.campaign!, session.content, (payload as StationPayload).stationId);
+    case 'market.previewBuy':
+      return marketBuyPreview(session.campaign!, session.content, payload as MarketBuyPreviewPayload);
+    case 'market.previewSell':
+      return marketSellPreview(session.campaign!, session.content, payload as MarketSellPreviewPayload);
+    case 'repair.preview':
+      return repairPreview(session.campaign!, session.content, payload as ShipEconomicPayload);
+    case 'resupply.preview':
+      return resupplyPreview(session.campaign!, session.content, payload as ShipEconomicPayload);
+    case 'insurance.preview':
+      return insurancePreview(session.campaign!, session.content, payload as ShipEconomicPayload);
     case 'system.health':
       return handleHealth(context);
     case 'system.capabilities':
@@ -432,6 +452,11 @@ function describeFailure(type: RequestType, error: unknown): ReturnType<typeof i
     const failure = ruleViolation(error.reason);
     return error.reason === 'itemNotFound' || error.reason === 'inventoryNotFound'
       ? { ...failure, code: 'NOT_FOUND' } : failure;
+  }
+  if (error instanceof EconomyError) {
+    return error.reason === 'stationNotFound' || error.reason === 'listingNotFound'
+      ? createEngineError('NOT_FOUND', 'error.notFound', { type, reason: error.reason })
+      : ruleViolation(error.reason === 'invalidPreview' ? 'invalidPreview' : 'marketUnavailable');
   }
   if (error instanceof ContentLookupError) {
     return createEngineError('NOT_FOUND', 'error.notFound', {

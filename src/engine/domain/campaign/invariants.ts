@@ -1,6 +1,7 @@
 import { sortedKeys } from '@shared';
 import type { ContentRepository } from '@engine/ports';
 import { validateAssets } from '../assets/validation';
+import { validateEconomy } from '../economy/validation';
 
 import { isCampaignId, isEntityId, MAX_ORDINAL } from './identity';
 import { RANDOM_STREAMS, isRandomStreams } from '../random/streams';
@@ -110,6 +111,7 @@ export function validateCampaign(state: CampaignState, content?: ContentReposito
 
   validateScheduler(state, add);
   validateAssets(state, add, content);
+  validateEconomy(state, add, content);
 
   return issues;
 }

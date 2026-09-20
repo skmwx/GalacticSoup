@@ -44,6 +44,9 @@ let validateStateHashData: Validator;
 let validateSaveStatusData: Validator;
 let validateSaveSlotData: Validator;
 let validateSaveEnvelope: Validator;
+let validateStationServicesData: Validator;
+let validateMarketListingsData: Validator;
+let validateTransactionPreviewData: Validator;
 
 const content = shippedContent();
 
@@ -56,6 +59,7 @@ beforeAll(() => {
   const ajv = new AjvConstructor({ allErrors: true, strict: true });
   ajv.addSchema(loadSchema('engine-error.schema.json'));
   ajv.addSchema(loadSchema('domain-event.schema.json'));
+  ajv.addSchema(loadSchema('economy.common.schema.json'));
   validateRequest = ajv.compile(loadSchema('client-request.schema.json')) as Validator;
   validateResponse = ajv.compile(loadSchema('engine-response.schema.json')) as Validator;
   validateHealthData = ajv.compile(loadSchema('system.health.data.schema.json')) as Validator;
@@ -79,6 +83,15 @@ beforeAll(() => {
   ) as unknown as Validator;
   validateSaveSlotData = ajv.compile(
     loadSchema('campaign.saves.data.schema.json'),
+  ) as Validator;
+  validateStationServicesData = ajv.compile(
+    loadSchema('station.services.data.schema.json'),
+  ) as Validator;
+  validateMarketListingsData = ajv.compile(
+    loadSchema('market.listings.data.schema.json'),
+  ) as Validator;
+  validateTransactionPreviewData = ajv.compile(
+    loadSchema('transaction-preview.data.schema.json'),
   ) as Validator;
 
   const saves = new AjvConstructor({ allErrors: true, strict: true });
@@ -438,6 +451,29 @@ describe('campaign protocol schema parity', () => {
     expect(validateStateHashData(dataOf(hash))).toBe(true);
   });
 
+  it('publishes schemas for station economy projections and previews [TECH-7.1, TECH-7.4]', async () => {
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
+    await ask(
+      host,
+      'campaign.create',
+      { displayName: 'Vela', seed, createdAtRealMs: 1_700_000_000_000 },
+      'req-create-economy',
+    );
+    const stationId = content.rules.economy.startingStationId;
+    const services = await ask(host, 'station.services', { stationId }, 'req-services');
+    const listings = await ask(host, 'market.listings', { stationId }, 'req-listings');
+    const preview = await ask(host, 'market.previewBuy', {
+      stationId,
+      itemId: 'ammo.projectile.small.fusion',
+      quantity: 2,
+    }, 'req-market-preview');
+
+    const dataOf = (response: unknown): unknown => (response as { data: unknown }).data;
+    expect(validateStationServicesData(dataOf(services))).toBe(true);
+    expect(validateMarketListingsData(dataOf(listings))).toBe(true);
+    expect(validateTransactionPreviewData(dataOf(preview))).toBe(true);
+  });
+
   it('publishes a schema for every save response shape [TECH-7.1, TECH-11.3]', async () => {
     const host = createEngineHost({ content, saves: createMemorySaveStore() });
 
@@ -483,7 +519,7 @@ describe('campaign protocol schema parity', () => {
   });
 
   it('validates the golden save against the published save schema [TECH-11.2, TECH-17]', () => {
-    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-3.json');
+    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-4.json');
 
     expect(validateSaveEnvelope(JSON.parse(readFileSync(file, 'utf8')))).toBe(true);
   });

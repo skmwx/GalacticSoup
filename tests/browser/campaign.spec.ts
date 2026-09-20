@@ -144,7 +144,7 @@ test.describe('campaign persistence', () => {
           const saves = records.map((record) => record.document);
           const latest = saves.sort((a, b) => b.sequence - a.sequence)[0]!;
           db.close();
-          if (latest.formatVersion !== 3) reject(new Error('Expected format 3'));
+          if (latest.formatVersion !== 4) reject(new Error('Expected format 4'));
           else resolve(latest.state.assets);
         };
       };

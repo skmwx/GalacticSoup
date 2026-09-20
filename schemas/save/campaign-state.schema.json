@@ -2,11 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/save/campaign-state.schema.json",
   "title": "CampaignState",
-  "description": "Authoritative campaign state version 3: wallet, ships, physical inventories, fitted modules and the open fitting draft (Technical Specification 8, 11).",
+  "description": "Authoritative campaign state version 4: station economy, transaction versions, insurance and the version 3 ship and inventory state (Technical Specification 8, 10.4, 11).",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "assets",
+    "economy",
     "campaignId",
     "createdAtRealMs",
     "displayName",
@@ -22,7 +23,7 @@
   ],
   "properties": {
     "stateVersion": {
-      "const": 3
+      "const": 4
     },
     "campaignId": {
       "type": "string",
@@ -355,10 +356,111 @@
         }
       }
     },
+    "economy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stations"
+      ],
+      "properties": {
+        "stations": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+            "maxLength": 96
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stationId",
+              "services",
+              "listings"
+            ],
+            "properties": {
+              "stationId": {
+                "type": "string",
+                "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                "maxLength": 96
+              },
+              "services": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "market",
+                  "repair",
+                  "resupply",
+                  "insurance"
+                ],
+                "properties": {
+                  "market": { "$ref": "#/$defs/stationServiceState" },
+                  "repair": { "$ref": "#/$defs/stationServiceState" },
+                  "resupply": { "$ref": "#/$defs/stationServiceState" },
+                  "insurance": { "$ref": "#/$defs/stationServiceState" }
+                }
+              },
+              "listings": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                  "maxLength": 96
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "itemId",
+                    "stock",
+                    "stockAccumulator",
+                    "lastProcessedHour",
+                    "eventFactor",
+                    "version"
+                  ],
+                  "properties": {
+                    "itemId": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                      "maxLength": 96
+                    },
+                    "stock": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "stockAccumulator": {
+                      "type": "number",
+                      "exclusiveMinimum": -1,
+                      "exclusiveMaximum": 1
+                    },
+                    "lastProcessedHour": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "eventFactor": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "assets": {
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "version",
         "credits",
         "location",
         "activeShipId",
@@ -367,6 +469,11 @@
         "stacks"
       ],
       "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
         "credits": {
           "type": "integer",
           "minimum": 0,
@@ -415,7 +522,8 @@
               "cargoInventoryId",
               "fittingInventoryId",
               "location",
-              "condition"
+              "condition",
+              "insurance"
             ],
             "properties": {
               "id": {
@@ -494,6 +602,27 @@
                   "capacitorCharge": {
                     "type": "number",
                     "minimum": 0
+                  }
+                }
+              },
+              "insurance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "coverage",
+                  "premiumPaidCredits"
+                ],
+                "properties": {
+                  "coverage": {
+                    "enum": [
+                      "basic",
+                      "enhanced"
+                    ]
+                  },
+                  "premiumPaidCredits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
                   }
                 }
               }
@@ -876,6 +1005,26 @@
           }
         }
       ]
+    }
+  },
+  "$defs": {
+    "stationServiceState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available",
+        "version"
+      ],
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      }
     }
   }
 }

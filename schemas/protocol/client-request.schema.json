@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/client-request.schema.json",
   "title": "ClientRequest",
-  "description": "Protocol version 3 request envelope and payloads.",
+  "description": "Protocol version 4 request envelope and payloads.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 3
+      "const": 4
     },
     "requestId": {
       "type": "string",
@@ -56,8 +56,20 @@
         "inventory.transfer",
         "item.compare",
         "item.inspect",
+        "insurance.confirm",
+        "insurance.preview",
+        "market.confirmBuy",
+        "market.confirmSell",
+        "market.listings",
+        "market.previewBuy",
+        "market.previewSell",
+        "repair.confirm",
+        "repair.preview",
+        "resupply.confirm",
+        "resupply.preview",
         "ship.get",
         "ship.undockValidity",
+        "station.services",
         "system.capabilities",
         "system.health",
         "time.advance",
@@ -895,6 +907,90 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "station.services",
+              "market.listings"
+            ]
+          }
+        },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": { "$ref": "#/$defs/stationPayload" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": { "const": "market.previewBuy" }
+        },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": { "$ref": "#/$defs/marketBuyPreviewPayload" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": { "const": "market.previewSell" }
+        },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": { "$ref": "#/$defs/marketSellPreviewPayload" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "repair.preview",
+              "resupply.preview",
+              "insurance.preview"
+            ]
+          }
+        },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": { "$ref": "#/$defs/shipEconomicPayload" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "market.confirmBuy",
+              "market.confirmSell",
+              "repair.confirm",
+              "resupply.confirm",
+              "insurance.confirm"
+            ]
+          }
+        },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": { "$ref": "#/$defs/confirmPreviewPayload" }
+        }
+      }
     }
   ],
   "$defs": {
@@ -902,6 +998,104 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {}
+    },
+    "entityId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+      "maxLength": 128
+    },
+    "stationId": {
+      "type": "string",
+      "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
+    "definitionId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
+    "positiveQuantity": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "stationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stationId"],
+      "properties": {
+        "stationId": { "$ref": "#/$defs/stationId" }
+      }
+    },
+    "shipEconomicPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipId"],
+      "properties": {
+        "shipId": { "$ref": "#/$defs/entityId" }
+      }
+    },
+    "marketBuyPreviewPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stationId", "itemId", "quantity"],
+      "properties": {
+        "stationId": { "$ref": "#/$defs/stationId" },
+        "itemId": { "$ref": "#/$defs/definitionId" },
+        "quantity": { "$ref": "#/$defs/positiveQuantity" },
+        "destinationInventoryId": { "$ref": "#/$defs/entityId" }
+      }
+    },
+    "marketSellPreviewPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stationId", "stackId", "quantity"],
+      "properties": {
+        "stationId": { "$ref": "#/$defs/stationId" },
+        "stackId": { "$ref": "#/$defs/entityId" },
+        "quantity": { "$ref": "#/$defs/positiveQuantity" }
+      }
+    },
+    "confirmPreviewPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["token"],
+      "properties": {
+        "token": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "canonicalParameters", "campaignRevision", "relevantVersions", "valuesHash"],
+          "properties": {
+            "action": {
+              "enum": ["market.buy", "market.sell", "repair", "resupply", "insurance.enhance"]
+            },
+            "canonicalParameters": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "campaignRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "relevantVersions": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 128,
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "valuesHash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
     },
     "createCampaignPayload": {
       "type": "object",

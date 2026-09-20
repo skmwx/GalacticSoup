@@ -82,8 +82,14 @@ export interface ShipIdentity {
   readonly fittingInventoryId: InventoryId;
   readonly location: DockedLocation;
   readonly condition: ShipCondition;
+  readonly insurance: {
+    readonly coverage: 'basic' | 'enhanced';
+    readonly premiumPaidCredits: number;
+  };
 }
 export interface AssetState {
+  /** Version of the asset aggregate used to bind economic previews. */
+  readonly version: number;
   readonly credits: number;
   readonly location: DockedLocation;
   readonly activeShipId: EntityId;

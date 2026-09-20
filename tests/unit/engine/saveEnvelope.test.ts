@@ -29,7 +29,7 @@ import { GOLDEN_CAPTURE, GOLDEN_CONTENT } from '../../support/goldenSave.ts';
 const content = shippedContent();
 
 function golden(): SaveEnvelope {
-  const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-3.json');
+  const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-4.json');
   return JSON.parse(readFileSync(file, 'utf8')) as SaveEnvelope;
 }
 

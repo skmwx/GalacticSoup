@@ -5,6 +5,7 @@
  * changes state, consumes randomness or advances time.
  */
 export * from './assets';
+export * from './economy';
 export { itemDataOf } from './items';
 export { comparisonProjection } from './comparison';
 export {

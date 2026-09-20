@@ -9,6 +9,7 @@
 export * from './assets';
 export * from './attributes';
 export * from './fitting';
+export * from './economy';
 export {
   authoritativeView,
   CAMPAIGN_STATE_VERSION,

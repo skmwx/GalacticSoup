@@ -1,4 +1,5 @@
 import type { MessageKey } from '@shared';
+import type { TransactionPreviewData } from './economy.ts';
 
 /**
  * Stable error codes with localizable parameters
@@ -31,6 +32,8 @@ export interface EngineError {
   readonly code: EngineErrorCode;
   readonly messageKey: MessageKey;
   readonly params?: ErrorParams;
+  /** Present only for STALE_PREVIEW so the player can review current values. */
+  readonly replacementPreview?: TransactionPreviewData;
 }
 
 /** Default message key for each code. A specific failure may refine the key. */
@@ -84,6 +87,13 @@ export const RULE_VIOLATION_REASONS = [
   'fittingDraftOpen',
   'fittingUnavailable',
   'fittingItemsMissing',
+  'marketUnavailable',
+  'marketListingUnavailable',
+  'marketSourceUnavailable',
+  'repairUnavailable',
+  'resupplyUnavailable',
+  'insuranceUnavailable',
+  'invalidPreview',
   'campaignAlreadyOpen',
   'noCampaignOpen',
   'campaignMismatch',
@@ -304,6 +314,14 @@ export function invariantFailure(params?: ErrorParams): EngineError {
 /** The revision the caller expected is not the revision the campaign is at. */
 export function staleRevision(params?: ErrorParams): EngineError {
   return createEngineError('STALE_REVISION', ENGINE_ERROR_MESSAGE_KEYS.STALE_REVISION, params);
+}
+
+export function stalePreview(replacementPreview: TransactionPreviewData): EngineError {
+  return {
+    code: 'STALE_PREVIEW',
+    messageKey: ENGINE_ERROR_MESSAGE_KEYS.STALE_PREVIEW,
+    replacementPreview,
+  };
 }
 
 /**

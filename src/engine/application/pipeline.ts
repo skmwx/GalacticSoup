@@ -31,6 +31,7 @@ import {
   type CommitResult,
   type Transaction,
 } from './transaction';
+import { handleEconomyCommand } from './economyCommands';
 
 /**
  * The command pipeline (Technical Specification 7.2).
@@ -109,6 +110,12 @@ export function runCommand(request: CommandRequest): CommandResult {
 
 function apply(transaction: Transaction, request: CommandRequest): CommandOutcome {
   switch (request.type) {
+    case 'market.confirmBuy':
+    case 'market.confirmSell':
+    case 'repair.confirm':
+    case 'resupply.confirm':
+    case 'insurance.confirm':
+      return handleEconomyCommand(transaction, request.type, request.payload);
     case 'fitting.begin':
     case 'fitting.set':
     case 'fitting.clear':

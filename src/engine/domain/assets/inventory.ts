@@ -14,6 +14,7 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
   function atomic<T>(operation: (work: AssetDraft) => T): T {
     const work: AssetDraft = { ...draft, assets: deepClone(draft.assets) };
     const result = operation(work);
+    work.assets.version += 1;
     draft.assets = work.assets;
     draft.nextEntityOrdinal = work.nextEntityOrdinal;
     return result;
@@ -94,6 +95,32 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
         return put(work, { id: allocate(work), inventoryId: inventory.id, definitionId,
           quantity, state: PLAIN_STATE, provenance }, inventory.id, true);
       });
+    },
+    addAs(
+      inventoryId: string,
+      definitionId: DefinitionId,
+      quantity: number,
+      provenance: Provenance,
+      state: StackState,
+    ): EntityId {
+      return atomic((work) => {
+        const inventory = requireInventory(work.assets, inventoryId);
+        positiveQuantity(quantity);
+        for (const value of Object.values(provenance)) safeCount(value);
+        if (safeCount(provenance.grantedQuantity + provenance.purchasedQuantity) !== quantity ||
+            (provenance.purchasedQuantity === 0 && provenance.purchaseCostCredits !== 0)) {
+          throw new InventoryError('invalidQuantity');
+        }
+        if (quantity > maximumThatFits(work.assets, content, inventoryId, definitionId)) {
+          throw new InventoryError('insufficientCapacity');
+        }
+        return put(work, { id: allocate(work), inventoryId: inventory.id, definitionId,
+          quantity, state: deepClone(state), provenance }, inventory.id, true);
+      });
+    },
+    /** Removes physical units and returns the consumed portion with apportioned provenance. */
+    remove(stackId: string, quantity: number): ItemStack {
+      return atomic((work) => take(work, stackId, quantity));
     },
     split(stackId: string, quantity: number): EntityId {
       return atomic((work) => {
