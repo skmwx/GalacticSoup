@@ -1,10 +1,9 @@
 /**
- * Protocol version 4 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 5 request catalogue (Technical Specification 7.1, 18).
  *
- * Adds ship inspection, the fitting draft and item comparison to the physical
- * inventory of version 2. Capabilities list the accepted request types. Older
- * clients are rejected at the envelope boundary, before any command can mutate
- * campaign state.
+ * Adds the authored content catalogue to the station contracts of version 4.
+ * Capabilities list the accepted request types. Older clients are rejected at
+ * the envelope boundary, before any command can mutate campaign state.
  */
 
 import type { EngineError } from './errors';
@@ -58,6 +57,30 @@ export interface ContentSummaryData {
   readonly defaultLocale: string;
   readonly locales: readonly string[];
   readonly definitionCounts: Readonly<Record<string, number>>;
+}
+
+/** Payload of `content.messages` (Technical Specification 12.5). */
+export interface ContentMessagesPayload {
+  /** Absent asks for the content's default locale. */
+  readonly locale?: string;
+}
+
+/**
+ * The authored message catalogue of one locale
+ * (Technical Specification 6.1, 12.5).
+ *
+ * Projections carry message keys, never rendered text, and the keys they carry
+ * are authored beside the content they describe. The interface resolves them
+ * against this catalogue, so it renders an item's name without reaching past
+ * the engine into the content bundle.
+ */
+export interface ContentMessagesData {
+  readonly locale: string;
+  /** The locale actually answered, which may be the default one. */
+  readonly resolvedLocale: string;
+  readonly contentVersion: string;
+  /** Message key to template, in stable key order. */
+  readonly messages: Readonly<Record<string, string>>;
 }
 
 /** Payload of `campaign.create` (Functional Specification 3.1). */
@@ -300,6 +323,7 @@ export interface ProtocolContract {
   'system.health': { payload: EmptyPayload; data: HealthData };
   'system.capabilities': { payload: EmptyPayload; data: CapabilitiesData };
   'content.summary': { payload: EmptyPayload; data: ContentSummaryData };
+  'content.messages': { payload: ContentMessagesPayload; data: ContentMessagesData };
   'campaign.close': { payload: CloseCampaignPayload; data: CommandResultData };
   'campaign.create': { payload: CreateCampaignPayload; data: CommandResultData };
   'campaign.reset': { payload: EmptyPayload; data: CommandResultData };
@@ -329,6 +353,7 @@ export const REQUEST_TYPES = [
   'campaign.save',
   'campaign.saves',
   'campaign.session',
+  'content.messages',
   'content.summary',
   'diagnostics.stateHash',
   'fitting.begin',

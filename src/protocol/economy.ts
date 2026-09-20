@@ -5,6 +5,22 @@ export const ECONOMIC_ACTIONS = [
 ] as const;
 export type EconomicAction = (typeof ECONOMIC_ACTIONS)[number];
 
+/**
+ * A hull as a market row. A hull is bought like anything else but never
+ * occupies a hold, so it carries no unit volume.
+ */
+export interface HullItemData {
+  readonly definitionId: string;
+  readonly nameKey: string;
+  readonly descriptionKey: string;
+  readonly kind: 'hull';
+  readonly unitVolumeCubicDecimetres: 0;
+  readonly referenceValueCredits: number;
+}
+
+/** Anything a station market can quote. */
+export type MarketItemData = ItemData | HullItemData;
+
 export interface FormulaOperandData {
   readonly key: string;
   readonly value: number;
@@ -40,7 +56,7 @@ export interface PreviewBaseData {
 export interface MarketTransactionPreviewData extends PreviewBaseData {
   readonly action: 'market.buy' | 'market.sell';
   readonly stationId: string;
-  readonly item: ItemData | { readonly definitionId: string; readonly nameKey: string; readonly descriptionKey: string; readonly kind: 'hull'; readonly unitVolumeCubicDecimetres: 0; readonly referenceValueCredits: number };
+  readonly item: MarketItemData;
   readonly quantity: number;
   readonly sourceStackId: string | null;
   readonly destinationInventoryId: string | null;
@@ -69,6 +85,8 @@ export interface RepairPreviewData extends PreviewBaseData {
 export interface ResupplyLineData {
   readonly slot: SlotRefData;
   readonly ammunitionId: string | null;
+  /** Name key of the loaded charge, so the line names it without a lookup. */
+  readonly ammunitionNameKey: string | null;
   readonly loadedRounds: number;
   readonly magazineSize: number;
   readonly roundsFromInventory: number;
@@ -130,7 +148,7 @@ export interface StationServicesData {
 }
 
 export interface MarketListingData {
-  readonly item: MarketTransactionPreviewData['item'];
+  readonly item: MarketItemData;
   readonly supply: 'dynamic' | 'fixed';
   readonly stock: number | null;
   readonly stationSellPriceCredits: number;

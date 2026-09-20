@@ -146,6 +146,33 @@ export interface PlannedSlotData {
   readonly charge: ItemData | null;
 }
 
+/**
+ * One module the player could put in a slot
+ * (Functional Specification 8.4; Technical Specification 12.3).
+ *
+ * Which module may occupy which slot is a content rule, so the engine answers
+ * it. The fitting screen offers exactly what this lists rather than deciding
+ * compatibility for itself, which is what keeps a command bar, a context menu
+ * and a dropdown from disagreeing.
+ */
+export interface FittingCandidateData {
+  readonly module: ItemData;
+  readonly category: string;
+  readonly hardpoint: string | null;
+  readonly powerUse: number;
+  readonly processingUse: number;
+  /** Units of this module the local stores and the ship itself can supply. */
+  readonly available: number;
+  /** Ammunition the player owns locally that this module accepts. */
+  readonly charges: readonly ItemData[];
+}
+
+/** The candidates one slot of the hull offers. */
+export interface SlotCandidatesData {
+  readonly slot: SlotRefData;
+  readonly candidates: readonly FittingCandidateData[];
+}
+
 export interface OpenFittingDraftData {
   readonly shipId: string;
   readonly baseRevision: number;
@@ -158,6 +185,8 @@ export interface OpenFittingDraftData {
   readonly blockedReason: string | null;
   /** The ship as committing the draft would leave it. */
   readonly preview: ShipData | null;
+  /** Every slot the hull offers, with the modules that may occupy it. */
+  readonly options: readonly SlotCandidatesData[];
 }
 
 export interface FittingDraftData {

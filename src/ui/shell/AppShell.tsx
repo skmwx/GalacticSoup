@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import type { ClientGateway, TransportKind } from '@gateway';
 
-import { CampaignPanel } from '../campaign/CampaignPanel';
+import { GameRoot } from '../campaign/GameRoot';
 import { useTranslate } from '../localization';
 import styles from './AppShell.module.css';
 import { CompatibilityFailure } from './CompatibilityFailure';
@@ -10,11 +10,12 @@ import { EngineMark } from './EngineMark';
 import { useEngineStatus } from './useEngineStatus';
 
 /**
- * The application shell (Technical Specification 12.1).
+ * The application shell (Technical Specification 12.1, 16).
  *
- * It reports what the engine says about itself and nothing more: there is no
- * campaign state in the interface, and every value shown here arrived through
- * the gateway.
+ * It reports what the engine says about itself and then hands the screen to
+ * the game. There is no campaign state in the interface: every value shown
+ * here arrived through the gateway, and the build diagnostics are a collapsed
+ * panel rather than the main surface.
  *
  * @implements TECH-12.1
  */
@@ -50,28 +51,29 @@ export function AppShell({ gateway }: AppShellProps): JSX.Element {
           <h1 className={styles['title']}>{translate('app.title')}</h1>
           <p className={styles['tagline']}>{translate('app.tagline')}</p>
         </div>
+        <p
+          className={styles['status']}
+          role="status"
+          aria-live="polite"
+          aria-label={translate('shell.status.label')}
+        >
+          {status.kind === 'connecting'
+            ? translate('shell.engine.connecting')
+            : translate('shell.engine.ready', {
+                transport: translate(TRANSPORT_KEYS[status.transport]),
+              })}
+        </p>
       </header>
 
       <main className={styles['main']}>
-        <section className={styles['panel']} aria-labelledby="engine-status-heading">
-          <h2 id="engine-status-heading" className={styles['panelHeading']}>
-            {translate('shell.engine.sectionLabel')}
-          </h2>
+        {status.kind === 'ready' ? <GameRoot gateway={gateway} /> : null}
 
-          <p
-            className={styles['status']}
-            role="status"
-            aria-live="polite"
-            aria-label={translate('shell.status.label')}
-          >
-            {status.kind === 'connecting'
-              ? translate('shell.engine.connecting')
-              : translate('shell.engine.ready', {
-                  transport: translate(TRANSPORT_KEYS[status.transport]),
-                })}
-          </p>
+        {status.kind === 'ready' ? (
+          <details className={styles['panel']}>
+            <summary className={styles['panelHeading']}>
+              {translate('shell.diagnostics.sectionLabel')}
+            </summary>
 
-          {status.kind === 'ready' ? (
             <dl className={styles['facts']}>
               <div className={styles['fact']}>
                 <dt>{translate('shell.engine.transport')}</dt>
@@ -93,19 +95,6 @@ export function AppShell({ gateway }: AppShellProps): JSX.Element {
                   })}
                 </dd>
               </div>
-            </dl>
-          ) : null}
-        </section>
-
-        {status.kind === 'ready' ? <CampaignPanel gateway={gateway} /> : null}
-
-        {status.kind === 'ready' ? (
-          <section className={styles['panel']} aria-labelledby="content-status-heading">
-            <h2 id="content-status-heading" className={styles['panelHeading']}>
-              {translate('shell.content.sectionLabel')}
-            </h2>
-
-            <dl className={styles['facts']}>
               <div className={styles['fact']}>
                 <dt>{translate('shell.content.version')}</dt>
                 <dd>{status.content.contentVersion}</dd>
@@ -123,10 +112,8 @@ export function AppShell({ gateway }: AppShellProps): JSX.Element {
                 </dd>
               </div>
             </dl>
-          </section>
+          </details>
         ) : null}
-
-        <p className={styles['note']}>{translate('shell.note.noCampaign')}</p>
       </main>
     </div>
   );

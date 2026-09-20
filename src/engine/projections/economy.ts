@@ -323,7 +323,8 @@ export function resupplyPreview(
     if (module?.category !== 'turret') continue;
     const magazineSize = module.turret.magazineSize;
     if (fitted.charge === null) {
-      lines.push({ slot: { ...fitted.slot }, ammunitionId: null, loadedRounds: 0, magazineSize,
+      lines.push({ slot: { ...fitted.slot }, ammunitionId: null, ammunitionNameKey: null,
+        loadedRounds: 0, magazineSize,
         roundsFromInventory: 0, roundsPurchased: 0, totalCredits: 0,
         unavailableReason: REASON.ammunition });
       continue;
@@ -331,6 +332,7 @@ export function resupplyPreview(
     const missing = Math.max(0, magazineSize - fitted.charge.quantity);
     if (missing === 0) {
       lines.push({ slot: { ...fitted.slot }, ammunitionId: fitted.charge.ammunitionId,
+        ammunitionNameKey: content.requireAmmunition(fitted.charge.ammunitionId).nameKey,
         loadedRounds: fitted.charge.quantity, magazineSize, roundsPurchased: 0,
         roundsFromInventory: 0,
         totalCredits: 0, unavailableReason: null });
@@ -345,6 +347,7 @@ export function resupplyPreview(
     const roundsPurchased = missing - roundsFromInventory;
     if (roundsPurchased === 0) {
       lines.push({ slot: { ...fitted.slot }, ammunitionId: fitted.charge.ammunitionId,
+        ammunitionNameKey: content.requireAmmunition(fitted.charge.ammunitionId).nameKey,
         loadedRounds: fitted.charge.quantity, magazineSize, roundsFromInventory,
         roundsPurchased: 0, totalCredits: 0, unavailableReason: null });
       continue;
@@ -359,6 +362,7 @@ export function resupplyPreview(
       total += quote.totalCredits;
       traces.push(...tracesOf(quote));
       lines.push({ slot: { ...fitted.slot }, ammunitionId: fitted.charge.ammunitionId,
+        ammunitionNameKey: content.requireAmmunition(fitted.charge.ammunitionId).nameKey,
         loadedRounds: fitted.charge.quantity, magazineSize, roundsPurchased,
         roundsFromInventory,
         totalCredits: quote.totalCredits, unavailableReason: null });
@@ -366,6 +370,7 @@ export function resupplyPreview(
       if (!(error instanceof EconomyError)) throw error;
       unavailableReason ??= error.reason === 'insufficientStock' ? REASON.stock : REASON.listing;
       lines.push({ slot: { ...fitted.slot }, ammunitionId: fitted.charge.ammunitionId,
+        ammunitionNameKey: content.requireAmmunition(fitted.charge.ammunitionId).nameKey,
         loadedRounds: fitted.charge.quantity, magazineSize, roundsPurchased: 0,
         roundsFromInventory, totalCredits: 0, unavailableReason });
     }

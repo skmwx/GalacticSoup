@@ -14,10 +14,24 @@ import { catalogFor, DEFAULT_LOCALE } from './catalog';
  * Makes the active localizer available to the interface
  * (Technical Specification 12.5).
  *
+ * The settings travel beside the localizer so a nested provider - the one that
+ * layers authored content text under the interface's own messages - can build
+ * a second localizer for the same locale and the same issue handler without
+ * the caller passing them twice.
+ *
  * @implements TECH-12.5
  */
 
-const LocalizationContext = createContext<Localizer | null>(null);
+export const LocalizationContext = createContext<Localizer | null>(null);
+
+export interface LocalizationSettings {
+  readonly locale: string;
+  readonly onIssue?: LocalizationIssueHandler;
+}
+
+export const LocalizationSettingsContext = createContext<LocalizationSettings>({
+  locale: DEFAULT_LOCALE,
+});
 
 export interface LocalizationProviderProps {
   readonly children: ReactNode;
@@ -40,8 +54,15 @@ export function LocalizationProvider({
     [locale, onIssue],
   );
 
+  const settings = useMemo<LocalizationSettings>(
+    () => ({ locale, ...(onIssue === undefined ? {} : { onIssue }) }),
+    [locale, onIssue],
+  );
+
   return (
-    <LocalizationContext.Provider value={localizer}>{children}</LocalizationContext.Provider>
+    <LocalizationSettingsContext.Provider value={settings}>
+      <LocalizationContext.Provider value={localizer}>{children}</LocalizationContext.Provider>
+    </LocalizationSettingsContext.Provider>
   );
 }
 
@@ -51,6 +72,10 @@ export function useLocalizer(): Localizer {
     throw new Error('useLocalizer must be used inside a LocalizationProvider.');
   }
   return localizer;
+}
+
+export function useLocalizationSettings(): LocalizationSettings {
+  return useContext(LocalizationSettingsContext);
 }
 
 /** Convenience binding for the common case of resolving a single message. */

@@ -51,3 +51,4 @@ Phase 1 through 6 are implemented, implement phase 7 of the MVP.
 5: Astra EH
 6: Opus EH
 7: Sol EH
+8: Opus EH

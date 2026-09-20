@@ -37,6 +37,8 @@ let validateResponse: Validator;
 let validateHealthData: Validator;
 let validateCapabilitiesData: Validator;
 let validateContentSummaryData: Validator;
+let validateContentMessagesData: Validator;
+let validateFittingDraftData: Validator;
 let validateCommandResultData: Validator;
 let validateSessionData: Validator;
 let validateFrameData: Validator;
@@ -68,6 +70,14 @@ beforeAll(() => {
   ) as Validator;
   validateContentSummaryData = ajv.compile(
     loadSchema('content.summary.data.schema.json'),
+  ) as Validator;
+  validateContentMessagesData = ajv.compile(
+    loadSchema('content.messages.data.schema.json'),
+  ) as Validator;
+  ajv.addSchema(loadSchema('assets.common.schema.json'));
+  ajv.addSchema(loadSchema('fitting.common.schema.json'));
+  validateFittingDraftData = ajv.compile(
+    loadSchema('fitting.draft.data.schema.json'),
   ) as Validator;
   validateCommandResultData = ajv.compile(
     loadSchema('command-result.data.schema.json'),
@@ -323,6 +333,33 @@ const JSON_FIXTURES: readonly { readonly label: string; readonly message: unknow
       payload: {},
     },
   },
+  {
+    label: 'a well-formed content.messages',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'content.messages',
+      payload: { locale: 'en' },
+    },
+  },
+  {
+    label: 'a content.messages with no locale',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'content.messages',
+      payload: {},
+    },
+  },
+  {
+    label: 'a content.messages with a malformed locale',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'content.messages',
+      payload: { locale: 'not a locale' },
+    },
+  },
   { label: 'a message that is not an object', message: 'nonsense' },
 ];
 
@@ -363,6 +400,20 @@ describe('protocol schema parity', () => {
     expect(health.ok && validateHealthData(health.data)).toBe(true);
     expect(capabilities.ok && validateCapabilitiesData(capabilities.data)).toBe(true);
     expect(summary.ok && validateContentSummaryData(summary.data)).toBe(true);
+  });
+
+  it('validates the authored message catalogue against its schema [TECH-7.1, TECH-12.5]', async () => {
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
+
+    const messages = await host.handle({
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'req-messages',
+      type: 'content.messages',
+      payload: {},
+    });
+
+    expect(validateResponse(messages)).toBe(true);
+    expect(messages.ok && validateContentMessagesData(messages.data)).toBe(true);
   });
 
   it('publishes a compilable schema for every protocol contract [TECH-7.1, TECH-17]', () => {
@@ -472,6 +523,26 @@ describe('campaign protocol schema parity', () => {
     expect(validateStationServicesData(dataOf(services))).toBe(true);
     expect(validateMarketListingsData(dataOf(listings))).toBe(true);
     expect(validateTransactionPreviewData(dataOf(preview))).toBe(true);
+  });
+
+  it('publishes a schema for the fitting draft and its slot candidates [TECH-7.1, TECH-17]', async () => {
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
+    await ask(
+      host,
+      'campaign.create',
+      { displayName: 'Vela', seed, createdAtRealMs: 1_700_000_000_000 },
+      'req-create-fitting',
+    );
+    const assets = (await ask(host, 'assets.list', EMPTY_PAYLOAD, 'req-assets')) as {
+      data: { activeShipId: string };
+    };
+    await ask(host, 'fitting.begin', { shipId: assets.data.activeShipId }, 'req-begin');
+    const draft = await ask(host, 'fitting.draft', EMPTY_PAYLOAD, 'req-draft');
+
+    const data = (draft as { data: { draft: { options: unknown[] } } }).data;
+    expect(data.draft.options.length).toBeGreaterThan(0);
+    expect(validateResponse(draft)).toBe(true);
+    expect(validateFittingDraftData(data)).toBe(true);
   });
 
   it('publishes a schema for every save response shape [TECH-7.1, TECH-11.3]', async () => {

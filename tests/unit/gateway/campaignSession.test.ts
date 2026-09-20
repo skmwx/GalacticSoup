@@ -22,6 +22,7 @@ interface Harness {
   readonly gateway: ClientGateway;
   readonly session: ReturnType<typeof createCampaignSession>;
   readonly clock: { value: number };
+  readonly waits: number[];
   dispose(): void;
 }
 
@@ -30,11 +31,16 @@ function harness(options: { autosaveIntervalMs?: number } = {}): Harness {
     host: createEngineHost({ content, saves: createMemorySaveStore() }),
     defaultTimeoutMs: 5_000,
   });
+  const waits: number[] = [];
   const clock = { value: 1_700_000_000_000 };
   const session = createCampaignSession({
     gateway,
     now: () => clock.value,
     createSeed: () => '0123456789abcdef0123456789abcdef',
+    wait: (milliseconds) => {
+      waits.push(milliseconds);
+      return Promise.resolve();
+    },
     ...(options.autosaveIntervalMs === undefined
       ? {}
       : { autosaveIntervalMs: options.autosaveIntervalMs }),
@@ -44,6 +50,7 @@ function harness(options: { autosaveIntervalMs?: number } = {}): Harness {
     gateway,
     session,
     clock,
+    waits,
     dispose: () => {
       gateway.dispose();
     },
@@ -131,6 +138,21 @@ describe('campaign session', () => {
 
     expect(test.session.state.slot?.status.lastSaveKind).toBe('manual');
     expect(test.session.state.slot?.status.lastSavedAtRealMs).toBe(test.clock.value);
+
+    test.dispose();
+  });
+
+  it('follows a queued write until it is durable [TECH-11.3, FUNC-3.4]', async () => {
+    // Capture is synchronous but the write is not, so `campaign.save` always
+    // answers `pending`. The session must keep reading until the write
+    // settles rather than leaving the interface saying "saving" forever.
+    const test = harness();
+    await test.session.create('Vela Trask');
+    await test.session.save('manual');
+
+    expect(test.session.state.slot?.status.state).toBe('saved');
+    expect(test.session.state.slot?.status.pendingWrites).toBe(0);
+    expect(test.waits.length).toBeGreaterThan(0);
 
     test.dispose();
   });

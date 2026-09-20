@@ -1,0 +1,96 @@
+.frame {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--gs-space-3);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-3);
+}
+
+.identity {
+  flex: 1 1 12rem;
+}
+
+.pilot {
+  margin: 0;
+  font-size: var(--gs-font-body);
+  font-weight: 600;
+}
+
+.location {
+  margin: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.readouts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-3);
+  margin: 0;
+  flex: 2 1 20rem;
+}
+
+.readout dt {
+  margin: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.readout dd {
+  margin: 0;
+  font-family: var(--gs-font-mono);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-2);
+  flex: 1 1 100%;
+}
+
+.controls button {
+  background: var(--gs-color-surface);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: inherit;
+  font: inherit;
+  padding: var(--gs-space-2) var(--gs-space-3);
+  cursor: pointer;
+}
+
+.saveStatus {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.warning {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--gs-color-warn);
+  font-size: var(--gs-font-small);
+}
+
+.error {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--gs-color-danger);
+}
+
+.details {
+  flex: 1 1 100%;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.details summary {
+  cursor: pointer;
+}
+
+.details dd {
+  overflow-wrap: anywhere;
+}

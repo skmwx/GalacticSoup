@@ -95,6 +95,13 @@ export interface ContentRepository extends ContentIdentity {
   /** Authored text for a content message key, or `undefined` when absent. */
   message(locale: string, key: MessageKey): string | undefined;
 
+  /**
+   * Every authored message of one locale, for the interface to resolve the
+   * keys projections carry. Returns an empty catalogue for a locale the bundle
+   * does not contain (Technical Specification 12.5).
+   */
+  messages(locale: string): Readonly<Record<MessageKey, string>>;
+
   /** Definition count per kind, in stable kind order. */
   definitionCounts(): Readonly<Record<string, number>>;
 }

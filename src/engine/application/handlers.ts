@@ -3,6 +3,8 @@ import type { ContentRepository } from '@engine/ports';
 import { frameProjection, sessionProjection, stateHashProjection } from '@engine/projections';
 import type {
   CapabilitiesData,
+  ContentMessagesData,
+  ContentMessagesPayload,
   ContentSummaryData,
   FrameData,
   HealthData,
@@ -58,6 +60,38 @@ export function handleContentSummary(context: HandlerContext): ContentSummaryDat
     defaultLocale: content.defaultLocale,
     locales: [...content.locales],
     definitionCounts: content.definitionCounts(),
+  };
+}
+
+/**
+ * Hands the interface the authored message catalogue it resolves projection
+ * keys against (Technical Specification 12.5).
+ *
+ * Content is the engine's to read, so the interface asks for the text rather
+ * than loading the bundle itself. An unknown locale is answered with the
+ * content's default one, named in the response, so the caller can tell that it
+ * did not get what it asked for.
+ *
+ * @implements TECH-12.5
+ */
+export function handleContentMessages(
+  context: HandlerContext,
+  payload: ContentMessagesPayload,
+): ContentMessagesData {
+  const { content } = context;
+  const requested = payload.locale ?? content.defaultLocale;
+  const resolved = content.locales.includes(requested) ? requested : content.defaultLocale;
+  const messages = content.messages(resolved);
+
+  return {
+    locale: requested,
+    resolvedLocale: resolved,
+    contentVersion: content.contentVersion,
+    messages: Object.fromEntries(
+      Object.keys(messages)
+        .sort()
+        .map((key) => [key, messages[key] as string]),
+    ),
   };
 }
 

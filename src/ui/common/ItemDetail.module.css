@@ -1,0 +1,107 @@
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+
+.name {
+  margin: 0;
+  font-size: var(--gs-font-body);
+  font-weight: 600;
+}
+
+.kind {
+  margin: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.description {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--gs-space-1);
+  margin: var(--gs-space-2) 0 0;
+}
+
+.fact {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gs-space-2);
+  border-bottom: var(--gs-border);
+  font-size: var(--gs-font-small);
+}
+
+.fact dt {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+}
+
+.fact dd {
+  margin: 0;
+  font-family: var(--gs-font-mono);
+}
+
+.comparison {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--gs-font-small);
+}
+
+.caption {
+  text-align: left;
+  color: var(--gs-color-text-muted);
+  padding-bottom: var(--gs-space-2);
+}
+
+.table th,
+.table td {
+  border-bottom: var(--gs-border);
+  padding: var(--gs-space-1) var(--gs-space-2);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table td {
+  font-family: var(--gs-font-mono);
+}
+
+.group {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gs-color-text-muted);
+  padding-top: var(--gs-space-2);
+}
+
+.directionWord {
+  font-family: var(--gs-font-stack);
+  color: var(--gs-color-text-muted);
+}
+
+.better {
+  color: var(--gs-color-ok);
+}
+
+.worse {
+  color: var(--gs-color-danger);
+}
+
+.equal,
+.neutral {
+  color: var(--gs-color-text-muted);
+}
+
+.empty {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+}

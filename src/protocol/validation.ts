@@ -219,6 +219,15 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
       return null;
     }
 
+    case 'content.messages': {
+      const unexpected = unexpectedField(fields, ['locale']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if ('locale' in fields && !isLocaleTag(fields['locale'])) {
+        return payloadField(type, 'locale', 'format');
+      }
+      return null;
+    }
+
     case 'item.compare': {
       const keys = ['definitionId', 'againstDefinitionId'];
       const unexpected = unexpectedField(fields, keys);
@@ -372,6 +381,13 @@ const SLOT_KIND_NAMES: readonly string[] = ['weapon', 'system', 'engineering', '
 const MAX_SLOT_INDEX = 15;
 
 const ENTITY_ID_PATTERN = /^c[0-9a-f]{24}-e[1-9][0-9]*$/;
+
+/** A BCP-47-shaped tag, which is as much as the protocol needs to know. */
+const LOCALE_TAG_PATTERN = /^[a-zA-Z]{2,8}(?:-[a-zA-Z0-9]{2,8})*$/;
+
+function isLocaleTag(value: unknown): value is string {
+  return typeof value === 'string' && value.length <= 35 && LOCALE_TAG_PATTERN.test(value);
+}
 
 function isEntityId(value: unknown): value is string {
   return typeof value === 'string' && value.length <= 128 && ENTITY_ID_PATTERN.test(value);

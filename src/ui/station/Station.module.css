@@ -1,0 +1,283 @@
+.station {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+  background: var(--gs-color-surface);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-3);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--gs-font-heading);
+}
+
+.subheading {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+  font-size: var(--gs-font-small);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-2);
+  border-bottom: var(--gs-border);
+  padding-bottom: var(--gs-space-2);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--gs-space-3);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gs-space-2);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: inherit;
+  font: inherit;
+  padding: var(--gs-space-3);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--gs-transition);
+}
+
+.tile:hover:not(:disabled) {
+  border-color: var(--gs-color-accent);
+}
+
+.tile:disabled {
+  cursor: not-allowed;
+  border-style: dashed;
+  color: var(--gs-color-text-muted);
+}
+
+.tileHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--gs-space-2);
+  font-size: var(--gs-font-body);
+  font-weight: 600;
+}
+
+.tileDetail {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+  font-size: var(--gs-font-small);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+}
+
+.panelHeading {
+  margin: 0;
+  font-size: var(--gs-font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gs-color-text-muted);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--gs-space-2);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+/* A checkbox reads as one line with its label, not as a stacked field. */
+.check {
+  composes: field;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--gs-space-2);
+}
+
+.input {
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: var(--gs-color-text);
+  font: inherit;
+  padding: var(--gs-space-2);
+  min-width: 8rem;
+}
+
+.select {
+  composes: input;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--gs-font-small);
+}
+
+.caption {
+  text-align: left;
+  color: var(--gs-color-text-muted);
+  padding-bottom: var(--gs-space-2);
+}
+
+.table th,
+.table td {
+  border-bottom: var(--gs-border);
+  padding: var(--gs-space-1) var(--gs-space-2);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table td {
+  font-family: var(--gs-font-mono);
+}
+
+.table th[scope='row'] {
+  font-family: var(--gs-font-stack);
+  font-weight: 500;
+}
+
+.numeric {
+  text-align: right;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-1);
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--gs-space-2);
+  margin: 0;
+}
+
+.figure {
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-2);
+}
+
+.figure dt {
+  margin: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.figure dd {
+  margin: var(--gs-space-1) 0 0;
+  font-family: var(--gs-font-mono);
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--gs-space-2);
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-2);
+}
+
+.slotName {
+  margin: 0;
+  font-size: var(--gs-font-small);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gs-color-text-muted);
+}
+
+.dialogSubject {
+  margin: 0;
+  font-weight: 600;
+}
+
+.muted {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+}
+
+.warning {
+  margin: 0;
+  color: var(--gs-color-warn);
+}
+
+.error {
+  margin: 0;
+  color: var(--gs-color-danger);
+}
+
+.ok {
+  margin: 0;
+  color: var(--gs-color-ok);
+}
+
+.issues {
+  margin: 0;
+  padding-left: var(--gs-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+}
+
+.bar {
+  display: block;
+  height: calc(0.5rem * var(--gs-ui-scale));
+  background: var(--gs-color-surface);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  background: var(--gs-color-accent);
+}
+
+/* Secondary controls inside a panel match the shell's buttons. */
+.panel > button,
+.toolbar > button {
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: inherit;
+  font: inherit;
+  padding: var(--gs-space-2) var(--gs-space-3);
+  cursor: pointer;
+}

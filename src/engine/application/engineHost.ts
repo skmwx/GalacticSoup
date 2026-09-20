@@ -8,6 +8,7 @@ import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload
   ComparePayload, ShipPayload } from '@protocol';
 import type { MarketBuyPreviewPayload, MarketSellPreviewPayload, ShipEconomicPayload,
   StationPayload } from '@protocol';
+import type { ContentMessagesPayload } from '@protocol';
 import {
   ContentIntegrityError,
   ContentLookupError,
@@ -44,6 +45,7 @@ import { runCommand } from './pipeline';
 import { createRecentRequests, type RecentRequests } from './recentRequests';
 import {
   handleCapabilities,
+  handleContentMessages,
   handleContentSummary,
   handleFrame,
   handleHealth,
@@ -431,6 +433,8 @@ function query(session: Session, type: RequestType, payload: unknown): unknown {
       return handleCapabilities(context);
     case 'content.summary':
       return handleContentSummary(context);
+    case 'content.messages':
+      return handleContentMessages(context, payload as ContentMessagesPayload);
     case 'campaign.session':
       return handleSession(context);
     case 'campaign.frame':

@@ -69,6 +69,8 @@ export type {
   CloseCampaignPayload,
   CommandResultData,
   CommandType,
+  ContentMessagesData,
+  ContentMessagesPayload,
   ContentSummaryData,
   CreateCampaignPayload,
   DomainEventData,

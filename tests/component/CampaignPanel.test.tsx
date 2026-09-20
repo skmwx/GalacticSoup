@@ -6,18 +6,19 @@ import { createMemorySaveStore, type MemorySaveStore } from '@adapters/persisten
 import { createEngineHost } from '@engine';
 import { createDirectGateway } from '@gateway/direct';
 import type { LocalizationIssue } from '@shared';
-import { CampaignPanel, LocalizationProvider } from '@ui';
+import { GameRoot, LocalizationProvider } from '@ui';
 
 import { shippedContent } from '../support/content.ts';
 
 /**
  * The campaign surface (Functional Specification 3.1, 3.4; MVP-AC-01).
  *
- * The panel is driven entirely by what the engine answers, so each case acts
- * on it the way a player would and then asserts what the engine holds.
+ * Before a campaign is open the screen offers start and resume; once one is
+ * open the persistent frame owns saving, closing and resetting. Each case acts
+ * on the surface the way a player would and then asserts what the engine holds.
  */
 
-function renderPanel(
+function renderGame(
   options: { store?: MemorySaveStore; onIssue?: (issue: LocalizationIssue) => void } = {},
 ) {
   const store = options.store ?? createMemorySaveStore();
@@ -28,7 +29,7 @@ function renderPanel(
 
   const result = render(
     <LocalizationProvider {...(options.onIssue === undefined ? {} : { onIssue: options.onIssue })}>
-      <CampaignPanel gateway={gateway} />
+      <GameRoot gateway={gateway} />
     </LocalizationProvider>,
   );
 
@@ -36,7 +37,7 @@ function renderPanel(
 }
 
 async function startCampaign(
-  harness: ReturnType<typeof renderPanel>,
+  harness: ReturnType<typeof renderGame>,
   name = 'Vela Trask',
 ): Promise<void> {
   const field = await screen.findByLabelText('Pilot name');
@@ -45,9 +46,9 @@ async function startCampaign(
   await screen.findByText(name);
 }
 
-describe('campaign panel', () => {
+describe('campaign surface', () => {
   it('offers a new campaign when nothing is saved [MVP-AC-01, FUNC-3.1]', async () => {
-    const harness = renderPanel();
+    const harness = renderGame();
 
     expect(await screen.findByLabelText('Pilot name')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Start campaign' })).toBeDisabled();
@@ -57,7 +58,7 @@ describe('campaign panel', () => {
   });
 
   it('starts a campaign and reports it saved [MVP-AC-01, FUNC-3.4]', async () => {
-    const harness = renderPanel();
+    const harness = renderGame();
     await startCampaign(harness);
 
     expect(screen.getByText('Vela Trask')).toBeInTheDocument();
@@ -72,10 +73,10 @@ describe('campaign panel', () => {
   });
 
   it('shows the saved campaign after it is closed, and resumes it [MVP-AC-01]', async () => {
-    const harness = renderPanel();
+    const harness = renderGame();
     await startCampaign(harness);
 
-    await harness.user.click(screen.getByRole('button', { name: 'Close campaign' }));
+    await harness.user.click(screen.getByRole('button', { name: /Close campaign/ }));
 
     const resume = await screen.findByRole('button', { name: 'Resume campaign' });
     expect(screen.getByText(/Saved campaign: Vela Trask/)).toBeInTheDocument();
@@ -89,10 +90,10 @@ describe('campaign panel', () => {
   });
 
   it('asks before discarding a campaign [FUNC-3.4, TECH-12.3]', async () => {
-    const harness = renderPanel();
+    const harness = renderGame();
     await startCampaign(harness);
 
-    await harness.user.click(screen.getByRole('button', { name: 'Reset campaign' }));
+    await harness.user.click(screen.getByRole('button', { name: /Reset campaign/ }));
     expect(
       screen.getByText(/Resetting deletes this campaign and every save of it/),
     ).toBeInTheDocument();
@@ -100,8 +101,8 @@ describe('campaign panel', () => {
     await harness.user.click(screen.getByRole('button', { name: 'Keep playing' }));
     expect(screen.getByText('Vela Trask')).toBeInTheDocument();
 
-    await harness.user.click(screen.getByRole('button', { name: 'Reset campaign' }));
-    await harness.user.click(screen.getByRole('button', { name: 'Delete this campaign' }));
+    await harness.user.click(screen.getByRole('button', { name: /Reset campaign/ }));
+    await harness.user.click(screen.getByRole('button', { name: /Delete this campaign/ }));
 
     expect(await screen.findByLabelText('Pilot name')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Resume campaign' })).not.toBeInTheDocument();
@@ -111,23 +112,27 @@ describe('campaign panel', () => {
   });
 
   it('saves on request and says so [FUNC-3.4]', async () => {
-    const harness = renderPanel();
+    const harness = renderGame();
     await startCampaign(harness);
 
-    await harness.user.click(screen.getByRole('button', { name: 'Save now' }));
+    await harness.user.click(screen.getByRole('button', { name: /Save now/ }));
 
     await waitFor(() => {
       expect(harness.store.saveIds().some((id) => id.includes(':manual:'))).toBe(true);
     });
-    expect(screen.getByRole('status', { name: 'Campaign save status' })).toHaveTextContent(
-      'Saved at revision',
-    );
+    // The write is asynchronous, so the status settles a moment after the
+    // command answered.
+    await waitFor(() => {
+      expect(screen.getByRole('status', { name: 'Campaign save status' })).toHaveTextContent(
+        'Saved at revision',
+      );
+    });
 
     harness.gateway.dispose();
   });
 
   it('warns when storage is nearly full or impermanent [TECH-11.1]', async () => {
-    const harness = renderPanel({
+    const harness = renderGame({
       store: createMemorySaveStore({
         persistence: false,
         storage: { persistent: false, usageBytes: 99, quotaBytes: 100 },
@@ -149,7 +154,7 @@ describe('campaign panel', () => {
     });
     render(
       <LocalizationProvider>
-        <CampaignPanel gateway={gateway} />
+        <GameRoot gateway={gateway} />
       </LocalizationProvider>,
     );
     await screen.findByLabelText('Pilot name');
@@ -172,7 +177,7 @@ describe('campaign panel', () => {
   });
 
   it('announces the save state in a live region [TECH-12.3]', async () => {
-    const harness = renderPanel();
+    const harness = renderGame();
     const status = await screen.findByRole('status', { name: 'Campaign save status' });
 
     expect(status).toHaveAttribute('aria-live', 'polite');
@@ -182,9 +187,9 @@ describe('campaign panel', () => {
 
   it('renders every string from the catalogue [TECH-12.5]', async () => {
     const onIssue = vi.fn();
-    const harness = renderPanel({ onIssue });
+    const harness = renderGame({ onIssue });
     await startCampaign(harness);
-    await harness.user.click(screen.getByRole('button', { name: 'Reset campaign' }));
+    await harness.user.click(screen.getByRole('button', { name: /Reset campaign/ }));
 
     expect(onIssue).not.toHaveBeenCalled();
 
@@ -192,7 +197,7 @@ describe('campaign panel', () => {
   });
 
   it('is operable with the keyboard alone [TECH-12.3]', async () => {
-    const harness = renderPanel();
+    const harness = renderGame();
     const field = await screen.findByLabelText('Pilot name');
 
     field.focus();

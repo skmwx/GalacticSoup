@@ -1,10 +1,11 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
- * Version 4 adds local market, repair, resupply and insurance previews and
- * confirmations to the station preparation contracts of version 3.
+ * Version 5 adds the authored content catalogue the interface resolves
+ * projection message keys against, and the per-slot fitting candidates the
+ * fitting screen offers, to the station preparation contracts of version 4.
  */
-export const PROTOCOL_VERSION = 4;
+export const PROTOCOL_VERSION = 5;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

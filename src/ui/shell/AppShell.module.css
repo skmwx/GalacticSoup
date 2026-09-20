@@ -3,13 +3,14 @@
   flex-direction: column;
   gap: var(--gs-space-4);
   min-height: 100%;
-  padding: var(--gs-space-5) var(--gs-space-4);
-  max-width: 62rem;
+  padding: var(--gs-space-4) var(--gs-space-3);
+  max-width: 78rem;
   margin: 0 auto;
 }
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--gs-space-3);
 }
@@ -45,6 +46,7 @@
 }
 
 .panelHeading {
+  cursor: pointer;
   margin: 0 0 var(--gs-space-2);
   font-size: var(--gs-font-body);
   text-transform: uppercase;
@@ -54,7 +56,9 @@
 
 .status {
   margin: 0;
+  margin-left: auto;
   color: var(--gs-color-ok);
+  font-size: var(--gs-font-small);
 }
 
 .facts {

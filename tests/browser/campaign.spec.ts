@@ -34,6 +34,13 @@ async function startCampaign(page: Page, name = PILOT): Promise<void> {
   await page.getByLabel('Pilot name').fill(name);
   await page.getByRole('button', { name: 'Start campaign' }).click();
   await expect(page.getByText(name, { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
+}
+
+/** The campaign identity lives behind the frame's details disclosure. */
+async function campaignIdentity(page: Page): Promise<string> {
+  await page.getByText('Campaign details').click();
+  return page.getByText(/^c[0-9a-f]{24}$/).innerText();
 }
 
 test.describe('campaign persistence', () => {
@@ -46,34 +53,35 @@ test.describe('campaign persistence', () => {
   test('creates, closes and reopens a campaign [MVP-AC-01, TECH-11.1]', async ({ page }) => {
     await startCampaign(page);
 
-    const identity = await page.getByText(/^c[0-9a-f]{24}$/).innerText();
+    const identity = await campaignIdentity(page);
     await expect(page.getByText('Saved at revision 1.')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Close campaign' }).click();
+    await page.getByRole('button', { name: /Close campaign/ }).click();
     await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
     await expect(page.getByText(new RegExp(`Saved campaign: ${PILOT}`))).toBeVisible();
 
     await page.getByRole('button', { name: 'Resume campaign' }).click();
-    await expect(page.getByText(identity, { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
+    expect(await campaignIdentity(page)).toBe(identity);
   });
 
   test('resumes the campaign after the page is reloaded [MVP-AC-01]', async ({ page }) => {
     await startCampaign(page);
-    const identity = await page.getByText(/^c[0-9a-f]{24}$/).innerText();
+    const identity = await campaignIdentity(page);
 
     await page.reload();
     await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
 
-    await expect(page.getByText(identity, { exact: true })).toBeVisible();
     await expect(page.getByText(PILOT, { exact: true })).toBeVisible();
+    expect(await campaignIdentity(page)).toBe(identity);
   });
 
   test('adds no simulation time while the game is closed [FUNC-22.12]', async ({ page }) => {
     await startCampaign(page);
     await expect(page.getByText('0s')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Close campaign' }).click();
+    await page.getByRole('button', { name: /Close campaign/ }).click();
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
 
@@ -84,8 +92,8 @@ test.describe('campaign persistence', () => {
   test('deletes the campaign and its saves on reset [FUNC-3.4]', async ({ page }) => {
     await startCampaign(page);
 
-    await page.getByRole('button', { name: 'Reset campaign' }).click();
-    await page.getByRole('button', { name: 'Delete this campaign' }).click();
+    await page.getByRole('button', { name: /Reset campaign/ }).click();
+    await page.getByRole('button', { name: /Delete this campaign/ }).click();
 
     await expect(page.getByLabel('Pilot name')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Resume campaign' })).toHaveCount(0);
@@ -159,11 +167,11 @@ test.describe('campaign persistence', () => {
       (s) => `${before.inventories[s.inventoryId]?.location.kind ?? '?'}:${s.state.kind}`,
     );
     expect(placed.sort()).toEqual(['fitting:charge', 'fitting:fitted', 'fitting:fitted', 'hangar:plain']);
-    await page.getByRole('button', { name: 'Close campaign' }).click();
+    await page.getByRole('button', { name: /Close campaign/ }).click();
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
     await expect(page.getByText(PILOT, { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Close campaign' }).click();
+    await page.getByRole('button', { name: /Close campaign/ }).click();
     await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
     expect(await savedAssets()).toEqual(before);
   });
@@ -177,7 +185,7 @@ test.describe('campaign persistence', () => {
     });
 
     await startCampaign(page);
-    await page.getByRole('button', { name: 'Save now' }).click();
+    await page.getByRole('button', { name: /Save now/ }).click();
     await expect(page.getByText(/Saved at revision/)).toBeVisible();
 
     expect(foreign).toEqual([]);

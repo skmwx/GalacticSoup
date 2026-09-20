@@ -27,7 +27,8 @@
             "missing",
             "committable",
             "blockedReason",
-            "preview"
+            "preview",
+            "options"
           ],
           "properties": {
             "shipId": {
@@ -136,6 +137,73 @@
                   "type": "null"
                 }
               ]
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "slot",
+                  "candidates"
+                ],
+                "properties": {
+                  "slot": {
+                    "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/slot"
+                  },
+                  "candidates": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "module",
+                        "category",
+                        "hardpoint",
+                        "powerUse",
+                        "processingUse",
+                        "available",
+                        "charges"
+                      ],
+                      "properties": {
+                        "module": {
+                          "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+                        },
+                        "category": {
+                          "type": "string"
+                        },
+                        "hardpoint": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "powerUse": {
+                          "type": "number"
+                        },
+                        "processingUse": {
+                          "type": "number"
+                        },
+                        "available": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "charges": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         },

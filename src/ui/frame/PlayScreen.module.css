@@ -1,0 +1,5 @@
+.play {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+}

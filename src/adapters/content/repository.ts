@@ -146,11 +146,13 @@ export function createContentRepository(
     ammunitionInGroup: (group) => ammunitionByGroup.get(group) ?? EMPTY_AMMUNITION,
 
     message: (locale, key) => content.localization[locale]?.[key],
+    messages: (locale) => content.localization[locale] ?? EMPTY_MESSAGES,
 
     definitionCounts: () => counts,
   };
 }
 
+const EMPTY_MESSAGES: Readonly<Record<string, string>> = Object.freeze({});
 const EMPTY_LISTINGS: readonly MarketListingDefinition[] = [];
 const EMPTY_AMMUNITION: readonly AmmunitionDefinition[] = [];
 

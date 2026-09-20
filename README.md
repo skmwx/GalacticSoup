@@ -117,8 +117,7 @@ and answers any autosave trigger a command reports back.
 
 Starting credits, hull, station, item grants and the starting fit are authored in
 `content/rules/economy.json`. A campaign owns one starter ship wearing that fit, its empty cargo
-hold, a station hangar with what the fit did not take, and the ship's own fitting store. Station
-screens arrive in Phase 8.
+hold, a station hangar with what the fit did not take, and the ship's own fitting store.
 
 `src/engine/domain/assets` owns inventory and wallet operations. Physical stacks move only through
 the inventory service, which provides atomic split, merge, transfer, reserve/release, state change
@@ -155,15 +154,39 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 3 exposes `ship.get`, `ship.undockValidity`, `fitting.draft`, `fitting.begin`,
+Protocol version 5 exposes `ship.get`, `ship.undockValidity`, `fitting.draft`, `fitting.begin`,
 `fitting.set`, `fitting.clear`, `fitting.revert`, `fitting.commit` and `item.compare` alongside the
-version 2 inventory contracts.
+inventory, market, repair, resupply and insurance contracts and the authored content catalogue.
 
-Campaign state and save format are version 3. Previous development saves are rejected without
+Campaign state and save format are version 4. Previous development saves are rejected without
 modification; start a new campaign after upgrading. No pre-release migration is required by the
-MVP plan. The migration runner remains covered by fixture registries, and the old format-1 and
-format-2 fixtures are retained to verify rejection. See
-`docs/agent-comm/status/phase-06-completion.md` for the handoff.
+MVP plan. The migration runner remains covered by fixture registries, and the older format fixtures
+are retained to verify rejection. See `docs/agent-comm/status/` for the per-phase handoffs.
+
+## The station
+
+While docked, the persistent frame carries what is true wherever the player is - pilot, station,
+wallet, the simulation clock and its pause control, the save state - and the station hub presents
+each service as its own tile rather than as rows of one table: market, hangar, fitting, services and
+ship.
+
+Nothing on those screens is authoritative. A price came out of the quote service, the modules a slot
+offers came out of the fitting projection, and every value travels with the calculation that
+produced it, so a screen can explain a number instead of asserting it. Every economic action goes
+through the same preview and confirmation: the engine binds a preview to the state it was calculated
+from, the interface hands that token straight back, and a preview the campaign has moved past comes
+back with its replacement and has to be confirmed again.
+
+`src/ui/actions/registry.ts` defines each action once - id, label key, icon, default shortcut,
+remapping category - and buttons, tiles, tabs and the keyboard handler all read the same entry.
+Whether an action can be taken is never decided there: availability and its reason come from a
+projection, and an unavailable control stays visible and says why. One runner keeps any control from
+submitting its command twice.
+
+The interface resolves authored text through the engine: projections carry message keys, and
+`content.messages` hands over the locale's catalogue so the interface never reaches past the engine
+into the content bundle. Simulation time advances because the main thread measures elapsed real time
+and sends it; the clock the frame shows is the one the engine answered with.
 
 ## Content
 

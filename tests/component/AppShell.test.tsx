@@ -61,9 +61,7 @@ describe('application shell', () => {
     const content = shippedContent();
 
     expect(await screen.findByText(content.contentVersion)).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { level: 2, name: 'Content' }),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Build and engine details')).toBeInTheDocument();
 
     gateway.dispose();
   });

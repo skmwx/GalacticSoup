@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { GATEWAY_MESSAGE_KEYS } from '@gateway';
 import { PROTOCOL_MESSAGE_KEYS } from '@protocol';
 import { createLocalizer, formatMessage } from '@shared';
-import { catalogFor, CATALOGS, DEFAULT_LOCALE } from '@ui';
+import { ACTION_MESSAGE_KEYS, catalogFor, CATALOGS, DEFAULT_LOCALE } from '@ui';
 
 /**
  * Rules and contracts carry message keys; only the catalogue carries text
@@ -25,7 +25,6 @@ describe('message catalogue', () => {
     const required = [
       'app.title',
       'app.tagline',
-      'shell.engine.sectionLabel',
       'shell.engine.connecting',
       'shell.engine.ready',
       'shell.engine.transport',
@@ -36,7 +35,11 @@ describe('message catalogue', () => {
       'shell.transport.worker',
       'shell.transport.port',
       'shell.transport.direct',
-      'shell.note.noCampaign',
+      'shell.diagnostics.sectionLabel',
+      'shell.status.label',
+      'shell.content.version',
+      'shell.content.definitions',
+      'shell.content.definitionCount',
       'compatibility.heading',
       'compatibility.detail',
       'compatibility.advice',
@@ -44,6 +47,10 @@ describe('message catalogue', () => {
 
     const missing = required.filter((key) => !createLocalizer({ locale: 'en', catalog }).has(key));
     expect(missing).toEqual([]);
+  });
+
+  it.each(ACTION_MESSAGE_KEYS)('covers the action key %s [TECH-12.3, TECH-12.5]', (key) => {
+    expect(Object.prototype.hasOwnProperty.call(catalog, key)).toBe(true);
   });
 
   it('has no empty or whitespace-only message [TECH-12.5]', () => {

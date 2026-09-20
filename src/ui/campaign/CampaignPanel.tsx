@@ -1,20 +1,21 @@
 import { useId, useState, type FormEvent, type JSX } from 'react';
 
-import type { ClientGateway } from '@gateway';
+import type { CampaignSession, CampaignSessionState } from '@gateway';
 import type { ResumableSaveData, SaveSlotData, SaveStatusData } from '@protocol';
 
 import { formatSimulationDuration } from '../format/duration';
 import { useTranslate } from '../localization';
 import styles from './CampaignPanel.module.css';
-import { useCampaignSession } from './useCampaignSession';
 
 /**
- * The campaign surface (Functional Specification 3.1, 3.4; MVP Scope 5).
+ * The surface shown when no campaign is open
+ * (Functional Specification 3.1, 3.4; MVP Scope 5).
  *
- * It offers exactly the four things the MVP's one slot supports - start,
- * resume, close and reset - plus the save status and the storage warnings the
- * player must be able to act on. The deferred save-management controls
- * (several slots, a rolling history, export and import) are absent rather than
+ * It offers the two things the MVP's one slot supports before play begins -
+ * start and resume - plus the save status and the storage warnings the player
+ * must be able to act on. Closing, saving and resetting an open campaign live
+ * in the persistent frame, because that is where they are needed while
+ * playing. The deferred save-management controls are absent rather than
  * disabled.
  *
  * Nothing here is authoritative. Every value shown arrived from the engine,
@@ -24,17 +25,15 @@ import { useCampaignSession } from './useCampaignSession';
  */
 
 export interface CampaignPanelProps {
-  readonly gateway: ClientGateway;
+  readonly session: CampaignSession;
+  readonly state: CampaignSessionState;
 }
 
-export function CampaignPanel({ gateway }: CampaignPanelProps): JSX.Element {
+export function CampaignPanel({ session, state }: CampaignPanelProps): JSX.Element {
   const translate = useTranslate();
-  const { state, session } = useCampaignSession(gateway);
   const [name, setName] = useState('');
-  const [confirmingReset, setConfirmingReset] = useState(false);
   const nameId = useId();
 
-  const open = state.session?.campaign ?? null;
   const resumable = state.slot?.resumable ?? null;
   const busy = state.busy;
 
@@ -54,7 +53,7 @@ export function CampaignPanel({ gateway }: CampaignPanelProps): JSX.Element {
 
       {state.loading ? (
         <p className={styles['status']}>{translate('campaign.loading')}</p>
-      ) : open === null ? (
+      ) : (
         <div className={styles['choices']}>
           {resumable === null ? null : (
             <div className={styles['resumable']}>
@@ -90,69 +89,6 @@ export function CampaignPanel({ gateway }: CampaignPanelProps): JSX.Element {
             )}
           </form>
         </div>
-      ) : (
-        <div className={styles['open']}>
-          <dl className={styles['facts']}>
-            <div className={styles['fact']}>
-              <dt>{translate('campaign.pilot')}</dt>
-              <dd>{open.displayName}</dd>
-            </div>
-            <div className={styles['fact']}>
-              <dt>{translate('campaign.simulationTime')}</dt>
-              <dd>{formatSimulationDuration(state.frame?.simulationTimeMs ?? 0)}</dd>
-            </div>
-            <div className={styles['fact']}>
-              <dt>{translate('campaign.identity')}</dt>
-              <dd>{open.campaignId}</dd>
-            </div>
-          </dl>
-
-          <div className={styles['actions']}>
-            <button type="button" onClick={() => void session.save('manual')} disabled={busy}>
-              {translate('campaign.saveNow')}
-            </button>
-            <button type="button" onClick={() => void session.close()} disabled={busy}>
-              {translate('campaign.close')}
-            </button>
-            {confirmingReset ? (
-              <>
-                <button
-                  type="button"
-                  className={styles['danger']}
-                  onClick={() => {
-                    setConfirmingReset(false);
-                    void session.reset();
-                  }}
-                  disabled={busy}
-                >
-                  {translate('campaign.resetConfirm')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfirmingReset(false);
-                  }}
-                >
-                  {translate('campaign.resetCancel')}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setConfirmingReset(true);
-                }}
-                disabled={busy}
-              >
-                {translate('campaign.reset')}
-              </button>
-            )}
-          </div>
-
-          {confirmingReset ? (
-            <p className={styles['warning']}>{translate('campaign.resetDetail')}</p>
-          ) : null}
-        </div>
       )}
 
       <p
@@ -180,7 +116,11 @@ export function CampaignPanel({ gateway }: CampaignPanelProps): JSX.Element {
   );
 }
 
-function StorageWarnings({ status }: { readonly status: SaveStatusData }): JSX.Element | null {
+export function StorageWarnings({
+  status,
+}: {
+  readonly status: SaveStatusData;
+}): JSX.Element | null {
   const translate = useTranslate();
   const warnings: string[] = [];
 

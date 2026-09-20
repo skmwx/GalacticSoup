@@ -5,6 +5,7 @@ import {
   type FrameData,
   type SaveKindName,
   type SaveSlotData,
+  type SaveStatusData,
   type SessionData,
 } from '@protocol';
 import type { MessageKey } from '@shared';
@@ -31,6 +32,18 @@ import { type ClientGateway, EngineUnavailableError, GatewayRequestError } from 
 /** Real minutes of unpaused play between interval autosaves. */
 export const AUTOSAVE_INTERVAL_MS = 300_000;
 
+/**
+ * How the session follows a snapshot to durability
+ * (Technical Specification 11.3).
+ *
+ * Capture is synchronous but the write is not, so `campaign.save` answers
+ * while the bytes are still in flight. The interface must not be left
+ * reporting "saving" forever, so the slot is re-read until the write settles -
+ * a bounded follow-up, never an open-ended poll.
+ */
+export const SAVE_SETTLE_ATTEMPTS = 40;
+export const SAVE_SETTLE_DELAY_MS = 25;
+
 export interface CampaignSessionState {
   /** True until the first `campaign.session` and `campaign.saves` answer. */
   readonly loading: boolean;
@@ -53,6 +66,8 @@ export interface CampaignSessionOptions {
   /** 128 bits of hexadecimal entropy. Defaults to the platform generator. */
   readonly createSeed?: () => string;
   readonly autosaveIntervalMs?: number;
+  /** Waits before re-reading a save that is still being written. */
+  readonly wait?: (milliseconds: number) => Promise<void>;
 }
 
 export interface CampaignSession {
@@ -88,6 +103,7 @@ export function createCampaignSession(options: CampaignSessionOptions): Campaign
   const now = options.now ?? defaultNow;
   const createSeed = options.createSeed ?? createCampaignSeed;
   const autosaveIntervalMs = options.autosaveIntervalMs ?? AUTOSAVE_INTERVAL_MS;
+  const wait = options.wait ?? defaultWait;
 
   const listeners = new Set<(state: CampaignSessionState) => void>();
   let state: CampaignSessionState = INITIAL;
@@ -174,6 +190,29 @@ export function createCampaignSession(options: CampaignSessionOptions): Campaign
       return;
     }
     publish({ slot: state.slot === null ? null : { ...state.slot, status: response.data } });
+    if (isSettled(response.data)) {
+      return;
+    }
+    await settleSave();
+  }
+
+  /**
+   * Follows a queued write until the engine reports it finished or failed.
+   * Each attempt re-reads the whole slot, so the resumable snapshot the
+   * interface offers is the one the store actually holds.
+   */
+  async function settleSave(): Promise<void> {
+    for (let attempt = 0; attempt < SAVE_SETTLE_ATTEMPTS; attempt += 1) {
+      await wait(SAVE_SETTLE_DELAY_MS);
+      const slot = await gateway.request('campaign.saves', EMPTY_PAYLOAD);
+      if (!slot.ok) {
+        return;
+      }
+      publish({ slot: slot.data });
+      if (isSettled(slot.data.status)) {
+        return;
+      }
+    }
   }
 
   return {
@@ -273,6 +312,17 @@ export function createCampaignSeed(): string {
 
 function defaultNow(): number {
   return Date.now();
+}
+
+function defaultWait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+/** True once no write is outstanding, whether it succeeded or failed. */
+function isSettled(status: SaveStatusData): boolean {
+  return status.state !== 'pending' && status.pendingWrites === 0;
 }
 
 function describeThrown(error: unknown): MessageKey {

@@ -1,0 +1,81 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--gs-space-4);
+  background: rgb(2 4 9 / 78%);
+  overflow: auto;
+  z-index: 10;
+}
+
+.panel {
+  background: var(--gs-color-surface);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  width: min(100%, 44rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+  padding: var(--gs-space-3);
+  margin: auto 0;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gs-space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--gs-font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gs-color-text-muted);
+}
+
+.dismiss {
+  background: none;
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  padding: 0 var(--gs-space-2);
+  cursor: pointer;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-2);
+  align-items: flex-start;
+  border-top: var(--gs-border);
+  padding-top: var(--gs-space-3);
+}
+
+/* A secondary control in the footer, such as cancelling, matches the shell
+   rather than the browser's default button. */
+.footer > button {
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: inherit;
+  font: inherit;
+  padding: var(--gs-space-2) var(--gs-space-3);
+  cursor: pointer;
+  transition: border-color var(--gs-transition);
+}
+
+.footer > button:hover {
+  border-color: var(--gs-color-accent);
+}

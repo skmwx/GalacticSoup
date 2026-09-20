@@ -21,6 +21,9 @@ test.describe('application boot', () => {
 
     await expect(page.getByRole('heading', { level: 1, name: 'Galactic Soup' })).toBeVisible();
     await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready over a dedicated worker\./);
+
+    // The build identity is a diagnostics surface, not the main screen.
+    await page.getByText('Build and engine details').click();
     await expect(page.getByText('worker', { exact: true })).toBeVisible();
     await expect(page.getByText(/^\d+ request types$/)).toBeVisible();
 
@@ -30,7 +33,7 @@ test.describe('application boot', () => {
   test('serves the compiled content bundle to the worker [TECH-6.3]', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { level: 2, name: 'Content' })).toBeVisible();
+    await page.getByText('Build and engine details').click();
     // The version the build derived from the authored content and its digest.
     await expect(page.getByText(/^\d+\.\d+\.\d+\+[0-9a-f]{12}$/)).toBeVisible();
     await expect(page.getByText(/\d+ definitions in \d+ kinds/)).toBeVisible();

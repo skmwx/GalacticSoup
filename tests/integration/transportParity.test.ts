@@ -66,6 +66,16 @@ describe('transport parity', () => {
     expect(first.ok && (first.data as HealthData).engineVersion).toBe('1.2.3');
   });
 
+  it('returns the same content catalogue over both transports [TECH-12.5, TECH-17]', async () => {
+    const [direct, channel] = transports();
+
+    const first = await direct!.gateway.request('content.messages', { locale: 'en' });
+    const second = await channel!.gateway.request('content.messages', {});
+
+    expect(withoutRequestId(first)).toEqual(withoutRequestId(second));
+    expect(first.ok && Object.keys(first.data.messages).length).toBeGreaterThan(0);
+  });
+
   it('returns the same capabilities over both transports [TECH-4.2, TECH-7.1]', async () => {
     const [direct, channel] = transports();
 

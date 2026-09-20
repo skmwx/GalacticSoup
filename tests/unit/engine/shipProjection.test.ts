@@ -162,6 +162,93 @@ describe('the fitting-draft projection', () => {
     // The preview still shows what the fit would do once the item is bought.
     expect(draft?.preview?.slots.filter((slot) => slot.module !== null)).toHaveLength(3);
   });
+
+  it('offers every slot the hull has, whether or not the draft fills it [FUNC-8.4, TECH-12.3]', () => {
+    const draft = fittingDraftProjection(opened(), content).draft;
+    const hull = content.requireHull('hull.independent.starter' as never);
+    const total = Object.values(hull.slots).reduce((sum, count) => sum + count, 0);
+
+    expect(draft?.options).toHaveLength(total);
+    expect(draft?.options.map((option) => `${option.slot.kind}:${String(option.slot.index)}`)).toEqual([
+      'weapon:0', 'weapon:1', 'system:0', 'system:1', 'engineering:0', 'engineering:1',
+    ]);
+  });
+
+  it('offers only modules the player owns locally and the slot accepts [FUNC-8.4]', () => {
+    const draft = fittingDraftProjection(opened(), content).draft;
+    const weapon = draft?.options.find((option) => option.slot.kind === 'weapon');
+    const system = draft?.options.find((option) => option.slot.kind === 'system');
+    const engineering = draft?.options.find((option) => option.slot.kind === 'engineering');
+
+    // The starting fit is the only thing owned: one autocannon and one shield
+    // booster, both of them currently worn by the ship.
+    expect(weapon?.candidates.map((candidate) => candidate.module.definitionId)).toEqual([
+      'module.turret.autocannon.small',
+    ]);
+    expect(system?.candidates.map((candidate) => candidate.module.definitionId)).toEqual([
+      'module.shield.booster.small',
+    ]);
+    expect(engineering?.candidates).toEqual([]);
+  });
+
+  it('counts a fitted module as available, because a commit takes it off first [FUNC-8.4]', () => {
+    const draft = fittingDraftProjection(opened(), content).draft;
+    const weapon = draft?.options.find((option) => option.slot.kind === 'weapon');
+
+    expect(weapon?.candidates[0]?.available).toBe(1);
+    expect(weapon?.candidates[0]?.powerUse).toBe(
+      content.requireModule('module.turret.autocannon.small' as never).fitting.powerUse,
+    );
+    expect(weapon?.candidates[0]?.hardpoint).toBe('turret');
+  });
+
+  it('offers a turret only the ammunition it accepts and the player holds [FUNC-8.4]', () => {
+    const draft = fittingDraftProjection(opened(), content).draft;
+    const weapon = draft?.options.find((option) => option.slot.kind === 'weapon');
+
+    // Hybrid charges exist in the catalogue but are neither owned nor accepted
+    // by a projectile turret.
+    expect(weapon?.candidates[0]?.charges.map((charge) => charge.definitionId)).toEqual([
+      'ammo.projectile.small.fusion',
+    ]);
+  });
+
+  it('offers a module the moment the player owns one [FUNC-8.4, MVP-AC-02]', () => {
+    const state = opened();
+    const before = fittingDraftProjection(state, content).draft;
+    expect(
+      before?.options.find((option) => option.slot.kind === 'engineering')?.candidates,
+    ).toEqual([]);
+
+    const hangar = Object.values(state.assets.inventories).find(
+      (inventory) => inventory.location.kind === 'hangar',
+    );
+    const bought: CampaignState = {
+      ...state,
+      assets: {
+        ...state.assets,
+        stacks: {
+          ...state.assets.stacks,
+          'stack-plating': {
+            id: 'stack-plating' as never,
+            inventoryId: (hangar?.id ?? '') as never,
+            definitionId: 'module.plating.armor.small' as never,
+            quantity: 2,
+            state: { kind: 'plain' },
+            provenance: { grantedQuantity: 0, purchasedQuantity: 2, purchaseCostCredits: 8000 },
+          },
+        },
+      },
+    };
+
+    const after = fittingDraftProjection(bought, content).draft;
+    const engineering = after?.options.find((option) => option.slot.kind === 'engineering');
+    expect(engineering?.candidates.map((candidate) => candidate.module.definitionId)).toEqual([
+      'module.plating.armor.small',
+    ]);
+    expect(engineering?.candidates[0]?.available).toBe(2);
+    expect(engineering?.candidates[0]?.charges).toEqual([]);
+  });
 });
 
 describe('comparison', () => {

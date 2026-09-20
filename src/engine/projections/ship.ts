@@ -36,13 +36,16 @@ import type {
   DerivedStatData,
   FitIssueData,
   FittedSlotData,
+  FittingCandidateData,
   FittingDraftData,
   LayerConditionData,
   MissingItemData,
+  ItemData,
   OpenFittingDraftData,
   PlannedSlotData,
   ResourceUseData,
   ShipData,
+  SlotCandidatesData,
   UndockValidityData,
   WeaponStatData,
 } from '@protocol';
@@ -135,7 +138,101 @@ function describeDraft(
     blockedReason:
       preview.failureReason === null ? null : `error.ruleViolation.${preview.failureReason}`,
     preview: previewShip(state, content, draft, preview, committable),
+    options: slotCandidates(state, content, draft.shipId),
   };
+}
+
+/**
+ * What the player may put in each slot (Functional Specification 8.4;
+ * Technical Specification 12.3).
+ *
+ * Compatibility is a content rule, so it is decided here and offered as a
+ * list. A module counts as available when the local hangar, the ship's own
+ * hold or the ship itself can supply it, which is exactly where a commit
+ * looks for it. Ammunition is offered per module, because which charges a
+ * turret accepts depends on the turret.
+ */
+function slotCandidates(
+  state: CampaignState,
+  content: ContentRepository,
+  shipId: string,
+): readonly SlotCandidatesData[] {
+  const ship = state.assets.ships[shipId];
+  if (ship === undefined) {
+    return [];
+  }
+  const hull = content.requireHull(ship.hullId);
+  const owned = localDefinitionCounts(state, ship);
+  const modules = [...owned.keys()]
+    .sort()
+    .flatMap((definitionId) => content.module(definitionId) ?? []);
+
+  return SLOT_KINDS.flatMap((kind) => {
+    const slots: SlotCandidatesData[] = [];
+    for (let index = 0; index < hull.slots[kind]; index += 1) {
+      const candidates: FittingCandidateData[] = modules
+        .filter(
+          (module) =>
+            module.slot === kind &&
+            (module.hardpoint === undefined || hull.hardpoints[module.hardpoint] > 0),
+        )
+        .map((module) => ({
+          module: itemDataOf(module, content),
+          category: module.category,
+          hardpoint: module.hardpoint ?? null,
+          powerUse: module.fitting.powerUse,
+          processingUse: module.fitting.processingUse,
+          available: owned.get(module.id) ?? 0,
+          charges:
+            module.category === 'turret'
+              ? ownedCharges(content, owned, module.turret.ammunitionGroup)
+              : [],
+        }));
+      slots.push({ slot: { kind, index }, candidates });
+    }
+    return slots;
+  });
+}
+
+/** Ammunition of one group the player holds locally, in stable id order. */
+function ownedCharges(
+  content: ContentRepository,
+  owned: ReadonlyMap<string, number>,
+  group: string,
+): readonly ItemData[] {
+  return content
+    .ammunitionInGroup(group)
+    .filter((ammunition) => (owned.get(ammunition.id) ?? 0) > 0)
+    .map((ammunition) => itemDataOf(ammunition, content));
+}
+
+/**
+ * Units of each definition the ship's own stores and its station hangar hold,
+ * counting what the ship currently wears: a commit takes an unwanted module
+ * off before it refits, so a fitted module is a source like any other.
+ */
+function localDefinitionCounts(
+  state: CampaignState,
+  ship: ShipIdentity,
+): ReadonlyMap<string, number> {
+  const sources = new Set<string>([ship.cargoInventoryId, ship.fittingInventoryId]);
+  for (const inventory of Object.values(state.assets.inventories)) {
+    if (
+      inventory.location.kind === 'hangar' &&
+      inventory.location.stationId === ship.location.stationId
+    ) {
+      sources.add(inventory.id);
+    }
+  }
+
+  const counts = new Map<string, number>();
+  for (const stack of Object.values(state.assets.stacks)) {
+    if (!sources.has(stack.inventoryId)) {
+      continue;
+    }
+    counts.set(stack.definitionId, (counts.get(stack.definitionId) ?? 0) + stack.quantity);
+  }
+  return counts;
 }
 
 /**

@@ -1,3 +1,5 @@
+import type { CommandResultData } from '@protocol';
+
 import { type ClientGateway } from './clientGateway';
 
 /**
@@ -32,6 +34,12 @@ export interface FrameDriverOptions {
   readonly onVisibilityChange?: (listener: () => boolean) => () => void;
   /** Called after each advance that reached the engine. */
   readonly onAdvance?: (elapsedRealMs: number) => void;
+  /**
+   * The engine's answer to an advance. It carries the authoritative clock and
+   * the projection topics the elapsed time invalidated, so the interface reads
+   * both from the engine rather than keeping a clock of its own.
+   */
+  readonly onResult?: (result: CommandResultData) => void;
   readonly onError?: (error: unknown) => void;
 }
 
@@ -73,8 +81,11 @@ export function createFrameDriver(options: FrameDriverOptions): FrameDriver {
     const elapsed = Math.max(0, Math.floor(current - previous));
     void options.gateway
       .request('time.advance', { elapsedRealMs: elapsed })
-      .then(() => {
+      .then((response) => {
         options.onAdvance?.(elapsed);
+        if (response.ok) {
+          options.onResult?.(response.data);
+        }
       })
       .catch((error: unknown) => {
         options.onError?.(error);
