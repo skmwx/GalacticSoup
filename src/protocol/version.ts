@@ -1,11 +1,10 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
- * Version 1 carries engine health and capability requests only. There is no
- * campaign, command or snapshot contract yet; adding one increments this value
- * together with its schemas and compatibility handling.
+ * Version 2 includes the wallet, asset and inventory contracts alongside the
+ * campaign/session, time and persistence requests.
  */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

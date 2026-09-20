@@ -74,14 +74,15 @@ describe('scheduler', () => {
   it('allocates an entity id and an insertion ordinal per entry [TECH-5.1, TECH-9.2]', () => {
     const draft = testDraft();
 
+    const initialOrdinal = draft.nextEntityOrdinal;
     const first = scheduleBoundary(draft, { kind: 'a', dueAtMs: 10 });
     const second = scheduleBoundary(draft, { kind: 'b', dueAtMs: 20 });
 
-    expect(first.entryId).toBe(entityIdOf(draft.campaignId, 1));
-    expect(second.entryId).toBe(entityIdOf(draft.campaignId, 2));
+    expect(first.entryId).toBe(entityIdOf(draft.campaignId, initialOrdinal));
+    expect(second.entryId).toBe(entityIdOf(draft.campaignId, initialOrdinal + 1));
     expect(first.insertionOrdinal).toBe(1);
     expect(second.insertionOrdinal).toBe(2);
-    expect(draft.nextEntityOrdinal).toBe(3);
+    expect(draft.nextEntityOrdinal).toBe(initialOrdinal + 2);
     expect(draft.scheduler.nextInsertionOrdinal).toBe(3);
   });
 

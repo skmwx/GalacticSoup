@@ -1,4 +1,5 @@
 import type { CampaignState } from '@engine/domain';
+import { handleInventoryCommand } from './inventoryCommands';
 import type { ContentRepository } from '@engine/ports';
 import {
   type AdvanceTimePayload,
@@ -107,6 +108,10 @@ export function runCommand(request: CommandRequest): CommandResult {
 
 function apply(transaction: Transaction, request: CommandRequest): CommandOutcome {
   switch (request.type) {
+    case 'inventory.transfer':
+    case 'inventory.split':
+    case 'inventory.merge':
+      return handleInventoryCommand(transaction, request.type, request.payload);
     case 'campaign.create':
       return handleCreateCampaign(transaction, request.payload as CreateCampaignPayload);
     case 'campaign.reset':

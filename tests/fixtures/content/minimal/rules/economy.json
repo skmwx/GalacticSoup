@@ -18,6 +18,19 @@
     "stationServiceModifierMaximum": 1.5,
     "basicInsurancePayoutFraction": 0.3,
     "enhancedInsurancePremiumFraction": 0.15,
-    "enhancedInsurancePayoutFraction": 0.7
+    "enhancedInsurancePayoutFraction": 0.7,
+    "startingCredits": 20000,
+    "startingStationId": "station.test.dock",
+    "starterHullId": "hull.test.starter",
+    "startingItems": [
+      {
+        "definitionId": "module.test.turret",
+        "quantity": 1
+      },
+      {
+        "definitionId": "ammo.test.charge",
+        "quantity": 20
+      }
+    ]
   }
 }

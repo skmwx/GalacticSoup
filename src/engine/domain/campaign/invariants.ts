@@ -1,4 +1,6 @@
 import { sortedKeys } from '@shared';
+import type { ContentRepository } from '@engine/ports';
+import { validateAssets } from '../assets/validation';
 
 import { isCampaignId, isEntityId, MAX_ORDINAL } from './identity';
 import { RANDOM_STREAMS, isRandomStreams } from '../random/streams';
@@ -22,9 +24,11 @@ import {
  * adds the numbered checks for the state it introduces; the list below names
  * the specification checks covered so the gap stays visible.
  *
- * Covered here: 1 (bounded values), 7 and 12 (scheduler entries, and the
+ * Covered here: 1 (bounded values), 2-5 (asset references, ownership, capacity,
+ * reservations and active-ship location), 7 and 12 (scheduler entries, and the
  * absence of a real timestamp as a completion condition), 11 (streams,
- * simulation time, revisions and ordinals).
+ * simulation time, revisions and ordinals). Content-dependent asset checks run
+ * at commit, before persistence and on load with the installed repository.
  *
  * @implements TECH-15.3
  */
@@ -39,7 +43,7 @@ export interface InvariantIssue {
 
 type Report = (rule: string, path: string, detail: string) => void;
 
-export function validateCampaign(state: CampaignState): readonly InvariantIssue[] {
+export function validateCampaign(state: CampaignState, content?: ContentRepository): readonly InvariantIssue[] {
   const issues: InvariantIssue[] = [];
   const add: Report = (rule, path, detail) => {
     issues.push({ rule, path, detail });
@@ -102,6 +106,7 @@ export function validateCampaign(state: CampaignState): readonly InvariantIssue[
   }
 
   validateScheduler(state, add);
+  validateAssets(state, add, content);
 
   return issues;
 }

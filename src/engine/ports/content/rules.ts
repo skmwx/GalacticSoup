@@ -54,6 +54,10 @@ export interface CombatRules {
 }
 
 export interface EconomyRules {
+  readonly startingCredits: number;
+  readonly startingStationId: string;
+  readonly starterHullId: string;
+  readonly startingItems: readonly { readonly definitionId: string; readonly quantity: number }[];
   readonly scarcityMinimum: number;
   readonly scarcityMaximum: number;
   readonly midPriceMultiplierMinimum: number;

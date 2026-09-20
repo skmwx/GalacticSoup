@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/save/campaign-state.schema.json",
   "title": "CampaignState",
-  "description": "The authoritative campaign payload of a save snapshot, state version 1 (Technical Specification 8.1, 11.2). The snapshot envelope that wraps it - format version, engine and protocol versions, content version and hash, save kind and checksum - is added by the persistence phase. Every value here is plain JSON: no derived index, no cache and no wall-clock delta is stored.",
+  "description": "Authoritative campaign state version 2: wallet, ships and physical inventories (Technical Specification 8, 11).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,11 +16,12 @@
     "nextEventOrdinal",
     "time",
     "random",
-    "scheduler"
+    "scheduler",
+    "assets"
   ],
   "properties": {
     "stateVersion": {
-      "const": 1
+      "const": 2
     },
     "campaignId": {
       "type": "string",
@@ -347,6 +348,311 @@
                     "type": "null"
                   }
                 ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "credits",
+        "location",
+        "activeShipId",
+        "ships",
+        "inventories",
+        "stacks"
+      ],
+      "properties": {
+        "credits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "location": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "stationId",
+            "systemId"
+          ],
+          "properties": {
+            "kind": {
+              "const": "station"
+            },
+            "stationId": {
+              "type": "string",
+              "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            },
+            "systemId": {
+              "type": "string",
+              "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            }
+          }
+        },
+        "activeShipId": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "ships": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "hullId",
+              "cargoInventoryId",
+              "location"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+              },
+              "hullId": {
+                "type": "string",
+                "pattern": "^hull(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                "maxLength": 96
+              },
+              "cargoInventoryId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+              },
+              "location": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "stationId",
+                  "systemId"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "station"
+                  },
+                  "stationId": {
+                    "type": "string",
+                    "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                    "maxLength": 96
+                  },
+                  "systemId": {
+                    "type": "string",
+                    "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                    "maxLength": 96
+                  }
+                }
+              }
+            }
+          }
+        },
+        "inventories": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "location",
+              "capacity"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+              },
+              "location": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "stationId"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "hangar"
+                      },
+                      "stationId": {
+                        "type": "string",
+                        "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                        "maxLength": 96
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "shipId"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "cargo"
+                      },
+                      "shipId": {
+                        "type": "string",
+                        "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "sourceInventoryId",
+                      "ownerId"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "reserve"
+                      },
+                      "sourceInventoryId": {
+                        "type": "string",
+                        "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                      },
+                      "ownerId": {
+                        "type": "string",
+                        "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                      }
+                    }
+                  }
+                ]
+              },
+              "capacity": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "unlimited"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "volumeCubicDecimetres"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "limited"
+                      },
+                      "volumeCubicDecimetres": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "inventoryId"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "shared"
+                      },
+                      "inventoryId": {
+                        "type": "string",
+                        "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "stacks": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "definitionId",
+              "quantity",
+              "inventoryId",
+              "state",
+              "provenance"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+              },
+              "definitionId": {
+                "type": "string",
+                "pattern": "^(item|module|ammo)(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                "maxLength": 96
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "inventoryId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+              },
+              "state": {
+                "const": "plain"
+              },
+              "provenance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "grantedQuantity",
+                  "purchasedQuantity",
+                  "purchaseCostCredits"
+                ],
+                "properties": {
+                  "grantedQuantity": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "purchasedQuantity": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "purchaseCostCredits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                }
               }
             }
           }

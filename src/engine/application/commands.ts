@@ -53,13 +53,16 @@ export function handleCreateCampaign(
     seed: payload.seed,
     createdAtRealMs: payload.createdAtRealMs,
     initialRate: baseRate(transaction),
-  });
+  }, transaction.content);
 
   transaction.openCampaign(state);
   transaction.publish('campaign.created', { campaignId: state.campaignId });
   transaction.invalidate('session');
   transaction.invalidate('frame');
   transaction.invalidate('saves');
+  transaction.invalidate('assets');
+  transaction.invalidate('inventory');
+  transaction.invalidate('wallet');
   // A new campaign must be resumable before the player touches anything
   // (Functional Specification 3.4).
   transaction.requestAutosave();
@@ -87,6 +90,9 @@ export function handleResumeCampaign(
   transaction.invalidate('session');
   transaction.invalidate('frame');
   transaction.invalidate('saves');
+  transaction.invalidate('assets');
+  transaction.invalidate('inventory');
+  transaction.invalidate('wallet');
   return APPLIED;
 }
 
@@ -106,6 +112,9 @@ export function handleCloseCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('session');
   transaction.invalidate('frame');
   transaction.invalidate('saves');
+  transaction.invalidate('assets');
+  transaction.invalidate('inventory');
+  transaction.invalidate('wallet');
   return APPLIED;
 }
 
@@ -125,6 +134,9 @@ export function handleResetCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('session');
   transaction.invalidate('frame');
   transaction.invalidate('saves');
+  transaction.invalidate('assets');
+  transaction.invalidate('inventory');
+  transaction.invalidate('wallet');
   return APPLIED;
 }
 

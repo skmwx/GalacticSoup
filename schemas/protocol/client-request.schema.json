@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/client-request.schema.json",
   "title": "ClientRequest",
-  "description": "Versioned request envelope for protocol version 1 (Technical Specification 7.1). Generated independently of the TypeScript types so a future non-TypeScript engine can validate the same contract.",
+  "description": "Protocol version 2 request envelope and payloads.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 1
+      "const": 2
     },
     "requestId": {
       "type": "string",
@@ -31,6 +31,7 @@
     },
     "type": {
       "enum": [
+        "assets.list",
         "campaign.close",
         "campaign.create",
         "campaign.frame",
@@ -41,10 +42,18 @@
         "campaign.session",
         "content.summary",
         "diagnostics.stateHash",
+        "inventory.cargo",
+        "inventory.hangar",
+        "inventory.maximum",
+        "inventory.merge",
+        "inventory.split",
+        "inventory.transfer",
+        "item.inspect",
         "system.capabilities",
         "system.health",
         "time.advance",
-        "time.set"
+        "time.set",
+        "wallet.get"
       ]
     },
     "payload": {
@@ -314,6 +323,290 @@
         "properties": {
           "payload": {
             "$ref": "#/$defs/closeCampaignPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "assets.list"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [],
+            "properties": {}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "wallet.get"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [],
+            "properties": {}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "inventory.hangar"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stationId"
+            ],
+            "properties": {
+              "stationId": {
+                "type": "string",
+                "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                "maxLength": 96
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "inventory.cargo"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "shipId"
+            ],
+            "properties": {
+              "shipId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "item.inspect"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stackId"
+            ],
+            "properties": {
+              "stackId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "inventory.maximum"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stackId",
+              "destinationInventoryId"
+            ],
+            "properties": {
+              "stackId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              },
+              "destinationInventoryId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "inventory.transfer"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stackId",
+              "destinationInventoryId",
+              "quantity"
+            ],
+            "properties": {
+              "stackId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              },
+              "destinationInventoryId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "inventory.split"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stackId",
+              "quantity"
+            ],
+            "properties": {
+              "stackId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "inventory.merge"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sourceStackId",
+              "targetStackId"
+            ],
+            "properties": {
+              "sourceStackId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              },
+              "targetStackId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              }
+            }
           }
         }
       }

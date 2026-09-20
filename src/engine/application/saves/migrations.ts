@@ -10,8 +10,8 @@ import { deepClone } from '@shared';
  * draw or reach the content port. Each one ships with golden before/after
  * fixtures.
  *
- * Format version 1 is the baseline, so the registry is empty. A later format
- * adds one entry per version step; the runner below refuses a registry whose
+ * No version has been released, so the registry is empty (MVP plan section 2).
+ * A released format change adds one entry per step; the runner refuses a registry whose
  * steps do not chain, so a missing step cannot be discovered in production.
  *
  * @implements TECH-11.4
@@ -28,7 +28,7 @@ export interface SaveMigration {
   migrate(save: MigratableSave): MigratableSave;
 }
 
-/** No released format precedes version 1. */
+/** No previous format has been publicly released. */
 export const SAVE_MIGRATIONS: readonly SaveMigration[] = [];
 
 export type MigrationResult =

@@ -202,7 +202,7 @@ export function commit(transaction: Transaction): CommitResult {
     if (!internals.result.restoring) {
       draft.revision += 1;
     }
-    const issues = validateCampaign(draft as CampaignState);
+    const issues = validateCampaign(draft as CampaignState, transaction.content);
     if (issues.length > 0) {
       throw new InvariantFailure(issues);
     }

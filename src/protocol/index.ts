@@ -4,6 +4,7 @@
  */
 export { failureResponse, isSuccess, successResponse } from './envelope';
 export type { ClientRequest, EngineFailure, EngineResponse, EngineSuccess } from './envelope';
+export * from './assets';
 export {
   contentError,
   contentErrorMessageKey,

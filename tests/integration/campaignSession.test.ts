@@ -1,3 +1,4 @@
+import { PROTOCOL_VERSION } from '@protocol';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createMemorySaveStore } from '@adapters/persistence';
@@ -77,7 +78,7 @@ describe('campaign session over a transport', () => {
       const created = await create(gateway);
       expect(created.committed).toBe(true);
       expect(created.revision).toBe(1);
-      expect(created.invalidations).toEqual(['frame', 'saves', 'session']);
+      expect(created.invalidations).toEqual(['assets', 'frame', 'inventory', 'saves', 'session', 'wallet']);
 
       const running = await gateway.request('time.set', { paused: false, rate: 1 });
       expect(running.ok).toBe(true);
@@ -134,7 +135,7 @@ describe('campaign session over a transport', () => {
     const gateway = gatewayFor('direct');
 
     const rejected = await gateway.sendEnvelope({
-      protocolVersion: 1,
+      protocolVersion: PROTOCOL_VERSION,
       requestId: 'bad-create',
       type: 'campaign.create',
       payload: { displayName: '', seed: SEED, createdAtRealMs: 0 },

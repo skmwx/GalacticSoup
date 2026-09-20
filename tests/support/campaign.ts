@@ -30,7 +30,7 @@ export function testCampaign(overrides: Partial<CampaignState> = {}): CampaignSt
     seed: TEST_SEED,
     createdAtRealMs: 1_700_000_000_000,
     initialRate: 1,
-  });
+  }, shippedContent());
   return { ...base, revision: 1, ...overrides };
 }
 

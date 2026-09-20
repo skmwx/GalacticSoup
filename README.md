@@ -98,7 +98,7 @@ campaign are serialised and therefore finish in revision order.
 A save is a self-describing JSON envelope: the build and content it was written against, the
 campaign and revision it holds, the canonical `CampaignState` payload, and a SHA-256 over
 everything else in it. `schemas/save/save-envelope.schema.json` is its published contract and
-`tests/fixtures/saves/format-1.json` is the golden artefact that pins the format, its canonical
+`tests/fixtures/saves/format-2.json` is the golden artefact that pins the format, its canonical
 serialisation and its digest. Loading walks the steps the technical specification prescribes —
 bounds, checksum, shape, migrations, content compatibility, invariants — and nothing in that path
 writes, so a save that cannot be opened is left exactly as it was found and the loader falls back to
@@ -112,6 +112,29 @@ The engine has no wall clock, so the timestamp a snapshot carries for display ar
 request that asks for it. That is also why the five-minute interval autosave is a main-thread play
 timer: `createCampaignSession` in `@gateway` counts unpaused real time and sends `campaign.save`,
 and answers any autosave trigger a command reports back.
+
+## Wallet and physical assets
+
+Phase 5 adds the headless asset foundation. Starting credits, hull, station and item grants are
+authored in `content/rules/economy.json`. A campaign owns one unfitted starter ship, its empty
+cargo hold and a station hangar containing the basic turret, shield booster and ammunition.
+Phase 6 assembles the fit; station screens arrive in Phase 8.
+
+`src/engine/domain/assets` owns inventory and wallet operations. Physical stacks move only through
+the inventory service, which provides atomic split, merge, transfer, reserve/release and capacity
+changes. Reservations occupy explicit inventories and retain their share of source capacity.
+Quantities, credits and cargo volume use safe integers; acquisition quantities and credit totals
+survive splitting and merging without loss.
+
+Protocol version 2 exposes `inventory.transfer`, `inventory.split`, `inventory.merge`,
+`inventory.maximum`, `inventory.hangar`, `inventory.cargo`, `assets.list`, `wallet.get` and
+`item.inspect`. The engine checks locality and returns immutable projections. Reservation and
+wallet mutations remain domain operations for the gameplay handlers that need them.
+
+Campaign state and save format are version 2. Previous development saves are rejected without
+modification; start a new campaign after upgrading. No pre-release migration is required by the
+MVP plan. The migration runner remains covered by fixture registries, and the old format-1 fixture
+is retained to verify rejection. See `docs/agent-comm/status/phase-05-completion.md` for the handoff.
 
 ## Content
 

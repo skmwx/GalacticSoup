@@ -1,4 +1,5 @@
 import { isDefinitionId, type DefinitionId } from '@shared';
+import { isAssetState } from '../assets/validation';
 
 import { isCampaignId, isCampaignSeed, isEntityId, MAX_ORDINAL } from './identity';
 import { isRandomStreams } from '../random/streams';
@@ -99,6 +100,7 @@ export function readCampaignState(value: unknown): CampaignReadResult {
   }
 
   readScheduler(value['scheduler'], add);
+  if (!isAssetState(value['assets'])) add('assetShape', 'state.assets', 'Saved assets are missing or malformed.');
 
   if (issues.length > 0) {
     return { ok: false, issues };
@@ -121,12 +123,16 @@ export function readCampaignState(value: unknown): CampaignReadResult {
  *
  * A campaign stores definition ids rather than copies of definitions, so a
  * content update reaches it without a migration as long as every id it names
- * still resolves. This phase's state names none, because no gameplay entity
- * exists yet; each later phase adds the references the state it introduces
- * carries.
+ * still resolves. Ships, locations and physical stacks all contribute references;
+ * later phases extend this set whenever they persist another definition ID.
  */
 export function campaignDefinitionReferences(state: CampaignState): readonly DefinitionId[] {
-  const references: DefinitionId[] = [];
+  const references: DefinitionId[] = [state.assets.location.stationId, state.assets.location.systemId];
+  for (const ship of Object.values(state.assets.ships)) references.push(ship.hullId, ship.location.stationId, ship.location.systemId);
+  for (const inventory of Object.values(state.assets.inventories)) {
+    if (inventory.location.kind === 'hangar') references.push(inventory.location.stationId);
+  }
+  for (const stack of Object.values(state.assets.stacks)) references.push(stack.definitionId);
   for (const entry of state.scheduler.entries) {
     // A boundary kind is an engine enumeration rather than a definition id.
     // Only a kind that names a definition is collected, which is the seam a
@@ -135,10 +141,11 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
       references.push(entry.kind);
     }
   }
-  return references;
+  return [...new Set(references)].sort();
 }
 
 const STATE_FIELDS: readonly string[] = [
+  'assets',
   'stateVersion',
   'campaignId',
   'displayName',

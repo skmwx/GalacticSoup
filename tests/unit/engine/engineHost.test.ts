@@ -81,7 +81,7 @@ describe('engine host', () => {
       {},
       { requestId: 'req-2' },
       request('campaign.create'),
-      request('system.health', { protocolVersion: 2 }),
+      request('system.health', { protocolVersion: 99 }),
       request('system.health', { payload: { verbose: true } }),
     ];
 

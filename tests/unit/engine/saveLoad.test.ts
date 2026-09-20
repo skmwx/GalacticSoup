@@ -166,12 +166,11 @@ describe('save load pipeline', () => {
       },
     ];
 
-    // The registry raises the stored version towards the current one; with
-    // format version 1 current, a save already at 1 needs no step.
+    // The fixture registry proves loading through the first version boundary.
     const result = loadSave(older, { content, migrations });
 
     expect(result.ok).toBe(true);
-    expect(result.ok && result.migrated).toEqual([]);
+    expect(result.ok && result.migrated).toEqual([1]);
   });
 
   it('reads a campaign payload independently of its envelope [TECH-11.4]', () => {

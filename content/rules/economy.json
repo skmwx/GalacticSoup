@@ -19,6 +19,23 @@
     "stationServiceModifierMaximum": 1.5,
     "basicInsurancePayoutFraction": 0.3,
     "enhancedInsurancePremiumFraction": 0.15,
-    "enhancedInsurancePayoutFraction": 0.7
+    "enhancedInsurancePayoutFraction": 0.7,
+    "startingCredits": 20000,
+    "startingStationId": "station.borrell.harbour",
+    "starterHullId": "hull.independent.starter",
+    "startingItems": [
+      {
+        "definitionId": "module.turret.autocannon.small",
+        "quantity": 1
+      },
+      {
+        "definitionId": "module.shield.booster.small",
+        "quantity": 1
+      },
+      {
+        "definitionId": "ammo.projectile.small.fusion",
+        "quantity": 20
+      }
+    ]
   }
 }

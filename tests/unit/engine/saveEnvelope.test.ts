@@ -1,3 +1,4 @@
+import { fixtureRepository } from '../../support/contentFixtures.ts';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -28,7 +29,7 @@ import { GOLDEN_CAPTURE, GOLDEN_CONTENT } from '../../support/goldenSave.ts';
 const content = shippedContent();
 
 function golden(): SaveEnvelope {
-  const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-1.json');
+  const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-2.json');
   return JSON.parse(readFileSync(file, 'utf8')) as SaveEnvelope;
 }
 
@@ -48,7 +49,7 @@ function capture(overrides: Partial<Parameters<typeof captureSnapshot>[0]> = {})
 
 describe('save envelope', () => {
   it('reproduces the golden save byte for byte [TECH-11.2, TECH-17]', () => {
-    const campaign = { ...createCampaign(GOLDEN_CAPTURE.campaign), revision: 1 };
+    const campaign = { ...createCampaign(GOLDEN_CAPTURE.campaign, fixtureRepository()), revision: 1 };
     const produced = captureSnapshot({ ...GOLDEN_CAPTURE.envelope, campaign });
 
     expect(canonicalJson(produced as unknown as Record<string, unknown>)).toBe(

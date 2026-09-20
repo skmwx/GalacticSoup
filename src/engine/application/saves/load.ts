@@ -1,6 +1,7 @@
 import {
   campaignDefinitionReferences,
   readCampaignState,
+  validateCampaign,
   type CampaignState,
   type InvariantIssue,
 } from '@engine/domain';
@@ -140,21 +141,20 @@ export function loadSave(stored: unknown, context: LoadContext): LoadResult {
   }
 
   const contentChanged = envelope.contentHash !== context.content.contentHash;
-  if (contentChanged) {
-    const missing = unresolvedReferences(
-      campaignDefinitionReferences(payload.state),
-      context.content,
-    );
-    if (missing.length > 0) {
-      return failure(
-        saveLoadError('contentIncompatible', {
-          storedContentVersion: envelope.contentVersion,
-          installedContentVersion: context.content.contentVersion,
-          missing: missing.length,
-          firstMissing: missing[0] ?? '',
-        }),
-      );
-    }
+  // A matching bundle hash is not evidence that a saved reference is valid.
+  const missing = unresolvedReferences(campaignDefinitionReferences(payload.state), context.content);
+  if (missing.length > 0) {
+    return failure(saveLoadError('contentIncompatible', {
+      storedContentVersion: envelope.contentVersion,
+      installedContentVersion: context.content.contentVersion,
+      missing: missing.length,
+      firstMissing: missing[0] ?? '',
+    }));
+  }
+
+  const issues = validateCampaign(payload.state, context.content);
+  if (issues.length > 0) {
+    return { ok: false, error: saveLoadError('payload', { rule: issues[0]!.rule, path: issues[0]!.path }), issues };
   }
 
   return {

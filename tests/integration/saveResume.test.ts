@@ -1,3 +1,4 @@
+import { PROTOCOL_VERSION } from '@protocol';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createMemorySaveStore, type MemorySaveStore } from '@adapters/persistence';
@@ -301,7 +302,7 @@ describe('campaign persistence', () => {
     await create(gateway);
 
     const message = {
-      protocolVersion: 1,
+      protocolVersion: PROTOCOL_VERSION,
       requestId: 'save-once',
       type: 'campaign.save',
       payload: { kind: 'manual', savedAtRealMs: CREATED_AT + 10 },

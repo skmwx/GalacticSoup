@@ -95,6 +95,39 @@ export function validateSemantics(collected) {
   const tradeable = new Map([...items, ...modules, ...ammunition]);
   const sellable = new Map([...tradeable, ...hulls]);
 
+  const start = collected.rules.economy;
+  if (start !== undefined) {
+    const values = start.values;
+    const station = stations.get(values.startingStationId);
+    const hull = hulls.get(values.starterHullId);
+    if (station === undefined || !station.neutralAccess ||
+        systems.get(station.systemId)?.dangerRating !== 1) {
+      issues.push(issue('unresolvedReference', start.file, 'values.startingStationId',
+        'Starting station must resolve to a neutral-access station in danger 1 space.'));
+    }
+    if (hull === undefined || !hull.playerUsable) {
+      issues.push(issue('unresolvedReference', start.file, 'values.starterHullId',
+        'Starter hull must resolve to a player-usable hull.'));
+    }
+    const granted = new Set();
+    let startingVolume = 0;
+    for (const [index, item] of (values.startingItems ?? []).entries()) {
+      if (!tradeable.has(item.definitionId) || granted.has(item.definitionId)) {
+        issues.push(issue('unresolvedReference', start.file, `values.startingItems[${index}].definitionId`,
+          'Starting items must resolve to distinct physical item definitions.'));
+      }
+      granted.add(item.definitionId);
+      const definition = tradeable.get(item.definitionId);
+      if (definition !== undefined) {
+        startingVolume += item.quantity * Math.round(definition.volumeCubicMetres * 1000);
+        if (!Number.isSafeInteger(startingVolume)) {
+          issues.push(issue('invalidValue', start.file, `values.startingItems[${index}].quantity`,
+            'Starting item volume exceeds the supported canonical integer range.'));
+        }
+      }
+    }
+  }
+
   const ammunitionGroups = new Set(
     collected.definitions.ammunition.map((entry) => entry.value.group),
   );

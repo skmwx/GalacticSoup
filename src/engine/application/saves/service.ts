@@ -1,4 +1,4 @@
-import type { CampaignState } from '@engine/domain';
+import { validateCampaign, type CampaignState } from '@engine/domain';
 import {
   DEFAULT_SAVE_RETENTION,
   DEFAULT_SLOT_ID,
@@ -14,6 +14,7 @@ import {
 } from '@engine/ports';
 import {
   ruleViolation,
+  invariantFailure,
   saveWriteError,
   type EngineError,
   type ResumableSaveData,
@@ -207,6 +208,12 @@ export function createSaveService(options: SaveServiceOptions): SaveService {
       savedAtRealMs: number,
     ): Promise<SaveStatusData> {
       const captured = capturing.then(async () => {
+        const issues = validateCampaign(campaign, content);
+        if (issues.length > 0) {
+          lastError = invariantFailure({ rule: issues[0]!.rule, path: issues[0]!.path });
+          state = 'failed';
+          return statusOf();
+        }
         await ensureManifest();
         await ensureStorage();
 

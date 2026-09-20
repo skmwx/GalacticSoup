@@ -1,3 +1,4 @@
+import { fixtureRepository } from '../../support/contentFixtures.ts';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -113,7 +114,7 @@ const JSON_FIXTURES: readonly { readonly label: string; readonly message: unknow
   },
   {
     label: 'a foreign protocol version',
-    message: { protocolVersion: 2, requestId: 'r', type: 'system.health', payload: {} },
+    message: { protocolVersion: 99, requestId: 'r', type: 'system.health', payload: {} },
   },
   {
     label: 'an unknown request type',
@@ -473,16 +474,16 @@ describe('campaign protocol schema parity', () => {
   });
 
   it('validates a captured save against the published save schema [TECH-11.2, TECH-17]', () => {
-    const campaign = { ...createCampaign(GOLDEN_CAPTURE.campaign), revision: 1 };
+    const campaign = { ...createCampaign(GOLDEN_CAPTURE.campaign, fixtureRepository()), revision: 1 };
     const envelope = captureSnapshot({ ...GOLDEN_CAPTURE.envelope, campaign });
 
     expect(validateSaveEnvelope(envelope)).toBe(true);
     expect(validateSaveEnvelope({ ...envelope, kind: 'quicksave' })).toBe(false);
-    expect(validateSaveEnvelope({ ...envelope, formatVersion: 2 })).toBe(false);
+    expect(validateSaveEnvelope({ ...envelope, formatVersion: 99 })).toBe(false);
   });
 
   it('validates the golden save against the published save schema [TECH-11.2, TECH-17]', () => {
-    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-1.json');
+    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-2.json');
 
     expect(validateSaveEnvelope(JSON.parse(readFileSync(file, 'utf8')))).toBe(true);
   });

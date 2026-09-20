@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/inventory.hangar.data.schema.json",
+  "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/inventory"
+}

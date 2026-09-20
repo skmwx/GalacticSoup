@@ -1,4 +1,5 @@
 import type { ClientRequest } from './envelope';
+import { isDefinitionIdIn } from '@shared';
 import { type EngineError, invalidRequest } from './errors';
 import { isRequestType, SAVE_KIND_NAMES, type RequestType } from './requests';
 import { findTransportViolation } from './transport';
@@ -142,6 +143,8 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
   const fields = payload as Record<string, unknown>;
 
   switch (type) {
+    case 'assets.list':
+    case 'wallet.get':
     case 'system.health':
     case 'system.capabilities':
     case 'content.summary':
@@ -152,6 +155,35 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
     case 'campaign.frame':
     case 'diagnostics.stateHash':
       return expectNoFields(type, fields);
+
+    case 'inventory.transfer':
+    case 'inventory.split':
+    case 'inventory.merge':
+    case 'inventory.maximum':
+    case 'inventory.hangar':
+    case 'inventory.cargo':
+    case 'item.inspect': {
+      const keys = {
+        'inventory.transfer': ['stackId', 'destinationInventoryId', 'quantity'],
+        'inventory.split': ['stackId', 'quantity'],
+        'inventory.merge': ['sourceStackId', 'targetStackId'],
+        'inventory.maximum': ['stackId', 'destinationInventoryId'],
+        'inventory.hangar': ['stationId'], 'inventory.cargo': ['shipId'], 'item.inspect': ['stackId'],
+      }[type];
+      const unexpected = unexpectedField(fields, keys);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      for (const key of keys) {
+        const value = fields[key];
+        if (key === 'quantity') {
+          if (!isWholeNonNegative(value) || value === 0) return payloadField(type, key, 'format');
+        } else {
+          const valid = key === 'stationId' ? isDefinitionIdIn(value, 'station')
+            : typeof value === 'string' && value.length <= 128 && /^c[0-9a-f]{24}-e[1-9][0-9]*$/.test(value);
+          if (!valid) return payloadField(type, key, 'format');
+        }
+      }
+      return null;
+    }
 
     case 'campaign.create': {
       const unexpected = unexpectedField(fields, ['displayName', 'seed', 'createdAtRealMs']);

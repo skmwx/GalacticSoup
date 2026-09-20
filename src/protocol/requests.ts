@@ -1,18 +1,15 @@
 /**
- * Protocol version 1 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 2 request catalogue (Technical Specification 7.1, 18).
  *
- * Version 1 exposes engine health, capability reporting, content identity, the
- * campaign session, time control and a diagnostic state hash. Gameplay command
- * and query families are declared by the phases that implement them.
- *
- * A request type is added to a version rather than incrementing it while no
- * released client exists: `system.capabilities` reports the accepted types, so
- * a client discovers what this host answers instead of assuming it. The
- * version increments when a payload or response shape that has shipped
- * changes incompatibly.
+ * Adds physical inventory commands and asset inspection to the campaign shell.
+ * Capabilities list the accepted request types. Older clients are rejected at
+ * the envelope boundary, before any command can mutate campaign state.
  */
 
 import type { EngineError } from './errors';
+import type { AssetsData, WalletData, InventoryData, ItemInspectionData, MaximumInventoryData,
+  TransferInventoryPayload, SplitInventoryPayload, MergeInventoryPayload, MaximumInventoryPayload,
+  StackPayload, HangarPayload, CargoPayload } from './assets';
 
 /** Payload for requests that take no arguments. */
 export type EmptyPayload = Record<string, never>;
@@ -254,6 +251,15 @@ export interface SaveSlotData {
 }
 
 export interface ProtocolContract {
+  'assets.list': { payload: EmptyPayload; data: AssetsData };
+  'wallet.get': { payload: EmptyPayload; data: WalletData };
+  'inventory.hangar': { payload: HangarPayload; data: InventoryData };
+  'inventory.cargo': { payload: CargoPayload; data: InventoryData };
+  'item.inspect': { payload: StackPayload; data: ItemInspectionData };
+  'inventory.maximum': { payload: MaximumInventoryPayload; data: MaximumInventoryData };
+  'inventory.transfer': { payload: TransferInventoryPayload; data: CommandResultData };
+  'inventory.split': { payload: SplitInventoryPayload; data: CommandResultData };
+  'inventory.merge': { payload: MergeInventoryPayload; data: CommandResultData };
   'system.health': { payload: EmptyPayload; data: HealthData };
   'system.capabilities': { payload: EmptyPayload; data: CapabilitiesData };
   'content.summary': { payload: EmptyPayload; data: ContentSummaryData };
@@ -277,6 +283,7 @@ export type ResponseData<TType extends RequestType> = ProtocolContract[TType]['d
 
 /** Sorted so capability reports and fixtures are order-stable. */
 export const REQUEST_TYPES = [
+  'assets.list',
   'campaign.close',
   'campaign.create',
   'campaign.frame',
@@ -287,10 +294,18 @@ export const REQUEST_TYPES = [
   'campaign.session',
   'content.summary',
   'diagnostics.stateHash',
+  'inventory.cargo',
+  'inventory.hangar',
+  'inventory.maximum',
+  'inventory.merge',
+  'inventory.split',
+  'inventory.transfer',
+  'item.inspect',
   'system.capabilities',
   'system.health',
   'time.advance',
   'time.set',
+  'wallet.get',
 ] as const satisfies readonly RequestType[];
 
 /**
@@ -299,6 +314,9 @@ export const REQUEST_TYPES = [
  * cache; every other type is a read-only query (Technical Specification 7.2).
  */
 export const COMMAND_TYPES = [
+  'inventory.merge',
+  'inventory.split',
+  'inventory.transfer',
   'campaign.close',
   'campaign.create',
   'campaign.reset',

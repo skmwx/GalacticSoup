@@ -24,12 +24,12 @@ const step = (from: number, apply: (save: Record<string, unknown>) => void): Sav
 describe('save migrations', () => {
   it('ships no migration before the first released format change [TECH-11.4]', () => {
     expect(SAVE_MIGRATIONS).toEqual([]);
-    expect(SAVE_FORMAT_VERSION).toBe(1);
+    expect(SAVE_FORMAT_VERSION).toBe(2);
   });
 
   it('is a no-op for a save already at the current version [TECH-11.4]', () => {
-    const save = { formatVersion: 1, state: {} };
-    const result = migrateSave(save, 1);
+    const save = { formatVersion: SAVE_FORMAT_VERSION, state: {} };
+    const result = migrateSave(save, SAVE_FORMAT_VERSION);
 
     expect(result.ok).toBe(true);
     expect(result.ok && result.applied).toEqual([]);

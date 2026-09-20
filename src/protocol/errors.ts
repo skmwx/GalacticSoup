@@ -77,6 +77,9 @@ export function invalidRequestMessageKey(reason: InvalidRequestReason): MessageK
  * (Functional Specification 22.10).
  */
 export const RULE_VIOLATION_REASONS = [
+  'inventoryNotFound', 'itemNotFound', 'invalidQuantity', 'insufficientItems',
+  'insufficientCapacity', 'incompatibleStacks', 'sameInventory', 'inventoryUnavailable',
+  'invalidReservation', 'numericOverflow', 'insufficientCredits',
   'campaignAlreadyOpen',
   'noCampaignOpen',
   'campaignMismatch',

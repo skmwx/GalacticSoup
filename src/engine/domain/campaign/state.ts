@@ -1,4 +1,7 @@
 import { canonicalJson, deepClone, sha256Hex, type Mutable } from '@shared';
+import type { ContentRepository } from '@engine/ports';
+import { startingAssets } from '../assets/start';
+import type { AssetState } from '../assets/types';
 
 import { deriveCampaignId, type CampaignId } from './identity';
 import { emptyScheduler, type SchedulerState } from './scheduler';
@@ -20,7 +23,7 @@ import { seedStreams, type RandomStreams } from '../random/streams';
  */
 
 /** Shape version of the authoritative payload, carried by every snapshot. */
-export const CAMPAIGN_STATE_VERSION = 1;
+export const CAMPAIGN_STATE_VERSION = 2;
 
 /** Upper bound on simulation time, about 31 simulated years. */
 export const MAX_SIMULATION_TIME_MS = 1_000_000_000_000;
@@ -38,6 +41,7 @@ export interface TimeState {
 }
 
 export interface CampaignState {
+  readonly assets: AssetState;
   readonly stateVersion: number;
   readonly campaignId: CampaignId;
   readonly displayName: string;
@@ -76,15 +80,17 @@ export interface CreateCampaignInput {
  * A new campaign starts paused. Simulation time never advances while the
  * player has not asked for it (Functional Specification 3.3).
  */
-export function createCampaign(input: CreateCampaignInput): CampaignState {
+export function createCampaign(input: CreateCampaignInput, content: ContentRepository): CampaignState {
+  const starting = startingAssets(deriveCampaignId(input.seed), content);
   return {
+    assets: starting.assets,
     stateVersion: CAMPAIGN_STATE_VERSION,
     campaignId: deriveCampaignId(input.seed),
     displayName: input.displayName,
     seed: input.seed,
     createdAtRealMs: input.createdAtRealMs,
     revision: 0,
-    nextEntityOrdinal: 1,
+    nextEntityOrdinal: starting.nextEntityOrdinal,
     nextEventOrdinal: 1,
     time: {
       simulationTimeMs: 0,

@@ -1,3 +1,4 @@
+import { shippedContent } from '../../support/content.ts';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -49,7 +50,7 @@ describe('campaign creation', () => {
       seed: TEST_SEED,
       createdAtRealMs: 42,
       initialRate: 1,
-    });
+    }, shippedContent());
 
     expect(state.stateVersion).toBe(CAMPAIGN_STATE_VERSION);
     expect(state.time).toEqual({
@@ -59,7 +60,7 @@ describe('campaign creation', () => {
       accumulatorMs: 0,
     });
     expect(state.revision).toBe(0);
-    expect(state.nextEntityOrdinal).toBe(1);
+    expect(state.nextEntityOrdinal).toBe(7);
     expect(state.nextEventOrdinal).toBe(1);
     expect(state.scheduler.entries).toEqual([]);
   });

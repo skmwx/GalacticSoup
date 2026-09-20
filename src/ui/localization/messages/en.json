@@ -104,5 +104,16 @@
   "error.quotaError": "There is not enough local storage space to save the campaign.",
   "error.integrityError": "The saved campaign failed its integrity check.",
   "error.internalError": "The engine stopped an action to protect the campaign.",
-  "error.internalError.invariant": "The change could not be made safely and was abandoned. The campaign is unchanged ({rule})."
+  "error.internalError.invariant": "The change could not be made safely and was abandoned. The campaign is unchanged ({rule}).",
+  "error.ruleViolation.inventoryNotFound": "That inventory is no longer available.",
+  "error.ruleViolation.itemNotFound": "That item is no longer available.",
+  "error.ruleViolation.invalidQuantity": "Choose a positive whole quantity smaller than the stack when splitting.",
+  "error.ruleViolation.insufficientItems": "The stack does not contain that many items.",
+  "error.ruleViolation.insufficientCapacity": "The destination cannot hold the entire quantity.",
+  "error.ruleViolation.incompatibleStacks": "Only identical items in the same inventory can merge.",
+  "error.ruleViolation.sameInventory": "Choose a different destination inventory.",
+  "error.ruleViolation.inventoryUnavailable": "These items must be at your docked station before you can move them.",
+  "error.ruleViolation.invalidReservation": "That reservation cannot be used by this operation.",
+  "error.ruleViolation.numericOverflow": "This operation exceeds the supported quantity, volume or credit limit.",
+  "error.ruleViolation.insufficientCredits": "Your wallet does not have enough credits."
 }

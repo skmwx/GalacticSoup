@@ -1,4 +1,7 @@
-import type { CampaignState } from '@engine/domain';
+import { InventoryError, type CampaignState } from '@engine/domain';
+import { assetsProjection, walletProjection, hangarProjection, cargoProjection,
+  itemInspectionProjection, maximumInventoryProjection } from '@engine/projections';
+import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload } from '@protocol';
 import {
   ContentIntegrityError,
   ContentLookupError,
@@ -190,8 +193,12 @@ async function route(
     return successResponse(requestId, revision, await session.saves.slot());
   }
 
+  if (isAssetQuery(type) && session.campaign === null) {
+    return failureResponse(requestId, ruleViolation('noCampaignOpen'), revision);
+  }
+
   try {
-    return successResponse(requestId, revision, query(session, type));
+    return successResponse(requestId, revision, query(session, type, request.payload));
   } catch (error: unknown) {
     return failureResponse(requestId, describeFailure(type, error), revision);
   }
@@ -362,7 +369,11 @@ function checkCampaign(
   return null;
 }
 
-function query(session: Session, type: RequestType): unknown {
+function isAssetQuery(type: RequestType): boolean {
+  return ['assets.list', 'wallet.get', 'inventory.hangar', 'inventory.cargo', 'item.inspect', 'inventory.maximum'].includes(type);
+}
+
+function query(session: Session, type: RequestType, payload: unknown): unknown {
   const context: HandlerContext = {
     engineVersion: session.engineVersion,
     protocolVersion: PROTOCOL_VERSION,
@@ -371,6 +382,15 @@ function query(session: Session, type: RequestType): unknown {
   };
 
   switch (type) {
+    case 'assets.list': return assetsProjection(session.campaign!, session.content);
+    case 'wallet.get': return walletProjection(session.campaign!);
+    case 'inventory.hangar': return hangarProjection(session.campaign!, session.content, (payload as HangarPayload).stationId);
+    case 'inventory.cargo': return cargoProjection(session.campaign!, session.content, (payload as CargoPayload).shipId);
+    case 'item.inspect': return itemInspectionProjection(session.campaign!, session.content, (payload as StackPayload).stackId);
+    case 'inventory.maximum': {
+      const p = payload as MaximumInventoryPayload;
+      return maximumInventoryProjection(session.campaign!, session.content, p.stackId, p.destinationInventoryId);
+    }
     case 'system.health':
       return handleHealth(context);
     case 'system.capabilities':
@@ -394,6 +414,11 @@ function query(session: Session, type: RequestType): unknown {
  * ones (Technical Specification 5.4).
  */
 function describeFailure(type: RequestType, error: unknown): ReturnType<typeof internalError> {
+  if (error instanceof InventoryError) {
+    const failure = ruleViolation(error.reason);
+    return error.reason === 'itemNotFound' || error.reason === 'inventoryNotFound'
+      ? { ...failure, code: 'NOT_FOUND' } : failure;
+  }
   if (error instanceof ContentLookupError) {
     return createEngineError('NOT_FOUND', 'error.notFound', {
       type,

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/assets.list.data.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "revision",
+    "credits",
+    "location",
+    "activeShipId",
+    "ships",
+    "inventories"
+  ],
+  "properties": {
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "credits": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "stationId",
+        "systemId"
+      ],
+      "properties": {
+        "kind": {
+          "const": "station"
+        },
+        "stationId": {
+          "type": "string",
+          "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "systemId": {
+          "type": "string",
+          "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        }
+      }
+    },
+    "activeShipId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+    },
+    "ships": {
+      "type": "array",
+      "items": {
+        "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/ship"
+      }
+    },
+    "inventories": {
+      "type": "array",
+      "items": {
+        "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/inventory"
+      }
+    }
+  }
+}

@@ -126,6 +126,43 @@ test.describe('campaign persistence', () => {
     expect(slots).toBe(1);
   });
 
+  test('persists starting assets through the real worker and IndexedDB [MVP-AC-02, TECH-11.2]', async ({ page }) => {
+    await startCampaign(page);
+    const savedAssets = () => page.evaluate(async () => new Promise<{
+      credits: number; activeShipId: string; ships: Record<string, { cargoInventoryId: string }>;
+      stacks: Record<string, { quantity: number; inventoryId: string }>;
+      inventories: Record<string, { location: { kind: string } }>;
+    }>((resolve, reject) => {
+      const open = indexedDB.open('galactic-soup');
+      open.onerror = () => reject(open.error);
+      open.onsuccess = () => {
+        const db = open.result;
+        const read = db.transaction('snapshots', 'readonly').objectStore('snapshots').getAll();
+        read.onerror = () => { db.close(); reject(read.error); };
+        read.onsuccess = () => {
+          const records = read.result as { document: { formatVersion: number; sequence: number; state: { assets: Parameters<typeof resolve>[0] } } }[];
+          const saves = records.map((record) => record.document);
+          const latest = saves.sort((a, b) => b.sequence - a.sequence)[0]!;
+          db.close();
+          if (latest.formatVersion !== 2) reject(new Error('Expected format 2'));
+          else resolve(latest.state.assets);
+        };
+      };
+    }));
+    const before = await savedAssets();
+    expect(before.credits).toBe(20000);
+    expect(Object.keys(before.ships)).toEqual([before.activeShipId]);
+    expect(Object.values(before.stacks).map((s) => s.quantity).sort((a, b) => a - b)).toEqual([1, 1, 20]);
+    expect(Object.values(before.stacks).every((s) => before.inventories[s.inventoryId]?.location.kind === 'hangar')).toBe(true);
+    await page.getByRole('button', { name: 'Close campaign' }).click();
+    await page.reload();
+    await page.getByRole('button', { name: 'Resume campaign' }).click();
+    await expect(page.getByText(PILOT, { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Close campaign' }).click();
+    await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
+    expect(await savedAssets()).toEqual(before);
+  });
+
   test('makes no network request while saving [TECH-2, TECH-3.2]', async ({ page, baseURL }) => {
     const foreign: string[] = [];
     page.on('request', (request) => {

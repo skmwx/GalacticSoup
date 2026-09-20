@@ -3,13 +3,14 @@ import type { ContentIdentity, CreateCampaignInput, SaveKind } from '@engine';
 /**
  * Inputs of the golden save fixture (Technical Specification 11.2, 11.4).
  *
- * `tests/fixtures/saves/format-1.json` is the artefact these inputs produce.
+ * `tests/fixtures/saves/format-2.json` is the artefact these inputs produce.
  * It pins the envelope's shape, its canonical serialisation and its checksum,
  * so a change to any of the three is a deliberate format change rather than a
  * silent one - and so a second implementation of the format can be held to the
  * same bytes.
  *
- * The content identity is synthetic on purpose. A golden save built against
+ * The asset definitions come from the stable minimal fixture pack; the envelope's
+ * content identity is synthetic on purpose. A golden save built against
  * the shipped bundle would change every time a balance value moved, which
  * would prove nothing about the format.
  */
@@ -42,7 +43,7 @@ export const GOLDEN_CAPTURE: {
   envelope: {
     content: GOLDEN_CONTENT,
     engineVersion: '1.0.0',
-    protocolVersion: 1,
+    protocolVersion: 2,
     slotId: 'slot-1',
     kind: 'auto',
     sequence: 1,

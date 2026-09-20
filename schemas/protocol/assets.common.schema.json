@@ -1,0 +1,302 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json",
+  "$defs": {
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definitionId",
+        "nameKey",
+        "descriptionKey",
+        "kind",
+        "unitVolumeCubicDecimetres",
+        "referenceValueCredits"
+      ],
+      "properties": {
+        "definitionId": {
+          "type": "string",
+          "pattern": "^(item|module|ammo)(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "descriptionKey": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "module",
+            "ammunition",
+            "item"
+          ]
+        },
+        "unitVolumeCubicDecimetres": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "referenceValueCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grantedQuantity",
+        "purchasedQuantity",
+        "purchaseCostCredits"
+      ],
+      "properties": {
+        "grantedQuantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "purchasedQuantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "purchaseCostCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "stack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "inventoryId",
+        "quantity",
+        "state",
+        "provenance",
+        "item"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "inventoryId": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "const": "plain"
+        },
+        "provenance": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/provenance"
+        },
+        "item": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+        }
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "id",
+        "location",
+        "accessible",
+        "unavailableReason",
+        "capacityCubicDecimetres",
+        "usedCubicDecimetres",
+        "freeCubicDecimetres",
+        "stacks"
+      ],
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "location": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "stationId"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "hangar"
+                },
+                "stationId": {
+                  "type": "string",
+                  "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                  "maxLength": 96
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "shipId"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "cargo"
+                },
+                "shipId": {
+                  "type": "string",
+                  "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "sourceInventoryId",
+                "ownerId"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "reserve"
+                },
+                "sourceInventoryId": {
+                  "type": "string",
+                  "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                },
+                "ownerId": {
+                  "type": "string",
+                  "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+                }
+              }
+            }
+          ]
+        },
+        "accessible": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "capacityCubicDecimetres": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usedCubicDecimetres": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "freeCubicDecimetres": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stacks": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/stack"
+          }
+        }
+      }
+    },
+    "ship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "hullId",
+        "cargoInventoryId",
+        "location",
+        "nameKey",
+        "active"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "hullId": {
+          "type": "string",
+          "pattern": "^hull(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "cargoInventoryId": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "location": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "stationId",
+            "systemId"
+          ],
+          "properties": {
+            "kind": {
+              "const": "station"
+            },
+            "stationId": {
+              "type": "string",
+              "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            },
+            "systemId": {
+              "type": "string",
+              "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            }
+          }
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

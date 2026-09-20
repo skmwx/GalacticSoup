@@ -6,6 +6,7 @@
  * nothing about transports, storage or the interface, and it reaches authored
  * content only through the content port.
  */
+export * from './assets';
 export {
   authoritativeView,
   CAMPAIGN_STATE_VERSION,
