@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { createMemorySaveStore } from '@adapters/persistence';
 import { createEngineHost } from '@engine';
 import type { ClientGateway } from '@gateway';
 import { createChannelGateway, createDirectGateway } from '@gateway/direct';
@@ -40,7 +41,7 @@ type TransportName = (typeof TRANSPORTS)[number];
 function gatewayFor(name: TransportName): ClientGateway {
   if (name === 'direct') {
     const direct = createDirectGateway({
-      host: createEngineHost({ content }),
+      host: createEngineHost({ content, saves: createMemorySaveStore() }),
       defaultTimeoutMs: 5_000,
     });
     disposers.push(() => direct.dispose());
@@ -48,7 +49,7 @@ function gatewayFor(name: TransportName): ClientGateway {
   }
 
   const channel = createChannelGateway({
-    host: createEngineHost({ content }),
+    host: createEngineHost({ content, saves: createMemorySaveStore() }),
     defaultTimeoutMs: 5_000,
   });
   disposers.push(() => channel.close());
@@ -76,7 +77,7 @@ describe('campaign session over a transport', () => {
       const created = await create(gateway);
       expect(created.committed).toBe(true);
       expect(created.revision).toBe(1);
-      expect(created.invalidations).toEqual(['frame', 'session']);
+      expect(created.invalidations).toEqual(['frame', 'saves', 'session']);
 
       const running = await gateway.request('time.set', { paused: false, rate: 1 });
       expect(running.ok).toBe(true);

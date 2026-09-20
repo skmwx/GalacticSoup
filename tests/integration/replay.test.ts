@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { createMemorySaveStore, type MemorySaveStore } from '@adapters/persistence';
 import { createEngineHost } from '@engine';
 import type { ClientGateway } from '@gateway';
 import { createChannelGateway, createDirectGateway } from '@gateway/direct';
@@ -27,9 +28,9 @@ afterEach(() => {
   }
 });
 
-function directGateway(): ClientGateway {
+function directGateway(saves: MemorySaveStore = createMemorySaveStore()): ClientGateway {
   const gateway = createDirectGateway({
-    host: createEngineHost({ content }),
+    host: createEngineHost({ content, saves }),
     defaultTimeoutMs: 10_000,
   });
   disposers.push(() => gateway.dispose());
@@ -38,7 +39,7 @@ function directGateway(): ClientGateway {
 
 function channelGateway(): ClientGateway {
   const channel = createChannelGateway({
-    host: createEngineHost({ content }),
+    host: createEngineHost({ content, saves: createMemorySaveStore() }),
     defaultTimeoutMs: 10_000,
   });
   disposers.push(() => channel.close());
@@ -121,6 +122,30 @@ describe('deterministic replay', () => {
     const extended = await runReplay(directGateway(), other);
 
     expect(extended.finalHash).not.toBe(base.finalHash);
+  });
+
+  it('continues identically after a close and a resume [MVP-AC-01, TECH-9.5, TECH-11.4]', async () => {
+    const half = Math.floor(SCRIPT.steps.length / 2);
+    const first: ReplayScript = { ...SCRIPT, steps: SCRIPT.steps.slice(0, half) };
+    const second: ReplayScript = {
+      ...SCRIPT,
+      start: 'resume',
+      steps: SCRIPT.steps.slice(half),
+    };
+
+    const straight = await runReplay(directGateway(), SCRIPT);
+
+    // The same script, interrupted by closing the game and reopening it over
+    // the same storage.
+    const store = createMemorySaveStore();
+    const before = directGateway(store);
+    await runReplay(before, first);
+    await before.request('campaign.close', { savedAtRealMs: SCRIPT.createdAtRealMs + 1 });
+    const interrupted = await runReplay(directGateway(store), second);
+
+    expect(interrupted.finalHash).toBe(straight.finalHash);
+    expect(interrupted.finalRevision).toBe(straight.finalRevision);
+    expect(interrupted.simulationTimeMs).toBe(straight.simulationTimeMs);
   });
 
   it('depends on the campaign seed [TECH-9.4, TECH-9.5]', async () => {

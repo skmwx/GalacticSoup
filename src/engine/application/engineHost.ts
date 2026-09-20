@@ -1,18 +1,30 @@
 import type { CampaignState } from '@engine/domain';
-import { ContentIntegrityError, ContentLookupError, type ContentRepository } from '@engine/ports';
+import {
+  ContentIntegrityError,
+  ContentLookupError,
+  type ContentRepository,
+  type SaveRetention,
+  type SaveStore,
+} from '@engine/ports';
 import {
   type ClientRequest,
+  type CloseCampaignPayload,
+  type CommandResultData,
   type CommandType,
+  type CreateCampaignPayload,
   type EngineResponse,
   type RequestType,
+  type SaveCampaignPayload,
   contentErrorMessageKey,
   createEngineError,
   failureResponse,
   findTransportViolation,
   internalError,
   isCommandType,
+  isPersistenceType,
   NO_CAMPAIGN_REVISION,
   PROTOCOL_VERSION,
+  readRequestId,
   ruleViolation,
   staleRevision,
   successResponse,
@@ -30,6 +42,7 @@ import {
   handleStateHash,
   type HandlerContext,
 } from './handlers';
+import { createSaveService, type SaveService } from './saves';
 import { ENGINE_VERSION } from './version';
 
 /**
@@ -41,6 +54,10 @@ import { ENGINE_VERSION } from './version';
  * Expected failures are returned as error responses; an unexpected throw is
  * contained here and reported as `INTERNAL_ERROR` so it cannot cross the
  * worker boundary as an exception.
+ *
+ * Requests are serialised: reaching persistence makes handling asynchronous,
+ * and two commands must never interleave over one campaign. The queue is the
+ * host's, not the transport's, so the guarantee holds however messages arrive.
  *
  * @implements TECH-2, TECH-4.1, TECH-7.1, TECH-7.2
  */
@@ -57,10 +74,17 @@ export interface EngineHostOptions {
    * test supplies whichever pack the case needs.
    */
   readonly content: ContentRepository;
+  /**
+   * Durable storage for snapshots. The engine orchestrates saving; where the
+   * bytes go is the adapter's business (Technical Specification 4.1, 11).
+   */
+  readonly saves: SaveStore;
   /** Overridable so tests can assert version reporting without a rebuild. */
   readonly engineVersion?: string;
   /** Size of the duplicate-request cache. */
   readonly recentRequestLimit?: number;
+  readonly slotId?: string;
+  readonly retention?: SaveRetention;
 }
 
 interface Session {
@@ -68,36 +92,57 @@ interface Session {
   readonly content: ContentRepository;
   readonly engineVersion: string;
   readonly recent: RecentRequests;
+  readonly saves: SaveService;
 }
 
 export function createEngineHost(options: EngineHostOptions): EngineHost {
+  const engineVersion = options.engineVersion ?? ENGINE_VERSION;
   const session: Session = {
     campaign: null,
     content: options.content,
-    engineVersion: options.engineVersion ?? ENGINE_VERSION,
+    engineVersion,
     recent:
       options.recentRequestLimit === undefined
         ? createRecentRequests()
         : createRecentRequests(options.recentRequestLimit),
+    saves: createSaveService({
+      store: options.saves,
+      content: options.content,
+      engineVersion,
+      protocolVersion: PROTOCOL_VERSION,
+      ...(options.slotId === undefined ? {} : { slotId: options.slotId }),
+      ...(options.retention === undefined ? {} : { retention: options.retention }),
+    }),
   };
+
+  let queue: Promise<unknown> = Promise.resolve();
 
   return {
     engineVersion: session.engineVersion,
     protocolVersion: PROTOCOL_VERSION,
     handle(message: unknown): Promise<EngineResponse<unknown>> {
-      return Promise.resolve(dispatch(session, message));
+      const run = queue.then(() =>
+        dispatch(session, message).catch(() =>
+          failureResponse(readRequestId(message), internalError({ stage: 'dispatch' })),
+        ),
+      );
+      queue = run.then(
+        () => undefined,
+        () => undefined,
+      );
+      return run;
     },
   };
 }
 
-function dispatch(session: Session, message: unknown): EngineResponse<unknown> {
+async function dispatch(session: Session, message: unknown): Promise<EngineResponse<unknown>> {
   const validation = validateClientRequest(message);
   if (!validation.ok) {
     return failureResponse(validation.requestId, validation.error);
   }
 
   const request = validation.request;
-  const response = route(session, request);
+  const response = await route(session, request);
 
   const violation = findTransportViolation(response);
   if (violation !== null) {
@@ -110,14 +155,14 @@ function dispatch(session: Session, message: unknown): EngineResponse<unknown> {
   return response;
 }
 
-function route(
+async function route(
   session: Session,
   request: ClientRequest<RequestType, unknown>,
-): EngineResponse<unknown> {
+): Promise<EngineResponse<unknown>> {
   const { requestId, type } = request;
   const revision = session.campaign?.revision ?? NO_CAMPAIGN_REVISION;
 
-  if (isCommandType(type)) {
+  if (isCommandType(type) || isPersistenceType(type)) {
     const remembered = session.recent.find(requestId);
     if (remembered !== undefined) {
       return remembered;
@@ -129,16 +174,20 @@ function route(
     return campaignError;
   }
 
+  if (isPersistenceType(type)) {
+    return executeSave(session, requestId, request.payload as SaveCampaignPayload);
+  }
+
   if (isCommandType(type)) {
     const expected = request.expectedRevision;
     if (expected !== undefined && expected !== revision) {
-      return failureResponse(
-        requestId,
-        staleRevision({ expected, actual: revision }),
-        revision,
-      );
+      return failureResponse(requestId, staleRevision({ expected, actual: revision }), revision);
     }
     return executeCommand(session, requestId, type, request.payload);
+  }
+
+  if (type === 'campaign.saves') {
+    return successResponse(requestId, revision, await session.saves.slot());
   }
 
   try {
@@ -148,17 +197,71 @@ function route(
   }
 }
 
-function executeCommand(
+/**
+ * Takes a snapshot on request (Technical Specification 11.3).
+ *
+ * The capture happens now, at the revision the campaign is at; the write is
+ * queued and the response reports that it is pending. Simulation is never
+ * held up waiting for storage.
+ */
+async function executeSave(
+  session: Session,
+  requestId: string,
+  payload: SaveCampaignPayload,
+): Promise<EngineResponse<unknown>> {
+  const revision = session.campaign?.revision ?? NO_CAMPAIGN_REVISION;
+  if (session.campaign === null) {
+    return failureResponse(requestId, ruleViolation('noCampaignOpen'), revision);
+  }
+
+  const status = await session.saves.save(session.campaign, payload.kind, payload.savedAtRealMs);
+  const response = successResponse(requestId, revision, status);
+  session.recent.remember(requestId, response);
+  return response;
+}
+
+async function executeCommand(
   session: Session,
   requestId: string,
   type: CommandType,
   payload: unknown,
-): EngineResponse<unknown> {
+): Promise<EngineResponse<unknown>> {
+  let commandPayload = payload;
+
+  if (type === 'campaign.resume') {
+    if (session.campaign !== null) {
+      return failureResponse(
+        requestId,
+        ruleViolation('campaignAlreadyOpen'),
+        session.campaign.revision,
+      );
+    }
+    const resumed = await session.saves.resume();
+    if (!resumed.ok) {
+      return failureResponse(requestId, resumed.error, NO_CAMPAIGN_REVISION);
+    }
+    commandPayload = { state: resumed.loaded.state };
+  }
+
+  if (type === 'campaign.close') {
+    if (session.campaign === null) {
+      return failureResponse(requestId, ruleViolation('noCampaignOpen'), NO_CAMPAIGN_REVISION);
+    }
+    // Closing must leave a durable campaign behind, so the snapshot is taken
+    // and written before the campaign leaves the session.
+    await session.saves.save(
+      session.campaign,
+      'auto',
+      (payload as CloseCampaignPayload).savedAtRealMs,
+    );
+    await session.saves.drain();
+  }
+
   const result = runCommand({
     campaign: session.campaign,
     content: session.content,
     type,
-    payload,
+    payload: commandPayload,
   });
 
   if (result.kind === 'failed') {
@@ -171,21 +274,69 @@ function executeCommand(
 
   if (result.kind === 'committed') {
     if (result.campaign === null) {
-      // The campaign ended. Its remembered results describe a campaign that no
-      // longer exists, so they are forgotten before this one is recorded.
+      // The campaign left the session. Its remembered results describe a
+      // campaign that is no longer open, so they are forgotten before this
+      // one is recorded.
       session.recent.clear();
     }
     session.campaign = result.campaign;
   }
 
+  if (type === 'campaign.reset' && result.kind === 'committed') {
+    // Reset discards the campaign, and a discarded campaign keeps no saves.
+    await session.saves.clear();
+  }
+
+  const data = await fulfilAutosave(session, type, payload, result.data, result.kind);
   const revision = session.campaign?.revision ?? NO_CAMPAIGN_REVISION;
-  const response = successResponse(requestId, revision, result.data);
+  const response = successResponse(requestId, revision, data);
 
   if (result.kind === 'committed') {
     session.recent.remember(requestId, response);
   }
 
   return response;
+}
+
+/**
+ * Answers an autosave trigger (Technical Specification 11.3).
+ *
+ * The trigger is emitted only after the transaction commits. The engine has no
+ * wall clock, so it can only take the snapshot itself when the request that
+ * triggered it supplied a real timestamp. Otherwise the trigger travels to the
+ * client, which stamps and sends `campaign.save`.
+ */
+async function fulfilAutosave(
+  session: Session,
+  type: CommandType,
+  payload: unknown,
+  data: CommandResultData,
+  kind: 'committed' | 'unchanged',
+): Promise<CommandResultData> {
+  if (kind !== 'committed' || !data.autosaveRequested || session.campaign === null) {
+    return data;
+  }
+
+  const savedAtRealMs = realTimeOf(type, payload);
+  if (savedAtRealMs === null) {
+    return data;
+  }
+
+  await session.saves.save(session.campaign, 'auto', savedAtRealMs);
+  await session.saves.drain();
+  return { ...data, autosaveRequested: false };
+}
+
+/** The wall-clock stamp a request carried, or `null` when it carried none. */
+function realTimeOf(type: CommandType, payload: unknown): number | null {
+  switch (type) {
+    case 'campaign.create':
+      return (payload as CreateCampaignPayload).createdAtRealMs;
+    case 'campaign.close':
+      return (payload as CloseCampaignPayload).savedAtRealMs;
+    default:
+      return null;
+  }
 }
 
 function checkCampaign(

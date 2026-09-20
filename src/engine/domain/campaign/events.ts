@@ -15,6 +15,7 @@
 
 /** Event kinds this phase can publish. Later phases add their own. */
 export const DOMAIN_EVENT_KINDS = [
+  'campaign.closed',
   'campaign.created',
   'campaign.reset',
   'scheduler.boundaryResolved',
@@ -38,7 +39,7 @@ export interface DomainEvent {
  * tactical change does not force every slow screen to re-query
  * (Technical Specification 7.3).
  */
-export const PROJECTION_TOPICS = ['session', 'frame'] as const;
+export const PROJECTION_TOPICS = ['session', 'frame', 'saves'] as const;
 
 export type ProjectionTopic = (typeof PROJECTION_TOPICS)[number];
 

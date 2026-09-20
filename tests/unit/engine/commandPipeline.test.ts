@@ -120,8 +120,10 @@ describe('command pipeline', () => {
     }
     expect(result.campaign?.revision).toBe(1);
     expect(result.data.committed).toBe(true);
-    expect(result.data.invalidations).toEqual(['frame', 'session']);
+    expect(result.data.invalidations).toEqual(['frame', 'saves', 'session']);
     expect(result.data.events.map((event) => event.kind)).toEqual(['campaign.created']);
+    // A new campaign must become durable at once (Functional Specification 3.4).
+    expect(result.data.autosaveRequested).toBe(true);
   });
 
   it('refuses a second campaign while one is open [FUNC-22.10]', () => {

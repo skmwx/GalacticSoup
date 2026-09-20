@@ -4,7 +4,8 @@ import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { createEngineHost } from '@engine';
+import { createMemorySaveStore } from '@adapters/persistence';
+import { captureSnapshot, createCampaign, createEngineHost } from '@engine';
 import {
   CONTENT_ERROR_REASONS,
   EMPTY_PAYLOAD,
@@ -15,6 +16,7 @@ import {
 
 import { REPO_ROOT } from '../../../config/aliases.mjs';
 import { shippedContent } from '../../support/content.ts';
+import { GOLDEN_CAPTURE } from '../../support/goldenSave.ts';
 
 /**
  * The runtime validator is hand-written so the engine carries no library
@@ -38,6 +40,9 @@ let validateCommandResultData: Validator;
 let validateSessionData: Validator;
 let validateFrameData: Validator;
 let validateStateHashData: Validator;
+let validateSaveStatusData: Validator;
+let validateSaveSlotData: Validator;
+let validateSaveEnvelope: Validator;
 
 const content = shippedContent();
 
@@ -67,7 +72,23 @@ beforeAll(() => {
   validateStateHashData = ajv.compile(
     loadSchema('diagnostics.stateHash.data.schema.json'),
   ) as Validator;
+  ajv.addSchema(loadSchema('save-status.data.schema.json'));
+  validateSaveStatusData = ajv.getSchema(
+    'https://galacticsoup.invalid/schemas/protocol/save-status.data.schema.json',
+  ) as unknown as Validator;
+  validateSaveSlotData = ajv.compile(
+    loadSchema('campaign.saves.data.schema.json'),
+  ) as Validator;
+
+  const saves = new AjvConstructor({ allErrors: true, strict: true });
+  saves.addSchema(loadSaveSchema('campaign-state.schema.json'));
+  validateSaveEnvelope = saves.compile(loadSaveSchema('save-envelope.schema.json')) as Validator;
 });
+
+function loadSaveSchema(name: string): object {
+  const file = path.join(REPO_ROOT, 'schemas', 'save', name);
+  return JSON.parse(readFileSync(file, 'utf8')) as object;
+}
 
 const JSON_FIXTURES: readonly { readonly label: string; readonly message: unknown }[] = [
   {
@@ -216,6 +237,78 @@ const JSON_FIXTURES: readonly { readonly label: string; readonly message: unknow
       expectedRevision: -1,
     },
   },
+  {
+    label: 'a well-formed campaign.save',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.save',
+      payload: { kind: 'manual', savedAtRealMs: 1 },
+    },
+  },
+  {
+    label: 'a campaign.save with an unknown kind',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.save',
+      payload: { kind: 'quicksave', savedAtRealMs: 1 },
+    },
+  },
+  {
+    label: 'a campaign.save with a fractional timestamp',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.save',
+      payload: { kind: 'auto', savedAtRealMs: 1.5 },
+    },
+  },
+  {
+    label: 'a well-formed campaign.close',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.close',
+      payload: { savedAtRealMs: 1 },
+    },
+  },
+  {
+    label: 'a campaign.close with no timestamp',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.close',
+      payload: {},
+    },
+  },
+  {
+    label: 'a well-formed campaign.resume',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.resume',
+      payload: {},
+    },
+  },
+  {
+    label: 'a campaign.resume carrying payload fields',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.resume',
+      payload: { force: true },
+    },
+  },
+  {
+    label: 'a well-formed campaign.saves',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'campaign.saves',
+      payload: {},
+    },
+  },
   { label: 'a message that is not an object', message: 'nonsense' },
 ];
 
@@ -228,7 +321,7 @@ describe('protocol schema parity', () => {
   );
 
   it('validates every engine response against the response schema [TECH-7.1]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
 
     const health = await host.handle({
       protocolVersion: PROTOCOL_VERSION,
@@ -296,7 +389,7 @@ describe('protocol schema parity', () => {
   });
 
   it('validates a failure response against the response schema [TECH-5.4, TECH-7.1]', async () => {
-    const failure = await createEngineHost({ content }).handle({ nonsense: true });
+    const failure = await createEngineHost({ content, saves: createMemorySaveStore() }).handle({ nonsense: true });
 
     expect(failure.ok).toBe(false);
     expect(validateResponse(failure)).toBe(true);
@@ -316,7 +409,7 @@ describe('campaign protocol schema parity', () => {
   }
 
   it('publishes a schema for every campaign response shape [TECH-7.1, TECH-17]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
 
     const created = await ask(
       host,
@@ -344,8 +437,58 @@ describe('campaign protocol schema parity', () => {
     expect(validateStateHashData(dataOf(hash))).toBe(true);
   });
 
+  it('publishes a schema for every save response shape [TECH-7.1, TECH-11.3]', async () => {
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
+
+    await ask(
+      host,
+      'campaign.create',
+      { displayName: 'Vela', seed, createdAtRealMs: 1_700_000_000_000 },
+      'req-create',
+    );
+    const saved = await ask(
+      host,
+      'campaign.save',
+      { kind: 'manual', savedAtRealMs: 1_700_000_001_000 },
+      'req-save',
+    );
+    const slot = await ask(host, 'campaign.saves', EMPTY_PAYLOAD, 'req-slot');
+    const closed = await ask(
+      host,
+      'campaign.close',
+      { savedAtRealMs: 1_700_000_002_000 },
+      'req-close',
+    );
+    const resumed = await ask(host, 'campaign.resume', EMPTY_PAYLOAD, 'req-resume');
+
+    const dataOf = (response: unknown): unknown => (response as { data: unknown }).data;
+
+    for (const response of [saved, slot, closed, resumed]) {
+      expect(validateResponse(response)).toBe(true);
+    }
+    expect(validateSaveStatusData(dataOf(saved))).toBe(true);
+    expect(validateSaveSlotData(dataOf(slot))).toBe(true);
+    expect(validateCommandResultData(dataOf(closed))).toBe(true);
+    expect(validateCommandResultData(dataOf(resumed))).toBe(true);
+  });
+
+  it('validates a captured save against the published save schema [TECH-11.2, TECH-17]', () => {
+    const campaign = { ...createCampaign(GOLDEN_CAPTURE.campaign), revision: 1 };
+    const envelope = captureSnapshot({ ...GOLDEN_CAPTURE.envelope, campaign });
+
+    expect(validateSaveEnvelope(envelope)).toBe(true);
+    expect(validateSaveEnvelope({ ...envelope, kind: 'quicksave' })).toBe(false);
+    expect(validateSaveEnvelope({ ...envelope, formatVersion: 2 })).toBe(false);
+  });
+
+  it('validates the golden save against the published save schema [TECH-11.2, TECH-17]', () => {
+    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-1.json');
+
+    expect(validateSaveEnvelope(JSON.parse(readFileSync(file, 'utf8')))).toBe(true);
+  });
+
   it('validates the no-campaign projections against their schemas [TECH-7.1, TECH-7.3]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
 
     const session = await ask(host, 'campaign.session', EMPTY_PAYLOAD, 'req-session');
     const frame = await ask(host, 'campaign.frame', EMPTY_PAYLOAD, 'req-frame');

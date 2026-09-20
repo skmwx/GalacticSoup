@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { createMemorySaveStore } from '@adapters/persistence';
 import { createEngineHost } from '@engine';
 import type { ClientGateway } from '@gateway';
 import { createChannelGateway, createDirectGateway } from '@gateway/direct';
@@ -30,7 +31,11 @@ afterEach(() => {
 });
 
 function transports(): { name: string; gateway: ClientGateway }[] {
-  const host = createEngineHost({ content: shippedContent(), engineVersion: '1.2.3' });
+  const host = createEngineHost({
+    content: shippedContent(),
+    saves: createMemorySaveStore(),
+    engineVersion: '1.2.3',
+  });
 
   const direct = createDirectGateway({ host, defaultTimeoutMs: 2_000 });
   disposers.push(() => direct.dispose());

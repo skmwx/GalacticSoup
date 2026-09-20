@@ -1,0 +1,136 @@
+.panel {
+  background: var(--gs-color-surface);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--gs-font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gs-color-text-muted);
+}
+
+.status {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+}
+
+.resumable,
+.start,
+.open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gs-space-2);
+}
+
+.summary {
+  margin: 0;
+}
+
+.field {
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.input {
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: inherit;
+  font: inherit;
+  padding: var(--gs-space-2);
+  min-width: min(100%, 20rem);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--gs-space-2);
+  margin: 0;
+  width: 100%;
+}
+
+.fact {
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-2);
+}
+
+.fact dt {
+  margin: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.fact dd {
+  margin: var(--gs-space-1) 0 0;
+  font-family: var(--gs-font-mono);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-2);
+}
+
+.panel button {
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: inherit;
+  font: inherit;
+  padding: var(--gs-space-2) var(--gs-space-3);
+  cursor: pointer;
+  transition: border-color var(--gs-transition);
+}
+
+.panel button:hover:not(:disabled) {
+  border-color: var(--gs-color-accent);
+}
+
+.panel button:disabled {
+  cursor: not-allowed;
+  color: var(--gs-color-text-muted);
+}
+
+.danger {
+  border-color: var(--gs-color-danger) !important;
+  color: var(--gs-color-danger) !important;
+}
+
+.saveStatus {
+  margin: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.warnings {
+  margin: 0;
+  padding-left: var(--gs-space-3);
+}
+
+.warning {
+  margin: 0;
+  color: var(--gs-color-warn);
+  font-size: var(--gs-font-small);
+}
+
+.error {
+  margin: 0;
+  color: var(--gs-color-danger);
+}

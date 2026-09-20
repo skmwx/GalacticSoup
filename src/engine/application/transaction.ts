@@ -77,10 +77,23 @@ export interface Transaction {
   requireDraft(): CampaignDraft;
   /** Starts a campaign inside this transaction. */
   openCampaign(state: CampaignState): CampaignDraft;
+  /**
+   * Installs a previously committed campaign without consuming a revision or
+   * an ordinal. Restoring is not a change: a resumed campaign must be
+   * indistinguishable from the snapshot it came from, down to its canonical
+   * state hash (Technical Specification 9.5, 11.4).
+   */
+  restoreCampaign(state: CampaignState): void;
   /** Ends the campaign. Publish anything about it before calling this. */
   closeCampaign(): void;
   publish(kind: DomainEventKind, params?: DomainEventParams): void;
   invalidate(topic: ProjectionTopic): void;
+  /**
+   * Marks the point this command reached as one the campaign must be durable
+   * at (Functional Specification 3.4). The trigger is emitted only after the
+   * transaction commits; nothing here writes (Technical Specification 11.3).
+   */
+  requestAutosave(): void;
   /** This transaction seen as a simulation context. Needs an open campaign. */
   simulation(): SimulationContext;
 }
@@ -89,11 +102,14 @@ export interface CommitResult {
   readonly campaign: CampaignState | null;
   readonly events: readonly DomainEvent[];
   readonly invalidations: readonly ProjectionTopic[];
+  /** The committed command asked for a snapshot to be taken. */
+  readonly autosaveRequested: boolean;
 }
 
 interface TransactionInternals extends Transaction {
   readonly events: DomainEvent[];
   readonly invalidations: Set<ProjectionTopic>;
+  readonly result: { restoring: boolean; autosave: boolean };
 }
 
 export function beginTransaction(
@@ -103,6 +119,7 @@ export function beginTransaction(
   let draft: CampaignDraft | null = campaign === null ? null : draftOf(campaign);
   const events: DomainEvent[] = [];
   const invalidations = new Set<ProjectionTopic>();
+  const result = { restoring: false, autosave: false };
 
   const transaction: TransactionInternals = {
     get draft(): CampaignDraft | null {
@@ -111,6 +128,7 @@ export function beginTransaction(
     content,
     events,
     invalidations,
+    result,
 
     requireDraft(): CampaignDraft {
       if (draft === null) {
@@ -122,6 +140,11 @@ export function beginTransaction(
     openCampaign(state: CampaignState): CampaignDraft {
       draft = draftOf(state);
       return draft;
+    },
+
+    restoreCampaign(state: CampaignState): void {
+      draft = draftOf(state);
+      result.restoring = true;
     },
 
     closeCampaign(): void {
@@ -141,6 +164,10 @@ export function beginTransaction(
 
     invalidate(topic: ProjectionTopic): void {
       invalidations.add(topic);
+    },
+
+    requestAutosave(): void {
+      result.autosave = true;
     },
 
     simulation(): SimulationContext {
@@ -172,7 +199,9 @@ export function commit(transaction: Transaction): CommitResult {
   const draft = internals.draft;
 
   if (draft !== null) {
-    draft.revision += 1;
+    if (!internals.result.restoring) {
+      draft.revision += 1;
+    }
     const issues = validateCampaign(draft as CampaignState);
     if (issues.length > 0) {
       throw new InvariantFailure(issues);
@@ -183,5 +212,6 @@ export function commit(transaction: Transaction): CommitResult {
     campaign: draft === null ? null : deepFreeze(draft as CampaignState),
     events: [...internals.events],
     invalidations: [...internals.invalidations].sort(),
+    autosaveRequested: internals.result.autosave,
   };
 }

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/campaign.saves.data.schema.json",
+  "title": "SaveSlotData",
+  "description": "The campaign slot and the snapshot `campaign.resume` would open (MVP Scope 6; Technical Specification 11.1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "slotId",
+    "saveCount",
+    "resumable",
+    "status"
+  ],
+  "properties": {
+    "slotId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "saveCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "resumable": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "saveId",
+            "campaignId",
+            "displayName",
+            "kind",
+            "revision",
+            "simulationTimeMs",
+            "savedAtRealMs",
+            "formatVersion",
+            "contentVersion",
+            "contentMatches"
+          ],
+          "properties": {
+            "saveId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "campaignId": {
+              "type": "string",
+              "pattern": "^c[0-9a-f]{24}$"
+            },
+            "displayName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 48
+            },
+            "kind": {
+              "enum": [
+                "auto",
+                "manual"
+              ]
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "simulationTimeMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "savedAtRealMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "formatVersion": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "contentVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "contentMatches": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "$ref": "https://galacticsoup.invalid/schemas/protocol/save-status.data.schema.json"
+    }
+  }
+}

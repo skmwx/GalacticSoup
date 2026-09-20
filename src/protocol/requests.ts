@@ -12,6 +12,8 @@
  * changes incompatibly.
  */
 
+import type { EngineError } from './errors';
+
 /** Payload for requests that take no arguments. */
 export type EmptyPayload = Record<string, never>;
 
@@ -97,6 +99,13 @@ export interface CommandResultData {
   readonly revision: number;
   readonly simulationTimeMs: number;
   readonly committed: boolean;
+  /**
+   * The command reached a point at which the campaign must be durable
+   * (Functional Specification 3.4). The client answers by sending
+   * `campaign.save`, because only the client has a wall clock to stamp the
+   * snapshot with.
+   */
+  readonly autosaveRequested: boolean;
   /** Projection topics whose cached view models are now stale. */
   readonly invalidations: readonly string[];
   readonly events: readonly DomainEventData[];
@@ -161,12 +170,99 @@ export interface StateHashData {
   readonly contentHash: string;
 }
 
+/** Save kinds a campaign slot holds (Functional Specification 3.4). */
+export const SAVE_KIND_NAMES = ['auto', 'manual'] as const;
+
+export type SaveKindName = (typeof SAVE_KIND_NAMES)[number];
+
+/**
+ * Payload of `campaign.save` (Technical Specification 11.3).
+ *
+ * The engine has no wall clock, so the real timestamp a snapshot carries for
+ * display arrives with the request that asks for it.
+ */
+export interface SaveCampaignPayload {
+  readonly kind: SaveKindName;
+  readonly savedAtRealMs: number;
+}
+
+/** Payload of `campaign.close` (Functional Specification 3.4). */
+export interface CloseCampaignPayload {
+  readonly savedAtRealMs: number;
+}
+
+/** What the browser says about the space saves have (Technical Specification 11.1). */
+export interface StorageReportData {
+  /** `null` when the browser does not answer. */
+  readonly persistent: boolean | null;
+  readonly usageBytes: number | null;
+  readonly quotaBytes: number | null;
+  /** True when the interface must warn that saving may soon fail. */
+  readonly lowSpace: boolean;
+}
+
+export const SAVE_STATES = ['idle', 'pending', 'saved', 'failed'] as const;
+
+export type SaveStateName = (typeof SAVE_STATES)[number];
+
+/**
+ * What the save subsystem is doing (Technical Specification 11.3).
+ *
+ * Saving is asynchronous and never blocks the simulation, so the interface
+ * reports progress from this projection rather than from a command response.
+ */
+export interface SaveStatusData {
+  readonly state: SaveStateName;
+  /** Which store implementation is in use, for diagnostics. */
+  readonly backend: string;
+  readonly slotId: string;
+  readonly lastSavedRevision: number | null;
+  readonly lastSavedAtRealMs: number | null;
+  readonly lastSaveKind: SaveKindName | null;
+  readonly pendingWrites: number;
+  readonly storage: StorageReportData;
+  /** The failure that put the subsystem in `failed`, or `null`. */
+  readonly error: EngineError | null;
+}
+
+/** The snapshot `campaign.resume` would open (Functional Specification 3.4). */
+export interface ResumableSaveData {
+  readonly saveId: string;
+  readonly campaignId: string;
+  readonly displayName: string;
+  readonly kind: SaveKindName;
+  readonly revision: number;
+  readonly simulationTimeMs: number;
+  readonly savedAtRealMs: number;
+  readonly formatVersion: number;
+  readonly contentVersion: string;
+  /** False when the save was written against different content. */
+  readonly contentMatches: boolean;
+}
+
+/**
+ * The campaign slot (MVP Scope 6; Technical Specification 11.1).
+ *
+ * The MVP exposes one slot and resumes its newest valid snapshot; the deferred
+ * save-management surfaces would read the same projection.
+ */
+export interface SaveSlotData {
+  readonly slotId: string;
+  readonly saveCount: number;
+  readonly resumable: ResumableSaveData | null;
+  readonly status: SaveStatusData;
+}
+
 export interface ProtocolContract {
   'system.health': { payload: EmptyPayload; data: HealthData };
   'system.capabilities': { payload: EmptyPayload; data: CapabilitiesData };
   'content.summary': { payload: EmptyPayload; data: ContentSummaryData };
+  'campaign.close': { payload: CloseCampaignPayload; data: CommandResultData };
   'campaign.create': { payload: CreateCampaignPayload; data: CommandResultData };
   'campaign.reset': { payload: EmptyPayload; data: CommandResultData };
+  'campaign.resume': { payload: EmptyPayload; data: CommandResultData };
+  'campaign.save': { payload: SaveCampaignPayload; data: SaveStatusData };
+  'campaign.saves': { payload: EmptyPayload; data: SaveSlotData };
   'campaign.session': { payload: EmptyPayload; data: SessionData };
   'campaign.frame': { payload: EmptyPayload; data: FrameData };
   'time.set': { payload: SetTimePayload; data: CommandResultData };
@@ -181,9 +277,13 @@ export type ResponseData<TType extends RequestType> = ProtocolContract[TType]['d
 
 /** Sorted so capability reports and fixtures are order-stable. */
 export const REQUEST_TYPES = [
+  'campaign.close',
   'campaign.create',
   'campaign.frame',
   'campaign.reset',
+  'campaign.resume',
+  'campaign.save',
+  'campaign.saves',
   'campaign.session',
   'content.summary',
   'diagnostics.stateHash',
@@ -199,13 +299,24 @@ export const REQUEST_TYPES = [
  * cache; every other type is a read-only query (Technical Specification 7.2).
  */
 export const COMMAND_TYPES = [
+  'campaign.close',
   'campaign.create',
   'campaign.reset',
+  'campaign.resume',
   'time.advance',
   'time.set',
 ] as const satisfies readonly RequestType[];
 
 export type CommandType = (typeof COMMAND_TYPES)[number];
+
+/**
+ * Request types that reach durable storage without changing campaign state
+ * (Technical Specification 11.3). They take no revision and are neither pure
+ * queries nor campaign commands, so the host handles them on their own path.
+ */
+export const PERSISTENCE_TYPES = ['campaign.save'] as const satisfies readonly RequestType[];
+
+export type PersistenceType = (typeof PERSISTENCE_TYPES)[number];
 
 export function isRequestType(value: string): value is RequestType {
   return (REQUEST_TYPES as readonly string[]).includes(value);
@@ -213,4 +324,8 @@ export function isRequestType(value: string): value is RequestType {
 
 export function isCommandType(value: string): value is CommandType {
   return (COMMAND_TYPES as readonly string[]).includes(value);
+}
+
+export function isPersistenceType(value: string): value is PersistenceType {
+  return (PERSISTENCE_TYPES as readonly string[]).includes(value);
 }

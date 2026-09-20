@@ -14,9 +14,12 @@ import {
 
 import {
   handleAdvanceTime,
+  handleCloseCampaign,
   handleCreateCampaign,
   handleResetCampaign,
+  handleResumeCampaign,
   handleSetTime,
+  type ResumeCampaignInput,
 } from './commands';
 import {
   beginTransaction,
@@ -55,6 +58,8 @@ export type CommandResult =
       readonly kind: 'committed';
       readonly campaign: CampaignState | null;
       readonly data: CommandResultData;
+      /** The command asked for a snapshot; the host decides who takes it. */
+      readonly autosaveRequested: boolean;
     }
   | { readonly kind: 'unchanged'; readonly data: CommandResultData }
   | { readonly kind: 'failed'; readonly error: EngineError };
@@ -87,11 +92,13 @@ export function runCommand(request: CommandRequest): CommandResult {
   return {
     kind: 'committed',
     campaign: committed.campaign,
+    autosaveRequested: committed.autosaveRequested,
     data: {
       campaignId: committed.campaign?.campaignId ?? null,
       revision: committed.campaign?.revision ?? NO_CAMPAIGN_REVISION,
       simulationTimeMs: committed.campaign?.time.simulationTimeMs ?? 0,
       committed: true,
+      autosaveRequested: committed.autosaveRequested,
       invalidations: [...committed.invalidations],
       events: committed.events.map((event) => ({ ...event })),
     },
@@ -104,6 +111,10 @@ function apply(transaction: Transaction, request: CommandRequest): CommandOutcom
       return handleCreateCampaign(transaction, request.payload as CreateCampaignPayload);
     case 'campaign.reset':
       return handleResetCampaign(transaction);
+    case 'campaign.close':
+      return handleCloseCampaign(transaction);
+    case 'campaign.resume':
+      return handleResumeCampaign(transaction, request.payload as ResumeCampaignInput);
     case 'time.set':
       return handleSetTime(transaction, request.payload as SetTimePayload);
     case 'time.advance':
@@ -119,6 +130,7 @@ function unchangedResult(campaign: CampaignState | null): CommandResultData {
     revision: campaign?.revision ?? NO_CAMPAIGN_REVISION,
     simulationTimeMs: campaign?.time.simulationTimeMs ?? 0,
     committed: false,
+    autosaveRequested: false,
     invalidations: [],
     events: [],
   };

@@ -46,3 +46,6 @@ Review the MVP Scope document and create MVP Implementation Plan. Implementation
 Read the documents in docs\ root folder and docs\human-input .
 
 Implement phase 1 of the MVP.
+Phase 1 is implemented, implement phase 2 of the MVP.
+Phase 1 and 2 are implemented, implement phase 3 of the MVP.
+Phase 1 through 3 are implemented, implement phase 4 of the MVP.

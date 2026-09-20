@@ -1,0 +1,75 @@
+{
+  "format": "galactic-soup/save",
+  "formatVersion": 1,
+  "protocolVersion": 1,
+  "engineVersion": "1.0.0",
+  "contentVersion": "1.0.0+000000000000",
+  "contentHash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "slotId": "slot-1",
+  "saveId": "slot-1:auto:1",
+  "campaignId": "cd4befff9414cec4ed0dace04",
+  "displayName": "Golden Pilot",
+  "kind": "auto",
+  "sequence": 1,
+  "revision": 1,
+  "simulationTimeMs": 0,
+  "savedAtRealMs": 1700000123456,
+  "state": {
+    "stateVersion": 1,
+    "campaignId": "cd4befff9414cec4ed0dace04",
+    "displayName": "Golden Pilot",
+    "seed": "0123456789abcdef0123456789abcdef",
+    "createdAtRealMs": 1700000000000,
+    "revision": 1,
+    "nextEntityOrdinal": 1,
+    "nextEventOrdinal": 1,
+    "time": {
+      "simulationTimeMs": 0,
+      "paused": true,
+      "rate": 1,
+      "accumulatorMs": 0
+    },
+    "random": {
+      "combat": {
+        "s0": 2919637781,
+        "s1": 3856240189,
+        "s2": 869517528,
+        "s3": 2013977808,
+        "drawIndex": 0
+      },
+      "economy": {
+        "s0": 3863712299,
+        "s1": 1489260572,
+        "s2": 12460306,
+        "s3": 2565530270,
+        "drawIndex": 0
+      },
+      "encounter": {
+        "s0": 544014222,
+        "s1": 1170746920,
+        "s2": 441093851,
+        "s3": 3125871578,
+        "drawIndex": 0
+      },
+      "loot": {
+        "s0": 3621832897,
+        "s1": 3035129070,
+        "s2": 2992763132,
+        "s3": 2229667982,
+        "drawIndex": 0
+      },
+      "world": {
+        "s0": 489763333,
+        "s1": 2557278903,
+        "s2": 2286875452,
+        "s3": 1476596905,
+        "drawIndex": 0
+      }
+    },
+    "scheduler": {
+      "entries": [],
+      "nextInsertionOrdinal": 1
+    }
+  },
+  "checksum": "5d66c8262f265a2cffa04c2adee5194d495060453f3cc0fd4a5dfff8b2d7bc59"
+}

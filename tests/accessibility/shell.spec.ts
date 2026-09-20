@@ -9,7 +9,7 @@ import { expect, test } from '@playwright/test';
 test.describe('shell accessibility', () => {
   test('has no automatically detectable violations [TECH-12.3]', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('status')).toHaveText(/Engine ready/);
+    await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -27,7 +27,7 @@ test.describe('shell accessibility', () => {
 
   test('remains readable at a doubled interface scale [TECH-12.3]', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('status')).toHaveText(/Engine ready/);
+    await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
 
     await page.evaluate(() => {
       document.documentElement.style.setProperty('--gs-ui-scale', '2');
@@ -35,7 +35,7 @@ test.describe('shell accessibility', () => {
     });
 
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByRole('status')).toBeVisible();
+    await expect(page.getByRole('status', { name: 'Engine status' })).toBeVisible();
 
     const overflows = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,

@@ -1,4 +1,5 @@
 import { loadBundledContent } from '@adapters/content';
+import { createMemorySaveStore } from '@adapters/persistence';
 import { attachEngineHost, type MessageTargetLike } from '@adapters/worker';
 import { createEngineHost, type EngineHost } from '@engine';
 import { createPortGateway, type ClientGateway, type MessagePortLike } from '@gateway';
@@ -22,7 +23,9 @@ export interface DirectGatewayOptions {
 }
 
 export function createDirectGateway(options: DirectGatewayOptions = {}): ClientGateway {
-  const host = options.host ?? createEngineHost({ content: loadBundledContent() });
+  const host =
+    options.host ??
+    createEngineHost({ content: loadBundledContent(), saves: createMemorySaveStore() });
   const { clientPort, hostTarget } = createLoopbackChannel();
   const detach = attachEngineHost(hostTarget, host);
 

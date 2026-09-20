@@ -17,9 +17,9 @@ import {
  * checkpoint so a divergence is located at the step that caused it rather
  * than at the end.
  *
- * The starting campaign is created by the script's first step because no
- * snapshot can be loaded yet; the persistence phase adds loading a stored
- * starting state to this same harness.
+ * A run starts either by creating a campaign from a seed or by resuming the
+ * snapshot the store already holds, so a script split across a close and a
+ * reopen can be compared with the same script run straight through.
  */
 
 export type ReplayStep =
@@ -33,6 +33,11 @@ export interface ReplayScript {
   readonly steps: readonly ReplayStep[];
   /** Record a hash after every this many steps. Defaults to every step. */
   readonly checkpointEvery?: number;
+  /**
+   * Where the run starts: a new campaign from the seed, or the snapshot the
+   * gateway's store already holds (Technical Specification 11.4).
+   */
+  readonly start?: 'create' | 'resume';
 }
 
 export interface ReplayCheckpoint {
@@ -68,11 +73,15 @@ export async function runReplay(gateway: ClientGateway, script: ReplayScript): P
     }
   };
 
-  await send('campaign.create', {
-    displayName: script.displayName,
-    seed: script.seed,
-    createdAtRealMs: script.createdAtRealMs,
-  });
+  if (script.start === 'resume') {
+    await send('campaign.resume', {});
+  } else {
+    await send('campaign.create', {
+      displayName: script.displayName,
+      seed: script.seed,
+      createdAtRealMs: script.createdAtRealMs,
+    });
+  }
 
   for (const [index, step] of script.steps.entries()) {
     if ('advanceMs' in step) {

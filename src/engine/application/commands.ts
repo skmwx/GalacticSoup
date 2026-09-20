@@ -31,6 +31,15 @@ import {
  */
 export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {};
 
+/**
+ * The internal payload of `campaign.resume`. The protocol request carries no
+ * arguments; the host loads and validates the snapshot and passes the campaign
+ * it produced to the handler.
+ */
+export interface ResumeCampaignInput {
+  readonly state: CampaignState;
+}
+
 export function handleCreateCampaign(
   transaction: Transaction,
   payload: CreateCampaignPayload,
@@ -50,6 +59,53 @@ export function handleCreateCampaign(
   transaction.publish('campaign.created', { campaignId: state.campaignId });
   transaction.invalidate('session');
   transaction.invalidate('frame');
+  transaction.invalidate('saves');
+  // A new campaign must be resumable before the player touches anything
+  // (Functional Specification 3.4).
+  transaction.requestAutosave();
+  return APPLIED;
+}
+
+/**
+ * Installs a snapshot that has already been validated by the load pipeline.
+ *
+ * The payload is domain state rather than protocol data: `campaign.resume`
+ * carries no arguments, and the host substitutes the campaign it loaded from
+ * the store. Restoring consumes neither a revision nor an event ordinal and
+ * publishes no event, so a resumed campaign hashes identically to the snapshot
+ * it came from (Technical Specification 9.5).
+ */
+export function handleResumeCampaign(
+  transaction: Transaction,
+  payload: ResumeCampaignInput,
+): CommandOutcome {
+  if (transaction.draft !== null) {
+    return reject('campaignAlreadyOpen');
+  }
+
+  transaction.restoreCampaign(payload.state);
+  transaction.invalidate('session');
+  transaction.invalidate('frame');
+  transaction.invalidate('saves');
+  return APPLIED;
+}
+
+/**
+ * Stops playing. The campaign leaves the session but its snapshots remain, so
+ * it can be resumed later; discarding it is `campaign.reset`
+ * (MVP Scope section 3).
+ */
+export function handleCloseCampaign(transaction: Transaction): CommandOutcome {
+  const draft = transaction.draft;
+  if (draft === null) {
+    return reject('noCampaignOpen');
+  }
+
+  transaction.publish('campaign.closed', { campaignId: draft.campaignId });
+  transaction.closeCampaign();
+  transaction.invalidate('session');
+  transaction.invalidate('frame');
+  transaction.invalidate('saves');
   return APPLIED;
 }
 
@@ -68,6 +124,7 @@ export function handleResetCampaign(transaction: Transaction): CommandOutcome {
   transaction.closeCampaign();
   transaction.invalidate('session');
   transaction.invalidate('frame');
+  transaction.invalidate('saves');
   return APPLIED;
 }
 

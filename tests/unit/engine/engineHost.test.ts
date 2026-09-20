@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { createMemorySaveStore } from '@adapters/persistence';
 import { createEngineHost, ENGINE_VERSION } from '@engine';
 import {
   EMPTY_PAYLOAD,
@@ -32,7 +33,7 @@ function request(type: string, overrides: Record<string, unknown> = {}): unknown
 
 describe('engine host', () => {
   it('reports its health without a campaign [TECH-7.1]', async () => {
-    const response = await createEngineHost({ content }).handle(request('system.health'));
+    const response = await createEngineHost({ content, saves: createMemorySaveStore() }).handle(request('system.health'));
 
     expect(response.ok).toBe(true);
     if (!response.ok) {
@@ -48,7 +49,7 @@ describe('engine host', () => {
   });
 
   it('reports the request types it accepts [TECH-7.1]', async () => {
-    const response = await createEngineHost({ content, engineVersion: '9.9.9' }).handle(
+    const response = await createEngineHost({ content, saves: createMemorySaveStore(), engineVersion: '9.9.9' }).handle(
       request('system.capabilities'),
     );
 
@@ -64,13 +65,13 @@ describe('engine host', () => {
   });
 
   it('answers every request with a transport-safe response [TECH-4.2]', async () => {
-    const response = await createEngineHost({ content }).handle(request('system.capabilities'));
+    const response = await createEngineHost({ content, saves: createMemorySaveStore() }).handle(request('system.capabilities'));
 
     expect(isTransportValue(response)).toBe(true);
   });
 
   it('returns a stable error instead of throwing on malformed input [TECH-5.4]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     const malformed: unknown[] = [
       undefined,
       null,
@@ -97,13 +98,13 @@ describe('engine host', () => {
   });
 
   it('correlates a failure that carries no request id with the unknown id [TECH-7.1]', async () => {
-    const response = await createEngineHost({ content }).handle('nonsense');
+    const response = await createEngineHost({ content, saves: createMemorySaveStore() }).handle('nonsense');
 
     expect(response.requestId).toBe(UNKNOWN_REQUEST_ID);
   });
 
   it('never resolves a state-changing revision above zero before campaigns exist [TECH-7.1]', async () => {
-    const response = await createEngineHost({ content }).handle(request('system.health'));
+    const response = await createEngineHost({ content, saves: createMemorySaveStore() }).handle(request('system.health'));
 
     expect(response.ok && response.revision).toBe(NO_CAMPAIGN_REVISION);
   });
@@ -132,7 +133,7 @@ describe('campaign session', () => {
   }
 
   it('opens a campaign and reports it in the session projection [MVP-AC-01, TECH-7.3, FUNC-19.1]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     const created = await host.handle(create());
     const session = await host.handle(request('campaign.session', { requestId: 'req-session' }));
 
@@ -151,7 +152,7 @@ describe('campaign session', () => {
   });
 
   it('reports no campaign before one is created [TECH-7.3]', async () => {
-    const response = await createEngineHost({ content }).handle(
+    const response = await createEngineHost({ content, saves: createMemorySaveStore() }).handle(
       request('campaign.session', { requestId: 'req-session' }),
     );
 
@@ -163,7 +164,7 @@ describe('campaign session', () => {
   });
 
   it('returns the original result for a duplicated command [TECH-7.2]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     await host.handle(create());
     await host.handle(run('req-run'));
 
@@ -182,7 +183,7 @@ describe('campaign session', () => {
   });
 
   it('runs a query again rather than replaying a cached answer [TECH-7.3]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     const before = await host.handle(request('campaign.session', { requestId: 'req-shared' }));
     await host.handle(create('req-create'));
     const after = await host.handle(request('campaign.session', { requestId: 'req-shared' }));
@@ -192,7 +193,7 @@ describe('campaign session', () => {
   });
 
   it('rejects a command that expected another revision [TECH-7.2, TECH-5.4]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     await host.handle(create());
 
     const stale = await host.handle(
@@ -214,7 +215,7 @@ describe('campaign session', () => {
   });
 
   it('accepts a command that expected the current revision [TECH-7.2]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     await host.handle(create());
 
     const accepted = await host.handle(
@@ -230,7 +231,7 @@ describe('campaign session', () => {
   });
 
   it('rejects a request addressed to another campaign [FUNC-22.10]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     await host.handle(create());
 
     const mismatched = await host.handle(
@@ -244,7 +245,7 @@ describe('campaign session', () => {
   });
 
   it('advances only while running, and reports the frame [FUNC-3.3, MVP-AC-01]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     const quantum = content.rules.time.simulationQuantumMs;
     await host.handle(create());
 
@@ -263,7 +264,7 @@ describe('campaign session', () => {
     const hashes: string[] = [];
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const host = createEngineHost({ content });
+      const host = createEngineHost({ content, saves: createMemorySaveStore() });
       await host.handle(create());
       await host.handle(run('req-run'));
       await host.handle(advance('req-advance', 500));
@@ -281,7 +282,7 @@ describe('campaign session', () => {
   });
 
   it('ends the campaign on reset [MVP-AC-01]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     await host.handle(create());
     const reset = await host.handle(request('campaign.reset', { requestId: 'req-reset' }));
     const session = await host.handle(request('campaign.session', { requestId: 'req-session' }));
@@ -295,7 +296,7 @@ describe('duplicate requests after a campaign ends', () => {
   const seed = '0123456789abcdef0123456789abcdef';
 
   it('forgets results that describe a campaign that no longer exists [TECH-7.2]', async () => {
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     const create = (requestId: string): unknown =>
       request('campaign.create', {
         requestId,

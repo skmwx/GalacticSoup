@@ -10,6 +10,7 @@
     "revision",
     "simulationTimeMs",
     "committed",
+    "autosaveRequested",
     "invalidations",
     "events"
   ],
@@ -36,6 +37,10 @@
       "maximum": 9007199254740991
     },
     "committed": {
+      "type": "boolean"
+    },
+    "autosaveRequested": {
+      "description": "The command reached a point at which the campaign must be durable (Functional Specification 3.4).",
       "type": "boolean"
     },
     "invalidations": {

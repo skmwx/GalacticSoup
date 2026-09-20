@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 
 import type { ClientGateway, TransportKind } from '@gateway';
 
+import { CampaignPanel } from '../campaign/CampaignPanel';
 import { useTranslate } from '../localization';
 import styles from './AppShell.module.css';
 import { CompatibilityFailure } from './CompatibilityFailure';
@@ -57,7 +58,12 @@ export function AppShell({ gateway }: AppShellProps): JSX.Element {
             {translate('shell.engine.sectionLabel')}
           </h2>
 
-          <p className={styles['status']} role="status" aria-live="polite">
+          <p
+            className={styles['status']}
+            role="status"
+            aria-live="polite"
+            aria-label={translate('shell.status.label')}
+          >
             {status.kind === 'connecting'
               ? translate('shell.engine.connecting')
               : translate('shell.engine.ready', {
@@ -90,6 +96,8 @@ export function AppShell({ gateway }: AppShellProps): JSX.Element {
             </dl>
           ) : null}
         </section>
+
+        {status.kind === 'ready' ? <CampaignPanel gateway={gateway} /> : null}
 
         {status.kind === 'ready' ? (
           <section className={styles['panel']} aria-labelledby="content-status-heading">

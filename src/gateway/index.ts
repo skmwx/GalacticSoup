@@ -17,6 +17,16 @@ export type {
   SendEnvelopeOptions,
   TransportKind,
 } from './clientGateway';
+export {
+  AUTOSAVE_INTERVAL_MS,
+  createCampaignSeed,
+  createCampaignSession,
+} from './campaignSession';
+export type {
+  CampaignSession,
+  CampaignSessionOptions,
+  CampaignSessionState,
+} from './campaignSession';
 export { buildClientRequest, createRequestIdFactory } from './envelope';
 export type { EnvelopeFields } from './envelope';
 export { createFrameDriver } from './frameDriver';

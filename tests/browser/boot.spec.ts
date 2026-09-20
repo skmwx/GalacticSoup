@@ -20,7 +20,7 @@ test.describe('application boot', () => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Galactic Soup' })).toBeVisible();
-    await expect(page.getByRole('status')).toHaveText(/Engine ready over a dedicated worker\./);
+    await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready over a dedicated worker\./);
     await expect(page.getByText('worker', { exact: true })).toBeVisible();
     await expect(page.getByText(/^\d+ request types$/)).toBeVisible();
 
@@ -45,7 +45,7 @@ test.describe('application boot', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('status')).toHaveText(/Engine ready/);
+    await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
 
     expect(foreign).toEqual([]);
   });
@@ -54,7 +54,7 @@ test.describe('application boot', () => {
     page,
   }) => {
     await page.goto('/');
-    await expect(page.getByRole('status')).toHaveText(/Engine ready/);
+    await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
 
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
   });

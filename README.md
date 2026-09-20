@@ -38,8 +38,10 @@ The Playwright suites need browsers: `npx playwright install chromium`.
 The interface never owns game state. A player action becomes a protocol command, the client
 gateway carries it to the engine host, and the engine — which runs in a dedicated worker and knows
 nothing about the DOM, React or browser storage — decides the outcome and returns it. Queries
-return immutable view models. Swapping the worker transport for a network transport, or the
-TypeScript engine for a server, must not require changing interface components.
+return immutable view models. The engine reaches authored content and durable storage only through
+ports it declares; the adapters behind them are composed in the worker. Swapping the worker
+transport for a network transport, or the TypeScript engine for a server, must not require changing
+interface components.
 
 `config/packages.mjs` declares the package boundaries and is the single source of truth for the
 build aliases, the TypeScript paths and the architecture check. Cross-package imports go through a
@@ -59,7 +61,7 @@ src/
     simulation/   authoritative clock, scheduler, ordered systems
     projections/  domain-to-view-model builders
     ports/        interfaces the engine owns and adapters implement
-  adapters/       worker host and message dispatch, content loading
+  adapters/       worker host and message dispatch, content loading, save stores
   shared/         dependency-free primitives
 content/          authored game data: rules, catalog, universe, economy, encounters
 schemas/          JSON Schemas for the protocol, for content and for saved state
@@ -85,6 +87,31 @@ insertion ordinal — never a `setTimeout`.
 `schemas/save/campaign-state.schema.json` is the contract for the authoritative payload a snapshot
 stores, and `diagnostics.stateHash` returns its canonical SHA-256 so replay tests can compare
 checkpoints across transports.
+
+## Saving and resuming
+
+A campaign lives in one local slot. The engine decides when a snapshot exists and what it holds;
+the store decides only where the bytes go. Capture is synchronous and happens at the revision the
+caller asked about, so simulation carries on while the write is still in flight, and writes for one
+campaign are serialised and therefore finish in revision order.
+
+A save is a self-describing JSON envelope: the build and content it was written against, the
+campaign and revision it holds, the canonical `CampaignState` payload, and a SHA-256 over
+everything else in it. `schemas/save/save-envelope.schema.json` is its published contract and
+`tests/fixtures/saves/format-1.json` is the golden artefact that pins the format, its canonical
+serialisation and its digest. Loading walks the steps the technical specification prescribes —
+bounds, checksum, shape, migrations, content compatibility, invariants — and nothing in that path
+writes, so a save that cannot be opened is left exactly as it was found and the loader falls back to
+the previous valid snapshot.
+
+The slot keeps five rolling autosaves and one replaceable manual save, rotated in a single
+IndexedDB transaction. A failed or interrupted write leaves the previous manifest and every
+snapshot it names intact, and is reported through the save status rather than by interrupting play.
+
+The engine has no wall clock, so the timestamp a snapshot carries for display arrives with the
+request that asks for it. That is also why the five-minute interval autosave is a main-thread play
+timer: `createCampaignSession` in `@gateway` counts unpaused real time and sends `campaign.save`,
+and answers any autosave trigger a command reports back.
 
 ## Content
 

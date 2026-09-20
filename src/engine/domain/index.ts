@@ -49,6 +49,15 @@ export {
   MAX_ORDINAL,
 } from './campaign/identity';
 export type { CampaignId, EntityId } from './campaign/identity';
+export {
+  campaignDefinitionReferences,
+  readCampaignState,
+} from './campaign/snapshot';
+export type {
+  CampaignReadFailure,
+  CampaignReadResult,
+  CampaignReadSuccess,
+} from './campaign/snapshot';
 export { validateCampaign } from './campaign/invariants';
 export type { InvariantIssue } from './campaign/invariants';
 export {

@@ -13,11 +13,12 @@
  * the test run and the production build, so all four accept or reject exactly
  * the same content.
  */
-import { canonicalJson, sha256Hex } from '../../../src/shared/index.ts';
 import {
-  CONTENT_LIMITS,
+  canonicalJson,
   findStructuralViolation,
-} from '../../../src/adapters/content/limits.ts';
+  sha256Hex,
+} from '../../../src/shared/index.ts';
+import { CONTENT_LIMITS } from '../../../src/adapters/content/limits.ts';
 
 import { issue, sortIssues } from './issues.mjs';
 import { validateBundle, validateDocument } from './schema.mjs';
@@ -81,7 +82,7 @@ export function compileContent(files) {
       continue;
     }
 
-    const violation = findStructuralViolation(document);
+    const violation = findStructuralViolation(document, CONTENT_LIMITS);
     if (violation !== null) {
       issues.push(issue('structure', file.path, violation.path, `${violation.reason}: ${violation.detail}`));
       continue;

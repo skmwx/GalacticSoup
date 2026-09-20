@@ -21,7 +21,7 @@ import {
   sortedKeys,
 } from '@shared';
 
-import { findStructuralViolation } from './limits.ts';
+import { findStructuralViolation } from './structure.ts';
 
 /**
  * Turns a compiled bundle into engine-facing content (Technical

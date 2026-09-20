@@ -28,6 +28,7 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "@adapters/content": ["./src/adapters/content/index.ts"],
+      "@adapters/persistence": ["./src/adapters/persistence/index.ts"],
       "@adapters/worker": ["./src/adapters/worker/index.ts"],
       "@app": ["./src/app/index.ts"],
       "@engine": ["./src/engine/index.ts"],

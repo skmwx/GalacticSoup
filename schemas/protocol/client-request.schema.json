@@ -31,9 +31,13 @@
     },
     "type": {
       "enum": [
+        "campaign.close",
         "campaign.create",
         "campaign.frame",
         "campaign.reset",
+        "campaign.resume",
+        "campaign.save",
+        "campaign.saves",
         "campaign.session",
         "content.summary",
         "diagnostics.stateHash",
@@ -72,6 +76,44 @@
         "properties": {
           "type": {
             "const": "campaign.reset"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/emptyPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "campaign.resume"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/emptyPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "campaign.saves"
           }
         },
         "required": [
@@ -237,6 +279,44 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "campaign.save"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/saveCampaignPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "campaign.close"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/closeCampaignPayload"
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -305,6 +385,41 @@
       ],
       "properties": {
         "elapsedRealMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "saveCampaignPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "savedAtRealMs"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "auto",
+            "manual"
+          ]
+        },
+        "savedAtRealMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "closeCampaignPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "savedAtRealMs"
+      ],
+      "properties": {
+        "savedAtRealMs": {
           "type": "integer",
           "minimum": 0,
           "maximum": 9007199254740991

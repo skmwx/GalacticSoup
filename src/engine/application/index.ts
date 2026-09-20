@@ -4,11 +4,14 @@
  */
 export {
   handleAdvanceTime,
+  handleCloseCampaign,
   handleCreateCampaign,
   handleResetCampaign,
+  handleResumeCampaign,
   handleSetTime,
   INSTALLED_BOUNDARY_RESOLVERS,
 } from './commands';
+export type { ResumeCampaignInput } from './commands';
 export { createEngineHost } from './engineHost';
 export type { EngineHost, EngineHostOptions } from './engineHost';
 export {
@@ -20,6 +23,29 @@ export {
   handleStateHash,
 } from './handlers';
 export type { HandlerContext } from './handlers';
+export {
+  captureSnapshot,
+  createSaveService,
+  envelopeChecksum,
+  isSealed,
+  loadSave,
+  migrateSave,
+  SAVE_MIGRATIONS,
+  saveIdOf,
+} from './saves';
+export type {
+  CaptureInput,
+  LoadContext,
+  LoadFailure,
+  LoadResult,
+  LoadSuccess,
+  MigratableSave,
+  MigrationResult,
+  ResumeResult,
+  SaveMigration,
+  SaveService,
+  SaveServiceOptions,
+} from './saves';
 export { runCommand } from './pipeline';
 export type { CommandRequest, CommandResult } from './pipeline';
 export { createRecentRequests, RECENT_REQUEST_LIMIT } from './recentRequests';

@@ -52,6 +52,27 @@ export type {
   TurretModuleDefinition,
 } from './content/definitions.ts';
 export { ContentIntegrityError, ContentLookupError } from './content/repository.ts';
+export {
+  DEFAULT_SAVE_RETENTION,
+  DEFAULT_SLOT_ID,
+  isSaveKind,
+  SAVE_FORMAT_VERSION,
+  SAVE_KINDS,
+  SAVE_LIMITS,
+  SaveStoreError,
+  summaryOf,
+} from './persistence/saves.ts';
+export type {
+  SaveEnvelope,
+  SaveKind,
+  SaveRetention,
+  SaveStore,
+  SaveStoreErrorReason,
+  SaveSummary,
+  SaveWriteRequest,
+  SlotManifest,
+  StorageReport,
+} from './persistence/saves.ts';
 export type { ContentIdentity, ContentRepository } from './content/repository.ts';
 export { RULE_GROUPS } from './content/rules.ts';
 export type {

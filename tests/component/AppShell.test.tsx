@@ -1,3 +1,4 @@
+import { createMemorySaveStore } from '@adapters/persistence';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -16,7 +17,11 @@ import { shippedContent } from '../support/content.ts';
 
 function renderShell(options: { onIssue?: (issue: LocalizationIssue) => void } = {}) {
   const gateway = createDirectGateway({
-    host: createEngineHost({ content: shippedContent(), engineVersion: '4.5.6' }),
+    host: createEngineHost({
+      content: shippedContent(),
+      saves: createMemorySaveStore(),
+      engineVersion: '4.5.6',
+    }),
     defaultTimeoutMs: 2_000,
   });
 
@@ -66,7 +71,7 @@ describe('application shell', () => {
   it('announces the status in a live region [TECH-12.1]', async () => {
     const { gateway } = renderShell();
 
-    const status = await screen.findByRole('status');
+    const status = await screen.findByRole('status', { name: 'Engine status' });
     expect(status).toHaveAttribute('aria-live', 'polite');
 
     gateway.dispose();

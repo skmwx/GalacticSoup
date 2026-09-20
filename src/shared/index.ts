@@ -99,3 +99,9 @@ export type {
   Radians,
   RadiansPerSecond,
 } from './numeric/index.ts';
+export { findStructuralViolation } from './structure/limits.ts';
+export type {
+  StructuralLimits,
+  StructuralViolation,
+  StructuralViolationReason,
+} from './structure/limits.ts';

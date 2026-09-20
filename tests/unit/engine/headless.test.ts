@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { createMemorySaveStore } from '@adapters/persistence';
 import { EMPTY_PAYLOAD, PROTOCOL_VERSION } from '@protocol';
 
 /**
@@ -20,7 +21,7 @@ describe('headless engine', () => {
     const { createEngineHost } = await import('@engine');
     const { shippedContent } = await import('../../support/content.ts');
 
-    const response = await createEngineHost({ content: shippedContent() }).handle({
+    const response = await createEngineHost({ content: shippedContent(), saves: createMemorySaveStore() }).handle({
       protocolVersion: PROTOCOL_VERSION,
       requestId: 'headless-1',
       type: 'system.health',
@@ -37,7 +38,7 @@ describe('deterministic engine', () => {
     const { shippedContent } = await import('../../support/content.ts');
 
     const content = shippedContent();
-    const host = createEngineHost({ content });
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
     const ask = (requestId: string, type: string, payload: unknown): Promise<unknown> =>
       host.handle({ protocolVersion: PROTOCOL_VERSION, requestId, type, payload });
 

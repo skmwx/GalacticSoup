@@ -13,10 +13,11 @@ The plan is intentionally divided into work packages that one coding agent can c
 3. Add only contracts and abstractions required by the current or already-completed phases. Deferred systems are not prebuilt.
 4. Put tunable values and authored definitions in validated content; keep algorithms in the engine.
 5. Treat a phase as a vertical change through every affected layer. A command without its query/projection, schema, persistence coverage, and tests is incomplete.
-6. When authoritative state or a protocol changes, update its version, schema, pure migration where applicable, golden fixture, and compatibility tests in the same phase. After the first snapshot is introduced, no phase may defer save-shape work.
-7. Add stable Functional Specification and MVP acceptance IDs to tests as soon as behavior is implemented. Keep the traceability source current rather than reconstructing it at the end.
-8. Finish with targeted tests and the repository-wide unit/integration suite. Run browser tests when the phase changes a player flow, and run the production build when it changes bundling, workers, content loading, or persistence.
-9. Record any deliberate technical-specification exception as an architecture decision and obtain the corresponding document change before relying on it. Do not encode an undocumented exception as a temporary shortcut.
+6. When authoritative state or a protocol changes, update its version, schema, invariants, golden fixture, and compatibility tests in the same phase. After the first snapshot is introduced, no phase may defer save-shape work.
+7. No phase owes a migration for a save or a content set produced before release. Technical Specification 11.4 requires a migration path for every *publicly released* save version and a transition fixture for every *released* content change; this MVP has released neither, so a development campaign that a shape or content change invalidates is discarded and a new one started. The migration registry, its runner, and the load pipeline's version and content-compatibility steps still ship and stay tested against fixture registries, so the first released change has a working mechanism to hang itself on and Technical Specification 15.1's persistence tests remain covered. This is a sequencing decision recorded by the human operator on 2026-09-20; it relaxes nothing for a released build.
+8. Add stable Functional Specification and MVP acceptance IDs to tests as soon as behavior is implemented. Keep the traceability source current rather than reconstructing it at the end.
+9. Finish with targeted tests and the repository-wide unit/integration suite. Run browser tests when the phase changes a player flow, and run the production build when it changes bundling, workers, content loading, or persistence.
+10. Record any deliberate technical-specification exception as an architecture decision and obtain the corresponding document change before relying on it. Do not encode an undocumented exception as a temporary shortcut.
 
 Phase 1 establishes these stable entry points, which later phases use consistently: `npm run validate:content`, `npm run test:unit`, `npm run test:integration`, `npm run test:component`, `npm run test:browser`, `npm run test:accessibility`, `npm run traceability`, and `npm run build`.
 
@@ -169,7 +170,7 @@ Phase 1 establishes these stable entry points, which later phases use consistent
 - Keep UI stores limited to presentation state and immutable projections.
 - Establish reusable focus and keyboard interaction patterns for station surfaces; full accessibility verification remains Phase 19.
 
-**Contracts and persistence:** No new domain authority. Persist only campaign fields introduced by a discovered integration need, with a same-phase schema/migration/fixture update. Presentation preferences are not campaign data.
+**Contracts and persistence:** No new domain authority. Persist only campaign fields introduced by a discovered integration need, with a same-phase schema, invariant, and golden-fixture update (section 2, rules 6-7). Presentation preferences are not campaign data.
 
 **Tests and exit gate:** Component tests cover projection rendering, stale previews, focus return, duplicate-submit prevention, and failure reasons; a browser flow creates a campaign, inspects and compares items, transacts, changes a fit, repairs/resupplies, insures, and reopens to the same state.
 
@@ -274,7 +275,7 @@ Phase 1 establishes these stable entry points, which later phases use consistent
 - Connect return, docking, selling, repair, resupply, and fitting so rewards can immediately change the next attempt.
 - Complete calculation explanations needed to understand the included combat decisions.
 
-**Contracts and persistence:** Tactical projection schemas become acceptance-test contracts. Any integration-discovered authoritative field receives the required migration and golden-save update.
+**Contracts and persistence:** Tactical projection schemas become acceptance-test contracts. Any integration-discovered authoritative field receives the required schema, invariant, and golden-save update (section 2, rules 6-7).
 
 **Tests and exit gate:** A browser acceptance test performs the complete easiest-site loop from campaign creation through a meaningful station-side improvement and a repeat attempt. Separate mouse and keyboard scripts cover combat commands. Save/reopen is tested once in combat and once after reward conversion. This is the first end-to-end MVP vertical slice.
 
@@ -308,7 +309,7 @@ Phase 1 establishes these stable entry points, which later phases use consistent
 - Add headless scenario fixtures representing starter, intermediate, and suitable mastery fits.
 - Add content diagnostics that make progression failures attributable to data rather than opaque browser runs.
 
-**Contracts and persistence:** Content-version changes retain stable IDs. Supply a content transition or migration fixture for any previously persisted definition that changes structurally; balance-only edits use installed current values for future calculations as specified.
+**Contracts and persistence:** Content-version changes retain stable IDs wherever practical, so an existing campaign keeps resolving. Balance-only edits use installed current values for future calculations as specified. A structural change that removes or renames a definition an existing development campaign references makes that campaign unopenable, which is acceptable and needs no transition fixture before release (section 2, rule 7); the loader must still refuse it with a precise, explainable error rather than opening it.
 
 **Tests and exit gate:** Content validation proves all MVP references and starter reachability; headless scenarios complete all three encounters with their intended representative fits and verify repeatability; browser acceptance covers the multi-opponent site and advancement to the mastery site.
 
@@ -325,7 +326,7 @@ Phase 1 establishes these stable entry points, which later phases use consistent
 - Fix engine or UI defects exposed by the simulations, but route any rule change back through the authoritative documents before implementation.
 - Record the candidate tuning bundle and fixture seeds used for release-candidate comparison.
 
-**Contracts and persistence:** Prefer balance-only content updates. Any structural change must carry its content compatibility fixture in this phase.
+**Contracts and persistence:** Prefer balance-only content updates, because they leave an existing campaign openable. A structural change needs no content compatibility fixture before release (section 2, rule 7) and may invalidate a development campaign; tuning iterations restart from a new one.
 
 **Tests and exit gate:** Deterministic scenario bands meet every objective in MVP Scope section 4.3; poor-purchase and loss-recovery fixtures remain viable; no representative fit is universally dominant across the scoped encounters; the full headless suite and progression browser flow pass.
 
@@ -378,9 +379,9 @@ Phase 1 establishes these stable entry points, which later phases use consistent
 - Finalize the machine-readable traceability source and generate a report mapping every MVP acceptance ID and applicable normative section to engine modules, content, projections, and tests.
 - Bound logs/history and verify performance against the authored MVP maxima.
 
-**Contracts and persistence:** Close the MVP protocol/save versions and migration chain; no unchecked optional or unversioned fields remain.
+**Contracts and persistence:** Close the MVP protocol and save versions; no unchecked optional or unversioned fields remain. The released migration chain begins at the version this phase closes, so the registry is expected to be empty and its runner is verified against a fixture registry instead (section 2, rule 7).
 
-**Tests and exit gate:** Rotation behavior used internally, atomic write failure, checksum/corruption, quota, unsupported/newer version, content mismatch, migration, reload at each golden state, and full replay all pass. The generated traceability report has no uncovered included requirement.
+**Tests and exit gate:** Rotation behavior used internally, atomic write failure, checksum/corruption, quota, unsupported/newer version, content mismatch, the migration runner against a fixture registry, reload at each golden state, and full replay all pass. The generated traceability report has no uncovered included requirement.
 
 **Traceability:** MVP-AC-01 through MVP-AC-10; Functional Specification sections selected by `MVPScope.md`; Technical Specification sections 5, 7, 9.5, 11, 13-16, and 18.
 

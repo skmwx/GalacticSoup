@@ -9,8 +9,8 @@
  * 4.3 (source layout). A package is a stable boundary: code outside a package
  * may only reach it through its public index, addressed by the alias below.
  *
- * Later phases add packages (adapters/persistence) by adding an entry here plus
- * the matching tsconfig path. Nothing is declared before the phase that owns it.
+ * A later phase adds a package by adding an entry here plus the matching
+ * tsconfig path. Nothing is declared before the phase that owns it.
  */
 
 /**
@@ -114,9 +114,22 @@ export const PACKAGES = {
     platform: 'pure',
     purpose: 'Content bundle loading, integrity checking and indexing.',
   },
+  '@adapters/persistence': {
+    dir: 'src/adapters/persistence',
+    mayImport: ['@shared', '@engine/ports'],
+    externals: [],
+    platform: 'browser',
+    purpose: 'IndexedDB and in-memory save stores behind the persistence port.',
+  },
   '@adapters/worker': {
     dir: 'src/adapters/worker',
-    mayImport: ['@shared', '@protocol', '@engine', '@adapters/content'],
+    mayImport: [
+      '@shared',
+      '@protocol',
+      '@engine',
+      '@adapters/content',
+      '@adapters/persistence',
+    ],
     externals: [],
     platform: 'browser',
     purpose: 'Worker host and message dispatch.',
@@ -136,6 +149,7 @@ export const PACKAGES = {
       '@gateway',
       '@engine',
       '@adapters/content',
+      '@adapters/persistence',
       '@adapters/worker',
     ],
     externals: [],

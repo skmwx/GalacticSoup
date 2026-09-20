@@ -6,8 +6,9 @@
  * shaped and how it reaches the process; the engine knows neither.
  */
 export { loadBundledContent } from './bundled.ts';
-export { CONTENT_LIMITS, findStructuralViolation } from './limits.ts';
-export type { StructuralViolation, StructuralViolationReason } from './limits.ts';
+export { CONTENT_LIMITS } from './limits.ts';
+export { findStructuralViolation } from './structure.ts';
+export type { StructuralViolation, StructuralViolationReason } from './structure.ts';
 export { BUNDLE_DEFINITION_KINDS, bundleDigest, parseContentBundle } from './parseBundle.ts';
 export type { ParsedContent } from './parseBundle.ts';
 export { createContentRepository } from './repository.ts';

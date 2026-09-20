@@ -1,6 +1,6 @@
 import type { ClientRequest } from './envelope';
 import { type EngineError, invalidRequest } from './errors';
-import { isRequestType, type RequestType } from './requests';
+import { isRequestType, SAVE_KIND_NAMES, type RequestType } from './requests';
 import { findTransportViolation } from './transport';
 import { MAX_REQUEST_ID_LENGTH, PROTOCOL_VERSION, UNKNOWN_REQUEST_ID } from './version';
 
@@ -146,6 +146,8 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
     case 'system.capabilities':
     case 'content.summary':
     case 'campaign.reset':
+    case 'campaign.resume':
+    case 'campaign.saves':
     case 'campaign.session':
     case 'campaign.frame':
     case 'diagnostics.stateHash':
@@ -170,6 +172,31 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
       }
       if (!isWholeNonNegative(fields['createdAtRealMs'])) {
         return payloadField(type, 'createdAtRealMs', 'format');
+      }
+      return null;
+    }
+
+    case 'campaign.save': {
+      const unexpected = unexpectedField(fields, ['kind', 'savedAtRealMs']);
+      if (unexpected !== null) {
+        return payloadField(type, unexpected, 'unexpectedField');
+      }
+      if (!(SAVE_KIND_NAMES as readonly unknown[]).includes(fields['kind'])) {
+        return payloadField(type, 'kind', 'format');
+      }
+      if (!isWholeNonNegative(fields['savedAtRealMs'])) {
+        return payloadField(type, 'savedAtRealMs', 'format');
+      }
+      return null;
+    }
+
+    case 'campaign.close': {
+      const unexpected = unexpectedField(fields, ['savedAtRealMs']);
+      if (unexpected !== null) {
+        return payloadField(type, unexpected, 'unexpectedField');
+      }
+      if (!isWholeNonNegative(fields['savedAtRealMs'])) {
+        return payloadField(type, 'savedAtRealMs', 'format');
       }
       return null;
     }

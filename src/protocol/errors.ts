@@ -81,6 +81,7 @@ export const RULE_VIOLATION_REASONS = [
   'noCampaignOpen',
   'campaignMismatch',
   'unsupportedTimeRate',
+  'noResumableSave',
 ] as const;
 
 export type RuleViolationReason = (typeof RULE_VIOLATION_REASONS)[number];
@@ -145,6 +146,75 @@ export function contentError(issue: ContentIssue): EngineError {
   });
 }
 
+/**
+ * Why a stored save could not be opened (Technical Specification 11.4).
+ *
+ * A save is untrusted input, so every step of the load pipeline has a reason
+ * the player can be told. None of them modifies the stored snapshot: a save
+ * that cannot be opened is left exactly as it was found.
+ */
+export const SAVE_LOAD_REASONS = [
+  'notFound',
+  'tooLarge',
+  'structure',
+  'envelope',
+  'checksum',
+  'forwardVersion',
+  'migrationFailed',
+  'payload',
+  'contentIncompatible',
+] as const;
+
+export type SaveLoadReason = (typeof SAVE_LOAD_REASONS)[number];
+
+export function saveLoadMessageKey(reason: SaveLoadReason): MessageKey {
+  return `error.saveLoad.${reason}`;
+}
+
+/**
+ * Corruption is reported as an integrity failure and everything else as a save
+ * failure, so the interface can distinguish "this file is damaged" from "this
+ * build cannot open it" (Technical Specification 5.4).
+ */
+const SAVE_LOAD_CODES: Readonly<Record<SaveLoadReason, EngineErrorCode>> = {
+  notFound: 'SAVE_ERROR',
+  tooLarge: 'INTEGRITY_ERROR',
+  structure: 'INTEGRITY_ERROR',
+  envelope: 'INTEGRITY_ERROR',
+  checksum: 'INTEGRITY_ERROR',
+  forwardVersion: 'SAVE_ERROR',
+  migrationFailed: 'SAVE_ERROR',
+  payload: 'INTEGRITY_ERROR',
+  contentIncompatible: 'CONTENT_ERROR',
+};
+
+export function saveLoadError(reason: SaveLoadReason, params?: ErrorParams): EngineError {
+  return createEngineError(SAVE_LOAD_CODES[reason], saveLoadMessageKey(reason), params);
+}
+
+/** Why a save could not be written (Technical Specification 11.1). */
+export const SAVE_WRITE_REASONS = [
+  'unavailable',
+  'quota',
+  'writeFailed',
+  'readFailed',
+  'notFound',
+] as const;
+
+export type SaveWriteReason = (typeof SAVE_WRITE_REASONS)[number];
+
+export function saveWriteMessageKey(reason: SaveWriteReason): MessageKey {
+  return `error.saveWrite.${reason}`;
+}
+
+export function saveWriteError(reason: SaveWriteReason, params?: ErrorParams): EngineError {
+  return createEngineError(
+    reason === 'quota' ? 'QUOTA_ERROR' : 'SAVE_ERROR',
+    saveWriteMessageKey(reason),
+    params,
+  );
+}
+
 export function createEngineError(
   code: EngineErrorCode,
   messageKey: MessageKey,
@@ -187,5 +257,7 @@ export const PROTOCOL_MESSAGE_KEYS: readonly MessageKey[] = [
   ...INVALID_REQUEST_REASONS.map(invalidRequestMessageKey),
   ...CONTENT_ERROR_REASONS.map(contentErrorMessageKey),
   ...RULE_VIOLATION_REASONS.map(ruleViolationMessageKey),
+  ...SAVE_LOAD_REASONS.map(saveLoadMessageKey),
+  ...SAVE_WRITE_REASONS.map(saveWriteMessageKey),
   'error.internalError.invariant',
 ].sort();

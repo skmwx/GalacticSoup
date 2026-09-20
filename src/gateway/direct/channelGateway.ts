@@ -1,4 +1,5 @@
 import { loadBundledContent } from '@adapters/content';
+import { createMemorySaveStore } from '@adapters/persistence';
 import { attachEngineHost, type MessageTargetLike } from '@adapters/worker';
 import { createEngineHost, type EngineHost } from '@engine';
 import { createPortGateway, type ClientGateway, type MessagePortLike } from '@gateway';
@@ -26,7 +27,9 @@ export interface ChannelGateway {
 }
 
 export function createChannelGateway(options: ChannelGatewayOptions = {}): ChannelGateway {
-  const host = options.host ?? createEngineHost({ content: loadBundledContent() });
+  const host =
+    options.host ??
+    createEngineHost({ content: loadBundledContent(), saves: createMemorySaveStore() });
   const channel = new MessageChannel();
 
   const detach = attachEngineHost(channel.port2 as unknown as MessageTargetLike, host);
