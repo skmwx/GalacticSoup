@@ -179,12 +179,15 @@ export function usePlayData(options: PlayDataOptions): PlayData {
   /** Where the ship was at the last read, so a tactical refresh costs one request. */
   const placement = useRef<{ location: LocationData; shipId: string } | null>(null);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    // React StrictMode intentionally runs an extra setup/cleanup cycle in
+    // development. Restore the flag in setup so the second cycle can publish
+    // the projections it reads instead of leaving the play surface loading.
+    mounted.current = true;
+    return () => {
       mounted.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const publish = useCallback((next: Partial<PlayDataState>) => {
     if (mounted.current) {

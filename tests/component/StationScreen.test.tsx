@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -23,18 +24,22 @@ import { shippedContent } from '../support/content.ts';
 const PILOT = 'Vela Trask';
 const FUSION = 'ammo.projectile.small.fusion';
 
-function renderGame(options: { onIssue?: (issue: LocalizationIssue) => void } = {}) {
+function renderGame(options: {
+  onIssue?: (issue: LocalizationIssue) => void;
+  strict?: boolean;
+} = {}) {
   const store = createMemorySaveStore();
   const gateway = createDirectGateway({
     host: createEngineHost({ content: shippedContent(), saves: store }),
     defaultTimeoutMs: 5_000,
   });
 
-  render(
+  const game = (
     <LocalizationProvider {...(options.onIssue === undefined ? {} : { onIssue: options.onIssue })}>
       <GameRoot gateway={gateway} />
-    </LocalizationProvider>,
+    </LocalizationProvider>
   );
+  render(options.strict === true ? <StrictMode>{game}</StrictMode> : game);
 
   return { gateway, store, user: userEvent.setup() };
 }
@@ -63,6 +68,16 @@ async function assets(harness: Harness): Promise<AssetsData> {
 }
 
 describe('station hub', () => {
+  it('loads the station projections under development StrictMode [TECH-12.1]', async () => {
+    const harness = renderGame({ strict: true });
+
+    await startCampaign(harness);
+
+    expect(screen.getByText('Docked at Borrell Harbour')).toBeInTheDocument();
+    expect(screen.queryByText("Reading the ship’s position…")).not.toBeInTheDocument();
+    harness.gateway.dispose();
+  });
+
   it('names the station and its services from projections [MVP-AC-02, FUNC-19.5]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
