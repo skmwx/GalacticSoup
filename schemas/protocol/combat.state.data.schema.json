@@ -1,0 +1,604 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/combat.state.data.schema.json",
+  "title": "CombatData",
+  "description": "The tactical view: locks, relative motion and per-weapon effectiveness (Functional Specification 9.2-9.5, 19.3).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "revision",
+    "simulationTimeMs",
+    "shipId",
+    "maxLockedTargets",
+    "maxLockRangeKm",
+    "scanResolution",
+    "signatureRadiusMetres",
+    "capacitorCharge",
+    "capacitorCapacity",
+    "locks",
+    "motion",
+    "weapons",
+    "lockCommands"
+  ],
+  "properties": {
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "simulationTimeMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "shipId": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/entityId"
+        }
+      ]
+    },
+    "maxLockedTargets": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maxLockRangeKm": {
+      "type": "number",
+      "minimum": 0
+    },
+    "scanResolution": {
+      "type": "number",
+      "minimum": 0
+    },
+    "signatureRadiusMetres": {
+      "type": "number",
+      "minimum": 0
+    },
+    "capacitorCharge": {
+      "type": "number",
+      "minimum": 0
+    },
+    "capacitorCapacity": {
+      "type": "number",
+      "minimum": 0
+    },
+    "locks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/lock"
+      }
+    },
+    "motion": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/targetMotion"
+      }
+    },
+    "weapons": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/weapon"
+      }
+    },
+    "lockCommands": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/objectLockAvailability"
+      }
+    }
+  },
+  "$defs": {
+    "entityId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+    },
+    "objectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commandAvailability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "available",
+        "unavailableReason"
+      ],
+      "properties": {
+        "command": {
+          "type": "string"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "formulaTrace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formulaKey",
+        "operands",
+        "unroundedResult",
+        "displayResult"
+      ],
+      "properties": {
+        "formulaKey": {
+          "type": "string"
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "value"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "unroundedResult": {
+          "type": "number"
+        },
+        "displayResult": {
+          "type": "number"
+        }
+      }
+    },
+    "slotRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "index"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        }
+      }
+    },
+    "damageProfile": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      },
+      "propertyNames": {
+        "enum": [
+          "electromagnetic",
+          "thermal",
+          "kinetic",
+          "explosive"
+        ]
+      }
+    },
+    "lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetId",
+        "status",
+        "startedAtMs",
+        "completesAtMs",
+        "remainingSeconds",
+        "lockTimeSeconds",
+        "trace",
+        "outOfRangeSinceMs",
+        "commands"
+      ],
+      "properties": {
+        "targetId": {
+          "$ref": "#/$defs/objectId"
+        },
+        "status": {
+          "enum": [
+            "locking",
+            "locked"
+          ]
+        },
+        "startedAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "completesAtMs": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          ]
+        },
+        "remainingSeconds": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "number",
+              "minimum": 0
+            }
+          ]
+        },
+        "lockTimeSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "trace": {
+          "$ref": "#/$defs/formulaTrace"
+        },
+        "outOfRangeSinceMs": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          ]
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/commandAvailability"
+          }
+        }
+      }
+    },
+    "targetMotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetId",
+        "rangeKm",
+        "closingSpeedKmPerSecond",
+        "transverseVelocityKmPerSecond",
+        "angularVelocityRadiansPerSecond",
+        "signatureRadiusMetres",
+        "withinLockRange"
+      ],
+      "properties": {
+        "targetId": {
+          "$ref": "#/$defs/objectId"
+        },
+        "rangeKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "closingSpeedKmPerSecond": {
+          "type": "number"
+        },
+        "transverseVelocityKmPerSecond": {
+          "type": "number"
+        },
+        "angularVelocityRadiansPerSecond": {
+          "type": "number"
+        },
+        "signatureRadiusMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "withinLockRange": {
+          "type": "boolean"
+        }
+      }
+    },
+    "weaponEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetId",
+        "hitChance",
+        "trackingStrain",
+        "rangeStrain",
+        "withinAbsoluteRange",
+        "listedDamage",
+        "expectedDamagePerShot",
+        "trace"
+      ],
+      "properties": {
+        "targetId": {
+          "$ref": "#/$defs/objectId"
+        },
+        "hitChance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "trackingStrain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rangeStrain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "withinAbsoluteRange": {
+          "type": "boolean"
+        },
+        "listedDamage": {
+          "$ref": "#/$defs/damageProfile"
+        },
+        "expectedDamagePerShot": {
+          "type": "number",
+          "minimum": 0
+        },
+        "trace": {
+          "$ref": "#/$defs/formulaTrace"
+        }
+      }
+    },
+    "weaponCycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "startedAtMs",
+        "completesAtMs",
+        "remainingSeconds",
+        "targetId",
+        "ammunitionId",
+        "reservedRounds",
+        "committedCapacitor"
+      ],
+      "properties": {
+        "startedAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "completesAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "remainingSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "targetId": {
+          "$ref": "#/$defs/objectId"
+        },
+        "ammunitionId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "reservedRounds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "committedCapacitor": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "weaponReload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ammunitionId",
+        "completesAtMs",
+        "remainingSeconds",
+        "changing"
+      ],
+      "properties": {
+        "ammunitionId": {
+          "type": "string"
+        },
+        "completesAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "remainingSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "changing": {
+          "type": "boolean"
+        }
+      }
+    },
+    "weapon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot",
+        "moduleId",
+        "nameKey",
+        "online",
+        "ammunitionId",
+        "loadedRounds",
+        "magazineSize",
+        "cycleSeconds",
+        "capacitorPerCycle",
+        "optimalRangeKm",
+        "falloffKm",
+        "absoluteRangeKm",
+        "trackingRadiansPerSecond",
+        "repeating",
+        "targetId",
+        "cycle",
+        "reload",
+        "stopReason",
+        "compatibleAmmunition",
+        "effects",
+        "commands"
+      ],
+      "properties": {
+        "slot": {
+          "$ref": "#/$defs/slotRef"
+        },
+        "moduleId": {
+          "type": "string"
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "online": {
+          "type": "boolean"
+        },
+        "ammunitionId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "loadedRounds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "magazineSize": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cycleSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "capacitorPerCycle": {
+          "type": "number",
+          "minimum": 0
+        },
+        "optimalRangeKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "falloffKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "absoluteRangeKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "trackingRadiansPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "repeating": {
+          "type": "boolean"
+        },
+        "targetId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/objectId"
+            }
+          ]
+        },
+        "cycle": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/weaponCycle"
+            }
+          ]
+        },
+        "reload": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/weaponReload"
+            }
+          ]
+        },
+        "stopReason": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "compatibleAmmunition": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/weaponEffect"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/commandAvailability"
+          }
+        }
+      }
+    },
+    "objectLockAvailability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objectId",
+        "commands"
+      ],
+      "properties": {
+        "objectId": {
+          "$ref": "#/$defs/objectId"
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/commandAvailability"
+          }
+        }
+      }
+    }
+  }
+}

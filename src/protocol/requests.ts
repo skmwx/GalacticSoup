@@ -1,9 +1,10 @@
 /**
- * Protocol version 6 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 8 request catalogue (Technical Specification 7.1, 18).
  *
- * Adds the authored content catalogue to the station contracts of version 4.
- * Capabilities list the accepted request types. Older clients are rejected at
- * the envelope boundary, before any command can mutate campaign state.
+ * Adds targeting and weapon commands and the tactical combat view to the
+ * navigation and station contracts of version 7. Capabilities list the
+ * accepted request types. Older clients are rejected at the envelope boundary,
+ * before any command can mutate campaign state.
  */
 
 import type { EngineError } from './errors';
@@ -25,6 +26,13 @@ import type {
   StationPayload,
   StationServicesData,
 } from './economy';
+import type {
+  ActivateWeaponPayload,
+  ChangeAmmunitionPayload,
+  CombatData,
+  TargetPayloadData,
+  WeaponSlotPayload,
+} from './combat';
 import type {
   DestinationsData,
   DockPayload,
@@ -299,6 +307,13 @@ export interface SaveSlotData {
 }
 
 export interface ProtocolContract {
+  'combat.state': { payload: EmptyPayload; data: CombatData };
+  'targeting.lock': { payload: TargetPayloadData; data: CommandResultData };
+  'targeting.unlock': { payload: TargetPayloadData; data: CommandResultData };
+  'weapon.activate': { payload: ActivateWeaponPayload; data: CommandResultData };
+  'weapon.deactivate': { payload: WeaponSlotPayload; data: CommandResultData };
+  'weapon.reload': { payload: WeaponSlotPayload; data: CommandResultData };
+  'weapon.changeAmmunition': { payload: ChangeAmmunitionPayload; data: CommandResultData };
   'navigation.destinations': { payload: EmptyPayload; data: DestinationsData };
   'navigation.site': { payload: EmptyPayload; data: SiteData };
   'navigation.selectDestination': { payload: SelectDestinationPayload; data: CommandResultData };
@@ -374,6 +389,7 @@ export const REQUEST_TYPES = [
   'campaign.save',
   'campaign.saves',
   'campaign.session',
+  'combat.state',
   'content.messages',
   'content.summary',
   'diagnostics.stateHash',
@@ -419,9 +435,15 @@ export const REQUEST_TYPES = [
   'station.services',
   'system.capabilities',
   'system.health',
+  'targeting.lock',
+  'targeting.unlock',
   'time.advance',
   'time.set',
   'wallet.get',
+  'weapon.activate',
+  'weapon.changeAmmunition',
+  'weapon.deactivate',
+  'weapon.reload',
 ] as const satisfies readonly RequestType[];
 
 /**
@@ -453,6 +475,12 @@ export const COMMAND_TYPES = [
   'repair.confirm',
   'resupply.confirm',
   'ship.undock',
+  'targeting.lock',
+  'targeting.unlock',
+  'weapon.activate',
+  'weapon.changeAmmunition',
+  'weapon.deactivate',
+  'weapon.reload',
   'campaign.close',
   'campaign.create',
   'campaign.reset',

@@ -7,6 +7,21 @@
  */
 export { advanceTime, MAX_BOUNDARIES_PER_QUANTUM } from './clock';
 export type { AdvanceOutcome, BoundaryResolver, BoundaryResolvers, ContinuousSystem } from './clock';
+export {
+  activateWeapon,
+  advanceCombat,
+  beginLock,
+  clearCombat,
+  deactivateWeapon,
+  LOCK_COMPLETE_BOUNDARY,
+  releaseLock,
+  RELOAD_COMPLETE_BOUNDARY,
+  requestReload,
+  resolveLockComplete,
+  resolveReloadComplete,
+  resolveWeaponCycle,
+  WEAPON_CYCLE_BOUNDARY,
+} from './combat';
 export { resolveEconomyHour } from './economy';
 export {
   advanceNavigation,

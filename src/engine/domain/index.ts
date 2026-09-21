@@ -8,6 +8,7 @@
  */
 export * from './assets';
 export * from './attributes';
+export * from './combat';
 export * from './fitting';
 export * from './economy';
 export * from './navigation';

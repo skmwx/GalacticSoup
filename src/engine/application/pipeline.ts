@@ -31,6 +31,7 @@ import {
   type CommitResult,
   type Transaction,
 } from './transaction';
+import { handleCombatCommand } from './combatCommands';
 import { handleEconomyCommand } from './economyCommands';
 import { handleNavigationCommand } from './navigationCommands';
 
@@ -122,6 +123,13 @@ function apply(transaction: Transaction, request: CommandRequest): CommandOutcom
     case 'navigation.retreat':
     case 'navigation.dock':
       return handleNavigationCommand(transaction, request.type, request.payload);
+    case 'targeting.lock':
+    case 'targeting.unlock':
+    case 'weapon.activate':
+    case 'weapon.deactivate':
+    case 'weapon.reload':
+    case 'weapon.changeAmmunition':
+      return handleCombatCommand(transaction, request.type, request.payload);
     case 'market.confirmBuy':
     case 'market.confirmSell':
     case 'repair.confirm':

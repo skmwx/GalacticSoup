@@ -20,6 +20,7 @@ import {
   type WarpLocation,
 } from '@engine/domain';
 import type { SchedulerEntry } from '@engine/domain';
+import { clearCombat } from './combat';
 import type { SimulationContext } from './context';
 import { cancelBoundary, scheduleBoundary } from './scheduler';
 
@@ -135,6 +136,7 @@ export function resolveWarpPrepared(context: SimulationContext, entry: Scheduler
     context.content.rules.time.simulationQuantumMs,
     Math.ceil((travel.distanceKm / warpSpeed) * 1000),
   );
+  clearCombat(context, ship.id);
   draft.assets.location = location;
   ship.location = location;
   draft.assets.version += 1;
@@ -219,6 +221,7 @@ export function resolveDockComplete(context: SimulationContext, entry: Scheduler
   }
   const ship = draft.assets.ships[draft.assets.activeShipId];
   if (ship === undefined) return;
+  clearCombat(context, ship.id);
   const docked = { kind: 'station' as const, stationId: station.id, systemId: station.systemId };
   draft.assets.location = docked;
   ship.location = docked;

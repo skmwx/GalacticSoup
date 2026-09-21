@@ -25,3 +25,29 @@ decision.
 
 **Answer:**
 Please do not worry about save compatibility, we are in early development stage, saves are not important right now.
+---
+
+## Q2 — Phase 11 — Does a weapon's per-cycle round need its own reserve inventory?
+
+**Asked:** 2026-09-21 (Phase 11, targeting, turret, ammunition and reload). **Blocking:** no —
+Phase 11 shipped with the reading below, and changing it later is a localised change.
+
+Technical Specification 8.3 says that committed weapon ammunition "moves into explicit reserve
+locations" and that "reservations are not flags on items left in a hangar". Functional Specification
+9.4 says one round is reserved when a cycle starts and consumed when the shot is applied.
+
+Phase 11 reads the magazine itself as that explicit location: loading a weapon moves rounds out of
+cargo and into the ship's fitting store as a charge stack tied to one slot, which is a real move to
+a real place rather than a flag. The single round a running cycle holds back is then recorded on the
+cycle as `reservedRounds`, and the magazine's available count is reduced by it.
+
+The alternative — splitting that one round into its own reserve inventory for the length of every
+cycle — is what a literal reading asks for. It would create and destroy an inventory entity roughly
+every 2.5 seconds per weapon and allocate two entity ordinals per shot. It would not prevent
+anything: the cycle owns its magazine exclusively, so the round cannot be spent twice.
+
+If you would rather have the literal reading, say so and it becomes a small change in
+`src/engine/simulation/combat.ts` plus its tests. Otherwise the technical specification's wording in
+8.3 could be tightened to say that a dedicated magazine counts as the explicit location.
+
+**Answer:**

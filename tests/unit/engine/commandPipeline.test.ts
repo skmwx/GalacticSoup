@@ -121,7 +121,7 @@ describe('command pipeline', () => {
     expect(result.campaign?.revision).toBe(1);
     expect(result.data.committed).toBe(true);
     expect(result.data.invalidations).toEqual(
-      ['assets', 'destinations', 'fitting', 'frame', 'insurance', 'inventory', 'market',
+      ['assets', 'combat', 'destinations', 'fitting', 'frame', 'insurance', 'inventory', 'market',
         'navigation', 'repair', 'resupply', 'saves', 'session', 'ship', 'site', 'station', 'wallet'],
     );
     expect(result.data.events.map((event) => event.kind)).toEqual(['campaign.created']);

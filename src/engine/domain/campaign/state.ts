@@ -7,6 +7,8 @@ import { startingEconomy } from '../economy/state';
 import type { EconomyState } from '../economy/types';
 import { startingNavigation } from '../navigation/start';
 import type { NavigationState } from '../navigation/types';
+import { startingCombat } from '../combat/start';
+import type { CombatState } from '../combat/types';
 
 import { deriveCampaignId, type CampaignId } from './identity';
 import { emptyScheduler, type SchedulerState } from './scheduler';
@@ -28,7 +30,7 @@ import { seedStreams, type RandomStreams } from '../random/streams';
  */
 
 /** Shape version of the authoritative payload, carried by every snapshot. */
-export const CAMPAIGN_STATE_VERSION = 5;
+export const CAMPAIGN_STATE_VERSION = 6;
 
 /** Upper bound on simulation time, about 31 simulated years. */
 export const MAX_SIMULATION_TIME_MS = 1_000_000_000_000;
@@ -47,6 +49,11 @@ export interface TimeState {
 
 export interface CampaignState {
   readonly assets: AssetState;
+  /**
+   * Locks, weapon cycles and reloads of every ship that holds them
+   * (Functional Specification 9.2, 9.4). A docked campaign holds none.
+   */
+  readonly combat: CombatState;
   readonly economy: EconomyState;
   /**
    * The fitting draft the player has open, or `null` when none is
@@ -99,6 +106,7 @@ export function createCampaign(input: CreateCampaignInput, content: ContentRepos
   const starting = startingAssets(campaignId, content);
   return {
     assets: starting.assets,
+    combat: startingCombat(),
     economy: startingEconomy(content),
     fitting: null,
     navigation: startingNavigation(content),

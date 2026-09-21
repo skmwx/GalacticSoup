@@ -79,7 +79,7 @@ describe('campaign session over a transport', () => {
       expect(created.committed).toBe(true);
       expect(created.revision).toBe(1);
       expect(created.invalidations).toEqual(
-        ['assets', 'destinations', 'fitting', 'frame', 'insurance', 'inventory', 'market',
+        ['assets', 'combat', 'destinations', 'fitting', 'frame', 'insurance', 'inventory', 'market',
           'navigation', 'repair', 'resupply', 'saves', 'session', 'ship', 'site', 'station', 'wallet'],
       );
 

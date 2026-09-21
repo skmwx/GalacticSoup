@@ -8,6 +8,7 @@ export * from './assets';
 export * from './fitting';
 export * from './economy';
 export * from './navigation';
+export * from './combat';
 export {
   contentError,
   contentErrorMessageKey,

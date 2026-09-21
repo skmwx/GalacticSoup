@@ -2,15 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/save/campaign-state.schema.json",
   "title": "CampaignState",
-  "description": "Authoritative campaign state version 5: phase 9 site, movement, warp and docking state plus the version 4 station state (Technical Specification 8-11).",
+  "description": "Authoritative campaign state version 6: phase 11 targeting, weapon-cycle and reload runtime on top of the version 5 site, movement, warp, docking and station state (Technical Specification 8-11).",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "assets",
-    "economy",
     "campaignId",
+    "combat",
     "createdAtRealMs",
     "displayName",
+    "economy",
     "fitting",
     "navigation",
     "nextEntityOrdinal",
@@ -24,7 +25,7 @@
   ],
   "properties": {
     "stateVersion": {
-      "const": 5
+      "const": 6
     },
     "campaignId": {
       "type": "string",
@@ -395,10 +396,18 @@
                   "insurance"
                 ],
                 "properties": {
-                  "market": { "$ref": "#/$defs/stationServiceState" },
-                  "repair": { "$ref": "#/$defs/stationServiceState" },
-                  "resupply": { "$ref": "#/$defs/stationServiceState" },
-                  "insurance": { "$ref": "#/$defs/stationServiceState" }
+                  "market": {
+                    "$ref": "#/$defs/stationServiceState"
+                  },
+                  "repair": {
+                    "$ref": "#/$defs/stationServiceState"
+                  },
+                  "resupply": {
+                    "$ref": "#/$defs/stationServiceState"
+                  },
+                  "insurance": {
+                    "$ref": "#/$defs/stationServiceState"
+                  }
                 }
               },
               "listings": {
@@ -902,52 +911,133 @@
     "navigation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "knownDestinationSiteIds", "selectedEncounterId", "currentSite", "movement", "travel", "lastCancellation"],
+      "required": [
+        "version",
+        "knownDestinationSiteIds",
+        "selectedEncounterId",
+        "currentSite",
+        "movement",
+        "travel",
+        "lastCancellation"
+      ],
       "properties": {
-        "version": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
         "knownDestinationSiteIds": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "$ref": "#/$defs/siteId" }
+          "items": {
+            "$ref": "#/$defs/siteId"
+          }
         },
         "selectedEncounterId": {
           "anyOf": [
-            { "type": "null" },
-            { "type": "string", "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 }
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            }
           ]
         },
         "currentSite": {
           "anyOf": [
-            { "type": "null" },
+            {
+              "type": "null"
+            },
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["instanceId", "systemId", "siteId", "objects"],
+              "required": [
+                "instanceId",
+                "systemId",
+                "siteId",
+                "objects"
+              ],
               "properties": {
-                "instanceId": { "$ref": "#/$defs/entityId" },
-                "systemId": { "$ref": "#/$defs/systemId" },
-                "siteId": { "$ref": "#/$defs/siteId" },
+                "instanceId": {
+                  "$ref": "#/$defs/entityId"
+                },
+                "systemId": {
+                  "$ref": "#/$defs/systemId"
+                },
+                "siteId": {
+                  "$ref": "#/$defs/siteId"
+                },
                 "objects": {
                   "type": "object",
-                  "additionalProperties": { "$ref": "#/$defs/siteObject" }
+                  "additionalProperties": {
+                    "$ref": "#/$defs/siteObject"
+                  }
                 }
               }
             }
           ]
         },
-        "movement": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/movementOrder" }] },
-        "travel": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/travelState" }] },
+        "movement": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/movementOrder"
+            }
+          ]
+        },
+        "travel": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/travelState"
+            }
+          ]
+        },
         "lastCancellation": {
           "anyOf": [
-            { "type": "null" },
+            {
+              "type": "null"
+            },
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["orderKind", "reason", "simulationTimeMs"],
+              "required": [
+                "orderKind",
+                "reason",
+                "simulationTimeMs"
+              ],
               "properties": {
-                "orderKind": { "enum": ["approach", "orbit", "keepRange", "moveToPoint", "stop", "warp", "dock"] },
-                "reason": { "enum": ["replaced", "targetMissing", "warpStarted", "siteTransition", "docked"] },
-                "simulationTimeMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                "orderKind": {
+                  "enum": [
+                    "approach",
+                    "orbit",
+                    "keepRange",
+                    "moveToPoint",
+                    "stop",
+                    "warp",
+                    "dock"
+                  ]
+                },
+                "reason": {
+                  "enum": [
+                    "replaced",
+                    "targetMissing",
+                    "warpStarted",
+                    "siteTransition",
+                    "docked"
+                  ]
+                },
+                "simulationTimeMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
               }
             }
           ]
@@ -1019,81 +1109,325 @@
           }
         }
       ]
+    },
+    "combat": {
+      "description": "Locks, weapon cycles and reloads by ship entity id (Functional Specification 9.2, 9.4).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "ships"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ships": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/shipCombatState"
+          }
+        }
+      }
     }
   },
   "$defs": {
-    "entityId": { "type": "string", "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$" },
-    "systemId": { "type": "string", "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
-    "siteId": { "type": "string", "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
-    "stationId": { "type": "string", "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
+    "entityId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+    },
+    "systemId": {
+      "type": "string",
+      "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
+    "siteId": {
+      "type": "string",
+      "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
+    "stationId": {
+      "type": "string",
+      "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
     "shipLocation": {
       "oneOf": [
         {
-          "type": "object", "additionalProperties": false,
-          "required": ["kind", "stationId", "systemId"],
-          "properties": { "kind": { "const": "station" }, "stationId": { "$ref": "#/$defs/stationId" }, "systemId": { "$ref": "#/$defs/systemId" } }
-        },
-        {
-          "type": "object", "additionalProperties": false,
-          "required": ["kind", "siteId", "systemId"],
-          "properties": { "kind": { "const": "site" }, "siteId": { "$ref": "#/$defs/siteId" }, "systemId": { "$ref": "#/$defs/systemId" } }
-        },
-        {
-          "type": "object", "additionalProperties": false,
-          "required": ["kind", "fromSiteId", "toSiteId", "systemId"],
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "stationId",
+            "systemId"
+          ],
           "properties": {
-            "kind": { "const": "warp" }, "fromSiteId": { "$ref": "#/$defs/siteId" },
-            "toSiteId": { "$ref": "#/$defs/siteId" }, "systemId": { "$ref": "#/$defs/systemId" }
+            "kind": {
+              "const": "station"
+            },
+            "stationId": {
+              "$ref": "#/$defs/stationId"
+            },
+            "systemId": {
+              "$ref": "#/$defs/systemId"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "siteId",
+            "systemId"
+          ],
+          "properties": {
+            "kind": {
+              "const": "site"
+            },
+            "siteId": {
+              "$ref": "#/$defs/siteId"
+            },
+            "systemId": {
+              "$ref": "#/$defs/systemId"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "fromSiteId",
+            "toSiteId",
+            "systemId"
+          ],
+          "properties": {
+            "kind": {
+              "const": "warp"
+            },
+            "fromSiteId": {
+              "$ref": "#/$defs/siteId"
+            },
+            "toSiteId": {
+              "$ref": "#/$defs/siteId"
+            },
+            "systemId": {
+              "$ref": "#/$defs/systemId"
+            }
           }
         }
       ]
     },
     "vector": {
-      "type": "object", "additionalProperties": false, "required": ["x", "y"],
-      "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
     },
     "siteObject": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "kind", "definitionId", "nameKey", "position", "velocity", "facingRadians", "radiusKm", "movable"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "definitionId",
+        "nameKey",
+        "position",
+        "velocity",
+        "facingRadians",
+        "radiusKm",
+        "movable"
+      ],
       "properties": {
-        "id": { "type": "string" }, "kind": { "enum": ["ship", "station"] },
-        "definitionId": { "type": "string" }, "nameKey": { "type": "string" },
-        "position": { "$ref": "#/$defs/vector" }, "velocity": { "$ref": "#/$defs/vector" },
-        "facingRadians": { "type": "number" }, "radiusKm": { "type": "number", "minimum": 0 },
-        "movable": { "type": "boolean" }
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "ship",
+            "station"
+          ]
+        },
+        "definitionId": {
+          "type": "string"
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/vector"
+        },
+        "velocity": {
+          "$ref": "#/$defs/vector"
+        },
+        "facingRadians": {
+          "type": "number"
+        },
+        "radiusKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "movable": {
+          "type": "boolean"
+        }
       }
     },
     "movementOrder": {
       "oneOf": [
         {
-          "type": "object", "additionalProperties": false, "required": ["kind", "targetId", "distanceKm"],
-          "properties": { "kind": { "enum": ["approach", "orbit", "keepRange"] }, "targetId": { "type": "string" }, "distanceKm": { "type": "number", "minimum": 0 } }
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "targetId",
+            "distanceKm"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "approach",
+                "orbit",
+                "keepRange"
+              ]
+            },
+            "targetId": {
+              "type": "string"
+            },
+            "distanceKm": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
         },
         {
-          "type": "object", "additionalProperties": false, "required": ["kind", "point"],
-          "properties": { "kind": { "const": "moveToPoint" }, "point": { "$ref": "#/$defs/vector" } }
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "point"
+          ],
+          "properties": {
+            "kind": {
+              "const": "moveToPoint"
+            },
+            "point": {
+              "$ref": "#/$defs/vector"
+            }
+          }
         },
-        { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "const": "stop" } } }
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "stop"
+            }
+          }
+        }
       ]
     },
     "travelState": {
       "oneOf": [
         {
-          "type": "object", "additionalProperties": false,
-          "required": ["kind", "phase", "originSiteId", "destinationSiteId", "arrivalDistanceKm", "distanceKm", "boundaryEntryId"],
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "phase",
+            "originSiteId",
+            "destinationSiteId",
+            "arrivalDistanceKm",
+            "distanceKm",
+            "boundaryEntryId"
+          ],
           "properties": {
-            "kind": { "const": "warp" }, "phase": { "enum": ["aligning", "preparing", "transit"] },
-            "originSiteId": { "$ref": "#/$defs/siteId" }, "destinationSiteId": { "$ref": "#/$defs/siteId" },
-            "arrivalDistanceKm": { "type": "number", "minimum": 0 }, "distanceKm": { "type": "number", "minimum": 0 },
-            "boundaryEntryId": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/entityId" }] }
+            "kind": {
+              "const": "warp"
+            },
+            "phase": {
+              "enum": [
+                "aligning",
+                "preparing",
+                "transit"
+              ]
+            },
+            "originSiteId": {
+              "$ref": "#/$defs/siteId"
+            },
+            "destinationSiteId": {
+              "$ref": "#/$defs/siteId"
+            },
+            "arrivalDistanceKm": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceKm": {
+              "type": "number",
+              "minimum": 0
+            },
+            "boundaryEntryId": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/entityId"
+                }
+              ]
+            }
           }
         },
         {
-          "type": "object", "additionalProperties": false, "required": ["kind", "phase", "stationId", "boundaryEntryId"],
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "phase",
+            "stationId",
+            "boundaryEntryId"
+          ],
           "properties": {
-            "kind": { "const": "dock" }, "phase": { "enum": ["approaching", "preparing"] },
-            "stationId": { "$ref": "#/$defs/stationId" },
-            "boundaryEntryId": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/entityId" }] }
+            "kind": {
+              "const": "dock"
+            },
+            "phase": {
+              "enum": [
+                "approaching",
+                "preparing"
+              ]
+            },
+            "stationId": {
+              "$ref": "#/$defs/stationId"
+            },
+            "boundaryEntryId": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/entityId"
+                }
+              ]
+            }
           }
         }
       ]
@@ -1113,6 +1447,295 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 9007199254740991
+        }
+      }
+    },
+    "ammunitionId": {
+      "type": "string",
+      "pattern": "^ammo(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
+    "lockState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetId",
+        "status",
+        "startedAtMs",
+        "completesAtMs",
+        "boundaryEntryId",
+        "outOfRangeSinceMs"
+      ],
+      "properties": {
+        "targetId": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/entityId"
+            },
+            {
+              "$ref": "#/$defs/stationId"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "locking",
+            "locked"
+          ]
+        },
+        "startedAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "completesAtMs": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          ]
+        },
+        "boundaryEntryId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/entityId"
+            }
+          ]
+        },
+        "outOfRangeSinceMs": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          ]
+        }
+      }
+    },
+    "weaponCycleState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "startedAtMs",
+        "completesAtMs",
+        "boundaryEntryId",
+        "targetId",
+        "ammunitionId",
+        "reservedRounds",
+        "committedCapacitor"
+      ],
+      "properties": {
+        "startedAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "completesAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "boundaryEntryId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "targetId": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/entityId"
+            },
+            {
+              "$ref": "#/$defs/stationId"
+            }
+          ]
+        },
+        "ammunitionId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ammunitionId"
+            }
+          ]
+        },
+        "reservedRounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "committedCapacitor": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "weaponReloadState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ammunitionId",
+        "startedAtMs",
+        "completesAtMs",
+        "boundaryEntryId",
+        "changing"
+      ],
+      "properties": {
+        "ammunitionId": {
+          "$ref": "#/$defs/ammunitionId"
+        },
+        "startedAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "completesAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "boundaryEntryId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "changing": {
+          "type": "boolean"
+        }
+      }
+    },
+    "weaponState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repeating",
+        "targetId",
+        "cycle",
+        "reload",
+        "pendingReload",
+        "lastAmmunitionId",
+        "stopReason"
+      ],
+      "properties": {
+        "repeating": {
+          "type": "boolean"
+        },
+        "targetId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/entityId"
+            },
+            {
+              "$ref": "#/$defs/stationId"
+            }
+          ]
+        },
+        "cycle": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/weaponCycleState"
+            }
+          ]
+        },
+        "reload": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/weaponReloadState"
+            }
+          ]
+        },
+        "pendingReload": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "ammunitionId",
+                "changing"
+              ],
+              "properties": {
+                "ammunitionId": {
+                  "$ref": "#/$defs/ammunitionId"
+                },
+                "changing": {
+                  "type": "boolean"
+                }
+              }
+            }
+          ]
+        },
+        "lastAmmunitionId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ammunitionId"
+            }
+          ]
+        },
+        "stopReason": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "deactivated",
+                "lockLost",
+                "targetMissing",
+                "ammunitionExhausted",
+                "insufficientCapacitor",
+                "siteLeft"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "shipCombatState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "locks",
+        "weapons"
+      ],
+      "properties": {
+        "locks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/lockState"
+          }
+        },
+        "weapons": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(weapon|system|engineering|utility):(0|[1-9][0-9]?)$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/weaponState"
+          }
         }
       }
     }

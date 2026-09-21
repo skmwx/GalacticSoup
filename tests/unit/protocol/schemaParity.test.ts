@@ -51,6 +51,7 @@ let validateMarketListingsData: Validator;
 let validateTransactionPreviewData: Validator;
 let validateNavigationSiteData: Validator;
 let validateNavigationDestinationsData: Validator;
+let validateCombatData: Validator;
 
 const content = shippedContent();
 
@@ -111,6 +112,7 @@ beforeAll(() => {
   validateNavigationDestinationsData = ajv.compile(
     loadSchema('navigation.destinations.data.schema.json'),
   ) as Validator;
+  validateCombatData = ajv.compile(loadSchema('combat.state.data.schema.json')) as Validator;
 
   const saves = new AjvConstructor({ allErrors: true, strict: true });
   saves.addSchema(loadSaveSchema('campaign-state.schema.json'));
@@ -575,6 +577,26 @@ describe('campaign protocol schema parity', () => {
     expect(validateNavigationSiteData(dataOf(loadedSite))).toBe(true);
   });
 
+  it('publishes a schema for the tactical combat projection [TECH-7.1, TECH-10.3, FUNC-19.3]', async () => {
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
+    await ask(
+      host,
+      'campaign.create',
+      { displayName: 'Vela', seed, createdAtRealMs: 1_700_000_000_000 },
+      'req-create-combat',
+    );
+    const docked = await ask(host, 'combat.state', EMPTY_PAYLOAD, 'req-combat-docked');
+    await ask(host, 'ship.undock', EMPTY_PAYLOAD, 'req-undock-combat');
+    const flying = await ask(host, 'combat.state', EMPTY_PAYLOAD, 'req-combat-flying');
+    const dataOf = (response: unknown): unknown => (response as { data: unknown }).data;
+
+    for (const response of [docked, flying]) {
+      expect(validateResponse(response)).toBe(true);
+    }
+    expect(validateCombatData(dataOf(docked))).toBe(true);
+    expect(validateCombatData(dataOf(flying))).toBe(true);
+  });
+
   it('publishes a schema for every save response shape [TECH-7.1, TECH-11.3]', async () => {
     const host = createEngineHost({ content, saves: createMemorySaveStore() });
 
@@ -620,7 +642,7 @@ describe('campaign protocol schema parity', () => {
   });
 
   it('validates the golden save against the published save schema [TECH-11.2, TECH-17]', () => {
-    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-5.json');
+    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-6.json');
 
     expect(validateSaveEnvelope(JSON.parse(readFileSync(file, 'utf8')))).toBe(true);
   });

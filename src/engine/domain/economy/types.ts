@@ -1,5 +1,7 @@
 import type { DefinitionId, StationId } from '@shared';
 
+import type { FormulaOperand, FormulaTrace } from '../formula';
+
 /** Mutable market state layered over immutable authored listing definitions. */
 export interface MarketListingState {
   readonly itemId: DefinitionId;
@@ -33,17 +35,11 @@ export interface EconomyState {
 
 export type MarketSide = 'stationSells' | 'stationBuys';
 
-export interface FormulaOperand {
-  readonly key: string;
-  readonly value: number;
-}
-
-export interface FormulaTrace {
-  readonly formulaKey: string;
-  readonly operands: readonly FormulaOperand[];
-  readonly unroundedResult: number;
-  readonly displayResult: number;
-}
+/**
+ * Quotes explain themselves with the shared trace record, which combat and
+ * fitting also use; it is declared once in `../formula`.
+ */
+export type { FormulaOperand, FormulaTrace };
 
 export interface UnitQuote {
   readonly side: MarketSide;

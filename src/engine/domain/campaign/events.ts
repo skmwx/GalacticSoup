@@ -42,6 +42,16 @@ export const DOMAIN_EVENT_KINDS = [
   'navigation.dockOrdered',
   'navigation.dockPreparing',
   'navigation.docked',
+  'combat.lockStarted',
+  'combat.lockCompleted',
+  'combat.lockLost',
+  'combat.lockReleased',
+  'combat.weaponActivated',
+  'combat.weaponStopped',
+  'combat.shotResolved',
+  'combat.reloadStarted',
+  'combat.reloadCompleted',
+  'combat.ammunitionChanged',
 ] as const;
 
 export type DomainEventKind = (typeof DOMAIN_EVENT_KINDS)[number];
@@ -63,7 +73,7 @@ export interface DomainEvent {
 export const PROJECTION_TOPICS = [
   'session', 'frame', 'saves', 'assets', 'inventory', 'wallet', 'ship', 'fitting',
   'station', 'market', 'repair', 'resupply', 'insurance',
-  'navigation', 'site', 'destinations',
+  'navigation', 'site', 'destinations', 'combat',
 ] as const;
 
 export type ProjectionTopic = (typeof PROJECTION_TOPICS)[number];

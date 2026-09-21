@@ -1,11 +1,11 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
- * Version 7 adds projected command availability to the site, site-object and
- * destination views, along with the authored range and arrival distances the
- * orders offer. Version 6 introduced those views.
+ * Version 8 adds the targeting and weapon commands, the tactical combat view
+ * and the lock availability the site objects now carry. Version 7 added
+ * projected command availability to the navigation views.
  */
-export const PROTOCOL_VERSION = 7;
+export const PROTOCOL_VERSION = 8;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

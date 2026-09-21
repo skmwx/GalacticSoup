@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/client-request.schema.json",
   "title": "ClientRequest",
-  "description": "Protocol version 6 request envelope and payloads.",
+  "description": "Protocol version 8 request envelope and payloads.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 7
+      "const": 8
     },
     "requestId": {
       "type": "string",
@@ -40,6 +40,7 @@
         "campaign.save",
         "campaign.saves",
         "campaign.session",
+        "combat.state",
         "content.messages",
         "content.summary",
         "diagnostics.stateHash",
@@ -85,9 +86,15 @@
         "station.services",
         "system.capabilities",
         "system.health",
+        "targeting.lock",
+        "targeting.unlock",
         "time.advance",
         "time.set",
-        "wallet.get"
+        "wallet.get",
+        "weapon.activate",
+        "weapon.changeAmmunition",
+        "weapon.deactivate",
+        "weapon.reload"
       ]
     },
     "payload": {
@@ -99,35 +106,126 @@
       "if": {
         "properties": {
           "type": {
-            "enum": ["navigation.destinations", "navigation.site", "ship.undock", "movement.stop", "navigation.retreat"]
+            "enum": [
+              "navigation.destinations",
+              "navigation.site",
+              "ship.undock",
+              "movement.stop",
+              "navigation.retreat",
+              "combat.state"
+            ]
           }
         },
-        "required": ["type"]
+        "required": [
+          "type"
+        ]
       },
-      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
-    },
-    {
-      "if": { "properties": { "type": { "const": "navigation.selectDestination" } }, "required": ["type"] },
-      "then": { "properties": { "payload": { "$ref": "#/$defs/selectDestinationPayload" } } }
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/emptyPayload"
+          }
+        }
+      }
     },
     {
       "if": {
-        "properties": { "type": { "enum": ["movement.approach", "movement.orbit", "movement.keepRange"] } },
-        "required": ["type"]
+        "properties": {
+          "type": {
+            "const": "navigation.selectDestination"
+          }
+        },
+        "required": [
+          "type"
+        ]
       },
-      "then": { "properties": { "payload": { "$ref": "#/$defs/targetRangePayload" } } }
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/selectDestinationPayload"
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "type": { "const": "movement.moveToPoint" } }, "required": ["type"] },
-      "then": { "properties": { "payload": { "$ref": "#/$defs/moveToPointPayload" } } }
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "movement.approach",
+              "movement.orbit",
+              "movement.keepRange"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/targetRangePayload"
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "type": { "const": "navigation.warp" } }, "required": ["type"] },
-      "then": { "properties": { "payload": { "$ref": "#/$defs/warpPayload" } } }
+      "if": {
+        "properties": {
+          "type": {
+            "const": "movement.moveToPoint"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/moveToPointPayload"
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "type": { "const": "navigation.dock" } }, "required": ["type"] },
-      "then": { "properties": { "payload": { "$ref": "#/$defs/stationPayload" } } }
+      "if": {
+        "properties": {
+          "type": {
+            "const": "navigation.warp"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/warpPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "navigation.dock"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/stationPayload"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1081,6 +1179,88 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "targeting.lock",
+              "targeting.unlock"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/targetPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "weapon.deactivate",
+              "weapon.reload"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/weaponSlotPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "weapon.activate"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/activateWeaponPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "weapon.changeAmmunition"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/changeAmmunitionPayload"
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -1122,34 +1302,76 @@
     "selectDestinationPayload": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["encounterId"],
-      "properties": { "encounterId": { "$ref": "#/$defs/encounterId" } }
+      "required": [
+        "encounterId"
+      ],
+      "properties": {
+        "encounterId": {
+          "$ref": "#/$defs/encounterId"
+        }
+      }
     },
     "targetRangePayload": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["targetId", "distanceKm"],
+      "required": [
+        "targetId",
+        "distanceKm"
+      ],
       "properties": {
-        "targetId": { "oneOf": [{ "$ref": "#/$defs/entityId" }, { "$ref": "#/$defs/stationId" }] },
-        "distanceKm": { "type": "number", "minimum": 0, "maximum": 1000000000 }
+        "targetId": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/entityId"
+            },
+            {
+              "$ref": "#/$defs/stationId"
+            }
+          ]
+        },
+        "distanceKm": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000000000
+        }
       }
     },
     "moveToPointPayload": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["xKm", "yKm"],
+      "required": [
+        "xKm",
+        "yKm"
+      ],
       "properties": {
-        "xKm": { "type": "number", "minimum": -1000000000, "maximum": 1000000000 },
-        "yKm": { "type": "number", "minimum": -1000000000, "maximum": 1000000000 }
+        "xKm": {
+          "type": "number",
+          "minimum": -1000000000,
+          "maximum": 1000000000
+        },
+        "yKm": {
+          "type": "number",
+          "minimum": -1000000000,
+          "maximum": 1000000000
+        }
       }
     },
     "warpPayload": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["destinationSiteId", "arrivalDistanceKm"],
+      "required": [
+        "destinationSiteId",
+        "arrivalDistanceKm"
+      ],
       "properties": {
-        "destinationSiteId": { "$ref": "#/$defs/siteId" },
-        "arrivalDistanceKm": { "type": "number", "minimum": 0, "maximum": 1000000000 }
+        "destinationSiteId": {
+          "$ref": "#/$defs/siteId"
+        },
+        "arrivalDistanceKm": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000000000
+        }
       }
     },
     "stationPayload": {
@@ -1384,6 +1606,95 @@
           "type": "string",
           "pattern": "^[a-zA-Z]{2,8}(?:-[a-zA-Z0-9]{2,8})*$",
           "maxLength": 35
+        }
+      }
+    },
+    "siteObjectId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/entityId"
+        },
+        {
+          "$ref": "#/$defs/stationId"
+        }
+      ]
+    },
+    "ammunitionId": {
+      "type": "string",
+      "pattern": "^ammo(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
+    "targetPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetId"
+      ],
+      "properties": {
+        "targetId": {
+          "$ref": "#/$defs/siteObjectId"
+        }
+      }
+    },
+    "weaponSlotPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slotKind",
+        "slotIndex"
+      ],
+      "properties": {
+        "slotKind": {
+          "const": "weapon"
+        },
+        "slotIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        }
+      }
+    },
+    "activateWeaponPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slotKind",
+        "slotIndex",
+        "targetId"
+      ],
+      "properties": {
+        "slotKind": {
+          "const": "weapon"
+        },
+        "slotIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "targetId": {
+          "$ref": "#/$defs/siteObjectId"
+        }
+      }
+    },
+    "changeAmmunitionPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slotKind",
+        "slotIndex",
+        "ammunitionId"
+      ],
+      "properties": {
+        "slotKind": {
+          "const": "weapon"
+        },
+        "slotIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "ammunitionId": {
+          "$ref": "#/$defs/ammunitionId"
         }
       }
     }

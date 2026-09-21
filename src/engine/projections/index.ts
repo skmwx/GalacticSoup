@@ -6,6 +6,7 @@
  */
 export * from './assets';
 export * from './economy';
+export { combatProjection, objectLockCommands } from './combat';
 export { destinationsProjection, siteProjection } from './navigation';
 export { itemDataOf } from './items';
 export { comparisonProjection } from './comparison';

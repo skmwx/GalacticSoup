@@ -1,8 +1,15 @@
 import { createCampaign, type CampaignState } from '@engine/domain';
 import {
+  advanceCombat,
   advanceNavigation,
   advanceTime,
   DOCK_COMPLETE_BOUNDARY,
+  LOCK_COMPLETE_BOUNDARY,
+  RELOAD_COMPLETE_BOUNDARY,
+  resolveLockComplete,
+  resolveReloadComplete,
+  resolveWeaponCycle,
+  WEAPON_CYCLE_BOUNDARY,
   resolveDockComplete,
   resolveEconomyHour,
   resolveWarpArrival,
@@ -45,6 +52,9 @@ export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {
   [WARP_PREPARED_BOUNDARY]: resolveWarpPrepared,
   [WARP_ARRIVAL_BOUNDARY]: resolveWarpArrival,
   [DOCK_COMPLETE_BOUNDARY]: resolveDockComplete,
+  [LOCK_COMPLETE_BOUNDARY]: resolveLockComplete,
+  [WEAPON_CYCLE_BOUNDARY]: resolveWeaponCycle,
+  [RELOAD_COMPLETE_BOUNDARY]: resolveReloadComplete,
 };
 
 /**
@@ -90,6 +100,7 @@ export function handleCreateCampaign(
   transaction.invalidate('navigation');
   transaction.invalidate('site');
   transaction.invalidate('destinations');
+  transaction.invalidate('combat');
   // A new campaign must be resumable before the player touches anything
   // (Functional Specification 3.4).
   transaction.requestAutosave();
@@ -130,6 +141,7 @@ export function handleResumeCampaign(
   transaction.invalidate('navigation');
   transaction.invalidate('site');
   transaction.invalidate('destinations');
+  transaction.invalidate('combat');
   return APPLIED;
 }
 
@@ -162,6 +174,7 @@ export function handleCloseCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('navigation');
   transaction.invalidate('site');
   transaction.invalidate('destinations');
+  transaction.invalidate('combat');
   return APPLIED;
 }
 
@@ -194,6 +207,7 @@ export function handleResetCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('navigation');
   transaction.invalidate('site');
   transaction.invalidate('destinations');
+  transaction.invalidate('combat');
   return APPLIED;
 }
 
@@ -245,7 +259,7 @@ export function handleAdvanceTime(
     transaction.simulation(),
     payload.elapsedRealMs,
     INSTALLED_BOUNDARY_RESOLVERS,
-    [advanceNavigation],
+    [advanceNavigation, advanceCombat],
   );
 
   return outcome.changed ? APPLIED : UNCHANGED;

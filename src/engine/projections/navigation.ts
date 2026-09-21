@@ -19,6 +19,8 @@ import type {
   TravelStatusData,
 } from '@protocol';
 import { ruleViolationMessageKey } from '@protocol';
+
+import { objectLockCommands } from './combat';
 import { deepClone, deepFreeze } from '@shared';
 
 /**
@@ -125,7 +127,14 @@ function siteCommands(rules: NavigationRuleInput): readonly CommandAvailabilityD
   ];
 }
 
-/** The orders that act on one object in the site (Functional Specification 7.2, 7.4). */
+/**
+ * The orders that act on one object in the site
+ * (Functional Specification 7.2, 7.4, 9.2).
+ *
+ * Locking is a combat rule rather than a navigation one, so its availability
+ * comes from the combat predicates; it is carried here because the object list
+ * is where the player selects a target.
+ */
 function objectCommands(
   rules: NavigationRuleInput,
   objectId: string,
@@ -137,6 +146,7 @@ function objectCommands(
     availability('movement.orbit', target),
     availability('movement.keepRange', target),
     availability('navigation.dock', kind === 'station' ? dockRefusal(rules, objectId) : 'dockUnavailable'),
+    ...objectLockCommands(rules.state, rules.content, objectId),
   ];
 }
 

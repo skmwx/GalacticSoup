@@ -159,6 +159,7 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
     case 'campaign.frame':
     case 'navigation.destinations':
     case 'navigation.site':
+    case 'combat.state':
     case 'ship.undock':
     case 'movement.stop':
     case 'navigation.retreat':
@@ -197,6 +198,37 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
       }
       return isFiniteNonNegative(fields['arrivalDistanceKm'])
         ? null : payloadField(type, 'arrivalDistanceKm', 'format');
+    }
+
+    case 'targeting.lock':
+    case 'targeting.unlock': {
+      const unexpected = unexpectedField(fields, ['targetId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      return isSiteObjectId(fields['targetId']) ? null : payloadField(type, 'targetId', 'format');
+    }
+
+    case 'weapon.activate':
+    case 'weapon.deactivate':
+    case 'weapon.reload':
+    case 'weapon.changeAmmunition': {
+      const allowed =
+        type === 'weapon.activate'
+          ? ['slotKind', 'slotIndex', 'targetId']
+          : type === 'weapon.changeAmmunition'
+            ? ['slotKind', 'slotIndex', 'ammunitionId']
+            : ['slotKind', 'slotIndex'];
+      const unexpected = unexpectedField(fields, allowed);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (fields['slotKind'] !== 'weapon') return payloadField(type, 'slotKind', 'format');
+      if (!isIndex(fields['slotIndex'])) return payloadField(type, 'slotIndex', 'format');
+      if (type === 'weapon.activate') {
+        return isSiteObjectId(fields['targetId']) ? null : payloadField(type, 'targetId', 'format');
+      }
+      if (type === 'weapon.changeAmmunition') {
+        return isDefinitionIdIn(fields['ammunitionId'], 'ammo')
+          ? null : payloadField(type, 'ammunitionId', 'format');
+      }
+      return null;
     }
 
     case 'navigation.dock': {

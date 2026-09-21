@@ -60,6 +60,7 @@ src/
   engine/         headless authoritative engine
     application/  command pipeline, transactions, request dispatch
     domain/       campaign aggregate, identity, randomness, invariants
+                  (combat/ locks, weapon cycles, reloads and their formulas)
     simulation/   authoritative clock, scheduler, ordered systems
     projections/  domain-to-view-model builders
     ports/        interfaces the engine owns and adapters implement
@@ -156,12 +157,13 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 7 exposes `ship.get`, `ship.undockValidity`, `fitting.draft`, `fitting.begin`,
-`fitting.set`, `fitting.clear`, `fitting.revert`, `fitting.commit` and `item.compare` alongside the
-inventory, market, repair, resupply and insurance contracts, the navigation queries and orders, and
-the authored content catalogue.
+Protocol version 8 exposes `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`,
+`weapon.deactivate`, `weapon.reload` and `weapon.changeAmmunition` alongside `ship.get`,
+`ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market, repair,
+resupply and insurance contracts, the navigation queries and orders, and the authored content
+catalogue.
 
-Campaign state and save format are version 5. Previous development saves are rejected without
+Campaign state and save format are version 6. Previous development saves are rejected without
 modification; start a new campaign after upgrading. No pre-release migration is required by the
 MVP plan. The migration runner remains covered by fixture registries, and the older format fixtures
 are retained to verify rejection. See `docs/agent-comm/status/` for the per-phase handoffs.
@@ -216,6 +218,30 @@ refused ones would answer with; the command bar pairs that with a registry entry
 disabled control with its reason rather than hiding it. The same predicates run inside the command
 handlers, so the two cannot disagree. The ranges and arrival distances the orders offer are authored
 in `content/rules/navigation.json`.
+
+## Locking and firing
+
+A lock, a weapon cycle and a reload are each a queue entry with a due time, never a host timer, so a
+campaign closed halfway through a lock comes back halfway through the same lock. They belong to the
+ship that started them - `combat.ships` is keyed by ship id - and a ship that leaves the site drops
+every one of them along with its queued boundaries.
+
+Every cost a cycle commits is written on the cycle. Starting one spends its capacitor and holds one
+round back from the magazine; applying the shot consumes that round; a target that disappears or a
+lock that breaks first leaves the round loaded and does not refund the capacitor, which is what the
+functional specification asks for. An empty magazine reloads itself from cargo while compatible
+rounds remain and only then reports the weapon exhausted, and a reload asked for mid-cycle waits for
+that cycle rather than interrupting it.
+
+`src/engine/domain/combat/formulas.ts` holds lock time, relative motion, turret accuracy and shot
+variation as pure functions of plain numbers. Each returns the trace that produced it, so
+`combat.state` can hand the interface a hit chance with the range and tracking strains that made it
+rather than a bare percentage. One shot draws from the `combat` stream in a fixed order - the hit
+roll, then the critical roll, then the variation a critical replaces - so the same seed and the same
+orders reproduce the same fight, and a refused command draws nothing at all.
+
+Nothing in this phase writes to a target: a resolved shot is published as `combat.shotResolved` with
+its four raw damage components, and applying them to shields, armour and hull is the next phase.
 
 ## Content
 

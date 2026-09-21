@@ -1,6 +1,7 @@
 import { sortedKeys } from '@shared';
 import type { ContentRepository } from '@engine/ports';
 import { validateAssets } from '../assets/validation';
+import { validateCombat } from '../combat/validation';
 import { validateEconomy } from '../economy/validation';
 import { validateNavigation } from '../navigation/validation';
 
@@ -31,6 +32,7 @@ import {
  * active-ship location), 6 (fitting slot, hardpoint and online-resource
  * consistency; no MVP item has a skill requirement), 7 and 12 (scheduler
  * entries, and the absence of a real timestamp as a completion condition),
+ * 8 (locks, movement targets and the scheduler entries that resolve them),
  * 11 (streams, simulation time, revisions and ordinals). Content-dependent
  * asset checks run at commit, before persistence and on load with the
  * installed repository.
@@ -114,6 +116,7 @@ export function validateCampaign(state: CampaignState, content?: ContentReposito
   validateAssets(state, add, content);
   validateEconomy(state, add, content);
   validateNavigation(state, add, content);
+  validateCombat(state, add, content);
 
   return issues;
 }

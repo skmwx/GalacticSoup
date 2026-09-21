@@ -1,6 +1,6 @@
 {
   "format": "galactic-soup/save",
-  "formatVersion": 5,
+  "formatVersion": 6,
   "protocolVersion": 4,
   "engineVersion": "1.0.0",
   "contentVersion": "1.0.0+000000000000",
@@ -136,6 +136,10 @@
         }
       }
     },
+    "combat": {
+      "version": 1,
+      "ships": {}
+    },
     "economy": {
       "stations": {
         "station.test.dock": {
@@ -208,7 +212,7 @@
       "travel": null,
       "lastCancellation": null
     },
-    "stateVersion": 5,
+    "stateVersion": 6,
     "campaignId": "cd4befff9414cec4ed0dace04",
     "displayName": "Golden Pilot",
     "seed": "0123456789abcdef0123456789abcdef",
@@ -264,5 +268,5 @@
       "nextInsertionOrdinal": 1
     }
   },
-  "checksum": "9de658d8165f6e82f4291db082d77c7a38810edaa017e3d5f79f4c0141675672"
+  "checksum": "df05cd0b2eceda70e8c2aacf3afd0c4a9fed2b1245d6d93efef37d6973654887"
 }

@@ -1,6 +1,7 @@
 import { isDefinitionId, type DefinitionId } from '@shared';
 import { isAssetState } from '../assets/validation';
 import { parseSlotKey } from '../fitting/types';
+import { isCombatState } from '../combat/validation';
 import { isEconomyState } from '../economy/validation';
 import { isNavigationState } from '../navigation/validation';
 
@@ -106,6 +107,7 @@ export function readCampaignState(value: unknown): CampaignReadResult {
   if (!isAssetState(value['assets'])) add('assetShape', 'state.assets', 'Saved assets are missing or malformed.');
   if (!isEconomyState(value['economy'])) add('economyShape', 'state.economy', 'Saved station economies are missing or malformed.');
   if (!isNavigationState(value['navigation'])) add('navigationShape', 'state.navigation', 'Saved navigation is missing or malformed.');
+  if (!isCombatState(value['combat'])) add('combatShape', 'state.combat', 'Saved combat runtime is missing or malformed.');
   readFittingDraft(value['fitting'], add);
 
   if (issues.length > 0) {
@@ -159,6 +161,18 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
       if (isDefinitionId(object.definitionId)) references.push(object.definitionId);
     }
   }
+  for (const combat of Object.values(state.combat.ships)) {
+    for (const weapon of Object.values(combat.weapons)) {
+      for (const ammunitionId of [
+        weapon.lastAmmunitionId,
+        weapon.pendingReload?.ammunitionId ?? null,
+        weapon.reload?.ammunitionId ?? null,
+        weapon.cycle?.ammunitionId ?? null,
+      ]) {
+        if (ammunitionId !== null) references.push(ammunitionId);
+      }
+    }
+  }
   return [...new Set(references)].sort();
 }
 
@@ -174,6 +188,7 @@ function addLocationReferences(
 
 const STATE_FIELDS: readonly string[] = [
   'assets',
+  'combat',
   'economy',
   'fitting',
   'navigation',

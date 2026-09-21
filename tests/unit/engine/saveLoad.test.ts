@@ -182,13 +182,19 @@ describe('save load pipeline', () => {
         describe: 'fourth test step',
         migrate: (save) => ({ ...save, migratedFourth: true }),
       },
+      {
+        from: 5,
+        to: 6,
+        describe: 'fifth test step',
+        migrate: (save) => ({ ...save, migratedFifth: true }),
+      },
     ];
 
     // The fixture registry proves loading through every version boundary.
     const result = loadSave(older, { content, migrations });
 
     expect(result.ok).toBe(true);
-    expect(result.ok && result.migrated).toEqual([1, 2, 3, 4]);
+    expect(result.ok && result.migrated).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('reads a campaign payload independently of its envelope [TECH-11.4]', () => {

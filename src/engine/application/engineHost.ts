@@ -4,7 +4,7 @@ import { assetsProjection, walletProjection, hangarProjection, cargoProjection,
   fittingDraftProjection, shipProjection, undockValidityProjection } from '@engine/projections';
 import { insurancePreview, marketBuyPreview, marketListingsProjection, marketSellPreview,
   repairPreview, resupplyPreview, stationServicesProjection } from '@engine/projections';
-import { destinationsProjection, siteProjection } from '@engine/projections';
+import { combatProjection, destinationsProjection, siteProjection } from '@engine/projections';
 import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload,
   ComparePayload, ShipPayload } from '@protocol';
 import type { MarketBuyPreviewPayload, MarketSellPreviewPayload, ShipEconomicPayload,
@@ -385,7 +385,7 @@ function isCampaignQuery(type: RequestType): boolean {
     'inventory.maximum', 'ship.get', 'ship.undockValidity', 'fitting.draft', 'item.compare',
     'station.services', 'market.listings', 'market.previewBuy', 'market.previewSell',
     'repair.preview', 'resupply.preview', 'insurance.preview',
-    'navigation.destinations', 'navigation.site',
+    'navigation.destinations', 'navigation.site', 'combat.state',
   ].includes(type);
 }
 
@@ -402,6 +402,8 @@ function query(session: Session, type: RequestType, payload: unknown): unknown {
       return destinationsProjection(session.campaign!, session.content);
     case 'navigation.site':
       return siteProjection(session.campaign!, session.content);
+    case 'combat.state':
+      return combatProjection(session.campaign!, session.content);
     case 'assets.list': return assetsProjection(session.campaign!, session.content);
     case 'wallet.get': return walletProjection(session.campaign!);
     case 'inventory.hangar': return hangarProjection(session.campaign!, session.content, (payload as HangarPayload).stationId);
