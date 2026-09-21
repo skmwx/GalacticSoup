@@ -52,6 +52,27 @@ export function formatStat(value: number, locale: string): string {
   return decimalFormatter(locale, Math.abs(value) < 10 ? 3 : 1).format(value);
 }
 
+/**
+ * A distance in kilometres. Functional Specification 4.1 fixes the precision:
+ * below 10 km to a tenth of a kilometre, and from 10 km upwards to whole
+ * kilometres.
+ */
+export function formatDistanceKm(kilometres: number, locale: string): string {
+  if (!Number.isFinite(kilometres)) {
+    return '-';
+  }
+  const digits = Math.abs(kilometres) < 10 ? 1 : 0;
+  return decimalFormatter(locale, digits).format(withoutNegativeZero(kilometres));
+}
+
+/** A speed, in the kilometres per second the specification measures it in. */
+export function formatSpeedKmPerSecond(kmPerSecond: number, locale: string): string {
+  if (!Number.isFinite(kmPerSecond)) {
+    return '-';
+  }
+  return decimalFormatter(locale, 3).format(withoutNegativeZero(kmPerSecond));
+}
+
 /** A signed difference, so a comparison row reads as a change. */
 export function formatDifference(value: number, locale: string): string {
   const formatted = formatStat(Math.abs(value), locale);

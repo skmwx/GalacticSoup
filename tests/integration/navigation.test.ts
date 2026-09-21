@@ -243,3 +243,124 @@ it('replays navigation and spatial integration to identical hashes across transp
   }
   expect(hashes[0]).toEqual(hashes[1]);
 });
+
+describe('projected command availability', () => {
+  /** The availability entry the projection carries for one command. */
+  function entry(
+    commands: readonly { command: string; available: boolean; unavailableReason: string | null }[],
+    command: string,
+  ): { available: boolean; unavailableReason: string | null } {
+    const found = commands.find((candidate) => candidate.command === command);
+    if (found === undefined) throw new Error(`No projected availability for ${command}.`);
+    return { available: found.available, unavailableReason: found.unavailableReason };
+  }
+
+  it('offers exactly the orders the commands accept, docked and undocked [TECH-12.3, FUNC-7.1, FUNC-22.10, MVP-AC-03]', async () => {
+    const client = gateway('direct', createMemorySaveStore());
+    await create(client);
+
+    // Docked: the ship may leave and may choose where to go, and nothing else.
+    let site = await ask(client, 'navigation.site', {});
+    expect(entry(site.commands, 'ship.undock').available).toBe(true);
+    expect(entry(site.commands, 'movement.stop')).toEqual({
+      available: false,
+      unavailableReason: 'error.ruleViolation.movementUnavailable',
+    });
+    expect(entry(site.commands, 'navigation.retreat')).toEqual({
+      available: false,
+      unavailableReason: 'error.ruleViolation.retreatUnavailable',
+    });
+    expect(site.rangePresetsKm).toEqual(content.rules.navigation.rangePresetsKm);
+    expect(site.arrivalDistancesKm).toEqual(content.rules.navigation.arrivalDistancesKm);
+
+    const docked = await ask(client, 'navigation.destinations', {});
+    const target = docked.destinations.find((candidate) => candidate.tier === 1);
+    if (target === undefined) throw new Error('No tier-one destination.');
+    expect(entry(target.commands, 'navigation.selectDestination').available).toBe(true);
+    expect(entry(target.commands, 'navigation.warp')).toEqual({
+      available: false,
+      unavailableReason: 'error.ruleViolation.warpUnavailable',
+    });
+
+    await ask(client, 'navigation.selectDestination', { encounterId: target.encounterId });
+    await ask(client, 'ship.undock', {});
+
+    // Undocked at the station site: orders apply, the station may be docked
+    // with, and there is nothing to retreat from.
+    site = await ask(client, 'navigation.site', {});
+    expect(entry(site.commands, 'ship.undock')).toEqual({
+      available: false,
+      unavailableReason: 'error.ruleViolation.undockUnavailable',
+    });
+    expect(entry(site.commands, 'movement.moveToPoint').available).toBe(true);
+    expect(entry(site.commands, 'navigation.retreat').available).toBe(false);
+
+    const station = site.site?.objects.find((object) => object.kind === 'station');
+    const player = site.site?.objects.find((object) => object.player);
+    if (station === undefined || player === undefined) throw new Error('Site did not instantiate.');
+    expect(entry(station.commands, 'movement.approach').available).toBe(true);
+    expect(entry(station.commands, 'navigation.dock').available).toBe(true);
+    expect(entry(player.commands, 'movement.orbit')).toEqual({
+      available: false,
+      unavailableReason: 'error.ruleViolation.movementTargetUnavailable',
+    });
+    expect(entry(player.commands, 'navigation.dock').available).toBe(false);
+
+    const undocked = await ask(client, 'navigation.destinations', {});
+    const reachable = undocked.destinations.find((candidate) => candidate.siteId === target.siteId);
+    expect(entry(reachable?.commands ?? [], 'navigation.warp').available).toBe(true);
+    expect(entry(reachable?.commands ?? [], 'navigation.selectDestination')).toEqual({
+      available: false,
+      unavailableReason: 'error.ruleViolation.destinationSelectionUnavailable',
+    });
+  });
+
+  it('refuses a projected-unavailable command with the reason it projected [TECH-12.3, FUNC-22.10]', async () => {
+    const client = gateway('direct', createMemorySaveStore());
+    await create(client);
+
+    // Docked, so every flight order is refused; each refusal must match the
+    // reason the command bar was told to show.
+    const site = await ask(client, 'navigation.site', {});
+    const stop = entry(site.commands, 'movement.stop');
+    const refusedStop = await client.request('movement.stop', {});
+    expect(!refusedStop.ok && refusedStop.error.messageKey).toBe(stop.unavailableReason);
+
+    const retreat = entry(site.commands, 'navigation.retreat');
+    const refusedRetreat = await client.request('navigation.retreat', {});
+    expect(!refusedRetreat.ok && refusedRetreat.error.messageKey).toBe(retreat.unavailableReason);
+
+    const destinations = await ask(client, 'navigation.destinations', {});
+    const destination = destinations.destinations[0];
+    if (destination === undefined) throw new Error('No destination.');
+    const warp = entry(destination.commands, 'navigation.warp');
+    const refusedWarp = await client.request('navigation.warp', {
+      destinationSiteId: destination.siteId,
+      arrivalDistanceKm: 0,
+    });
+    expect(!refusedWarp.ok && refusedWarp.error.messageKey).toBe(warp.unavailableReason);
+  });
+
+  it('offers retreat once the ship is in an encounter site [MVP-AC-08, FUNC-9.11]', async () => {
+    const client = gateway('direct', createMemorySaveStore());
+    await create(client);
+    const destinations = await ask(client, 'navigation.destinations', {});
+    const destination = destinations.destinations[0];
+    if (destination === undefined) throw new Error('No destination.');
+    await ask(client, 'navigation.selectDestination', { encounterId: destination.encounterId });
+    await ask(client, 'ship.undock', {});
+    await ask(client, 'navigation.warp', {
+      destinationSiteId: destination.siteId,
+      arrivalDistanceKm: 30,
+    });
+    await ask(client, 'time.set', { paused: false, rate: 1 });
+    await advanceUntil(client, async () => {
+      const current = await ask(client, 'navigation.site', {});
+      return current.location.kind === 'site' && current.location.siteId === destination.siteId;
+    });
+
+    const site = await ask(client, 'navigation.site', {});
+    expect(entry(site.commands, 'navigation.retreat').available).toBe(true);
+    expect(site.site?.objects.every((object) => object.player)).toBe(true);
+  });
+});

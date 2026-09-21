@@ -9,7 +9,7 @@ import { ItemComparison, ItemSummary } from '../common/ItemDetail';
 import { formatQuantity, formatVolume } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import styles from './Station.module.css';
-import type { StationData } from './useStationData';
+import type { PlayData } from '../frame/usePlayData';
 
 /**
  * The station hangar and the docked ship's hold
@@ -25,13 +25,13 @@ import type { StationData } from './useStationData';
 
 export interface HangarPanelProps {
   readonly gateway: ClientGateway;
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly runner: ActionRunner;
 }
 
-export function HangarPanel({ gateway, station, runner }: HangarPanelProps): JSX.Element {
+export function HangarPanel({ gateway, data, runner }: HangarPanelProps): JSX.Element {
   const translate = useTranslate();
-  const assets = station.assets;
+  const assets = data.assets;
   const [inspecting, setInspecting] = useState<StackData | null>(null);
   const [comparedWith, setComparedWith] = useState<string | null>(null);
 
@@ -70,7 +70,7 @@ export function HangarPanel({ gateway, station, runner }: HangarPanelProps): JSX
             title={translate('hangar.stationHangar')}
             destination={cargo}
             destinationLabel={translate('hangar.toCargo')}
-            station={station}
+            data={data}
             runner={runner}
             onInspect={inspect}
           />
@@ -79,7 +79,7 @@ export function HangarPanel({ gateway, station, runner }: HangarPanelProps): JSX
             title={translate('hangar.shipCargo')}
             destination={hangar}
             destinationLabel={translate('hangar.toHangar')}
-            station={station}
+            data={data}
             runner={runner}
             onInspect={inspect}
           />
@@ -132,7 +132,7 @@ interface InventoryTableProps {
   readonly title: string;
   readonly destination: InventoryData;
   readonly destinationLabel: string;
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly runner: ActionRunner;
   readonly onInspect: (stack: StackData) => void;
 }
@@ -142,7 +142,7 @@ function InventoryTable({
   title,
   destination,
   destinationLabel,
-  station,
+  data,
   runner,
   onInspect,
 }: InventoryTableProps): JSX.Element {
@@ -197,7 +197,7 @@ function InventoryTable({
                         stack={stack}
                         destination={destination}
                         destinationLabel={destinationLabel}
-                        station={station}
+                        data={data}
                         runner={runner}
                       />
                       <ActionButton
@@ -226,7 +226,7 @@ interface TransferControlProps {
   readonly stack: StackData;
   readonly destination: InventoryData;
   readonly destinationLabel: string;
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly runner: ActionRunner;
 }
 
@@ -234,7 +234,7 @@ function TransferControl({
   stack,
   destination,
   destinationLabel,
-  station,
+  data,
   runner,
 }: TransferControlProps): JSX.Element {
   const translate = useTranslate();
@@ -270,7 +270,7 @@ function TransferControl({
         unavailableReason={destination.unavailableReason}
         label={destinationLabel}
         onRun={async () => {
-          await station.send('inventory.transfer', {
+          await data.send('inventory.transfer', {
             stackId: stack.id,
             destinationInventoryId: destination.id,
             quantity: capped,

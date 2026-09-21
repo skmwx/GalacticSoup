@@ -52,6 +52,8 @@ public index.
 src/
   app/            bootstrap and top-level composition
   ui/             React views, SVG renderers, localization, styles
+                  (frame/ the persistent frame and the projection store,
+                   station/ the docked surfaces, space/ the schematic view)
   gateway/        transport-independent client API and the frame driver
                   (plus test-only in-process gateways)
   protocol/       versioned envelope, request catalogue, error model
@@ -98,7 +100,7 @@ campaign are serialised and therefore finish in revision order.
 A save is a self-describing JSON envelope: the build and content it was written against, the
 campaign and revision it holds, the canonical `CampaignState` payload, and a SHA-256 over
 everything else in it. `schemas/save/save-envelope.schema.json` is its published contract and
-`tests/fixtures/saves/format-3.json` is the golden artefact that pins the format, its canonical
+`tests/fixtures/saves/format-5.json` is the golden artefact that pins the format, its canonical
 serialisation and its digest. Loading walks the steps the technical specification prescribes —
 bounds, checksum, shape, migrations, content compatibility, invariants — and nothing in that path
 writes, so a save that cannot be opened is left exactly as it was found and the loader falls back to
@@ -154,11 +156,12 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 5 exposes `ship.get`, `ship.undockValidity`, `fitting.draft`, `fitting.begin`,
+Protocol version 7 exposes `ship.get`, `ship.undockValidity`, `fitting.draft`, `fitting.begin`,
 `fitting.set`, `fitting.clear`, `fitting.revert`, `fitting.commit` and `item.compare` alongside the
-inventory, market, repair, resupply and insurance contracts and the authored content catalogue.
+inventory, market, repair, resupply and insurance contracts, the navigation queries and orders, and
+the authored content catalogue.
 
-Campaign state and save format are version 4. Previous development saves are rejected without
+Campaign state and save format are version 5. Previous development saves are rejected without
 modification; start a new campaign after upgrading. No pre-release migration is required by the
 MVP plan. The migration runner remains covered by fixture registries, and the older format fixtures
 are retained to verify rejection. See `docs/agent-comm/status/` for the per-phase handoffs.
@@ -187,6 +190,32 @@ The interface resolves authored text through the engine: projections carry messa
 `content.messages` hands over the locale's catalogue so the interface never reaches past the engine
 into the content bundle. Simulation time advances because the main thread measures elapsed real time
 and sends it; the clock the frame shows is the one the engine answered with.
+
+## Leaving the station
+
+Choosing a combat site marks it as the destination; it does not move the ship. The player undocks at
+the station site, gives the ship orders, warps to the encounter, and warps back and docks - which is
+what makes retreat mean something.
+
+The schematic view is two-dimensional and deliberately plain. The engine publishes world coordinates
+in kilometres and the renderer applies the camera; zoom changes display scale and nothing else. The
+layers are fixed - background, range overlays, intent, objects, labels, off-screen markers,
+interaction targets - and every semantic state carries a shape as well as a colour, so the view
+reads in a high-contrast theme. Between two authoritative frames the drawing carries each object
+along its published velocity for at most a quarter of a second; that is presentation, it is off
+while the game is paused or reduced motion is asked for, and no number the player reads comes from
+it.
+
+The drawing is one labelled image. The list beside it is what selection actually works through, so
+the site is reachable with the keyboard alone, and the selected object announces itself rather than
+being implied by a highlight.
+
+Whether an order can be given is a rule, so the engine decides it. `navigation.site` and
+`navigation.destinations` carry, for each subject, which commands it offers and the message the
+refused ones would answer with; the command bar pairs that with a registry entry and shows a
+disabled control with its reason rather than hiding it. The same predicates run inside the command
+handlers, so the two cannot disagree. The ranges and arrival distances the orders offer are authored
+in `content/rules/navigation.json`.
 
 ## Content
 

@@ -13,7 +13,7 @@ import { formatQuantity, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { ShipSummary } from './ShipPanel';
 import styles from './Station.module.css';
-import type { StationData } from './useStationData';
+import type { PlayData } from '../frame/usePlayData';
 
 /**
  * The fitting screen (Functional Specification 8.4-8.5, 19.5).
@@ -29,15 +29,15 @@ import type { StationData } from './useStationData';
  */
 
 export interface FittingPanelProps {
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly runner: ActionRunner;
 }
 
-export function FittingPanel({ station, runner }: FittingPanelProps): JSX.Element {
+export function FittingPanel({ data, runner }: FittingPanelProps): JSX.Element {
   const translate = useTranslate();
-  const draft = station.fitting?.draft ?? null;
-  const ship = station.ship;
-  const fittingService = station.services?.services.find((entry) => entry.service === 'fitting');
+  const draft = data.fitting?.draft ?? null;
+  const ship = data.ship;
+  const fittingService = data.services?.services.find((entry) => entry.service === 'fitting');
 
   return (
     <section className={styles['panel']} aria-labelledby="fitting-heading">
@@ -57,13 +57,13 @@ export function FittingPanel({ station, runner }: FittingPanelProps): JSX.Elemen
             unavailableReason={fittingService?.unavailableReason ?? null}
             onRun={async () => {
               if (ship !== null) {
-                await station.send('fitting.begin', { shipId: ship.id });
+                await data.send('fitting.begin', { shipId: ship.id });
               }
             }}
           />
         </>
       ) : (
-        <OpenDraft draft={draft} station={station} runner={runner} />
+        <OpenDraft draft={draft} data={data} runner={runner} />
       )}
     </section>
   );
@@ -71,11 +71,11 @@ export function FittingPanel({ station, runner }: FittingPanelProps): JSX.Elemen
 
 function OpenDraft({
   draft,
-  station,
+  data,
   runner,
 }: {
   readonly draft: OpenFittingDraftData;
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly runner: ActionRunner;
 }): JSX.Element {
   const translate = useTranslate();
@@ -93,7 +93,7 @@ function OpenDraft({
             key={slotKey(option.slot)}
             option={option}
             planned={planned.get(slotKey(option.slot)) ?? null}
-            station={station}
+            data={data}
             runner={runner}
           />
         ))}
@@ -127,14 +127,14 @@ function OpenDraft({
             draft.committable ? 'fitting.unavailable.unchanged' : 'fitting.unavailable.blocked'
           }
           onRun={async () => {
-            await station.send('fitting.commit', {});
+            await data.send('fitting.commit', {});
           }}
         />
         <ActionButton
           actionId="fitting.revert"
           runner={runner}
           onRun={async () => {
-            await station.send('fitting.revert', {});
+            await data.send('fitting.revert', {});
           }}
         />
       </div>
@@ -152,12 +152,12 @@ function OpenDraft({
 function SlotEditor({
   option,
   planned,
-  station,
+  data,
   runner,
 }: {
   readonly option: SlotCandidatesData;
   readonly planned: PlannedSlotData | null;
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly runner: ActionRunner;
 }): JSX.Element {
   const translate = useTranslate();
@@ -176,7 +176,7 @@ function SlotEditor({
     readonly online: boolean;
     readonly ammunitionId: string | null;
   }): Promise<void> => {
-    await station.send('fitting.set', {
+    await data.send('fitting.set', {
       slotKind: option.slot.kind,
       slotIndex: option.slot.index,
       moduleId: next.moduleId,
@@ -198,7 +198,7 @@ function SlotEditor({
           onChange={(event) => {
             const value = event.target.value;
             if (value === '') {
-              void station.send('fitting.clear', {
+              void data.send('fitting.clear', {
                 slotKind: option.slot.kind,
                 slotIndex: option.slot.index,
               });
@@ -272,7 +272,7 @@ function SlotEditor({
           runner={runner}
           label={translate('fitting.clearSlot', { slot: name })}
           onRun={async () => {
-            await station.send('fitting.clear', {
+            await data.send('fitting.clear', {
               slotKind: option.slot.kind,
               slotIndex: option.slot.index,
             });

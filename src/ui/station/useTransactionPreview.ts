@@ -7,7 +7,7 @@ import type {
   TransactionPreviewData,
 } from '@protocol';
 
-import type { StationData } from './useStationData';
+import type { PlayData } from '../frame/usePlayData';
 
 /**
  * Preview and confirmation for one economic action
@@ -51,7 +51,7 @@ export interface TransactionPreview {
 
 export interface TransactionPreviewOptions<TType extends PreviewRequest> {
   readonly gateway: ClientGateway;
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly type: TType;
   readonly confirmType: ConfirmCommand;
   /** Null suspends the preview, for a dialog that is not open. */
@@ -61,7 +61,7 @@ export interface TransactionPreviewOptions<TType extends PreviewRequest> {
 export function useTransactionPreview<TType extends PreviewRequest>(
   options: TransactionPreviewOptions<TType>,
 ): TransactionPreview {
-  const { gateway, station, type, confirmType, payload } = options;
+  const { gateway, data, type, confirmType, payload } = options;
   const [preview, setPreview] = useState<TransactionPreviewData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<EngineError | null>(null);
@@ -80,7 +80,7 @@ export function useTransactionPreview<TType extends PreviewRequest>(
   // value rather than its identity: an unchanged payload must not re-request,
   // because a fresh token would be bound to state the player has not seen.
   const key = payload === null ? null : JSON.stringify(payload);
-  const assetsRevision = station.assets?.revision ?? 0;
+  const assetsRevision = data.assets?.revision ?? 0;
   const latestPayload = useRef(payload);
   latestPayload.current = payload;
 
@@ -126,7 +126,7 @@ export function useTransactionPreview<TType extends PreviewRequest>(
       return false;
     }
     setError(null);
-    const answer = await station.send(confirmType, { token });
+    const answer = await data.send(confirmType, { token });
     if (!mounted.current) {
       return answer.ok;
     }
@@ -143,7 +143,7 @@ export function useTransactionPreview<TType extends PreviewRequest>(
       setReplaced(false);
     }
     return false;
-  }, [preview, station, confirmType]);
+  }, [preview, data, confirmType]);
 
   const reload = useCallback(() => {
     setReloads((count) => count + 1);

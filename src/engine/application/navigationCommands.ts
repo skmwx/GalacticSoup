@@ -6,16 +6,22 @@ import {
   type Transaction,
 } from './transaction';
 import {
-  assessFit,
-  deriveShipAttributes,
+  distance,
+  dockRefusal,
   instantiateSite,
-  shipFit,
+  movementRefusal,
+  retreatRefusal,
+  selectDestinationRefusal,
   siteDefinitionPosition,
+  targetOrderRefusal,
+  undockRefusal,
+  warpRefusal,
   type CampaignDraft,
+  type CommandRefusal,
   type MovementOrder,
+  type NavigationRuleInput,
   type SiteLocation,
 } from '@engine/domain';
-import { distance } from '@engine/domain';
 import { cancelBoundary } from '@engine/simulation';
 import type {
   DockPayload,
@@ -30,6 +36,10 @@ import type { EncounterId, SiteId, StationId } from '@shared';
  *
  * Every order changes only the transaction draft. Simulation-time state
  * machines perform movement and transitions later; the UI never moves a ship.
+ *
+ * Whether an order is legal is decided by the shared predicates in
+ * `@engine/domain`, which the site projection also asks, so the command bar
+ * offers exactly the orders these handlers accept.
  *
  * @implements FUNC-7.1, FUNC-7.2, FUNC-7.3, FUNC-7.4, FUNC-22.5, FUNC-22.10, FUNC-22.11, MVP-AC-03, MVP-AC-08
  */
@@ -75,18 +85,21 @@ export function handleNavigationCommand(
   }
 }
 
+/** The state and content the shared availability predicates read. */
+function rules(transaction: Transaction): NavigationRuleInput {
+  return { state: transaction.requireDraft(), content: transaction.content };
+}
+
+function refuse(refusal: CommandRefusal): CommandOutcome | null {
+  return refusal === null ? null : reject(refusal);
+}
+
 function selectDestination(transaction: Transaction, encounterId: string): CommandOutcome {
   const draft = transaction.requireDraft();
-  if (draft.assets.location.kind !== 'station') return reject('destinationSelectionUnavailable');
-  const encounter = transaction.content.encounter(encounterId);
-  if (
-    encounter === undefined ||
-    encounter.systemId !== draft.assets.location.systemId ||
-    !draft.navigation.knownDestinationSiteIds.includes(encounter.siteId)
-  ) {
-    return reject('destinationUnknown');
-  }
-  if (draft.navigation.selectedEncounterId === encounter.id) return UNCHANGED;
+  const refused = refuse(selectDestinationRefusal(rules(transaction), encounterId));
+  if (refused !== null) return refused;
+  if (draft.navigation.selectedEncounterId === encounterId) return UNCHANGED;
+  const encounter = transaction.content.requireEncounter(encounterId as EncounterId);
   draft.navigation.selectedEncounterId = encounter.id as EncounterId;
   changed(transaction, false);
   transaction.publish('navigation.destinationSelected', {
@@ -98,23 +111,11 @@ function selectDestination(transaction: Transaction, encounterId: string): Comma
 
 function undock(transaction: Transaction): CommandOutcome {
   const draft = transaction.requireDraft();
+  const refused = refuse(undockRefusal(rules(transaction)));
+  if (refused !== null) return refused;
   const location = draft.assets.location;
-  if (location.kind !== 'station') return reject('undockUnavailable');
-  if (draft.fitting !== null) return reject('fittingDraftOpen');
   const ship = draft.assets.ships[draft.assets.activeShipId];
-  if (ship === undefined || ship.location.kind !== 'station') return reject('undockUnavailable');
-  const hull = transaction.content.requireHull(ship.hullId);
-  const assessment = assessFit({
-    hull,
-    fit: shipFit(draft.assets, ship.id),
-    content: transaction.content,
-    derived: deriveShipAttributes({
-      hull,
-      fit: shipFit(draft.assets, ship.id),
-      content: transaction.content,
-    }),
-  });
-  if (assessment.violations.length > 0) return reject('undockInvalidFit');
+  if (location.kind !== 'station' || ship === undefined) return reject('undockUnavailable');
 
   const station = transaction.content.requireStation(location.stationId);
   const siteLocation: SiteLocation = {
@@ -146,17 +147,15 @@ function targetOrder(
   kind: 'approach' | 'orbit' | 'keepRange',
   payload: TargetRangePayload,
 ): CommandOutcome {
-  const draft = transaction.requireDraft();
-  const target = draft.navigation.currentSite?.objects[payload.targetId];
-  if (target === undefined || target.id === draft.assets.activeShipId) return reject('movementTargetUnavailable');
+  const refused = refuse(targetOrderRefusal(rules(transaction), payload.targetId));
+  if (refused !== null) return refused;
   return setMovement(transaction, { kind, targetId: payload.targetId, distanceKm: payload.distanceKm });
 }
 
 function setMovement(transaction: Transaction, order: MovementOrder): CommandOutcome {
   const draft = transaction.requireDraft();
-  if (draft.assets.location.kind !== 'site' || draft.navigation.currentSite === null) {
-    return reject('movementUnavailable');
-  }
+  const refused = refuse(movementRefusal(rules(transaction)));
+  if (refused !== null) return refused;
   replaceCurrentOrder(draft, transaction, order);
   changed(transaction, false);
   transaction.publish('navigation.movementOrdered', { kind: order.kind });
@@ -165,21 +164,20 @@ function setMovement(transaction: Transaction, order: MovementOrder): CommandOut
 
 function beginWarp(transaction: Transaction, payload: WarpPayload, retreating: boolean): CommandOutcome {
   const draft = transaction.requireDraft();
-  const location = draft.assets.location;
-  if (location.kind !== 'site' || draft.navigation.currentSite === null) return reject('warpUnavailable');
-  const destination = payload.destinationSiteId as SiteId;
-  if (!draft.navigation.knownDestinationSiteIds.includes(destination)) return reject('destinationUnknown');
-  if (destination === location.siteId) return reject('destinationCurrent');
+  const refused = refuse(warpRefusal(rules(transaction), payload.destinationSiteId));
+  if (refused !== null) return refused;
   if (!transaction.content.rules.navigation.arrivalDistancesKm.includes(payload.arrivalDistanceKm)) {
     return reject('invalidArrivalDistance');
   }
-  const originPosition = siteDefinitionPosition(transaction.content, location.systemId, location.siteId);
-  const destinationPosition = siteDefinitionPosition(transaction.content, location.systemId, destination);
-  if (originPosition === null || destinationPosition === null) return reject('destinationUnknown');
-  const distanceKm = distance(originPosition, destinationPosition);
-  if (distanceKm < transaction.content.rules.navigation.warpMinimumDistanceKm) {
-    return reject('warpTooClose');
-  }
+  const location = draft.assets.location;
+  if (location.kind !== 'site') return reject('warpUnavailable');
+  const destination = payload.destinationSiteId as SiteId;
+  // The refusal above already proved both sites resolve; this is the distance
+  // it measured, not a second decision about whether the warp is legal.
+  const origin = siteDefinitionPosition(transaction.content, location.systemId, location.siteId);
+  const target = siteDefinitionPosition(transaction.content, location.systemId, destination);
+  if (origin === null || target === null) return reject('destinationUnknown');
+  const distanceKm = distance(origin, target);
 
   cancelTravel(draft);
   if (draft.navigation.movement !== null) {
@@ -208,22 +206,19 @@ function beginWarp(transaction: Transaction, payload: WarpPayload, retreating: b
 }
 
 function retreat(transaction: Transaction): CommandOutcome {
-  const draft = transaction.requireDraft();
-  if (draft.assets.location.kind !== 'site') return reject('retreatUnavailable');
-  const station = transaction.content.requireStation(transaction.content.rules.economy.startingStationId as StationId);
-  if (draft.assets.location.siteId === station.siteId) return reject('retreatUnavailable');
+  const refused = refuse(retreatRefusal(rules(transaction)));
+  if (refused !== null) return refused;
+  const station = transaction.content.requireStation(
+    transaction.content.rules.economy.startingStationId as StationId,
+  );
   return beginWarp(transaction, { destinationSiteId: station.siteId, arrivalDistanceKm: 0 }, true);
 }
 
 function dock(transaction: Transaction, payload: DockPayload): CommandOutcome {
   const draft = transaction.requireDraft();
-  const location = draft.assets.location;
-  if (location.kind !== 'site' || draft.navigation.currentSite === null) return reject('dockUnavailable');
-  const station = transaction.content.station(payload.stationId);
-  const target = draft.navigation.currentSite.objects[payload.stationId];
-  if (station === undefined || target?.kind !== 'station' || station.siteId !== location.siteId) {
-    return reject('dockUnavailable');
-  }
+  const refused = refuse(dockRefusal(rules(transaction), payload.stationId));
+  if (refused !== null) return refused;
+  const station = transaction.content.requireStation(payload.stationId as StationId);
 
   cancelTravel(draft);
   if (draft.navigation.movement !== null) {

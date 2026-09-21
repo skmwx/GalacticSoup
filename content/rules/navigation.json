@@ -14,6 +14,7 @@
     "undockDistanceKm": 2,
     "stationRadiusKm": 0.5,
     "separationSpeedKmPerSecond": 0.2,
-    "arrivalDistancesKm": [0, 10, 30, 50, 100]
+    "arrivalDistancesKm": [0, 10, 30, 50, 100],
+    "rangePresetsKm": [1, 5, 10, 20, 30]
   }
 }

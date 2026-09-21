@@ -34,8 +34,10 @@ export { formatSimulationDuration } from './format/duration';
 export {
   formatCredits,
   formatDifference,
+  formatDistanceKm,
   formatPercent,
   formatQuantity,
+  formatSpeedKmPerSecond,
   formatStat,
   formatVolume,
 } from './format/numbers';
@@ -47,10 +49,63 @@ export { useSimulationClock } from './frame/useSimulationClock';
 export type { SimulationClock } from './frame/useSimulationClock';
 export { StationScreen } from './station/StationScreen';
 export type { StationScreenProps } from './station/StationScreen';
-export { useStationData } from './station/useStationData';
-export type { StationData, StationDataOptions, StationProjections } from './station/useStationData';
+export { usePlayData } from './frame/usePlayData';
+export type {
+  CommandAnswer,
+  PlayCommand,
+  PlayData,
+  PlayDataOptions,
+  PlayProjections,
+} from './frame/usePlayData';
+export { DeparturePanel } from './station/DeparturePanel';
+export type { DeparturePanelProps } from './station/DeparturePanel';
 export { useTransactionPreview } from './station/useTransactionPreview';
 export type { TransactionPreview } from './station/useTransactionPreview';
+export {
+  clampZoom,
+  CommandBar,
+  DEFAULT_PIXELS_PER_KM,
+  framing,
+  kilometresPerPixel,
+  labelVisible,
+  LABEL_MINIMUM_PIXELS_PER_KM,
+  MAX_EXTRAPOLATION_MS,
+  MAX_PIXELS_PER_KM,
+  MIN_PIXELS_PER_KM,
+  MINIMUM_HIT_DIAMETER_PX,
+  ObjectList,
+  offScreenMarker,
+  panned,
+  REDUCED_MOTION_QUERY,
+  ringSpacingKm,
+  screenToWorld,
+  SelectedObjectPanel,
+  SiteView,
+  SPACE_VIEWPORT,
+  SpaceScreen,
+  TravelStatus,
+  useCamera,
+  usePrefersReducedMotion,
+  useSiteMotion,
+  worldToScreen,
+  zoomedBy,
+  ZOOM_STEP,
+} from './space';
+export type {
+  Camera,
+  CameraControl,
+  CommandBarProps,
+  ObjectListProps,
+  OffScreenMarker,
+  Point,
+  SelectedObjectPanelProps,
+  SiteMotionOptions,
+  SitePositions,
+  SiteViewProps,
+  SpaceScreenProps,
+  TravelStatusProps,
+  Viewport,
+} from './space';
 export { AppShell } from './shell/AppShell';
 export type { AppShellProps } from './shell/AppShell';
 export { CompatibilityFailure } from './shell/CompatibilityFailure';

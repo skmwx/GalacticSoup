@@ -1,0 +1,292 @@
+/**
+ * The space view and its command surfaces (Technical Specification 12.2, 12.3).
+ *
+ * Semantic states are drawn with shape, stroke pattern and label as well as
+ * colour, so the view stays readable in a high-contrast theme and for a player
+ * who cannot separate the hues.
+ */
+
+.space {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr);
+  grid-template-areas:
+    'heading heading'
+    'view aside'
+    'commands commands';
+  gap: var(--gs-space-3);
+  padding: var(--gs-space-3);
+  align-content: start;
+}
+
+@media (max-width: 60rem) {
+  .space {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'heading'
+      'view'
+      'aside'
+      'commands';
+  }
+}
+
+.heading {
+  grid-area: heading;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--gs-space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--gs-font-heading);
+}
+
+.subheading {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+  font-size: var(--gs-font-small);
+}
+
+.stage {
+  grid-area: view;
+  position: relative;
+  min-width: 0;
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface);
+}
+
+.view {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+}
+
+.view[data-choosing='true'] {
+  cursor: crosshair;
+}
+
+.viewControls {
+  position: absolute;
+  inset-block-start: var(--gs-space-2);
+  inset-inline-end: var(--gs-space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+
+.ring {
+  fill: none;
+  stroke: var(--gs-color-border);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+}
+
+.ringLabel,
+.label {
+  fill: var(--gs-color-text-muted);
+  font-size: calc(0.75rem * var(--gs-text-scale));
+  font-family: var(--gs-font-mono);
+}
+
+.label {
+  fill: var(--gs-color-text);
+}
+
+.orderRange {
+  fill: none;
+  stroke: var(--gs-color-accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+.intent {
+  stroke: var(--gs-color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+
+.vector {
+  stroke: var(--gs-color-text-muted);
+  stroke-width: 1.5;
+}
+
+.station {
+  fill: var(--gs-color-surface-raised);
+  stroke: var(--gs-color-text);
+  stroke-width: 1.6;
+}
+
+.ship {
+  fill: var(--gs-color-surface-raised);
+  stroke: var(--gs-color-text);
+  stroke-width: 1.6;
+}
+
+.playerShip {
+  fill: var(--gs-color-accent);
+  stroke: var(--gs-color-text);
+  stroke-width: 1.6;
+}
+
+.selection path {
+  fill: none;
+  stroke: var(--gs-color-accent);
+  stroke-width: 2;
+}
+
+.offScreen {
+  fill: var(--gs-color-text-muted);
+}
+
+.offScreen[data-selected='true'] {
+  fill: var(--gs-color-accent);
+}
+
+.hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.aside {
+  grid-area: aside;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+  min-width: 0;
+}
+
+.panel {
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface);
+  padding: var(--gs-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+}
+
+.panelHeading {
+  margin: 0;
+  font-size: var(--gs-font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gs-color-text-muted);
+}
+
+.objectList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+
+.objectButton {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gs-space-2);
+  align-items: baseline;
+  text-align: start;
+  padding: var(--gs-space-2);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface-raised);
+  color: var(--gs-color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.objectButton[aria-pressed='true'] {
+  border-color: var(--gs-color-accent);
+  outline: 1px solid var(--gs-color-accent);
+}
+
+.objectKind {
+  color: var(--gs-color-text-muted);
+  font-size: var(--gs-font-small);
+}
+
+.objectRange {
+  font-family: var(--gs-font-mono);
+  font-size: var(--gs-font-small);
+}
+
+.readouts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--gs-space-1) var(--gs-space-3);
+}
+
+.readouts dt {
+  color: var(--gs-color-text-muted);
+  font-size: var(--gs-font-small);
+}
+
+.readouts dd {
+  margin: 0;
+  font-family: var(--gs-font-mono);
+}
+
+.commands {
+  grid-area: commands;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface);
+  padding: var(--gs-space-3);
+}
+
+.commandRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--gs-space-2);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.field select,
+.field input {
+  font: inherit;
+  color: var(--gs-color-text);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-1) var(--gs-space-2);
+  min-width: 6rem;
+}
+
+.muted {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+  font-size: var(--gs-font-small);
+}
+
+.travel {
+  margin: 0;
+  padding: var(--gs-space-2) var(--gs-space-3);
+  border: var(--gs-border);
+  border-inline-start: 3px solid var(--gs-color-accent);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface-raised);
+}
+
+.error {
+  margin: 0;
+  color: var(--gs-color-danger);
+}

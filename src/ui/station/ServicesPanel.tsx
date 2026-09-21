@@ -6,7 +6,7 @@ import { ActionButton, type ActionRunner } from '../actions';
 import { useTranslate } from '../localization';
 import styles from './Station.module.css';
 import { TransactionDialog } from './TransactionDialog';
-import type { StationData } from './useStationData';
+import type { PlayData } from '../frame/usePlayData';
 import { useTransactionPreview } from './useTransactionPreview';
 
 /**
@@ -22,35 +22,35 @@ import { useTransactionPreview } from './useTransactionPreview';
 
 export interface ServicesPanelProps {
   readonly gateway: ClientGateway;
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly runner: ActionRunner;
 }
 
 type OpenService = 'repair' | 'resupply' | 'insurance' | null;
 
-export function ServicesPanel({ gateway, station, runner }: ServicesPanelProps): JSX.Element {
+export function ServicesPanel({ gateway, data, runner }: ServicesPanelProps): JSX.Element {
   const translate = useTranslate();
   const [open, setOpen] = useState<OpenService>(null);
-  const shipId = station.assets?.activeShipId ?? null;
-  const services = station.services?.services ?? [];
+  const shipId = data.assets?.activeShipId ?? null;
+  const services = data.services?.services ?? [];
 
   const repair = useTransactionPreview({
     gateway,
-    station,
+    data,
     type: 'repair.preview',
     confirmType: 'repair.confirm',
     payload: open === 'repair' && shipId !== null ? { shipId } : null,
   });
   const resupply = useTransactionPreview({
     gateway,
-    station,
+    data,
     type: 'resupply.preview',
     confirmType: 'resupply.confirm',
     payload: open === 'resupply' && shipId !== null ? { shipId } : null,
   });
   const insurance = useTransactionPreview({
     gateway,
-    station,
+    data,
     type: 'insurance.preview',
     confirmType: 'insurance.confirm',
     payload: open === 'insurance' && shipId !== null ? { shipId } : null,
@@ -64,7 +64,7 @@ export function ServicesPanel({ gateway, station, runner }: ServicesPanelProps):
     };
   };
 
-  const wallet = station.assets?.credits ?? 0;
+  const wallet = data.assets?.credits ?? 0;
 
   return (
     <section className={styles['panel']} aria-labelledby="services-heading">

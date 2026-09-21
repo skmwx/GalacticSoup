@@ -4,7 +4,7 @@
   "title": "SiteData",
   "type": "object",
   "additionalProperties": false,
-  "required": ["revision", "simulationTimeMs", "location", "site", "movementOrder", "travelStatus", "lastCancellation"],
+  "required": ["revision", "simulationTimeMs", "location", "site", "movementOrder", "travelStatus", "lastCancellation", "commands", "rangePresetsKm", "arrivalDistancesKm"],
   "properties": {
     "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "simulationTimeMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
@@ -44,9 +44,22 @@
           }
         }
       ]
-    }
+    },
+    "commands": { "type": "array", "items": { "$ref": "#/$defs/commandAvailability" } },
+    "rangePresetsKm": { "type": "array", "minItems": 1, "items": { "type": "number", "exclusiveMinimum": 0 } },
+    "arrivalDistancesKm": { "type": "array", "minItems": 1, "items": { "type": "number", "minimum": 0 } }
   },
   "$defs": {
+    "commandAvailability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "available", "unavailableReason"],
+      "properties": {
+        "command": { "type": "string" },
+        "available": { "type": "boolean" },
+        "unavailableReason": { "anyOf": [{ "type": "null" }, { "type": "string" }] }
+      }
+    },
     "entityId": { "type": "string", "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$" },
     "systemId": { "type": "string", "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
     "siteId": { "type": "string", "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
@@ -60,7 +73,7 @@
     "siteObject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "definitionId", "nameKey", "position", "velocity", "facingRadians", "radiusKm", "rangeFromPlayerKm", "player"],
+      "required": ["id", "kind", "definitionId", "nameKey", "position", "velocity", "facingRadians", "radiusKm", "rangeFromPlayerKm", "player", "commands"],
       "properties": {
         "id": { "type": "string" },
         "kind": { "enum": ["ship", "station"] },
@@ -71,7 +84,8 @@
         "facingRadians": { "type": "number" },
         "radiusKm": { "type": "number", "minimum": 0 },
         "rangeFromPlayerKm": { "type": "number", "minimum": 0 },
-        "player": { "type": "boolean" }
+        "player": { "type": "boolean" },
+        "commands": { "type": "array", "items": { "$ref": "#/$defs/commandAvailability" } }
       }
     },
     "movementOrder": {

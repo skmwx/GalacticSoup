@@ -4,13 +4,14 @@ import type { ClientGateway } from '@gateway';
 
 import { ActionIcon, actionById, useActionShortcuts, type ActionRunner } from '../actions';
 import { useTranslate } from '../localization';
+import { DeparturePanel } from './DeparturePanel';
 import { FittingPanel } from './FittingPanel';
 import { HangarPanel } from './HangarPanel';
 import { MarketPanel } from './MarketPanel';
 import { ServicesPanel } from './ServicesPanel';
 import { ShipPanel } from './ShipPanel';
 import styles from './Station.module.css';
-import type { StationData } from './useStationData';
+import type { PlayData } from '../frame/usePlayData';
 
 /**
  * The station hub (Functional Specification 10, 19.5).
@@ -28,7 +29,7 @@ import type { StationData } from './useStationData';
 
 export interface StationScreenProps {
   readonly gateway: ClientGateway;
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly runner: ActionRunner;
 }
 
@@ -38,7 +39,8 @@ type PanelId =
   | 'station.hangar'
   | 'station.fitting'
   | 'station.services'
-  | 'station.ship';
+  | 'station.ship'
+  | 'station.departure';
 
 const PANELS: readonly PanelId[] = [
   'station.hub',
@@ -47,6 +49,7 @@ const PANELS: readonly PanelId[] = [
   'station.fitting',
   'station.services',
   'station.ship',
+  'station.departure',
 ];
 
 /**
@@ -61,9 +64,10 @@ const REQUIRED_SERVICE: Readonly<Record<PanelId, string | null>> = {
   'station.fitting': 'fitting',
   'station.services': null,
   'station.ship': null,
+  'station.departure': null,
 };
 
-export function StationScreen({ gateway, station, runner }: StationScreenProps): JSX.Element {
+export function StationScreen({ gateway, data, runner }: StationScreenProps): JSX.Element {
   const translate = useTranslate();
   const [open, setOpen] = useState<PanelId>('station.hub');
 
@@ -83,7 +87,7 @@ export function StationScreen({ gateway, station, runner }: StationScreenProps):
     if (required === null) {
       return { available: true, reason: null };
     }
-    const entry = station.services?.services.find((service) => service.service === required);
+    const entry = data.services?.services.find((service) => service.service === required);
     return { available: entry?.available ?? false, reason: entry?.unavailableReason ?? null };
   };
 
@@ -91,9 +95,9 @@ export function StationScreen({ gateway, station, runner }: StationScreenProps):
     <section className={styles['station']} aria-labelledby="station-heading">
       <div>
         <h2 id="station-heading" className={styles['heading']}>
-          {station.services === null
+          {data.services === null
             ? translate('station.loading')
-            : translate(station.services.nameKey)}
+            : translate(data.services.nameKey)}
         </h2>
         <p className={styles['subheading']}>{translate('station.docked')}</p>
       </div>
@@ -123,14 +127,14 @@ export function StationScreen({ gateway, station, runner }: StationScreenProps):
         })}
       </nav>
 
-      {station.error === null ? null : (
+      {data.error === null ? null : (
         <p className={styles['error']} role="alert">
-          {translate(station.error.messageKey, station.error.params)}
+          {translate(data.error.messageKey, data.error.params)}
         </p>
       )}
-      {station.transportMessageKey === null ? null : (
+      {data.transportMessageKey === null ? null : (
         <p className={styles['error']} role="alert">
-          {translate(station.transportMessageKey)}
+          {translate(data.transportMessageKey)}
         </p>
       )}
 
@@ -167,16 +171,17 @@ export function StationScreen({ gateway, station, runner }: StationScreenProps):
       ) : null}
 
       {open === 'station.market' ? (
-        <MarketPanel gateway={gateway} station={station} runner={runner} />
+        <MarketPanel gateway={gateway} data={data} runner={runner} />
       ) : null}
       {open === 'station.hangar' ? (
-        <HangarPanel gateway={gateway} station={station} runner={runner} />
+        <HangarPanel gateway={gateway} data={data} runner={runner} />
       ) : null}
-      {open === 'station.fitting' ? <FittingPanel station={station} runner={runner} /> : null}
+      {open === 'station.fitting' ? <FittingPanel data={data} runner={runner} /> : null}
       {open === 'station.services' ? (
-        <ServicesPanel gateway={gateway} station={station} runner={runner} />
+        <ServicesPanel gateway={gateway} data={data} runner={runner} />
       ) : null}
-      {open === 'station.ship' ? <ShipPanel station={station} /> : null}
+      {open === 'station.ship' ? <ShipPanel data={data} /> : null}
+      {open === 'station.departure' ? <DeparturePanel data={data} runner={runner} /> : null}
     </section>
   );
 }

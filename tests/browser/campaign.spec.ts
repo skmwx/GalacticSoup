@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { SAVE_FORMAT_VERSION } from '@engine';
+
 /**
  * The campaign save cycle in a real browser
  * (MVP-AC-01; Functional Specification 3.3-3.4; Technical Specification 11).
@@ -136,7 +138,9 @@ test.describe('campaign persistence', () => {
 
   test('persists the starting fit through the real worker and IndexedDB [MVP-AC-02, FUNC-8.4, TECH-11.2]', async ({ page }) => {
     await startCampaign(page);
-    const savedAssets = () => page.evaluate(async () => new Promise<{
+    // The expected format comes from the engine rather than a literal, so a
+    // format change fails the phase that makes it instead of this test.
+    const savedAssets = () => page.evaluate(async (expectedFormat) => new Promise<{
       credits: number; activeShipId: string; ships: Record<string, { cargoInventoryId: string }>;
       stacks: Record<string, { quantity: number; inventoryId: string; state: { kind: string } }>;
       inventories: Record<string, { location: { kind: string } }>;
@@ -152,11 +156,12 @@ test.describe('campaign persistence', () => {
           const saves = records.map((record) => record.document);
           const latest = saves.sort((a, b) => b.sequence - a.sequence)[0]!;
           db.close();
-          if (latest.formatVersion !== 4) reject(new Error('Expected format 4'));
-          else resolve(latest.state.assets);
+          if (latest.formatVersion !== expectedFormat) {
+            reject(new Error(`Expected save format ${String(expectedFormat)}.`));
+          } else resolve(latest.state.assets);
         };
       };
-    }));
+    }), SAVE_FORMAT_VERSION);
     const before = await savedAssets();
     expect(before.credits).toBe(20000);
     expect(Object.keys(before.ships)).toEqual([before.activeShipId]);

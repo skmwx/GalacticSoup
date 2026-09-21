@@ -10,6 +10,20 @@ export interface DockPayload { readonly stationId: string }
 
 export interface VectorData { readonly x: number; readonly y: number }
 
+/**
+ * Whether one command may be issued against this subject right now
+ * (Technical Specification 12.3).
+ *
+ * `command` is the protocol request type the control would send, so the action
+ * registry, the command bar and the engine all name the same thing. The reason
+ * is the message key the command itself would refuse with.
+ */
+export interface CommandAvailabilityData {
+  readonly command: string;
+  readonly available: boolean;
+  readonly unavailableReason: string | null;
+}
+
 export interface SiteObjectData {
   readonly id: string;
   readonly kind: 'ship' | 'station';
@@ -21,6 +35,8 @@ export interface SiteObjectData {
   readonly radiusKm: number;
   readonly rangeFromPlayerKm: number;
   readonly player: boolean;
+  /** Orders that act on this object: approach, orbit, keep range and dock. */
+  readonly commands: readonly CommandAvailabilityData[];
 }
 
 export type MovementOrderData =
@@ -69,6 +85,12 @@ export interface SiteData {
   readonly movementOrder: MovementOrderData | null;
   readonly travelStatus: TravelStatusData | null;
   readonly lastCancellation: MovementCancellationData | null;
+  /** Orders that name no target: undock, move to point, stop and retreat. */
+  readonly commands: readonly CommandAvailabilityData[];
+  /** Authored distances a range order offers, ascending. */
+  readonly rangePresetsKm: readonly number[];
+  /** Authored distances a warp may arrive at, ascending. */
+  readonly arrivalDistancesKm: readonly number[];
 }
 
 export interface DestinationData {
@@ -81,8 +103,8 @@ export interface DestinationData {
   readonly selected: boolean;
   readonly current: boolean;
   readonly known: boolean;
-  readonly available: boolean;
-  readonly unavailableReason: string | null;
+  /** Choosing this encounter, and warping to its site. */
+  readonly commands: readonly CommandAvailabilityData[];
 }
 
 export interface DestinationsData {

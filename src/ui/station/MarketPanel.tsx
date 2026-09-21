@@ -11,7 +11,7 @@ import { formatCredits, formatQuantity } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import styles from './Station.module.css';
 import { TransactionDialog } from './TransactionDialog';
-import type { StationData } from './useStationData';
+import type { PlayData } from '../frame/usePlayData';
 import { useTransactionPreview } from './useTransactionPreview';
 
 /**
@@ -30,7 +30,7 @@ import { useTransactionPreview } from './useTransactionPreview';
 
 export interface MarketPanelProps {
   readonly gateway: ClientGateway;
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly runner: ActionRunner;
 }
 
@@ -45,7 +45,7 @@ interface SellIntent {
   readonly quantity: number;
 }
 
-export function MarketPanel({ gateway, station, runner }: MarketPanelProps): JSX.Element {
+export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const [filter, setFilter] = useState('');
@@ -55,8 +55,8 @@ export function MarketPanel({ gateway, station, runner }: MarketPanelProps): JSX
   const [comparedWith, setComparedWith] = useState<string | null>(null);
   const filterId = useId();
 
-  const stationId = station.services?.stationId ?? null;
-  const listings = station.market?.listings ?? [];
+  const stationId = data.services?.stationId ?? null;
+  const listings = data.market?.listings ?? [];
   const visible = useMemo(
     () =>
       listings.filter((listing) =>
@@ -65,11 +65,11 @@ export function MarketPanel({ gateway, station, runner }: MarketPanelProps): JSX
     [listings, filter, translate],
   );
 
-  const sellable = useMemo(() => localSellableStacks(station), [station]);
+  const sellable = useMemo(() => localSellableStacks(data), [data]);
 
   const buyPreview = useTransactionPreview({
     gateway,
-    station,
+    data,
     type: 'market.previewBuy',
     confirmType: 'market.confirmBuy',
     payload:
@@ -87,7 +87,7 @@ export function MarketPanel({ gateway, station, runner }: MarketPanelProps): JSX
 
   const sellPreview = useTransactionPreview({
     gateway,
-    station,
+    data,
     type: 'market.previewSell',
     confirmType: 'market.confirmSell',
     payload:
@@ -96,7 +96,7 @@ export function MarketPanel({ gateway, station, runner }: MarketPanelProps): JSX
         : { stationId, stackId: sell.stackId, quantity: sell.quantity },
   });
 
-  const unavailable = station.market?.unavailableReason ?? null;
+  const unavailable = data.market?.unavailableReason ?? null;
 
   return (
     <section className={styles['panel']} aria-labelledby="market-heading">
@@ -253,7 +253,7 @@ export function MarketPanel({ gateway, station, runner }: MarketPanelProps): JSX
 
       {buy === null ? null : (
         <BuyDialog
-          station={station}
+          data={data}
           intent={buy}
           onChange={setBuy}
           transaction={buyPreview}
@@ -271,7 +271,7 @@ export function MarketPanel({ gateway, station, runner }: MarketPanelProps): JSX
           actionId="market.sell"
           transaction={sellPreview}
           runner={runner}
-          walletCredits={station.assets?.credits ?? 0}
+          walletCredits={data.assets?.credits ?? 0}
           onClose={() => {
             setSell(null);
           }}
@@ -347,7 +347,7 @@ export function MarketPanel({ gateway, station, runner }: MarketPanelProps): JSX
 }
 
 interface BuyDialogProps {
-  readonly station: StationData;
+  readonly data: PlayData;
   readonly intent: BuyIntent;
   readonly onChange: (intent: BuyIntent) => void;
   readonly transaction: ReturnType<typeof useTransactionPreview>;
@@ -361,7 +361,7 @@ interface BuyDialogProps {
  * default, and the player may want it in the hold they are about to leave with.
  */
 function BuyDialog({
-  station,
+  data,
   intent,
   onChange,
   transaction,
@@ -374,10 +374,10 @@ function BuyDialog({
   // The field may be empty while the player is retyping it; the quantity the
   // preview asks about keeps its last usable value until it is not.
   const [text, setText] = useState(String(intent.quantity));
-  const cargo = station.assets?.inventories.find(
+  const cargo = data.assets?.inventories.find(
     (inventory) =>
       inventory.location.kind === 'cargo' &&
-      inventory.location.shipId === station.assets?.activeShipId,
+      inventory.location.shipId === data.assets?.activeShipId,
   );
 
   return (
@@ -387,7 +387,7 @@ function BuyDialog({
       actionId="market.buy"
       transaction={transaction}
       runner={runner}
-      walletCredits={station.assets?.credits ?? 0}
+      walletCredits={data.assets?.credits ?? 0}
       onClose={onClose}
       onCommitted={onClose}
     >
@@ -433,8 +433,8 @@ function BuyDialog({
 }
 
 /** Plain stacks in the local hangar or the docked ship's hold. */
-function localSellableStacks(station: StationData): readonly StackData[] {
-  const assets = station.assets;
+function localSellableStacks(data: PlayData): readonly StackData[] {
+  const assets = data.assets;
   if (assets === null) {
     return [];
   }

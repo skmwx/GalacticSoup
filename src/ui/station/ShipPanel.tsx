@@ -7,7 +7,7 @@ import { formatPercent, formatQuantity, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { Figure } from './Figure';
 import styles from './Station.module.css';
-import type { StationData } from './useStationData';
+import type { PlayData } from '../frame/usePlayData';
 
 /**
  * The active ship (Functional Specification 8.2, 8.5, 19.6).
@@ -22,12 +22,12 @@ import type { StationData } from './useStationData';
  */
 
 export interface ShipPanelProps {
-  readonly station: StationData;
+  readonly data: PlayData;
 }
 
-export function ShipPanel({ station }: ShipPanelProps): JSX.Element {
+export function ShipPanel({ data }: ShipPanelProps): JSX.Element {
   const translate = useTranslate();
-  const ship = station.ship;
+  const ship = data.ship;
 
   return (
     <section className={styles['panel']} aria-labelledby="ship-heading">
@@ -40,7 +40,7 @@ export function ShipPanel({ station }: ShipPanelProps): JSX.Element {
       ) : (
         <>
           <ShipSummary ship={ship} />
-          {station.undock === null ? null : <UndockStatus validity={station.undock} />}
+          {data.undock === null ? null : <UndockStatus validity={data.undock} />}
           <ShipAttributes ship={ship} />
         </>
       )}

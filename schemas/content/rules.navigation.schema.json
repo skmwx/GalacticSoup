@@ -23,7 +23,8 @@
         "undockDistanceKm",
         "stationRadiusKm",
         "separationSpeedKmPerSecond",
-        "arrivalDistancesKm"
+        "arrivalDistancesKm",
+        "rangePresetsKm"
       ],
       "properties": {
         "approachToleranceKm": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },
@@ -43,6 +44,13 @@
           "minItems": 1,
           "uniqueItems": true,
           "items": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber" }
+        },
+        "rangePresetsKm": {
+          "description": "Distances an approach, orbit or keep-range order offers.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" }
         }
       }
     },

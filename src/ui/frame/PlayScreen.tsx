@@ -3,23 +3,28 @@ import { useCallback, type JSX } from 'react';
 import type { CampaignSession, CampaignSessionState, ClientGateway } from '@gateway';
 
 import { useActionRunner } from '../actions';
-import { ContentTextProvider } from '../localization';
+import { ContentTextProvider, useTranslate } from '../localization';
+import { SpaceScreen } from '../space/SpaceScreen';
 import { StationScreen } from '../station/StationScreen';
-import { useStationData } from '../station/useStationData';
 import { CampaignFrame } from './CampaignFrame';
 import styles from './PlayScreen.module.css';
+import { usePlayData } from './usePlayData';
 import { useSimulationClock } from './useSimulationClock';
 
 /**
  * Everything the player sees while a campaign is open
- * (Functional Specification 19.1, 19.5).
+ * (Functional Specification 19.1, 19.2, 19.5).
  *
- * It composes the persistent frame, the authoritative clock and the station
- * surfaces, and it owns the two things they share: the action runner that
- * stops a command being submitted twice, and the store that re-reads the
- * projections a command invalidated.
+ * It composes the persistent frame, the authoritative clock and whichever of
+ * the two play surfaces the ship's location calls for, and it owns the two
+ * things they share: the action runner that stops a command being submitted
+ * twice, and the store that re-reads the projections a command invalidated.
  *
- * @implements FUNC-19.1, FUNC-19.5, TECH-12.1
+ * Which screen is shown is not a choice this component makes. It is the
+ * location the engine reported, so undocking and docking move the player
+ * between surfaces only once the engine has said they did.
+ *
+ * @implements FUNC-19.1, FUNC-19.2, FUNC-19.5, TECH-12.1
  */
 
 export interface PlayScreenProps {
@@ -29,23 +34,25 @@ export interface PlayScreenProps {
 }
 
 export function PlayScreen({ gateway, session, sessionState }: PlayScreenProps): JSX.Element {
+  const translate = useTranslate();
   const runner = useActionRunner();
   const campaignId = sessionState.session?.campaign?.campaignId ?? null;
-  const station = useStationData({ gateway, session, campaignId });
+  const data = usePlayData({ gateway, session, campaignId });
+  const paused = sessionState.session?.time.paused ?? true;
 
   const onPlayTime = useCallback(
     (elapsedRealMs: number) => {
-      session.notePlayTime(elapsedRealMs, sessionState.session?.time.paused ?? true);
+      session.notePlayTime(elapsedRealMs, paused);
     },
-    [session, sessionState.session?.time.paused],
+    [session, paused],
   );
 
   const clock = useSimulationClock({
     gateway,
     active: campaignId !== null,
     initialSimulationTimeMs: sessionState.frame?.simulationTimeMs ?? 0,
-    paused: sessionState.session?.time.paused ?? true,
-    onInvalidations: station.applyInvalidations,
+    paused,
+    onInvalidations: data.applyInvalidations,
     onPlayTime,
   });
 
@@ -55,11 +62,22 @@ export function PlayScreen({ gateway, session, sessionState }: PlayScreenProps):
         <CampaignFrame
           session={session}
           sessionState={sessionState}
-          station={station}
+          data={data}
           runner={runner}
           simulationTimeMs={clock.simulationTimeMs}
         />
-        <StationScreen gateway={gateway} station={station} runner={runner} />
+        {data.location === null ? (
+          <p role="status">{translate('play.loading')}</p>
+        ) : data.docked ? (
+          <StationScreen gateway={gateway} data={data} runner={runner} />
+        ) : (
+          <SpaceScreen
+            data={data}
+            runner={runner}
+            simulationTimeMs={clock.simulationTimeMs}
+            paused={paused}
+          />
+        )}
       </div>
     </ContentTextProvider>
   );

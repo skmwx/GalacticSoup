@@ -50,6 +50,8 @@ export interface NavigationRules {
   readonly stationRadiusKm: number;
   readonly separationSpeedKmPerSecond: number;
   readonly arrivalDistancesKm: readonly number[];
+  /** Distances an approach, orbit or keep-range order offers, ascending. */
+  readonly rangePresetsKm: readonly number[];
 }
 
 export interface CombatRules {

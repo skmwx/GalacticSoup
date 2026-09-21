@@ -53,6 +53,25 @@ describe('message catalogue', () => {
     expect(Object.prototype.hasOwnProperty.call(catalog, key)).toBe(true);
   });
 
+  /**
+   * Keys the space view builds from a projected value cannot be found by
+   * reading the source for literals, so every member of each family is listed
+   * here (Technical Specification 12.5).
+   */
+  it('covers every key the space view composes at runtime [TECH-12.5, FUNC-19.2]', () => {
+    const required = [
+      ...['ship', 'station'].map((kind) => `space.kind.${kind}`),
+      ...['approach', 'orbit', 'keepRange', 'moveToPoint', 'stop'].map(
+        (kind) => `space.order.${kind}`,
+      ),
+      ...['aligning', 'preparing', 'transit'].map((phase) => `space.travel.warp.${phase}`),
+      ...['approaching', 'preparing'].map((phase) => `space.travel.dock.${phase}`),
+    ];
+
+    const missing = required.filter((key) => !createLocalizer({ locale: 'en', catalog }).has(key));
+    expect(missing).toEqual([]);
+  });
+
   it('has no empty or whitespace-only message [TECH-12.5]', () => {
     const empty = Object.entries(catalog)
       .filter(([, template]) => template.trim().length === 0)
