@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/encounter.state.data.schema.json",
+  "title": "EncounterData",
+  "description": "The authored encounter the player is inside, its opponents, the wrecks it left and the last attempt (Functional Specification 9.10-9.11).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "revision",
+    "simulationTimeMs",
+    "instance",
+    "wrecks",
+    "lastOutcome"
+  ],
+  "properties": {
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "simulationTimeMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "instance": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/encounterInstance"
+        }
+      ]
+    },
+    "wrecks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/wreck"
+      }
+    },
+    "lastOutcome": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/encounterOutcome"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "entityId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+    },
+    "vector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
+    },
+    "commandAvailability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "available",
+        "unavailableReason"
+      ],
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        }
+      }
+    },
+    "encounterNpc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shipId",
+        "profileId",
+        "nameKey",
+        "role",
+        "hullId",
+        "spawnOrdinal",
+        "bountyCredits",
+        "destroyed",
+        "destroyedAtMs",
+        "rangeFromPlayerKm"
+      ],
+      "properties": {
+        "shipId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "profileId": {
+          "type": "string"
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "hullId": {
+          "type": "string"
+        },
+        "spawnOrdinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "bountyCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "destroyed": {
+          "type": "boolean"
+        },
+        "destroyedAtMs": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          ]
+        },
+        "rangeFromPlayerKm": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "number",
+              "minimum": 0
+            }
+          ]
+        }
+      }
+    },
+    "encounterInstance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instanceId",
+        "encounterId",
+        "nameKey",
+        "descriptionKey",
+        "rewardSummaryKey",
+        "tier",
+        "siteId",
+        "status",
+        "startedAtMs",
+        "resolvedAtMs",
+        "objective",
+        "bountyCreditsPaid",
+        "npcs"
+      ],
+      "properties": {
+        "instanceId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "encounterId": {
+          "type": "string"
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "descriptionKey": {
+          "type": "string"
+        },
+        "rewardSummaryKey": {
+          "type": "string"
+        },
+        "tier": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "siteId": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "completed",
+            "abandoned"
+          ]
+        },
+        "startedAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "resolvedAtMs": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          ]
+        },
+        "objective": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "destroyed",
+            "required",
+            "complete"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "destroyed": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "required": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "complete": {
+              "type": "boolean"
+            }
+          }
+        },
+        "bountyCreditsPaid": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "npcs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/encounterNpc"
+          }
+        }
+      }
+    },
+    "wreck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wreckId",
+        "nameKey",
+        "hullId",
+        "position",
+        "rangeFromPlayerKm",
+        "expiresAtMs",
+        "remainingSeconds",
+        "itemCount",
+        "commands"
+      ],
+      "properties": {
+        "wreckId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "hullId": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/vector"
+        },
+        "rangeFromPlayerKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "expiresAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "remainingSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "itemCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/commandAvailability"
+          }
+        }
+      }
+    },
+    "encounterOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "encounterId",
+        "nameKey",
+        "status",
+        "resolvedAtMs",
+        "bountyCreditsPaid",
+        "npcsDestroyed",
+        "npcsTotal"
+      ],
+      "properties": {
+        "encounterId": {
+          "type": "string"
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "abandoned"
+          ]
+        },
+        "resolvedAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "bountyCreditsPaid": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "npcsDestroyed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "npcsTotal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    }
+  }
+}

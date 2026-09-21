@@ -44,6 +44,7 @@ function location(value: unknown): boolean {
     case 'cargo': case 'fitting': return shape(value, ['kind', 'shipId']) && isEntityId(value['shipId']);
     case 'reserve': return shape(value, ['kind', 'sourceInventoryId', 'ownerId']) &&
       isEntityId(value['sourceInventoryId']) && isEntityId(value['ownerId']);
+    case 'wreck': return shape(value, ['kind', 'wreckId']) && isEntityId(value['wreckId']);
     default: return false;
   }
 }
@@ -89,8 +90,9 @@ export function isAssetState(value: unknown): value is AssetState {
   const ships = value['ships'], inventories = value['inventories'], stacks = value['stacks'];
   if (!record(ships) || !record(inventories) || !record(stacks)) return false;
   if (![ships, inventories, stacks].every((map) => Object.keys(map).every(isEntityId))) return false;
-  if (!Object.values(ships).every((ship) => shape(ship, ['id', 'hullId', 'cargoInventoryId', 'fittingInventoryId', 'location', 'condition', 'insurance']) &&
-    isEntityId(ship['id']) && definition(ship['hullId'], 'hull') && isEntityId(ship['cargoInventoryId']) &&
+  if (!Object.values(ships).every((ship) => shape(ship, ['id', 'owner', 'hullId', 'cargoInventoryId', 'fittingInventoryId', 'location', 'condition', 'insurance']) &&
+    isEntityId(ship['id']) && (ship['owner'] === 'player' || ship['owner'] === 'npc') &&
+    definition(ship['hullId'], 'hull') && isEntityId(ship['cargoInventoryId']) &&
     isEntityId(ship['fittingInventoryId']) && shipLocation(ship['location']) && condition(ship['condition']) &&
     insurance(ship['insurance']))) return false;
   if (!Object.values(inventories).every((inv) => shape(inv, ['id', 'location', 'capacity']) &&
@@ -123,7 +125,8 @@ export function validateAssets(state: CampaignState, add: Report, content?: Cont
     }
   }
   const active = a.ships[a.activeShipId];
-  if (active === undefined || canonicalJson(active.location) !== canonicalJson(a.location)) fail('activeShipId', 'One active ship must share the campaign location.');
+  if (active === undefined || active.owner !== 'player' ||
+      canonicalJson(active.location) !== canonicalJson(a.location)) fail('activeShipId', 'One active player ship must share the campaign location.');
   const hangars = new Set<string>();
   for (const inv of Object.values(a.inventories)) {
     const loc = inv.location, cap = inv.capacity;
@@ -135,10 +138,12 @@ export function validateAssets(state: CampaignState, add: Report, content?: Cont
       if (cap.kind !== 'limited' || a.ships[loc.shipId]?.cargoInventoryId !== inv.id) fail(`inventories.${inv.id}`, 'Cargo must belong to exactly one ship.');
     } else if (loc.kind === 'fitting') {
       if (cap.kind !== 'unlimited' || a.ships[loc.shipId]?.fittingInventoryId !== inv.id) fail(`inventories.${inv.id}`, 'A fitting store must belong to exactly one ship.');
-    } else {
+    } else if (loc.kind === 'reserve') {
       const source = a.inventories[loc.sourceInventoryId];
       if (!a.ships[loc.ownerId] || !source || source.location.kind === 'reserve' ||
           cap.kind !== 'shared' || cap.inventoryId !== loc.sourceInventoryId) fail(`inventories.${inv.id}`, 'Reserve owner, source or capacity is invalid.');
+    } else if (cap.kind !== 'unlimited' || state.encounter.wrecks[loc.wreckId]?.inventoryId !== inv.id) {
+      fail(`inventories.${inv.id}`, 'A wreck store must belong to exactly one unexpired wreck.');
     }
   }
   for (const ship of Object.values(a.ships)) {
@@ -147,7 +152,11 @@ export function validateAssets(state: CampaignState, add: Report, content?: Cont
     const fitting = a.inventories[ship.fittingInventoryId];
     if (fitting?.location.kind !== 'fitting' || fitting.location.shipId !== ship.id) fail(`ships.${ship.id}`, 'Ship fitting store does not resolve.');
     if (content) {
-      if (!content.hull(ship.hullId)?.playerUsable) fail(`ships.${ship.id}.hullId`, 'Hull is not player-usable.');
+      const hull = content.hull(ship.hullId);
+      if (hull === undefined) fail(`ships.${ship.id}.hullId`, 'Hull does not resolve.');
+      // Only the player is held to the player-usable catalogue; an opponent
+      // flies an authored NPC hull (Functional Specification 8.1, 9.10).
+      else if (ship.owner === 'player' && !hull.playerUsable) fail(`ships.${ship.id}.hullId`, 'Hull is not player-usable.');
       const system = content.system(ship.location.systemId);
       if (system === undefined) {
         fail(`ships.${ship.id}.location`, 'System does not resolve.');

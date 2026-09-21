@@ -1,6 +1,9 @@
 import type { CampaignState, CommandRefusal, NavigationRuleInput } from '@engine/domain';
 import {
+  completionCount,
   distance,
+  movementOrderOf,
+  possibleLoot,
   dockRefusal,
   movementRefusal,
   retreatRefusal,
@@ -8,11 +11,13 @@ import {
   targetOrderRefusal,
   undockRefusal,
   warpRefusal,
+  wreckAccessRefusal,
 } from '@engine/domain';
 import type { ContentRepository } from '@engine/ports';
 import type {
   CommandAvailabilityData,
   DestinationData,
+  DestinationSpawnData,
   DestinationsData,
   SiteData,
   SiteObjectData,
@@ -35,6 +40,9 @@ import { deepClone, deepFreeze } from '@shared';
  */
 export function siteProjection(state: CampaignState, content: ContentRepository): SiteData {
   const rules: NavigationRuleInput = { state, content };
+  // The site view carries the player's own standing order; an opponent's is
+  // its own business (Technical Specification 10.3).
+  const playerOrder = movementOrderOf(state, state.assets.activeShipId);
   const runtime = state.navigation.currentSite;
   const player = runtime?.objects[state.assets.activeShipId];
   const siteDefinition = runtime === null
@@ -72,7 +80,7 @@ export function siteProjection(state: CampaignState, content: ContentRepository)
                 commands: objectCommands(rules, object.id, object.kind),
               })),
           },
-    movementOrder: state.navigation.movement === null ? null : deepClone(state.navigation.movement),
+    movementOrder: playerOrder === null ? null : deepClone(playerOrder),
     travelStatus: travelProjection(state),
     lastCancellation:
       state.navigation.lastCancellation === null ? null : { ...state.navigation.lastCancellation },
@@ -101,6 +109,22 @@ export function destinationsProjection(
       selected: state.navigation.selectedEncounterId === encounter.id,
       current: location.kind === 'site' && location.siteId === encounter.siteId,
       known: known.has(encounter.siteId),
+      spawns: encounter.spawns.map((spawn): DestinationSpawnData => {
+        const profile = content.npcProfile(spawn.npcProfileId);
+        return {
+          npcProfileId: spawn.npcProfileId,
+          nameKey: profile?.nameKey ?? '',
+          role: profile?.role ?? '',
+          count: spawn.count,
+          bountyCredits: profile?.bountyCredits ?? 0,
+        };
+      }),
+      totalBountyCredits: encounter.spawns.reduce(
+        (total, spawn) => total + (content.npcProfile(spawn.npcProfileId)?.bountyCredits ?? 0) * spawn.count,
+        0,
+      ),
+      possibleLootItemIds: disclosedLoot(content, encounter.spawns),
+      completionCount: completionCount(state, encounter.id),
       commands: [
         availability(
           'navigation.selectDestination',
@@ -114,6 +138,26 @@ export function destinationsProjection(
     selectedEncounterId: state.navigation.selectedEncounterId,
     destinations,
   });
+}
+
+/**
+ * Every item the opponents of one encounter can drop, in stable order
+ * (MVP Scope 4.2).
+ *
+ * The summary is disclosed before entry; it does not replace the reward
+ * timing and ownership rules of Functional Specification 9.11.
+ */
+function disclosedLoot(
+  content: ContentRepository,
+  spawns: readonly { readonly npcProfileId: string }[],
+): readonly string[] {
+  const items = new Set<string>();
+  for (const spawn of spawns) {
+    const profile = content.npcProfile(spawn.npcProfileId);
+    const table = profile === undefined ? undefined : content.lootTable(profile.lootTableId);
+    if (table !== undefined) for (const item of possibleLoot(table)) items.add(item);
+  }
+  return [...items].sort();
 }
 
 /** The orders that do not name a target object (Functional Specification 7.1). */
@@ -138,14 +182,20 @@ function siteCommands(rules: NavigationRuleInput): readonly CommandAvailabilityD
 function objectCommands(
   rules: NavigationRuleInput,
   objectId: string,
-  kind: 'ship' | 'station',
+  kind: 'ship' | 'station' | 'wreck',
 ): readonly CommandAvailabilityData[] {
   const target = targetOrderRefusal(rules, objectId);
+  const wreckRefusal = kind === 'wreck' ? wreckAccessRefusal(rules, objectId) : 'wreckNotFound';
   return [
     availability('movement.approach', target),
     availability('movement.orbit', target),
     availability('movement.keepRange', target),
     availability('navigation.dock', kind === 'station' ? dockRefusal(rules, objectId) : 'dockUnavailable'),
+    {
+      command: 'loot.take',
+      available: wreckRefusal === null,
+      unavailableReason: wreckRefusal === null ? null : ruleViolationMessageKey(wreckRefusal),
+    },
     ...objectLockCommands(rules.state, rules.content, objectId),
   ];
 }

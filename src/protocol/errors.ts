@@ -129,6 +129,9 @@ export const RULE_VIOLATION_REASONS = [
   'moduleNotActive',
   'moduleSlotUnavailable',
   'shipDestroyed',
+  'lootUnavailable',
+  'wreckNotFound',
+  'wreckOutOfRange',
   'noResumableSave',
 ] as const;
 

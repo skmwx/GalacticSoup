@@ -52,6 +52,7 @@ let validateTransactionPreviewData: Validator;
 let validateNavigationSiteData: Validator;
 let validateNavigationDestinationsData: Validator;
 let validateCombatData: Validator;
+let validateEncounterData: Validator;
 
 const content = shippedContent();
 
@@ -113,6 +114,9 @@ beforeAll(() => {
     loadSchema('navigation.destinations.data.schema.json'),
   ) as Validator;
   validateCombatData = ajv.compile(loadSchema('combat.state.data.schema.json')) as Validator;
+  validateEncounterData = ajv.compile(
+    loadSchema('encounter.state.data.schema.json'),
+  ) as Validator;
 
   const saves = new AjvConstructor({ allErrors: true, strict: true });
   saves.addSchema(loadSaveSchema('campaign-state.schema.json'));
@@ -597,6 +601,35 @@ describe('campaign protocol schema parity', () => {
     expect(validateCombatData(dataOf(flying))).toBe(true);
   });
 
+  it('publishes schemas for the encounter and wreck projections [TECH-7.1, TECH-10.6, FUNC-9.11]', async () => {
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
+    await ask(
+      host,
+      'campaign.create',
+      { displayName: 'Vela', seed, createdAtRealMs: 1_700_000_000_000 },
+      'req-create-encounter',
+    );
+    const dataOf = (response: unknown): unknown => (response as { data: unknown }).data;
+    const docked = await ask(host, 'encounter.state', EMPTY_PAYLOAD, 'req-encounter-docked');
+    expect(validateResponse(docked)).toBe(true);
+    expect(validateEncounterData(dataOf(docked))).toBe(true);
+
+    // In a site, with a running instance and a wreck to read.
+    await ask(host, 'ship.undock', EMPTY_PAYLOAD, 'req-undock-encounter');
+    const site = content.requireEncounter('encounter.borrell.pirate-scout' as never).siteId;
+    await ask(host, 'navigation.warp', { destinationSiteId: site, arrivalDistanceKm: 0 }, 'req-warp-encounter');
+    await ask(host, 'time.set', { paused: false, rate: 1 }, 'req-time-encounter');
+    for (let step = 0; step < 400; step += 1) {
+      await ask(host, 'time.advance', { elapsedRealMs: 250 }, `req-advance-${String(step)}`);
+      const current = await ask(host, 'encounter.state', EMPTY_PAYLOAD, `req-encounter-${String(step)}`);
+      if ((dataOf(current) as { instance: unknown }).instance !== null) {
+        expect(validateResponse(current)).toBe(true);
+        expect(validateEncounterData(dataOf(current))).toBe(true);
+        break;
+      }
+    }
+  }, 30_000);
+
   it('publishes a schema for every save response shape [TECH-7.1, TECH-11.3]', async () => {
     const host = createEngineHost({ content, saves: createMemorySaveStore() });
 
@@ -642,7 +675,7 @@ describe('campaign protocol schema parity', () => {
   });
 
   it('validates the golden save against the published save schema [TECH-11.2, TECH-17]', () => {
-    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-7.json');
+    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-8.json');
 
     expect(validateSaveEnvelope(JSON.parse(readFileSync(file, 'utf8')))).toBe(true);
   });

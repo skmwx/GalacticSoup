@@ -487,7 +487,7 @@ describe('leaving the site', () => {
 
     // The docking state machine is the shipped one: approaching, then the
     // scheduled completion that unloads the site.
-    fixture.draft.navigation.movement = null;
+    delete fixture.draft.navigation.movementOrders[fixture.playerId];
     fixture.draft.navigation.travel = {
       kind: 'dock',
       phase: 'approaching',

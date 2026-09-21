@@ -14,7 +14,8 @@ export type InventoryLocationData =
   | { readonly kind: 'hangar'; readonly stationId: string }
   | { readonly kind: 'cargo'; readonly shipId: string }
   | { readonly kind: 'fitting'; readonly shipId: string }
-  | { readonly kind: 'reserve'; readonly sourceInventoryId: string; readonly ownerId: string };
+  | { readonly kind: 'reserve'; readonly sourceInventoryId: string; readonly ownerId: string }
+  | { readonly kind: 'wreck'; readonly wreckId: string };
 /** Which slot a fitted module or a loaded charge occupies. */
 export interface SlotRefData { readonly kind: string; readonly index: number }
 export type StackStateData =
@@ -40,7 +41,7 @@ export interface InventoryData {
   readonly freeCubicDecimetres: number | null; readonly stacks: readonly StackData[];
 }
 export interface ShipAssetData {
-  readonly id: string; readonly hullId: string; readonly nameKey: string;
+  readonly id: string; readonly owner: string; readonly hullId: string; readonly nameKey: string;
   readonly active: boolean; readonly location: LocationData; readonly cargoInventoryId: string;
   readonly fittingInventoryId: string;
 }

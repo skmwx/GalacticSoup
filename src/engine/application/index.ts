@@ -10,6 +10,7 @@ export {
   handleResumeCampaign,
   handleSetTime,
   INSTALLED_BOUNDARY_RESOLVERS,
+  INSTALLED_CONTINUOUS_SYSTEMS,
 } from './commands';
 export type { ResumeCampaignInput } from './commands';
 export { createEngineHost } from './engineHost';

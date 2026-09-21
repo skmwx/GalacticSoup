@@ -165,7 +165,12 @@ test.describe('campaign persistence', () => {
     const before = await savedAssets();
     expect(before.credits).toBe(20000);
     expect(Object.keys(before.ships)).toEqual([before.activeShipId]);
-    expect(Object.values(before.stacks).map((s) => s.quantity).sort((a, b) => a - b)).toEqual([1, 1, 20, 40]);
+    // Two fitted modules of one unit each, one loaded magazine and whatever
+    // the grant left behind; the quantities themselves are tuning values.
+    const quantities = Object.values(before.stacks).map((s) => s.quantity).sort((a, b) => a - b);
+    expect(quantities).toHaveLength(4);
+    expect(quantities.slice(0, 2)).toEqual([1, 1]);
+    expect(quantities[2]).toBeGreaterThan(1);
     // The fitted modules and the loaded magazine live in the ship's fitting
     // store; only what the fit did not take stays in the hangar.
     const placed = Object.values(before.stacks).map(

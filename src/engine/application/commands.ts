@@ -1,6 +1,7 @@
 import { createCampaign, type CampaignState } from '@engine/domain';
 import {
   advanceCombat,
+  advanceEncounter,
   advanceNavigation,
   advanceTime,
   DOCK_COMPLETE_BOUNDARY,
@@ -12,14 +13,19 @@ import {
   resolveReloadComplete,
   resolveWeaponCycle,
   WEAPON_CYCLE_BOUNDARY,
+  NPC_DECISION_BOUNDARY,
   resolveDockComplete,
   resolveEconomyHour,
+  resolveNpcDecision,
+  resolveWreckExpiry,
+  WRECK_EXPIRE_BOUNDARY,
   resolveWarpArrival,
   resolveWarpPrepared,
   scheduleBoundary,
   WARP_ARRIVAL_BOUNDARY,
   WARP_PREPARED_BOUNDARY,
   type BoundaryResolvers,
+  type ContinuousSystem,
 } from '@engine/simulation';
 import type { AdvanceTimePayload, CreateCampaignPayload, SetTimePayload } from '@protocol';
 
@@ -58,7 +64,20 @@ export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {
   [MODULE_CYCLE_BOUNDARY]: resolveModuleCycle,
   [WEAPON_CYCLE_BOUNDARY]: resolveWeaponCycle,
   [RELOAD_COMPLETE_BOUNDARY]: resolveReloadComplete,
+  [NPC_DECISION_BOUNDARY]: resolveNpcDecision,
+  [WRECK_EXPIRE_BOUNDARY]: resolveWreckExpiry,
 };
+
+/**
+ * Continuously integrated systems, in the order Technical Specification 9.2
+ * requires: movement, then combat, then the encounter transitions the last
+ * completion batch caused.
+ */
+export const INSTALLED_CONTINUOUS_SYSTEMS: readonly ContinuousSystem[] = [
+  advanceNavigation,
+  advanceCombat,
+  advanceEncounter,
+];
 
 /**
  * The internal payload of `campaign.resume`. The protocol request carries no
@@ -262,7 +281,7 @@ export function handleAdvanceTime(
     transaction.simulation(),
     payload.elapsedRealMs,
     INSTALLED_BOUNDARY_RESOLVERS,
-    [advanceNavigation, advanceCombat],
+    INSTALLED_CONTINUOUS_SYSTEMS,
   );
 
   return outcome.changed ? APPLIED : UNCHANGED;

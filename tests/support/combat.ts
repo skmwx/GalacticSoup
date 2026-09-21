@@ -159,7 +159,7 @@ export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture
     0,
   );
   draft.assets.location = location;
-  draft.navigation.movement = { kind: 'stop' };
+  draft.navigation.movementOrders[playerId] = { kind: 'stop' };
 
   const shipEntry = draft.assets.ships[playerId];
   if (shipEntry !== undefined) shipEntry.location = location;
@@ -227,6 +227,7 @@ function createTargetShip(
   const fitting = service.create({ kind: 'fitting', shipId }, { kind: 'unlimited' });
   draft.assets.ships[shipId] = {
     id: shipId,
+    owner: 'player',
     hullId: hull.id,
     cargoInventoryId: cargo,
     fittingInventoryId: fitting,

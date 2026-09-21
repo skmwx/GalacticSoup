@@ -60,6 +60,14 @@ export const DOMAIN_EVENT_KINDS = [
   'combat.moduleCycleStarted',
   'combat.moduleCycleCompleted',
   'combat.shipDestroyed',
+  'encounter.started',
+  'encounter.opponentDestroyed',
+  'encounter.bountyPaid',
+  'encounter.completed',
+  'encounter.abandoned',
+  'encounter.wreckCreated',
+  'encounter.wreckExpired',
+  'encounter.lootTaken',
 ] as const;
 
 export type DomainEventKind = (typeof DOMAIN_EVENT_KINDS)[number];
@@ -81,7 +89,7 @@ export interface DomainEvent {
 export const PROJECTION_TOPICS = [
   'session', 'frame', 'saves', 'assets', 'inventory', 'wallet', 'ship', 'fitting',
   'station', 'market', 'repair', 'resupply', 'insurance',
-  'navigation', 'site', 'destinations', 'combat',
+  'navigation', 'site', 'destinations', 'combat', 'encounter',
 ] as const;
 
 export type ProjectionTopic = (typeof PROJECTION_TOPICS)[number];

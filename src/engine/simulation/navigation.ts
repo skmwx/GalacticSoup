@@ -1,6 +1,10 @@
 import {
   activeSiteObject,
   activeAttributeConditions,
+  isDestroyed,
+  movementOrderOf,
+  setMovementOrder,
+  siteShipIds,
   angularDifference,
   attributeValue,
   deterministicDirection,
@@ -23,6 +27,7 @@ import {
 } from '@engine/domain';
 import type { SchedulerEntry } from '@engine/domain';
 import { clearCombat } from './combat';
+import { abandonEncounter, instantiateEncounter, materializeWrecks } from './encounter';
 import type { SimulationContext } from './context';
 import { cancelBoundary, scheduleBoundary } from './scheduler';
 
@@ -47,8 +52,17 @@ export function advanceNavigation(
   const actor = activeSiteObject(draft);
   if (site === null || actor === null || draft.assets.location.kind !== 'site') return;
 
-  const attributes = movementAttributes(context, draft);
+  const attributes = movementAttributes(context, draft, draft.assets.activeShipId);
   const elapsedSeconds = (toTimeMs - fromTimeMs) / 1000;
+
+  // Every ship present is integrated, not only the player's: an opponent
+  // commands its ship with the same orders and the same controllers
+  // (Technical Specification 10.3).
+  for (const shipId of siteShipIds(draft)) {
+    if (shipId === draft.assets.activeShipId) continue;
+    integrateShip(context, shipId, elapsedSeconds);
+  }
+
   let control = null;
   const travel = draft.navigation.travel;
 
@@ -74,17 +88,19 @@ export function advanceNavigation(
         context.content.rules.navigation,
       );
     }
-  } else if (draft.navigation.movement !== null) {
-    const order = draft.navigation.movement;
-    const target =
-      order.kind === 'approach' || order.kind === 'orbit' || order.kind === 'keepRange'
-        ? site.objects[order.targetId] ?? null
-        : null;
-    if ((order.kind === 'approach' || order.kind === 'orbit' || order.kind === 'keepRange') && target === null) {
-      cancelForMissingTarget(context, order.kind);
-      control = movementControl({ kind: 'stop' }, actor, null, attributes, context.content.rules.navigation);
-    } else {
-      control = movementControl(order, actor, target, attributes, context.content.rules.navigation);
+  } else {
+    const order = movementOrderOf(draft, draft.assets.activeShipId);
+    if (order !== null) {
+      const target =
+        order.kind === 'approach' || order.kind === 'orbit' || order.kind === 'keepRange'
+          ? site.objects[order.targetId] ?? null
+          : null;
+      if ((order.kind === 'approach' || order.kind === 'orbit' || order.kind === 'keepRange') && target === null) {
+        cancelForMissingTarget(context, order.kind);
+        control = movementControl({ kind: 'stop' }, actor, null, attributes, context.content.rules.navigation);
+      } else {
+        control = movementControl(order, actor, target, attributes, context.content.rules.navigation);
+      }
     }
   }
 
@@ -112,7 +128,7 @@ export function resolveWarpPrepared(context: SimulationContext, entry: Scheduler
     draft.assets.location.kind !== 'site'
   ) return;
 
-  const maximumSpeed = movementAttributes(context, draft).maxSpeedKmPerSecond;
+  const maximumSpeed = movementAttributes(context, draft, draft.assets.activeShipId).maxSpeedKmPerSecond;
   if (!warpReady(context, actor, travel, maximumSpeed)) {
     draft.navigation.travel = { ...travel, phase: 'aligning', boundaryEntryId: null };
     return;
@@ -138,12 +154,14 @@ export function resolveWarpPrepared(context: SimulationContext, entry: Scheduler
     context.content.rules.time.simulationQuantumMs,
     Math.ceil((travel.distanceKm / warpSpeed) * 1000),
   );
+  // Leaving the site ends the instance it held (Functional Specification 9.11).
+  abandonEncounter(context);
   clearCombat(context, ship.id);
   draft.assets.location = location;
   ship.location = location;
   draft.assets.version += 1;
   draft.navigation.currentSite = null;
-  draft.navigation.movement = null;
+  draft.navigation.movementOrders = {};
   const arrival = scheduleBoundary(draft, {
     kind: WARP_ARRIVAL_BOUNDARY,
     dueAtMs: draft.time.simulationTimeMs + durationMs,
@@ -193,7 +211,9 @@ export function resolveWarpArrival(context: SimulationContext, entry: SchedulerE
   ship.location = siteLocation;
   draft.assets.version += 1;
   draft.navigation.travel = null;
-  draft.navigation.movement = { kind: 'stop' };
+  setMovementOrder(draft, ship.id, { kind: 'stop' });
+  materializeWrecks(context);
+  instantiateEncounter(context, travel.destinationSiteId);
   navigationChanged(context, true);
   context.publish('navigation.warpArrived', { siteId: travel.destinationSiteId });
   context.requestAutosave();
@@ -223,6 +243,7 @@ export function resolveDockComplete(context: SimulationContext, entry: Scheduler
   }
   const ship = draft.assets.ships[draft.assets.activeShipId];
   if (ship === undefined) return;
+  abandonEncounter(context);
   clearCombat(context, ship.id);
   const docked = { kind: 'station' as const, stationId: station.id, systemId: station.systemId };
   draft.assets.location = docked;
@@ -230,7 +251,7 @@ export function resolveDockComplete(context: SimulationContext, entry: Scheduler
   draft.assets.version += 1;
   draft.navigation.currentSite = null;
   draft.navigation.travel = null;
-  draft.navigation.movement = null;
+  draft.navigation.movementOrders = {};
   draft.navigation.lastCancellation = {
     orderKind: 'dock',
     reason: 'docked',
@@ -292,9 +313,9 @@ function warpReady(
   );
 }
 
-function movementAttributes(context: SimulationContext, draft: CampaignDraft) {
-  const ship = draft.assets.ships[draft.assets.activeShipId];
-  if (ship === undefined) throw new TypeError('The active ship does not exist.');
+function movementAttributes(context: SimulationContext, draft: CampaignDraft, shipId: string) {
+  const ship = draft.assets.ships[shipId];
+  if (ship === undefined) throw new TypeError(`Ship "${shipId}" does not exist.`);
   const fit = shipFit(draft.assets, ship.id);
   const derived = deriveShipAttributes({
     hull: context.content.requireHull(ship.hullId),
@@ -308,6 +329,45 @@ function movementAttributes(context: SimulationContext, draft: CampaignDraft) {
     brakingKmPerSecondSquared: attributeValue(derived, 'brakingKmPerSecondSquared'),
     turnRateRadiansPerSecond: attributeValue(derived, 'turnRateRadiansPerSecond'),
   };
+}
+
+/**
+ * Moves one ship other than the player's under its own standing order.
+ *
+ * A destroyed ship drifts: it keeps its velocity and stops steering, which is
+ * what a wreck-to-be should do until the encounter replaces it.
+ */
+function integrateShip(context: SimulationContext, shipId: string, elapsedSeconds: number): void {
+  const draft = context.draft;
+  const site = draft.navigation.currentSite;
+  const object = site?.objects[shipId];
+  if (site === null || object === undefined || draft.assets.ships[shipId] === undefined) return;
+
+  const attributes = movementAttributes(context, draft, shipId);
+  const order = isDestroyed(draft, shipId) ? { kind: 'stop' as const } : movementOrderOf(draft, shipId);
+  if (order === null) return;
+
+  const target =
+    order.kind === 'approach' || order.kind === 'orbit' || order.kind === 'keepRange'
+      ? site.objects[order.targetId] ?? null
+      : null;
+  // Functional Specification 22.5: a dependent order stops safely when its
+  // target disappears. An opponent's cancellation is not reported to the
+  // player, whose own cancellations are what the interface explains.
+  const missingTarget =
+    (order.kind === 'approach' || order.kind === 'orbit' || order.kind === 'keepRange') &&
+    target === null;
+  if (missingTarget) setMovementOrder(draft, shipId, { kind: 'stop' });
+
+  const control = movementControl(
+    missingTarget ? { kind: 'stop' } : order,
+    object,
+    target,
+    attributes,
+    context.content.rules.navigation,
+  );
+  if (control === null) return;
+  replaceSiteObject(draft, { ...object, ...integrateKinematics(object, control, attributes, elapsedSeconds) });
 }
 
 function separateSite(draft: CampaignDraft, speed: number, elapsedSeconds: number): void {
@@ -345,7 +405,7 @@ function cancelForMissingTarget(context: SimulationContext, orderKind: 'approach
   const boundary = draft.navigation.travel?.boundaryEntryId;
   if (boundary !== null && boundary !== undefined) cancelBoundary(draft, boundary);
   draft.navigation.travel = null;
-  draft.navigation.movement = { kind: 'stop' };
+  setMovementOrder(draft, draft.assets.activeShipId, { kind: 'stop' });
   draft.navigation.lastCancellation = {
     orderKind,
     reason: 'targetMissing',

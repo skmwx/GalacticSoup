@@ -30,14 +30,34 @@ export function inventoryProjection(state: CampaignState, content: ContentReposi
 }
 export function assetsProjection(state: CampaignState, content: ContentRepository): AssetsData {
   return deepFreeze({ ...walletProjection(state), location: deepClone(state.assets.location), activeShipId: state.assets.activeShipId,
-    ships: Object.keys(state.assets.ships).sort().map((id) => {
+    // Only the player's own ships are assets; an opponent's ship is an
+    // encounter entity that happens to use the same rules.
+    ships: Object.keys(state.assets.ships).sort()
+      .filter((id) => state.assets.ships[id]?.owner === 'player')
+      .map((id) => {
       const ship = state.assets.ships[id]!;
-      return { id: ship.id, hullId: ship.hullId, cargoInventoryId: ship.cargoInventoryId,
+      return { id: ship.id, owner: ship.owner, hullId: ship.hullId, cargoInventoryId: ship.cargoInventoryId,
         fittingInventoryId: ship.fittingInventoryId, location: deepClone(ship.location),
         nameKey: content.requireHull(ship.hullId).nameKey, active: ship.id === state.assets.activeShipId };
     }),
-    inventories: Object.keys(state.assets.inventories).sort().map((id) => inventoryProjection(state, content, id)) });
+    inventories: Object.keys(state.assets.inventories).sort()
+      .filter((id) => isPlayerInventory(state, id))
+      .map((id) => inventoryProjection(state, content, id)) });
 }
+/** A store the player owns: theirs, or one of their ships'. */
+function isPlayerInventory(state: CampaignState, inventoryId: string): boolean {
+  const location = state.assets.inventories[inventoryId]?.location;
+  if (location === undefined) return false;
+  if (location.kind === 'hangar') return true;
+  if (location.kind === 'cargo' || location.kind === 'fitting') {
+    return state.assets.ships[location.shipId]?.owner === 'player';
+  }
+  if (location.kind === 'reserve') {
+    return state.assets.ships[location.ownerId]?.owner === 'player';
+  }
+  return false;
+}
+
 export function hangarProjection(state: CampaignState, content: ContentRepository, stationId: string): InventoryData {
   const inventory = Object.values(state.assets.inventories).find((i) => i.location.kind === 'hangar' && i.location.stationId === stationId);
   if (!inventory) throw new InventoryError('inventoryNotFound');

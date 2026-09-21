@@ -9,6 +9,7 @@ import {
   distance,
   dockRefusal,
   instantiateSite,
+  movementOrderOf,
   movementRefusal,
   retreatRefusal,
   selectDestinationRefusal,
@@ -22,7 +23,7 @@ import {
   type NavigationRuleInput,
   type SiteLocation,
 } from '@engine/domain';
-import { cancelBoundary } from '@engine/simulation';
+import { cancelBoundary, materializeWrecks, orderMovement } from '@engine/simulation';
 import type {
   DockPayload,
   MoveToPointPayload,
@@ -131,11 +132,15 @@ function undock(transaction: Transaction): CommandOutcome {
     { x: transaction.content.rules.navigation.undockDistanceKm, y: 0 },
     0,
   );
-  draft.navigation.movement = { kind: 'stop' };
+  draft.navigation.movementOrders = {};
+  orderMovement(transaction.simulation(), ship.id, { kind: 'stop' });
   draft.navigation.travel = null;
   draft.assets.location = siteLocation;
   ship.location = siteLocation;
   draft.assets.version += 1;
+  // The station site can hold wrecks of its own, and the player's own wreck
+  // will be one of them (Functional Specification 5.4, 9.12).
+  materializeWrecks(transaction.simulation());
   changed(transaction, true);
   transaction.publish('navigation.undocked', { stationId: station.id, siteId: station.siteId });
   transaction.requestAutosave();
@@ -180,14 +185,15 @@ function beginWarp(transaction: Transaction, payload: WarpPayload, retreating: b
   const distanceKm = distance(origin, target);
 
   cancelTravel(draft);
-  if (draft.navigation.movement !== null) {
+  const current = movementOrderOf(draft, draft.assets.activeShipId);
+  if (current !== null) {
     draft.navigation.lastCancellation = {
-      orderKind: draft.navigation.movement.kind,
+      orderKind: current.kind,
       reason: 'replaced',
       simulationTimeMs: draft.time.simulationTimeMs,
     };
   }
-  draft.navigation.movement = null;
+  orderMovement(transaction.simulation(), draft.assets.activeShipId, null);
   draft.navigation.travel = {
     kind: 'warp',
     phase: 'aligning',
@@ -221,14 +227,15 @@ function dock(transaction: Transaction, payload: DockPayload): CommandOutcome {
   const station = transaction.content.requireStation(payload.stationId as StationId);
 
   cancelTravel(draft);
-  if (draft.navigation.movement !== null) {
+  const current = movementOrderOf(draft, draft.assets.activeShipId);
+  if (current !== null) {
     draft.navigation.lastCancellation = {
-      orderKind: draft.navigation.movement.kind,
+      orderKind: current.kind,
       reason: 'replaced',
       simulationTimeMs: draft.time.simulationTimeMs,
     };
   }
-  draft.navigation.movement = null;
+  orderMovement(transaction.simulation(), draft.assets.activeShipId, null);
   draft.navigation.travel = {
     kind: 'dock',
     phase: 'approaching',
@@ -245,6 +252,7 @@ function replaceCurrentOrder(
   transaction: Transaction,
   order: MovementOrder,
 ): void {
+  const current = movementOrderOf(draft, draft.assets.activeShipId);
   if (draft.navigation.travel !== null) {
     const travel = draft.navigation.travel;
     cancelTravel(draft);
@@ -253,15 +261,14 @@ function replaceCurrentOrder(
       reason: 'replaced',
       simulationTimeMs: draft.time.simulationTimeMs,
     };
-  } else if (draft.navigation.movement !== null) {
+  } else if (current !== null) {
     draft.navigation.lastCancellation = {
-      orderKind: draft.navigation.movement.kind,
+      orderKind: current.kind,
       reason: 'replaced',
       simulationTimeMs: draft.time.simulationTimeMs,
     };
   }
-  draft.navigation.movement = order;
-  void transaction;
+  orderMovement(transaction.simulation(), draft.assets.activeShipId, order);
 }
 
 function cancelTravel(draft: CampaignDraft): void {

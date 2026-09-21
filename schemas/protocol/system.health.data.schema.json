@@ -18,7 +18,7 @@
       "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$"
     },
     "protocolVersion": {
-      "const": 9
+      "const": 10
     }
   }
 }

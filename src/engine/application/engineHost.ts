@@ -5,11 +5,12 @@ import { assetsProjection, walletProjection, hangarProjection, cargoProjection,
 import { insurancePreview, marketBuyPreview, marketListingsProjection, marketSellPreview,
   repairPreview, resupplyPreview, stationServicesProjection } from '@engine/projections';
 import { combatProjection, destinationsProjection, siteProjection } from '@engine/projections';
+import { encounterProjection, wreckContentsProjection } from '@engine/projections';
 import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload,
   ComparePayload, ShipPayload } from '@protocol';
 import type { MarketBuyPreviewPayload, MarketSellPreviewPayload, ShipEconomicPayload,
   StationPayload } from '@protocol';
-import type { ContentMessagesPayload } from '@protocol';
+import type { ContentMessagesPayload, WreckPayload } from '@protocol';
 import {
   ContentIntegrityError,
   ContentLookupError,
@@ -386,6 +387,7 @@ function isCampaignQuery(type: RequestType): boolean {
     'station.services', 'market.listings', 'market.previewBuy', 'market.previewSell',
     'repair.preview', 'resupply.preview', 'insurance.preview',
     'navigation.destinations', 'navigation.site', 'combat.state',
+    'encounter.state', 'loot.contents',
   ].includes(type);
 }
 
@@ -404,6 +406,14 @@ function query(session: Session, type: RequestType, payload: unknown): unknown {
       return siteProjection(session.campaign!, session.content);
     case 'combat.state':
       return combatProjection(session.campaign!, session.content);
+    case 'encounter.state':
+      return encounterProjection(session.campaign!, session.content);
+    case 'loot.contents':
+      return wreckContentsProjection(
+        session.campaign!,
+        session.content,
+        (payload as WreckPayload).wreckId,
+      );
     case 'assets.list': return assetsProjection(session.campaign!, session.content);
     case 'wallet.get': return walletProjection(session.campaign!);
     case 'inventory.hangar': return hangarProjection(session.campaign!, session.content, (payload as HangarPayload).stationId);

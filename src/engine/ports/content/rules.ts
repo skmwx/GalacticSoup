@@ -1,4 +1,4 @@
-import type { SlotKind } from './definitions.ts';
+import type { NpcRole, SlotKind } from './definitions.ts';
 
 /**
  * Grouped tunable constants (Technical Specification 6.1).
@@ -77,6 +77,29 @@ export interface CombatRules {
   readonly playerWreckLifetimeSeconds: number;
   /** Independent survival chance of each cargo stack and fitted module. */
   readonly destructionItemSurvivalChance: number;
+  /** How close a ship must be to open a wreck (Functional Specification 9.11). */
+  readonly wreckAccessRangeKm: number;
+  /** How often an opponent reconsiders its orders (Functional Specification 9.10). */
+  readonly npcDecisionIntervalSeconds: number;
+  /** Layer share below which an opponent runs its repair module. */
+  readonly npcRepairThresholdFraction: number;
+  /** Share of its preferred range an opponent tolerates before it burns. */
+  readonly npcRangeToleranceFraction: number;
+  readonly npcRoles: Readonly<Record<NpcRole, NpcRoleRules>>;
+}
+
+/**
+ * The range band and movement order one NPC role commands
+ * (Functional Specification 9.10).
+ *
+ * The preferred range is a fraction of the opponent's own best turret optimal
+ * range, so a role stays a behaviour rather than a distance in kilometres that
+ * would have to be retuned for every weapon.
+ */
+export interface NpcRoleRules {
+  readonly movement: 'approach' | 'orbit' | 'keepRange';
+  readonly preferredRangeFraction: number;
+  readonly minimumRangeKm: number;
 }
 
 /**

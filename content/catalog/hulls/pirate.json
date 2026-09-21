@@ -9,7 +9,7 @@
       "playerUsable": false,
       "defenses": {
         "shield": {
-          "hitPoints": 220,
+          "hitPoints": 120,
           "resistances": {
             "electromagnetic": 0.0,
             "thermal": 0.2,
@@ -18,7 +18,7 @@
           }
         },
         "armor": {
-          "hitPoints": 180,
+          "hitPoints": 100,
           "resistances": {
             "electromagnetic": 0.45,
             "thermal": 0.3,
@@ -27,7 +27,7 @@
           }
         },
         "hull": {
-          "hitPoints": 200,
+          "hitPoints": 120,
           "resistances": {
             "electromagnetic": 0,
             "thermal": 0,
@@ -36,7 +36,7 @@
           }
         }
       },
-      "shieldRechargeSeconds": 600,
+      "shieldRechargeSeconds": 900,
       "capacitor": {
         "capacity": 200,
         "rechargeSeconds": 180
@@ -70,7 +70,7 @@
         "powerOutput": 36,
         "processingOutput": 130
       },
-      "referenceValueCredits": 7000,
+      "referenceValueCredits": 5000,
       "insuranceClass": "light",
       "traitKeys": [
         "content.hull.pirate.scout.trait.fast"

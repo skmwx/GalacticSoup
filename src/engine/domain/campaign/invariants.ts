@@ -3,6 +3,7 @@ import type { ContentRepository } from '@engine/ports';
 import { validateAssets } from '../assets/validation';
 import { validateCombat } from '../combat/validation';
 import { validateEconomy } from '../economy/validation';
+import { validateEncounter } from '../encounter/validation';
 import { validateNavigation } from '../navigation/validation';
 
 import { isCampaignId, isEntityId, MAX_ORDINAL } from './identity';
@@ -117,6 +118,7 @@ export function validateCampaign(state: CampaignState, content?: ContentReposito
   validateEconomy(state, add, content);
   validateNavigation(state, add, content);
   validateCombat(state, add, content);
+  validateEncounter(state, add, content);
 
   return issues;
 }

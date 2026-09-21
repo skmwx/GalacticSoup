@@ -1,10 +1,11 @@
 /**
- * Protocol version 9 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 10 request catalogue (Technical Specification 7.1, 18).
  *
- * Adds active module commands and the complete defensive, capacitor and module
- * runtime view to the targeting and weapon contracts of version 8. Capabilities
- * list the accepted request types. Older clients are rejected at the envelope
- * boundary, before any command can mutate campaign state.
+ * Adds the encounter lifecycle, opponent, wreck and loot contracts to the
+ * combat view of version 9, together with the disclosed reward summary each
+ * destination carries. Capabilities list the accepted request types. Older
+ * clients are rejected at the envelope boundary, before any command can mutate
+ * campaign state.
  */
 
 import type { EngineError } from './errors';
@@ -33,6 +34,12 @@ import type {
   TargetPayloadData,
   WeaponSlotPayload,
 } from './combat';
+import type {
+  EncounterData,
+  TakeLootPayload,
+  WreckContentsData,
+  WreckPayload,
+} from './encounter';
 import type {
   DestinationsData,
   DockPayload,
@@ -308,6 +315,9 @@ export interface SaveSlotData {
 
 export interface ProtocolContract {
   'combat.state': { payload: EmptyPayload; data: CombatData };
+  'encounter.state': { payload: EmptyPayload; data: EncounterData };
+  'loot.contents': { payload: WreckPayload; data: WreckContentsData };
+  'loot.take': { payload: TakeLootPayload; data: CommandResultData };
   'module.activate': { payload: WeaponSlotPayload; data: CommandResultData };
   'module.deactivate': { payload: WeaponSlotPayload; data: CommandResultData };
   'targeting.lock': { payload: TargetPayloadData; data: CommandResultData };
@@ -395,6 +405,7 @@ export const REQUEST_TYPES = [
   'content.messages',
   'content.summary',
   'diagnostics.stateHash',
+  'encounter.state',
   'fitting.begin',
   'fitting.clear',
   'fitting.commit',
@@ -411,6 +422,8 @@ export const REQUEST_TYPES = [
   'item.inspect',
   'insurance.confirm',
   'insurance.preview',
+  'loot.contents',
+  'loot.take',
   'market.confirmBuy',
   'market.confirmSell',
   'market.listings',
@@ -465,6 +478,7 @@ export const COMMAND_TYPES = [
   'inventory.split',
   'inventory.transfer',
   'insurance.confirm',
+  'loot.take',
   'market.confirmBuy',
   'market.confirmSell',
   'module.activate',

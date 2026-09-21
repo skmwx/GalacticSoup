@@ -5,6 +5,7 @@ import type { CampaignState } from '../campaign/state';
 import {
   MOVEMENT_CANCELLATION_REASONS,
   MOVEMENT_ORDER_KINDS,
+  SITE_OBJECT_KINDS,
   type NavigationState,
   type SiteObjectState,
   type Vector2,
@@ -15,13 +16,16 @@ type Report = (rule: string, path: string, detail: string) => void;
 export function isNavigationState(value: unknown): value is NavigationState {
   if (!shape(value, [
     'version', 'knownDestinationSiteIds', 'selectedEncounterId', 'currentSite',
-    'movement', 'travel', 'lastCancellation',
+    'movementOrders', 'travel', 'lastCancellation',
   ])) return false;
   if (!count(value['version']) || value['version'] < 1) return false;
   if (!Array.isArray(value['knownDestinationSiteIds']) ||
     !value['knownDestinationSiteIds'].every((id) => isDefinitionIdIn(id, 'site'))) return false;
   if (value['selectedEncounterId'] !== null && !isDefinitionIdIn(value['selectedEncounterId'], 'encounter')) return false;
-  if (!siteRuntime(value['currentSite']) || !movement(value['movement']) ||
+  const orders = value['movementOrders'];
+  if (!record(orders)) return false;
+  if (!Object.entries(orders).every(([key, order]) => isEntityId(key) && movement(order))) return false;
+  if (!siteRuntime(value['currentSite']) ||
     !travel(value['travel']) || !cancellation(value['lastCancellation'])) return false;
   return true;
 }
@@ -65,12 +69,20 @@ export function validateNavigation(
     }
   }
 
-  const movementOrder = navigation.movement;
-  if (movementOrder !== null && location.kind !== 'site') {
-    fail('movement', 'A normal-space movement order requires a loaded site.');
-  }
-  if (movementOrder !== null && 'targetId' in movementOrder && site?.objects[movementOrder.targetId] === undefined) {
-    fail('movement.targetId', 'A movement target must be present in the loaded site.');
+  for (const [shipId, order] of Object.entries(navigation.movementOrders)) {
+    if (location.kind !== 'site' || site === null) {
+      fail(`movementOrders.${shipId}`, 'A normal-space movement order requires a loaded site.');
+      continue;
+    }
+    if (site.objects[shipId]?.kind !== 'ship') {
+      fail(`movementOrders.${shipId}`, 'A movement order must belong to a ship in the loaded site.');
+    }
+    if ('targetId' in order && site.objects[order.targetId] === undefined) {
+      fail(`movementOrders.${shipId}.targetId`, 'A movement target must be present in the loaded site.');
+    }
+    if ('targetId' in order && order.targetId === shipId) {
+      fail(`movementOrders.${shipId}.targetId`, 'A ship cannot order itself as a movement target.');
+    }
   }
   const travelState = navigation.travel;
   if (travelState?.kind === 'warp') {
@@ -133,9 +145,9 @@ export function validateNavigation(
     if (site !== null) {
       if (!authoredSites.has(site.siteId)) fail('currentSite.siteId', 'The loaded site does not resolve.');
       for (const object of Object.values(site.objects)) {
-        const resolves = object.kind === 'ship'
-          ? content.hull(object.definitionId) !== undefined
-          : content.station(object.definitionId) !== undefined;
+        const resolves = object.kind === 'station'
+          ? content.station(object.definitionId) !== undefined
+          : content.hull(object.definitionId) !== undefined;
         if (!resolves) fail(`currentSite.objects.${object.id}.definitionId`, 'The object definition does not resolve.');
       }
     }
@@ -155,7 +167,7 @@ function siteObject(value: unknown): value is SiteObjectState {
     'id', 'kind', 'definitionId', 'nameKey', 'position', 'velocity',
     'facingRadians', 'radiusKm', 'movable',
   ]) && typeof value['id'] === 'string' &&
-    (value['kind'] === 'ship' || value['kind'] === 'station') &&
+    (SITE_OBJECT_KINDS as readonly unknown[]).includes(value['kind']) &&
     typeof value['definitionId'] === 'string' && typeof value['nameKey'] === 'string' &&
     vector(value['position']) && vector(value['velocity']) && finite(value['facingRadians']) &&
     isNonNegativeNumber(value['radiusKm']) && typeof value['movable'] === 'boolean';

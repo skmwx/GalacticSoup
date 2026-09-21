@@ -1,4 +1,4 @@
-import type { CampaignState } from '@engine/domain';
+import { InventoryError, type CampaignState } from '@engine/domain';
 import { handleFittingCommand } from './fittingCommands';
 import { handleInventoryCommand } from './inventoryCommands';
 import type { ContentRepository } from '@engine/ports';
@@ -12,6 +12,7 @@ import {
   internalError,
   invariantFailure,
   NO_CAMPAIGN_REVISION,
+  ruleViolation,
 } from '@protocol';
 
 import {
@@ -32,6 +33,7 @@ import {
   type Transaction,
 } from './transaction';
 import { handleCombatCommand } from './combatCommands';
+import { handleEncounterCommand } from './encounterCommands';
 import { handleEconomyCommand } from './economyCommands';
 import { handleNavigationCommand } from './navigationCommands';
 
@@ -148,6 +150,8 @@ function apply(transaction: Transaction, request: CommandRequest): CommandOutcom
     case 'inventory.split':
     case 'inventory.merge':
       return handleInventoryCommand(transaction, request.type, request.payload);
+    case 'loot.take':
+      return handleEncounterCommand(transaction, request.type, request.payload);
     case 'campaign.create':
       return handleCreateCampaign(transaction, request.payload as CreateCampaignPayload);
     case 'campaign.reset':
@@ -184,6 +188,12 @@ function unchangedResult(campaign: CampaignState | null): CommandResultData {
  * (Technical Specification 5.4, 15.3).
  */
 function describeDefect(error: unknown): EngineError {
+  // An inventory refusal is an expected, explainable outcome - a hold that is
+  // too small, a stack that no longer holds that many units - not a defect
+  // (Functional Specification 22.2, 22.10).
+  if (error instanceof InventoryError) {
+    return ruleViolation(error.reason);
+  }
   if (error instanceof InvariantFailure) {
     const first = error.issues[0];
     return invariantFailure({

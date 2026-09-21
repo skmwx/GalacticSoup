@@ -160,6 +160,7 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
     case 'navigation.destinations':
     case 'navigation.site':
     case 'combat.state':
+    case 'encounter.state':
     case 'ship.undock':
     case 'movement.stop':
     case 'navigation.retreat':
@@ -237,6 +238,22 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
       if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
       if (fields['slotKind'] !== 'system') return payloadField(type, 'slotKind', 'format');
       return isIndex(fields['slotIndex']) ? null : payloadField(type, 'slotIndex', 'format');
+    }
+
+    case 'loot.contents': {
+      const unexpected = unexpectedField(fields, ['wreckId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      return isEntityId(fields['wreckId']) ? null : payloadField(type, 'wreckId', 'format');
+    }
+
+    case 'loot.take': {
+      const unexpected = unexpectedField(fields, ['wreckId', 'stackId', 'quantity']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (!isEntityId(fields['wreckId'])) return payloadField(type, 'wreckId', 'format');
+      if (!isEntityId(fields['stackId'])) return payloadField(type, 'stackId', 'format');
+      const quantity = fields['quantity'];
+      return isWholeNonNegative(quantity) && quantity !== 0
+        ? null : payloadField(type, 'quantity', 'format');
     }
 
     case 'navigation.dock': {

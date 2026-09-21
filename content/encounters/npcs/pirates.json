@@ -1,6 +1,6 @@
 {
   "kind": "npc.profiles",
-  "$comment": "Roles differ by range behaviour, not only by hit points.",
+  "$comment": "Roles differ by range behaviour and module use, not only by hit points.",
   "definitions": [
     {
       "id": "npc.pirate.scout",
@@ -9,7 +9,8 @@
       "hullId": "hull.pirate.scout",
       "loadout": {
         "modules": [
-          "module.turret.autocannon.small"
+          "module.turret.autocannon.small",
+          "module.propulsion.afterburner.small"
         ],
         "ammunitionId": "ammo.projectile.small.fusion"
       },
@@ -23,7 +24,8 @@
       "hullId": "hull.pirate.scout",
       "loadout": {
         "modules": [
-          "module.turret.railgun.small"
+          "module.turret.railgun.small",
+          "module.plating.armor.small"
         ],
         "ammunitionId": "ammo.hybrid.small.iron"
       },
@@ -53,12 +55,13 @@
       "hullId": "hull.pirate.raider",
       "loadout": {
         "modules": [
-          "module.turret.railgun.small",
-          "module.turret.railgun.small",
+          "module.turret.autocannon.small",
+          "module.turret.autocannon.small",
+          "module.repair.armor.small",
           "module.plating.armor.small",
           "module.capacitor.battery.small"
         ],
-        "ammunitionId": "ammo.hybrid.small.plasma"
+        "ammunitionId": "ammo.projectile.small.phased"
       },
       "bountyCredits": 9000,
       "lootTableId": "loot.pirate.base"

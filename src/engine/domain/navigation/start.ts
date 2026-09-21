@@ -11,7 +11,7 @@ export function startingNavigation(content: ContentRepository): NavigationState 
     knownDestinationSiteIds: system.sites.map((site) => site.id).sort(),
     selectedEncounterId: null,
     currentSite: null,
-    movement: null,
+    movementOrders: {},
     travel: null,
     lastCancellation: null,
   };

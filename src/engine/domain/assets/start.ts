@@ -51,6 +51,7 @@ export function startingAssets(campaignId: CampaignId, content: ContentRepositor
 
   draft.assets.ships[shipId] = {
     id: shipId,
+    owner: 'player',
     hullId: hull.id,
     location,
     cargoInventoryId: cargo,

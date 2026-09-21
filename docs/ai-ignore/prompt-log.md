@@ -56,3 +56,15 @@ Phase 1 through 11 are implemented, implement phase 12 of the MVP.
 10: Opus EH
 11: Opus EH
 12: Sol EH
+
+# 011 Terra H, Sol H
+when I start the game with 'npm run dev' and open it in browser, and then start new campaign, it show text "Reading the ship’s position…  " which never goes away. Is it intended behavior at this stage or is something wrong?
+
+please make the change
+
+# 012 Claude Opus EH
+Read the documents in docs\ root folder and docs\human-input .
+
+Phase 1 through 12 are implemented, implement phase 13 of the MVP.
+
+13: Opus EH

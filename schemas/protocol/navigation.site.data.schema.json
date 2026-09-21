@@ -4,88 +4,274 @@
   "title": "SiteData",
   "type": "object",
   "additionalProperties": false,
-  "required": ["revision", "simulationTimeMs", "location", "site", "movementOrder", "travelStatus", "lastCancellation", "commands", "rangePresetsKm", "arrivalDistancesKm"],
+  "required": [
+    "revision",
+    "simulationTimeMs",
+    "location",
+    "site",
+    "movementOrder",
+    "travelStatus",
+    "lastCancellation",
+    "commands",
+    "rangePresetsKm",
+    "arrivalDistancesKm"
+  ],
   "properties": {
-    "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
-    "simulationTimeMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
-    "location": { "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/shipLocation" },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "simulationTimeMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "location": {
+      "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/shipLocation"
+    },
     "site": {
       "anyOf": [
-        { "type": "null" },
+        {
+          "type": "null"
+        },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["instanceId", "systemId", "systemNameKey", "dangerRating", "siteId", "siteNameKey", "objects"],
+          "required": [
+            "instanceId",
+            "systemId",
+            "systemNameKey",
+            "dangerRating",
+            "siteId",
+            "siteNameKey",
+            "objects"
+          ],
           "properties": {
-            "instanceId": { "$ref": "#/$defs/entityId" },
-            "systemId": { "$ref": "#/$defs/systemId" },
-            "systemNameKey": { "type": "string" },
-            "dangerRating": { "type": "integer", "minimum": 1, "maximum": 5 },
-            "siteId": { "$ref": "#/$defs/siteId" },
-            "siteNameKey": { "type": "string" },
-            "objects": { "type": "array", "items": { "$ref": "#/$defs/siteObject" } }
+            "instanceId": {
+              "$ref": "#/$defs/entityId"
+            },
+            "systemId": {
+              "$ref": "#/$defs/systemId"
+            },
+            "systemNameKey": {
+              "type": "string"
+            },
+            "dangerRating": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            },
+            "siteId": {
+              "$ref": "#/$defs/siteId"
+            },
+            "siteNameKey": {
+              "type": "string"
+            },
+            "objects": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/siteObject"
+              }
+            }
           }
         }
       ]
     },
-    "movementOrder": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/movementOrder" }] },
-    "travelStatus": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/travelStatus" }] },
+    "movementOrder": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/movementOrder"
+        }
+      ]
+    },
+    "travelStatus": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/travelStatus"
+        }
+      ]
+    },
     "lastCancellation": {
       "anyOf": [
-        { "type": "null" },
+        {
+          "type": "null"
+        },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["orderKind", "reason", "simulationTimeMs"],
+          "required": [
+            "orderKind",
+            "reason",
+            "simulationTimeMs"
+          ],
           "properties": {
-            "orderKind": { "type": "string" },
-            "reason": { "type": "string" },
-            "simulationTimeMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+            "orderKind": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "simulationTimeMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
           }
         }
       ]
     },
-    "commands": { "type": "array", "items": { "$ref": "#/$defs/commandAvailability" } },
-    "rangePresetsKm": { "type": "array", "minItems": 1, "items": { "type": "number", "exclusiveMinimum": 0 } },
-    "arrivalDistancesKm": { "type": "array", "minItems": 1, "items": { "type": "number", "minimum": 0 } }
+    "commands": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/commandAvailability"
+      }
+    },
+    "rangePresetsKm": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      }
+    },
+    "arrivalDistancesKm": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "number",
+        "minimum": 0
+      }
+    }
   },
   "$defs": {
     "commandAvailability": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["command", "available", "unavailableReason"],
+      "required": [
+        "command",
+        "available",
+        "unavailableReason"
+      ],
       "properties": {
-        "command": { "type": "string" },
-        "available": { "type": "boolean" },
-        "unavailableReason": { "anyOf": [{ "type": "null" }, { "type": "string" }] }
+        "command": {
+          "type": "string"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
       }
     },
-    "entityId": { "type": "string", "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$" },
-    "systemId": { "type": "string", "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
-    "siteId": { "type": "string", "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
-    "stationId": { "type": "string", "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
+    "entityId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+    },
+    "systemId": {
+      "type": "string",
+      "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
+    "siteId": {
+      "type": "string",
+      "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
+    "stationId": {
+      "type": "string",
+      "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
     "vector": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["x", "y"],
-      "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
     },
     "siteObject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "definitionId", "nameKey", "position", "velocity", "facingRadians", "radiusKm", "rangeFromPlayerKm", "player", "commands"],
+      "required": [
+        "id",
+        "kind",
+        "definitionId",
+        "nameKey",
+        "position",
+        "velocity",
+        "facingRadians",
+        "radiusKm",
+        "rangeFromPlayerKm",
+        "player",
+        "commands"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "kind": { "enum": ["ship", "station"] },
-        "definitionId": { "type": "string" },
-        "nameKey": { "type": "string" },
-        "position": { "$ref": "#/$defs/vector" },
-        "velocity": { "$ref": "#/$defs/vector" },
-        "facingRadians": { "type": "number" },
-        "radiusKm": { "type": "number", "minimum": 0 },
-        "rangeFromPlayerKm": { "type": "number", "minimum": 0 },
-        "player": { "type": "boolean" },
-        "commands": { "type": "array", "items": { "$ref": "#/$defs/commandAvailability" } }
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "ship",
+            "station",
+            "wreck"
+          ]
+        },
+        "definitionId": {
+          "type": "string"
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/vector"
+        },
+        "velocity": {
+          "$ref": "#/$defs/vector"
+        },
+        "facingRadians": {
+          "type": "number"
+        },
+        "radiusKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rangeFromPlayerKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "player": {
+          "type": "boolean"
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/commandAvailability"
+          }
+        }
       }
     },
     "movementOrder": {
@@ -93,24 +279,55 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["kind", "targetId", "distanceKm"],
+          "required": [
+            "kind",
+            "targetId",
+            "distanceKm"
+          ],
           "properties": {
-            "kind": { "enum": ["approach", "orbit", "keepRange"] },
-            "targetId": { "type": "string" },
-            "distanceKm": { "type": "number", "minimum": 0 }
+            "kind": {
+              "enum": [
+                "approach",
+                "orbit",
+                "keepRange"
+              ]
+            },
+            "targetId": {
+              "type": "string"
+            },
+            "distanceKm": {
+              "type": "number",
+              "minimum": 0
+            }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["kind", "point"],
-          "properties": { "kind": { "const": "moveToPoint" }, "point": { "$ref": "#/$defs/vector" } }
+          "required": [
+            "kind",
+            "point"
+          ],
+          "properties": {
+            "kind": {
+              "const": "moveToPoint"
+            },
+            "point": {
+              "$ref": "#/$defs/vector"
+            }
+          }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["kind"],
-          "properties": { "kind": { "const": "stop" } }
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "stop"
+            }
+          }
         }
       ]
     },
@@ -119,26 +336,88 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["kind", "phase", "originSiteId", "destinationSiteId", "arrivalDistanceKm", "distanceKm", "completionAtMs"],
+          "required": [
+            "kind",
+            "phase",
+            "originSiteId",
+            "destinationSiteId",
+            "arrivalDistanceKm",
+            "distanceKm",
+            "completionAtMs"
+          ],
           "properties": {
-            "kind": { "const": "warp" },
-            "phase": { "enum": ["aligning", "preparing", "transit"] },
-            "originSiteId": { "$ref": "#/$defs/siteId" },
-            "destinationSiteId": { "$ref": "#/$defs/siteId" },
-            "arrivalDistanceKm": { "type": "number", "minimum": 0 },
-            "distanceKm": { "type": "number", "minimum": 0 },
-            "completionAtMs": { "anyOf": [{ "type": "null" }, { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }] }
+            "kind": {
+              "const": "warp"
+            },
+            "phase": {
+              "enum": [
+                "aligning",
+                "preparing",
+                "transit"
+              ]
+            },
+            "originSiteId": {
+              "$ref": "#/$defs/siteId"
+            },
+            "destinationSiteId": {
+              "$ref": "#/$defs/siteId"
+            },
+            "arrivalDistanceKm": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceKm": {
+              "type": "number",
+              "minimum": 0
+            },
+            "completionAtMs": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              ]
+            }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["kind", "phase", "stationId", "completionAtMs"],
+          "required": [
+            "kind",
+            "phase",
+            "stationId",
+            "completionAtMs"
+          ],
           "properties": {
-            "kind": { "const": "dock" },
-            "phase": { "enum": ["approaching", "preparing"] },
-            "stationId": { "$ref": "#/$defs/stationId" },
-            "completionAtMs": { "anyOf": [{ "type": "null" }, { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }] }
+            "kind": {
+              "const": "dock"
+            },
+            "phase": {
+              "enum": [
+                "approaching",
+                "preparing"
+              ]
+            },
+            "stationId": {
+              "$ref": "#/$defs/stationId"
+            },
+            "completionAtMs": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              ]
+            }
           }
         }
       ]

@@ -9,6 +9,7 @@ export * from './fitting';
 export * from './economy';
 export * from './navigation';
 export * from './combat';
+export * from './encounter';
 export {
   contentError,
   contentErrorMessageKey,

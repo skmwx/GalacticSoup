@@ -1,11 +1,11 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
- * Version 9 adds active module commands plus layered defenses, capacitor,
- * module runtime and significant combat events to the tactical combat view.
- * Version 8 added targeting and weapon commands.
+ * Version 10 adds the encounter, opponent, wreck and loot contracts, the
+ * disclosed reward summary on a destination, and the take-loot command.
+ * Version 9 added active module commands and the full tactical combat view.
  */
-export const PROTOCOL_VERSION = 9;
+export const PROTOCOL_VERSION = 10;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

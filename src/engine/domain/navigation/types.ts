@@ -39,10 +39,13 @@ export interface MovementCancellation {
   readonly simulationTimeMs: number;
 }
 
+export const SITE_OBJECT_KINDS = ['ship', 'station', 'wreck'] as const;
+export type SiteObjectKind = (typeof SITE_OBJECT_KINDS)[number];
+
 export interface SiteObjectState {
-  /** Entity id for a ship, authored definition id for a permanent object. */
+  /** Entity id for a ship or wreck, authored definition id for a permanent object. */
   readonly id: string;
-  readonly kind: 'ship' | 'station';
+  readonly kind: SiteObjectKind;
   readonly definitionId: string;
   readonly nameKey: string;
   readonly position: Vector2;
@@ -83,8 +86,15 @@ export interface NavigationState {
   readonly knownDestinationSiteIds: readonly SiteId[];
   readonly selectedEncounterId: EncounterId | null;
   readonly currentSite: SiteRuntime | null;
-  readonly movement: MovementOrder | null;
+  /**
+   * The standing order of every ship in the loaded site, keyed by its entity
+   * id. A movement order belongs to the ship aggregate (Technical
+   * Specification 8.2), and an opponent commands its ship with the same orders
+   * the player commands theirs with (Technical Specification 10.3).
+   */
+  readonly movementOrders: Readonly<Record<string, MovementOrder>>;
   readonly travel: TravelState | null;
+  /** The player's most recent cancelled order, for the interface to explain. */
   readonly lastCancellation: MovementCancellation | null;
 }
 

@@ -66,6 +66,11 @@ const create = (gateway: ClientGateway) =>
     createdAtRealMs: 100,
   });
 
+/** The granted rounds are a tuning value, so the test reads them. */
+const grantedRounds = shippedContent().rules.economy.startingItems.find(
+  (item) => item.definitionId === 'ammo.projectile.small.fusion',
+)?.quantity ?? 0;
+
 describe.each(['direct', 'channel'] as const)('fitting through %s transport', (kind) => {
   it('prepares a fit, previews it, commits it and resumes it [MVP-AC-02, FUNC-8.4, FUNC-8.5, TECH-11.4]', async () => {
     const store = createMemorySaveStore();
@@ -135,7 +140,7 @@ describe.each(['direct', 'channel'] as const)('fitting through %s transport', (k
     expect(
       hangar.stacks.find((stack) => stack.item.definitionId === 'ammo.projectile.small.fusion')
         ?.quantity,
-    ).toBe(60);
+    ).toBe(grantedRounds);
 
     const hash = await ask(gateway, 'diagnostics.stateHash', {});
     await ask(gateway, 'campaign.close', { savedAtRealMs: 999_999_999 });

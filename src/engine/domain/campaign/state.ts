@@ -9,6 +9,8 @@ import { startingNavigation } from '../navigation/start';
 import type { NavigationState } from '../navigation/types';
 import { startingCombat } from '../combat/start';
 import type { CombatState } from '../combat/types';
+import { startingEncounters } from '../encounter/start';
+import type { EncounterState } from '../encounter/types';
 
 import { deriveCampaignId, type CampaignId } from './identity';
 import { emptyScheduler, type SchedulerState } from './scheduler';
@@ -30,7 +32,7 @@ import { seedStreams, type RandomStreams } from '../random/streams';
  */
 
 /** Shape version of the authoritative payload, carried by every snapshot. */
-export const CAMPAIGN_STATE_VERSION = 7;
+export const CAMPAIGN_STATE_VERSION = 8;
 
 /** Upper bound on simulation time, about 31 simulated years. */
 export const MAX_SIMULATION_TIME_MS = 1_000_000_000_000;
@@ -55,6 +57,11 @@ export interface CampaignState {
    */
   readonly combat: CombatState;
   readonly economy: EconomyState;
+  /**
+   * The authored encounter the player is inside, the wrecks it left behind and
+   * what has already been rewarded (Functional Specification 9.10-9.11).
+   */
+  readonly encounter: EncounterState;
   /**
    * The fitting draft the player has open, or `null` when none is
    * (Functional Specification 8.4-8.5). It is authoritative: closing the game
@@ -108,6 +115,7 @@ export function createCampaign(input: CreateCampaignInput, content: ContentRepos
     assets: starting.assets,
     combat: startingCombat(),
     economy: startingEconomy(content),
+    encounter: startingEncounters(),
     fitting: null,
     navigation: startingNavigation(content),
     stateVersion: CAMPAIGN_STATE_VERSION,

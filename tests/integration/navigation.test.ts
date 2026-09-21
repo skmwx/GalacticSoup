@@ -103,7 +103,10 @@ describe.each(['direct', 'channel'] as const)('phase 9 navigation through %s tra
     expect(outbound.some((result) => result.autosaveRequested)).toBe(true);
     site = await ask(client, 'navigation.site', {});
     expect(site.site?.siteId).toBe(scout.siteId);
-    expect(site.site?.objects).toHaveLength(1);
+    // The authored encounter instantiates with the player: the site holds the
+    // player's ship and exactly the opponents the definition spawns.
+    expect(site.site?.objects.filter((object) => object.player)).toHaveLength(1);
+    expect(site.site?.objects.filter((object) => !object.player).every((object) => object.kind === 'ship')).toBe(true);
 
     await ask(client, 'navigation.retreat', {});
     const inbound = await advanceUntil(client, async () => {
@@ -361,6 +364,8 @@ describe('projected command availability', () => {
 
     const site = await ask(client, 'navigation.site', {});
     expect(entry(site.commands, 'navigation.retreat').available).toBe(true);
-    expect(site.site?.objects.every((object) => object.player)).toBe(true);
+    // Retreat stays available while opponents are present; leaving is a legal
+    // outcome (Functional Specification 9.11).
+    expect(site.site?.objects.some((object) => !object.player)).toBe(true);
   });
 });

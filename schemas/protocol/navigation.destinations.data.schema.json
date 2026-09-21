@@ -4,13 +4,27 @@
   "title": "DestinationsData",
   "type": "object",
   "additionalProperties": false,
-  "required": ["revision", "selectedEncounterId", "destinations"],
+  "required": [
+    "revision",
+    "selectedEncounterId",
+    "destinations"
+  ],
   "properties": {
-    "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
     "selectedEncounterId": {
       "anyOf": [
-        { "type": "null" },
-        { "type": "string", "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 }
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        }
       ]
     },
     "destinations": {
@@ -18,18 +32,122 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["encounterId", "siteId", "nameKey", "descriptionKey", "rewardSummaryKey", "tier", "selected", "current", "known", "commands"],
+        "required": [
+          "encounterId",
+          "siteId",
+          "nameKey",
+          "descriptionKey",
+          "rewardSummaryKey",
+          "tier",
+          "selected",
+          "current",
+          "known",
+          "spawns",
+          "totalBountyCredits",
+          "possibleLootItemIds",
+          "completionCount",
+          "commands"
+        ],
         "properties": {
-          "encounterId": { "type": "string", "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
-          "siteId": { "type": "string", "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
-          "nameKey": { "type": "string" },
-          "descriptionKey": { "type": "string" },
-          "rewardSummaryKey": { "type": "string" },
-          "tier": { "type": "integer", "minimum": 1, "maximum": 5 },
-          "selected": { "type": "boolean" },
-          "current": { "type": "boolean" },
-          "known": { "type": "boolean" },
-          "commands": { "type": "array", "items": { "$ref": "#/$defs/commandAvailability" } }
+          "encounterId": {
+            "type": "string",
+            "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$",
+            "maxLength": 96
+          },
+          "siteId": {
+            "type": "string",
+            "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$",
+            "maxLength": 96
+          },
+          "nameKey": {
+            "type": "string"
+          },
+          "descriptionKey": {
+            "type": "string"
+          },
+          "rewardSummaryKey": {
+            "type": "string"
+          },
+          "tier": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "current": {
+            "type": "boolean"
+          },
+          "known": {
+            "type": "boolean"
+          },
+          "spawns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "npcProfileId",
+                "nameKey",
+                "role",
+                "count",
+                "bountyCredits"
+              ],
+              "properties": {
+                "npcProfileId": {
+                  "type": "string",
+                  "pattern": "^npc(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                  "maxLength": 96
+                },
+                "nameKey": {
+                  "type": "string"
+                },
+                "role": {
+                  "enum": [
+                    "brawler",
+                    "skirmisher",
+                    "sniper"
+                  ]
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "bountyCredits": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              }
+            }
+          },
+          "totalBountyCredits": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "possibleLootItemIds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^(item|module|ammo)(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            }
+          },
+          "completionCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/commandAvailability"
+            }
+          }
         }
       }
     }
@@ -38,11 +156,28 @@
     "commandAvailability": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["command", "available", "unavailableReason"],
+      "required": [
+        "command",
+        "available",
+        "unavailableReason"
+      ],
       "properties": {
-        "command": { "type": "string" },
-        "available": { "type": "boolean" },
-        "unavailableReason": { "anyOf": [{ "type": "null" }, { "type": "string" }] }
+        "command": {
+          "type": "string"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
       }
     }
   }

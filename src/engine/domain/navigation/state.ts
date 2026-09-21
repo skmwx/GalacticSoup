@@ -4,7 +4,7 @@ import { allocateEntityId } from '../campaign/allocation';
 import type { EntityId } from '../campaign/identity';
 import type { CampaignDraft } from '../campaign/state';
 import type { ShipIdentity } from '../assets';
-import type { SiteObjectState, SiteRuntime, Vector2 } from './types';
+import type { MovementOrder, SiteObjectState, SiteRuntime, Vector2 } from './types';
 
 export function instantiateSite(
   draft: CampaignDraft,
@@ -68,6 +68,46 @@ export function stationAtSite(content: ContentRepository, siteId: string): Stati
 
 export function activeSiteObject(draft: CampaignDraft): SiteObjectState | null {
   return draft.navigation.currentSite?.objects[draft.assets.activeShipId] ?? null;
+}
+
+/** The standing order of one ship, or `null` when it holds none. */
+export function movementOrderOf(
+  state: { readonly navigation: { readonly movementOrders: Readonly<Record<string, MovementOrder>> } },
+  shipId: string,
+): MovementOrder | null {
+  return state.navigation.movementOrders[shipId] ?? null;
+}
+
+/** Puts or clears one ship's standing order. */
+export function setMovementOrder(
+  draft: CampaignDraft,
+  shipId: string,
+  order: MovementOrder | null,
+): void {
+  const orders = draft.navigation.movementOrders as Record<string, MovementOrder>;
+  if (order === null) delete orders[shipId];
+  else orders[shipId] = { ...order };
+}
+
+/** Every movable ship present in the loaded site, in stable order. */
+export function siteShipIds(draft: CampaignDraft): readonly string[] {
+  const site = draft.navigation.currentSite;
+  if (site === null) return [];
+  return Object.keys(site.objects)
+    .sort()
+    .filter((id) => site.objects[id]?.kind === 'ship');
+}
+
+export function addSiteObject(draft: CampaignDraft, object: SiteObjectState): void {
+  const site = draft.navigation.currentSite;
+  if (site === null) return;
+  site.objects[object.id] = { ...object };
+}
+
+export function removeSiteObject(draft: CampaignDraft, objectId: string): void {
+  const site = draft.navigation.currentSite;
+  if (site === null) return;
+  delete site.objects[objectId];
 }
 
 export function replaceSiteObject(

@@ -28,6 +28,19 @@ export {
 } from './combat';
 export { resolveEconomyHour } from './economy';
 export {
+  abandonEncounter,
+  advanceEncounter,
+  instantiateEncounter,
+  materializeWrecks,
+  NPC_DECISION_BOUNDARY,
+  planNpcFit,
+  resolveNpcDecision,
+  resolveWreckExpiry,
+  takeLoot,
+  WRECK_EXPIRE_BOUNDARY,
+} from './encounter';
+export { orderMovement } from './orders';
+export {
   advanceNavigation,
   DOCK_COMPLETE_BOUNDARY,
   resolveDockComplete,

@@ -126,6 +126,12 @@
   stroke-width: 1.6;
 }
 
+.wreck {
+  fill: none;
+  stroke: var(--gs-color-text-muted);
+  stroke-width: 1.6;
+}
+
 .playerShip {
   fill: var(--gs-color-accent);
   stroke: var(--gs-color-text);

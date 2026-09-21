@@ -32,7 +32,9 @@ export type InventoryLocation =
   | { readonly kind: 'hangar'; readonly stationId: StationId }
   | { readonly kind: 'cargo'; readonly shipId: EntityId }
   | { readonly kind: 'fitting'; readonly shipId: EntityId }
-  | { readonly kind: 'reserve'; readonly sourceInventoryId: InventoryId; readonly ownerId: EntityId };
+  | { readonly kind: 'reserve'; readonly sourceInventoryId: InventoryId; readonly ownerId: EntityId }
+  /** The contents of one wreck, which anyone in range may take from. */
+  | { readonly kind: 'wreck'; readonly wreckId: EntityId };
 
 export type CapacityPolicy =
   | { readonly kind: 'unlimited' }
@@ -90,8 +92,18 @@ export interface ShipCondition {
   readonly capacitorCharge: number;
 }
 
+/**
+ * Who a ship answers to (Functional Specification 9.10).
+ *
+ * An opponent is an ordinary ship so that it uses the same fitting, movement,
+ * targeting and damage rules the player does. This field is what keeps it out
+ * of the player's hangar, market, repair and insurance surfaces all the same.
+ */
+export type ShipOwner = 'player' | 'npc';
+
 export interface ShipIdentity {
   readonly id: EntityId;
+  readonly owner: ShipOwner;
   readonly hullId: HullId;
   readonly cargoInventoryId: InventoryId;
   /** Holds the physical units of every fitted module and loaded charge. */

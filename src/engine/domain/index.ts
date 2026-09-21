@@ -11,6 +11,7 @@ export * from './attributes';
 export * from './combat';
 export * from './fitting';
 export * from './economy';
+export * from './encounter';
 export * from './navigation';
 export {
   authoritativeView,

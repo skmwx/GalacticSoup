@@ -32,6 +32,19 @@ function ids(assets: AssetsData) {
   const cargo = assets.inventories.find((i) => i.location.kind === 'cargo')!;
   return { hangar, cargo, ammo: hangar.stacks.find((s) => s.item.kind === 'ammunition')! };
 }
+/**
+ * What the starting grant leaves in the hangar after the starting fit loads
+ * one magazine. Both are tuning values, so the test reads them.
+ */
+const spareRounds = (() => {
+  const rules = shippedContent().rules;
+  const granted = rules.economy.startingItems.find(
+    (item) => item.definitionId === 'ammo.projectile.small.fusion',
+  )?.quantity ?? 0;
+  const turret = shippedContent().module('module.turret.autocannon.small');
+  return granted - (turret?.category === 'turret' ? turret.turret.magazineSize : 0);
+})();
+
 describe.each(['direct', 'channel'] as const)('inventory through %s transport', (kind) => {
   it('prepares, inspects, moves and resumes exactly the same owned assets [MVP-AC-02, MVP-AC-06, FUNC-6.1, FUNC-6.2, TECH-11.4]', async () => {
     const store = createMemorySaveStore();
@@ -45,13 +58,13 @@ describe.each(['direct', 'channel'] as const)('inventory through %s transport', 
     expect(await ask(gateway, 'inventory.hangar', { stationId: assets.location.stationId })).toEqual(hangar);
     expect(await ask(gateway, 'inventory.cargo', { shipId: assets.activeShipId })).toEqual(cargo);
     expect((await ask(gateway, 'item.inspect', { stackId: ammo.id })).stack).toEqual(ammo);
-    expect((await ask(gateway, 'inventory.maximum', { stackId: ammo.id, destinationInventoryId: cargo.id })).maximumQuantity).toBe(40);
+    expect((await ask(gateway, 'inventory.maximum', { stackId: ammo.id, destinationInventoryId: cargo.id })).maximumQuantity).toBe(spareRounds);
     const result = await ask(gateway, 'inventory.transfer', { stackId: ammo.id, destinationInventoryId: cargo.id, quantity: 12 });
     expect(result.invalidations).toEqual(['assets', 'inventory']);
     expect(result.events[0]!.kind).toBe('inventory.changed');
     const moved = await ask(gateway, 'assets.list', {});
     expect(moved.inventories.find((i) => i.id === cargo.id)!.stacks[0]!.quantity).toBe(12);
-    expect(moved.inventories.find((i) => i.id === hangar.id)!.stacks.find((s) => s.id === ammo.id)!.quantity).toBe(28);
+    expect(moved.inventories.find((i) => i.id === hangar.id)!.stacks.find((s) => s.id === ammo.id)!.quantity).toBe(spareRounds - 12);
     const hash = await ask(gateway, 'diagnostics.stateHash', {});
     await ask(gateway, 'campaign.close', { savedAtRealMs: 999999999 });
     const reopened = session(kind, store);
@@ -70,7 +83,7 @@ describe.each(['direct', 'channel'] as const)('inventory through %s transport', 
     const stale = await gateway.sendEnvelope({ protocolVersion: PROTOCOL_VERSION, requestId: 'stale-transfer',
       type: 'inventory.transfer', expectedRevision: 0, payload });
     expect(!stale.ok && stale.error.code).toBe('STALE_REVISION');
-    const missing = await gateway.request('inventory.transfer', { ...payload, quantity: 41 });
+    const missing = await gateway.request('inventory.transfer', { ...payload, quantity: spareRounds + 1 });
     expect(!missing.ok && missing.error.messageKey).toBe('error.ruleViolation.insufficientItems');
     expect(await ask(gateway, 'diagnostics.stateHash', {})).toEqual(hash);
     const envelope = { protocolVersion: PROTOCOL_VERSION, requestId: 'one-transfer', type: 'inventory.transfer', expectedRevision: 1, payload };

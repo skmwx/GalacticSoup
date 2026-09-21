@@ -26,7 +26,7 @@ export interface CommandAvailabilityData {
 
 export interface SiteObjectData {
   readonly id: string;
-  readonly kind: 'ship' | 'station';
+  readonly kind: 'ship' | 'station' | 'wreck';
   readonly definitionId: string;
   readonly nameKey: string;
   readonly position: VectorData;
@@ -93,6 +93,15 @@ export interface SiteData {
   readonly arrivalDistancesKm: readonly number[];
 }
 
+/** One authored spawn group, disclosed before entry (MVP Scope 4.2). */
+export interface DestinationSpawnData {
+  readonly npcProfileId: string;
+  readonly nameKey: string;
+  readonly role: string;
+  readonly count: number;
+  readonly bountyCredits: number;
+}
+
 export interface DestinationData {
   readonly encounterId: string;
   readonly siteId: string;
@@ -103,6 +112,14 @@ export interface DestinationData {
   readonly selected: boolean;
   readonly current: boolean;
   readonly known: boolean;
+  /** Opponents the site is authored to hold, in authored order. */
+  readonly spawns: readonly DestinationSpawnData[];
+  /** Total authored bounty of every opponent, before loot. */
+  readonly totalBountyCredits: number;
+  /** Every item its loot tables can drop, in stable order. */
+  readonly possibleLootItemIds: readonly string[];
+  /** How often the player has completed it; sites stay repeatable (MVP-AC-09). */
+  readonly completionCount: number;
   /** Choosing this encounter, and warping to its site. */
   readonly commands: readonly CommandAvailabilityData[];
 }

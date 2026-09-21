@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galactic-soup.local/schemas/content/rules.combat.schema.json",
   "title": "Combat rules",
-  "description": "Tunable constants of Functional Specification 9.2-9.12.",
+  "description": "Tunable constants of Functional Specification 9.2-9.12, including NPC behaviour bands.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -32,10 +32,15 @@
         "lockTimeCoefficient",
         "lockTimeMaximumSeconds",
         "lockTimeMinimumSeconds",
+        "npcDecisionIntervalSeconds",
+        "npcRangeToleranceFraction",
+        "npcRepairThresholdFraction",
+        "npcRoles",
         "npcWreckLifetimeSeconds",
         "playerWreckLifetimeSeconds",
         "reloadSeconds",
-        "resistanceMaximum"
+        "resistanceMaximum",
+        "wreckAccessRangeKm"
       ],
       "properties": {
         "resistanceMaximum": {
@@ -84,6 +89,102 @@
           "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
         },
         "destructionItemSurvivalChance": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "wreckAccessRangeKm": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "npcDecisionIntervalSeconds": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "npcRoles": {
+          "description": "Range band and movement order each NPC role commands (Functional Specification 9.10).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "brawler",
+            "skirmisher",
+            "sniper"
+          ],
+          "properties": {
+            "brawler": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "movement",
+                "preferredRangeFraction",
+                "minimumRangeKm"
+              ],
+              "properties": {
+                "movement": {
+                  "enum": [
+                    "approach",
+                    "orbit",
+                    "keepRange"
+                  ]
+                },
+                "preferredRangeFraction": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                },
+                "minimumRangeKm": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                }
+              }
+            },
+            "skirmisher": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "movement",
+                "preferredRangeFraction",
+                "minimumRangeKm"
+              ],
+              "properties": {
+                "movement": {
+                  "enum": [
+                    "approach",
+                    "orbit",
+                    "keepRange"
+                  ]
+                },
+                "preferredRangeFraction": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                },
+                "minimumRangeKm": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                }
+              }
+            },
+            "sniper": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "movement",
+                "preferredRangeFraction",
+                "minimumRangeKm"
+              ],
+              "properties": {
+                "movement": {
+                  "enum": [
+                    "approach",
+                    "orbit",
+                    "keepRange"
+                  ]
+                },
+                "preferredRangeFraction": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                },
+                "minimumRangeKm": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                }
+              }
+            }
+          }
+        },
+        "npcRepairThresholdFraction": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "npcRangeToleranceFraction": {
           "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
         }
       }

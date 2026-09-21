@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/loot.contents.data.schema.json",
+  "title": "WreckContentsData",
+  "description": "The contents of one wreck and the most of each stack the hold would accept (Functional Specification 9.11).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "revision",
+    "wreckId",
+    "accessible",
+    "unavailableReason",
+    "rangeFromPlayerKm",
+    "expiresAtMs",
+    "remainingSeconds",
+    "stacks",
+    "maximumQuantities"
+  ],
+  "properties": {
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "wreckId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+    },
+    "accessible": {
+      "type": "boolean"
+    },
+    "unavailableReason": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "rangeFromPlayerKm": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "number",
+          "minimum": 0
+        }
+      ]
+    },
+    "expiresAtMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "remainingSeconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "stacks": {
+      "type": "array",
+      "items": {
+        "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/stack"
+      }
+    },
+    "maximumQuantities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stackId",
+          "maximumQuantity"
+        ],
+        "properties": {
+          "stackId": {
+            "type": "string",
+            "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+          },
+          "maximumQuantity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        }
+      }
+    }
+  }
+}

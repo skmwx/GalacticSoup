@@ -106,7 +106,7 @@ describe('movement controllers', () => {
     );
     draft.assets.location = location;
     ship.location = location;
-    draft.navigation.movement = {
+    draft.navigation.movementOrders[ship.id] = {
       kind: 'approach',
       targetId: station.id,
       distanceKm: 0,
@@ -116,7 +116,7 @@ describe('movement controllers', () => {
 
     advanceNavigation(context, 0, 250);
 
-    expect(draft.navigation.movement).toEqual({ kind: 'stop' });
+    expect(draft.navigation.movementOrders[ship.id]).toEqual({ kind: 'stop' });
     expect(draft.navigation.lastCancellation).toEqual({
       orderKind: 'approach',
       reason: 'targetMissing',

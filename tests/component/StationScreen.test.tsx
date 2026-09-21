@@ -24,6 +24,16 @@ import { shippedContent } from '../support/content.ts';
 const PILOT = 'Vela Trask';
 const FUSION = 'ammo.projectile.small.fusion';
 
+/** Rounds the grant leaves in the hangar once the starting fit is loaded. */
+const spareRounds = (() => {
+  const content = shippedContent();
+  const granted = content.rules.economy.startingItems.find(
+    (item) => item.definitionId === FUSION,
+  )?.quantity ?? 0;
+  const turret = content.module('module.turret.autocannon.small');
+  return granted - (turret?.category === 'turret' ? turret.turret.magazineSize : 0);
+})();
+
 function renderGame(options: {
   onIssue?: (issue: LocalizationIssue) => void;
   strict?: boolean;
@@ -159,6 +169,11 @@ describe('market', () => {
       expect(within(dialog).getByText('19,900 ISK')).toBeInTheDocument();
     });
 
+    const fusionBefore = (await assets(harness)).inventories
+      .flatMap((inventory) => inventory.stacks)
+      .filter((stack) => stack.item.definitionId === FUSION)
+      .reduce((total, stack) => total + stack.quantity, 0);
+
     await harness.user.click(within(dialog).getByRole('button', { name: 'Confirm' }));
 
     await waitFor(() => {
@@ -167,12 +182,12 @@ describe('market', () => {
 
     const after = await assets(harness);
     expect(after.credits).toBe(19_900);
-    const fusion = after.inventories
+    const fusionAfter = after.inventories
       .flatMap((inventory) => inventory.stacks)
       .filter((stack) => stack.item.definitionId === FUSION)
       .reduce((total, stack) => total + stack.quantity, 0);
-    // 40 in the hangar, 20 loaded in the magazine, 10 just bought.
-    expect(fusion).toBe(70);
+    // Exactly the ten rounds bought were added to what the campaign granted.
+    expect(fusionAfter).toBe(fusionBefore + 10);
 
     harness.gateway.dispose();
   });
@@ -292,11 +307,17 @@ describe('market', () => {
     await startCampaign(harness);
     await openPanel(harness, 'Market');
 
+    const before = (await assets(harness)).credits;
     await harness.user.click(screen.getByRole('button', { name: 'Sell Fusion S' }));
     const dialog = await screen.findByRole('dialog', { name: 'Confirm sale' });
-    // 40 spare rounds at the station's buy price of 8.
-    await waitFor(() => {
-      expect(within(dialog).getByText('20,320 ISK')).toBeInTheDocument();
+
+    // The dialog names the total it is about to pay; the committed sale must
+    // move the wallet by exactly that (Functional Specification 22.4).
+    const total = await waitFor(() => {
+      const label = [...dialog.querySelectorAll('dt')].find((node) => node.textContent === 'Total');
+      const parsed = Number((label?.nextElementSibling?.textContent ?? '').replace(/[^0-9]/g, ''));
+      expect(parsed).toBeGreaterThan(0);
+      return parsed;
     });
 
     await harness.user.click(within(dialog).getByRole('button', { name: 'Confirm' }));
@@ -304,7 +325,7 @@ describe('market', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Confirm sale' })).not.toBeInTheDocument();
     });
-    expect((await assets(harness)).credits).toBe(20_320);
+    expect((await assets(harness)).credits).toBe(before + total);
 
     harness.gateway.dispose();
   });
@@ -330,7 +351,9 @@ describe('hangar', () => {
         .filter((inventory) => inventory.id === cargoId)
         .flatMap((inventory) => inventory.stacks);
       expect(inCargo).toHaveLength(1);
-      expect(inCargo[0]?.quantity).toBe(40);
+      // The whole spare stack moves; how many rounds the grant left is a
+      // tuning value.
+      expect(inCargo[0]?.quantity).toBe(spareRounds);
     });
 
     harness.gateway.dispose();

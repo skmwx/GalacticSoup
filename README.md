@@ -157,9 +157,9 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 9 exposes `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`,
-`weapon.deactivate`, `weapon.reload`, `weapon.changeAmmunition`, `module.activate` and
-`module.deactivate` alongside `ship.get`,
+Protocol version 10 exposes `encounter.state`, `loot.contents` and `loot.take` alongside
+`combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`, `weapon.deactivate`,
+`weapon.reload`, `weapon.changeAmmunition`, `module.activate`, `module.deactivate`, `ship.get`,
 `ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market, repair,
 resupply and insurance contracts, the navigation queries and orders, and the authored content
 catalogue.
@@ -169,7 +169,7 @@ capacitor recharge and endurance, active-module cycles and a bounded significant
 All combat actors use the same deterministic lifecycle for damage, repair, propulsion and support
 effects, so headless opponents and the player follow the same rules.
 
-Campaign state and save format are version 7. Previous development saves are rejected without
+Campaign state and save format are version 8. Previous development saves are rejected without
 modification; start a new campaign after upgrading. No pre-release migration is required by the
 MVP plan. The migration runner remains covered by fixture registries, and the older format fixtures
 are retained to verify rejection. See `docs/agent-comm/status/` for the per-phase handoffs.
@@ -246,8 +246,40 @@ rather than a bare percentage. One shot draws from the `combat` stream in a fixe
 roll, then the critical roll, then the variation a critical replaces - so the same seed and the same
 orders reproduce the same fight, and a refused command draws nothing at all.
 
-Nothing in this phase writes to a target: a resolved shot is published as `combat.shotResolved` with
-its four raw damage components, and applying them to shields, armour and hull is the next phase.
+A resolved shot is published as `combat.shotResolved` with its four raw damage components, and
+`src/engine/domain/combat/damage.ts` applies them through shields, armour and hull: every component
+crosses a depleted layer in the same proportion, so the order the damage types are iterated in
+cannot change the result. Destruction is detected only after every completion already committed at
+that timestamp has resolved, so two ships that fire simultaneously can destroy each other.
+
+## Encounters, opponents and wrecks
+
+An authored combat site is instantiated the moment the ship arrives, and the instance lasts exactly
+as long as the player occupies the site. Leaving abandons it - retreat is a legal outcome, not a
+failure - and the next arrival instantiates a fresh one, so no site can be exhausted.
+`content/encounters/templates/*.json` says which profiles a site spawns, how many and how far out;
+`npc.profiles` says what each one flies and carries and what its bounty is worth.
+
+An opponent is an ordinary ship. It is created through the inventory service with a real fit in a
+real fitting store, it derives its attributes through the same pipeline the player's ship uses, and
+`src/engine/simulation/encounter.ts` turns its intent into the same movement, targeting and module
+commands the player issues. It cannot out-range, out-track or out-tank the rules, and it reads only
+its own condition and the range to its target, so it gains nothing from the player losing.
+
+What it wants is decided by a pure function in `src/engine/domain/encounter/behavior.ts`. A role is
+a band rather than a distance: a brawler holds a small fraction of its own best turret optimal, a
+skirmisher orbits at most of it and a sniper keeps more than it, each clamped to its authored
+minimum and to what its own lock range can hold. It burns its propulsion only while it is outside
+that band and runs its repair module only below the authored threshold, so a refit changes how it
+fights without any behaviour being rewritten.
+
+Destroying one settles its bounty against a grant id, so a replayed completion cannot pay twice, and
+leaves a wreck holding the contents its loot table rolled from the `loot` stream. The wreck is an
+ordinary inventory in an ordinary place: taking from it is the same physical move as any other, so a
+hold that is too small keeps the goods where they are rather than destroying them. It outlives the
+instance that made it and expires on its own scheduled boundary, so warping out and back does not
+make it vanish. `navigation.destinations` discloses each site's opponents, total bounty and possible
+loot before entry, and records how often it has been completed.
 
 ## Content
 

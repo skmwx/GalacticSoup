@@ -211,6 +211,10 @@ export function SiteView({
             >
               {object.kind === 'station' ? (
                 <rect x={-9} y={-9} width={18} height={18} className={styles['station']} />
+              ) : object.kind === 'wreck' ? (
+                // A wreck is a hull that no longer flies, so it is drawn as a
+                // broken outline rather than as another ship.
+                <path d="M -8 -6 L 0 -2 L 8 -7 L 5 7 L -6 6 Z" className={styles['wreck']} />
               ) : (
                 <polygon
                   points="0,-10 7,8 0,4 -7,8"

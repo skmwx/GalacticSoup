@@ -335,6 +335,7 @@ function addPurchasedHull(
   const location = { kind: 'station' as const, stationId: station.id, systemId: station.systemId };
   draft.assets.ships[shipId] = {
     id: shipId,
+    owner: 'player',
     hullId,
     cargoInventoryId,
     fittingInventoryId,

@@ -16,6 +16,27 @@
     "absoluteRangeFalloffMultiples": 3,
     "npcWreckLifetimeSeconds": 1800,
     "playerWreckLifetimeSeconds": 7200,
-    "destructionItemSurvivalChance": 0.5
+    "destructionItemSurvivalChance": 0.5,
+    "wreckAccessRangeKm": 1,
+    "npcDecisionIntervalSeconds": 1.5,
+    "npcRepairThresholdFraction": 0.6,
+    "npcRangeToleranceFraction": 0.5,
+    "npcRoles": {
+      "brawler": {
+        "movement": "approach",
+        "preferredRangeFraction": 0.3,
+        "minimumRangeKm": 1
+      },
+      "skirmisher": {
+        "movement": "orbit",
+        "preferredRangeFraction": 0.75,
+        "minimumRangeKm": 3
+      },
+      "sniper": {
+        "movement": "keepRange",
+        "preferredRangeFraction": 1.15,
+        "minimumRangeKm": 8
+      }
+    }
   }
 }

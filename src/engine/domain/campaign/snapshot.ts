@@ -3,6 +3,7 @@ import { isAssetState } from '../assets/validation';
 import { parseSlotKey } from '../fitting/types';
 import { isCombatState } from '../combat/validation';
 import { isEconomyState } from '../economy/validation';
+import { isEncounterState } from '../encounter/validation';
 import { isNavigationState } from '../navigation/validation';
 
 import { isCampaignId, isCampaignSeed, isEntityId, MAX_ORDINAL } from './identity';
@@ -108,6 +109,7 @@ export function readCampaignState(value: unknown): CampaignReadResult {
   if (!isEconomyState(value['economy'])) add('economyShape', 'state.economy', 'Saved station economies are missing or malformed.');
   if (!isNavigationState(value['navigation'])) add('navigationShape', 'state.navigation', 'Saved navigation is missing or malformed.');
   if (!isCombatState(value['combat'])) add('combatShape', 'state.combat', 'Saved combat runtime is missing or malformed.');
+  if (!isEncounterState(value['encounter'])) add('encounterShape', 'state.encounter', 'Saved encounter state is missing or malformed.');
   readFittingDraft(value['fitting'], add);
 
   if (issues.length > 0) {
@@ -153,6 +155,18 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
     references.push(station.stationId);
     for (const listing of Object.values(station.listings)) references.push(listing.itemId);
   }
+  const encounter = state.encounter.active;
+  if (encounter !== null) {
+    references.push(encounter.encounterId, encounter.systemId, encounter.siteId);
+    for (const npc of encounter.npcs) references.push(npc.profileId, npc.lootTableId);
+  }
+  for (const entry of Object.values(state.encounter.wrecks)) {
+    references.push(entry.systemId, entry.siteId, entry.hullId);
+  }
+  for (const encounterId of Object.keys(state.encounter.completions)) {
+    if (isDefinitionId(encounterId)) references.push(encounterId);
+  }
+  if (state.encounter.lastOutcome !== null) references.push(state.encounter.lastOutcome.encounterId);
   references.push(...state.navigation.knownDestinationSiteIds);
   if (state.navigation.selectedEncounterId !== null) references.push(state.navigation.selectedEncounterId);
   if (state.navigation.currentSite !== null) {
@@ -190,6 +204,7 @@ const STATE_FIELDS: readonly string[] = [
   'assets',
   'combat',
   'economy',
+  'encounter',
   'fitting',
   'navigation',
   'stateVersion',
