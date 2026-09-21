@@ -157,13 +157,19 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 8 exposes `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`,
-`weapon.deactivate`, `weapon.reload` and `weapon.changeAmmunition` alongside `ship.get`,
+Protocol version 9 exposes `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`,
+`weapon.deactivate`, `weapon.reload`, `weapon.changeAmmunition`, `module.activate` and
+`module.deactivate` alongside `ship.get`,
 `ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market, repair,
 resupply and insurance contracts, the navigation queries and orders, and the authored content
 catalogue.
 
-Campaign state and save format are version 6. Previous development saves are rejected without
+The tactical state includes layered shield, armour and hull condition, damage resistances,
+capacitor recharge and endurance, active-module cycles and a bounded significant-event history.
+All combat actors use the same deterministic lifecycle for damage, repair, propulsion and support
+effects, so headless opponents and the player follow the same rules.
+
+Campaign state and save format are version 7. Previous development saves are rejected without
 modification; start a new campaign after upgrading. No pre-release migration is required by the
 MVP plan. The migration runner remains covered by fixture registries, and the older format fixtures
 are retained to verify rejection. See `docs/agent-comm/status/` for the per-phase handoffs.

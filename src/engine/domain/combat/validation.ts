@@ -1,4 +1,4 @@
-import type { ContentRepository } from '@engine/ports';
+import { DAMAGE_TYPES, DEFENSE_LAYERS, type ContentRepository } from '@engine/ports';
 import { isDefinitionIdIn } from '@shared';
 
 import { attributeValue } from '../attributes';
@@ -9,8 +9,11 @@ import { parseSlotKey } from '../fitting/types';
 import { combatantOf } from './state';
 import {
   LOCK_STATUSES,
+  ACTIVE_MODULE_STOP_REASONS,
   WEAPON_STOP_REASONS,
+  type ActiveModuleState,
   type CombatState,
+  type CombatEventRecord,
   type LockState,
   type WeaponState,
 } from './types';
@@ -34,13 +37,18 @@ type Report = (rule: string, path: string, detail: string) => void;
 export const LOCK_COMPLETE_KIND = 'combat.lockComplete';
 export const WEAPON_CYCLE_KIND = 'combat.weaponCycle';
 export const RELOAD_COMPLETE_KIND = 'combat.reloadComplete';
+export const MODULE_CYCLE_KIND = 'combat.moduleCycle';
 
 export function isCombatState(value: unknown): value is CombatState {
-  if (!shape(value, ['version', 'ships'])) return false;
+  if (!shape(value, ['version', 'ships', 'events'])) return false;
   if (!count(value['version']) || value['version'] < 1) return false;
   const ships = value['ships'];
   if (!record(ships)) return false;
-  return Object.entries(ships).every(([key, entry]) => isEntityId(key) && shipCombat(entry));
+  if (!Object.entries(ships).every(([key, entry]) => isEntityId(key) && shipCombat(entry))) {
+    return false;
+  }
+  return Array.isArray(value['events']) && value['events'].length <= 128 &&
+    value['events'].every(combatEvent);
 }
 
 export function validateCombat(
@@ -139,6 +147,56 @@ export function validateCombat(
         }
       }
     }
+
+    for (const [key, module] of Object.entries(combat.modules)) {
+      const path = `ships.${shipId}.modules.${key}`;
+      const slot = parseSlotKey(key);
+      if (slot === null || slot.kind === 'weapon') {
+        fail(path, 'An active-module runtime key names a non-weapon fitted slot.');
+      }
+      if (module.waitingForCapacitor && (!module.repeating || module.cycle !== null)) {
+        fail(path, 'Only a repeating module without a cycle may wait for capacitor.');
+      }
+      if (module.cycle !== null) {
+        if (module.cycle.completesAtMs < module.cycle.startedAtMs) {
+          fail(`${path}.cycle`, 'A module cycle cannot complete before it started.');
+        }
+        checkBoundary(
+          state,
+          module.cycle.boundaryEntryId,
+          shipId,
+          MODULE_CYCLE_KIND,
+          `${path}.cycle`,
+          fail,
+        );
+      }
+      if (content !== undefined && inSite && slot !== null) {
+        const combatant = combatantOf(state, content, shipId);
+        const fitted = combatant?.fit.find((entry) =>
+          entry.slot.kind === slot.kind && entry.slot.index === slot.index);
+        const definition = fitted === undefined ? undefined : content.module(fitted.moduleId);
+        if (
+          fitted === undefined ||
+          !fitted.online ||
+          definition?.activation === undefined ||
+          (definition.category !== 'propulsion' &&
+            definition.category !== 'shieldBooster' &&
+            definition.category !== 'armorRepairer')
+        ) {
+          fail(path, 'Active-module runtime must belong to an online operated module.');
+        }
+      }
+    }
+
+    if (combat.destroyedAtMs !== null) {
+      if (combat.destroyedAtMs > state.time.simulationTimeMs) {
+        fail(`ships.${shipId}.destroyedAtMs`, 'A ship cannot be destroyed in the future.');
+      }
+      if (combat.locks.length > 0 || Object.values(combat.weapons).some(activeWeapon) ||
+        Object.values(combat.modules).some(activeModule)) {
+        fail(`ships.${shipId}`, 'A destroyed ship cannot retain active combat operations.');
+      }
+    }
   }
 }
 
@@ -158,12 +216,23 @@ function checkBoundary(
 }
 
 function shipCombat(value: unknown): boolean {
-  if (!shape(value, ['locks', 'weapons'])) return false;
+  if (!shape(value, ['locks', 'weapons', 'modules', 'destroyedAtMs', 'capacitorTrend'])) return false;
   if (!Array.isArray(value['locks']) || !value['locks'].every(lock)) return false;
   const weapons = value['weapons'];
   if (!record(weapons)) return false;
-  return Object.entries(weapons).every(
+  if (!Object.entries(weapons).every(
     ([key, entry]) => parseSlotKey(key) !== null && weapon(entry),
+  )) return false;
+  const modules = value['modules'];
+  if (!record(modules) || !Object.entries(modules).every(
+    ([key, entry]) => parseSlotKey(key) !== null && activeModuleState(entry),
+  )) return false;
+  if (value['destroyedAtMs'] !== null && !count(value['destroyedAtMs'])) return false;
+  const trend = value['capacitorTrend'];
+  return trend === null || (
+    shape(trend, ['windowStartedAtMs', 'lastChangedAtMs', 'netChange']) &&
+    count(trend['windowStartedAtMs']) && count(trend['lastChangedAtMs']) &&
+    trend['lastChangedAtMs'] >= trend['windowStartedAtMs'] && finite(trend['netChange'])
   );
 }
 
@@ -221,8 +290,67 @@ function reloadState(value: unknown): boolean {
   );
 }
 
+function activeModuleState(value: unknown): value is ActiveModuleState {
+  if (!shape(value, ['repeating', 'cycle', 'waitingForCapacitor', 'stopReason'])) return false;
+  if (typeof value['repeating'] !== 'boolean' || typeof value['waitingForCapacitor'] !== 'boolean') {
+    return false;
+  }
+  const cycle = value['cycle'];
+  if (cycle !== null && !(
+    shape(cycle, ['startedAtMs', 'completesAtMs', 'boundaryEntryId', 'committedCapacitor']) &&
+    count(cycle['startedAtMs']) && count(cycle['completesAtMs']) &&
+    isEntityId(cycle['boundaryEntryId']) && nonNegative(cycle['committedCapacitor'])
+  )) return false;
+  return value['stopReason'] === null ||
+    (ACTIVE_MODULE_STOP_REASONS as readonly string[]).includes(value['stopReason'] as string);
+}
+
+function combatEvent(value: unknown): value is CombatEventRecord {
+  if (!record(value)) return false;
+  if (!count(value['firstAtMs']) || !count(value['lastAtMs']) ||
+      value['lastAtMs'] < value['firstAtMs'] || !count(value['count']) || value['count'] < 1) {
+    return false;
+  }
+  switch (value['kind']) {
+    case 'damage':
+      return shape(value, [
+        'kind', 'firstAtMs', 'lastAtMs', 'sourceId', 'targetId', 'slotKey', 'count',
+        'rawDamage', 'appliedDamage',
+      ]) && isEntityId(value['sourceId']) && isEntityId(value['targetId']) &&
+        typeof value['slotKey'] === 'string' && profile(value['rawDamage']) &&
+        profile(value['appliedDamage']);
+    case 'repair':
+      return shape(value, [
+        'kind', 'firstAtMs', 'lastAtMs', 'shipId', 'slotKey', 'layer', 'count',
+        'repairedHitPoints',
+      ]) && isEntityId(value['shipId']) && typeof value['slotKey'] === 'string' &&
+        (DEFENSE_LAYERS as readonly unknown[]).includes(value['layer']) &&
+        nonNegative(value['repairedHitPoints']);
+    case 'destruction':
+      return shape(value, ['kind', 'firstAtMs', 'lastAtMs', 'shipId', 'count']) &&
+        isEntityId(value['shipId']) && value['count'] === 1;
+    default:
+      return false;
+  }
+}
+
+function profile(value: unknown): boolean {
+  return shape(value, [...DAMAGE_TYPES]) && Object.values(value).every(nonNegative);
+}
+
+function activeWeapon(value: WeaponState): boolean {
+  return value.repeating || value.cycle !== null || value.reload !== null;
+}
+
+function activeModule(value: ActiveModuleState): boolean {
+  return value.repeating || value.cycle !== null || value.waitingForCapacitor;
+}
+
 function nonNegative(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+function finite(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
 }
 function count(value: unknown): value is number {
   return Number.isSafeInteger(value) && (value as number) >= 0;

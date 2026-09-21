@@ -88,6 +88,105 @@ export interface WeaponReloadData {
   readonly changing: boolean;
 }
 
+export interface DefenseLayerData {
+  readonly layer: 'shield' | 'armor' | 'hull';
+  readonly currentHitPoints: number;
+  readonly maximumHitPoints: number;
+  readonly damageTaken: number;
+  readonly fractionRemaining: number;
+  readonly resistances: Readonly<Record<string, number>>;
+  readonly hitPointsTrace: FormulaTraceData;
+  readonly resistanceTraces: Readonly<Record<string, FormulaTraceData>>;
+}
+
+export interface DefenseStateData {
+  readonly shipId: string;
+  readonly destroyed: boolean;
+  readonly destroyedAtMs: number | null;
+  readonly layers: readonly DefenseLayerData[];
+}
+
+export interface CapacitorStateData {
+  readonly charge: number;
+  readonly capacity: number;
+  readonly rechargePerSecond: number;
+  readonly recentNetChangePerSecond: number;
+  readonly projectedUsePerSecond: number;
+  readonly projectedNetChangePerSecond: number;
+  /** `null` means current repeating use is sustainable. */
+  readonly enduranceSeconds: number | null;
+  readonly stable: boolean;
+  readonly capacityTrace: FormulaTraceData;
+  readonly rechargeTrace: FormulaTraceData;
+  readonly enduranceTrace: FormulaTraceData;
+}
+
+export interface ActiveModuleCycleData {
+  readonly startedAtMs: number;
+  readonly completesAtMs: number;
+  readonly remainingSeconds: number;
+  readonly committedCapacitor: number;
+}
+
+export interface ModuleEffectData {
+  readonly kind: 'propulsion' | 'repair' | 'resistance' | 'capacitorSupport';
+  readonly layer: string | null;
+  readonly amountPerCycle: number;
+  readonly sustainedPerSecond: number;
+  readonly baseValue: number;
+  readonly activeValue: number;
+  readonly values: Readonly<Record<string, number>>;
+  readonly trace: FormulaTraceData;
+}
+
+export interface ModuleRuntimeData {
+  readonly slot: SlotRefData;
+  readonly moduleId: string;
+  readonly nameKey: string;
+  readonly category: string;
+  readonly online: boolean;
+  readonly passive: boolean;
+  readonly repeating: boolean;
+  readonly waitingForCapacitor: boolean;
+  readonly status: 'offline' | 'passive' | 'inactive' | 'active' | 'waiting' | 'deactivating';
+  readonly cycleSeconds: number;
+  readonly capacitorPerCycle: number;
+  readonly cycle: ActiveModuleCycleData | null;
+  readonly stopReason: string | null;
+  readonly effect: ModuleEffectData;
+  readonly commands: readonly CommandAvailabilityData[];
+}
+
+export type CombatEventData =
+  | {
+      readonly kind: 'damage';
+      readonly firstAtMs: number;
+      readonly lastAtMs: number;
+      readonly sourceId: string;
+      readonly targetId: string;
+      readonly slotKey: string;
+      readonly count: number;
+      readonly rawDamage: Readonly<Record<string, number>>;
+      readonly appliedDamage: Readonly<Record<string, number>>;
+    }
+  | {
+      readonly kind: 'repair';
+      readonly firstAtMs: number;
+      readonly lastAtMs: number;
+      readonly shipId: string;
+      readonly slotKey: string;
+      readonly layer: string;
+      readonly count: number;
+      readonly repairedHitPoints: number;
+    }
+  | {
+      readonly kind: 'destruction';
+      readonly firstAtMs: number;
+      readonly lastAtMs: number;
+      readonly shipId: string;
+      readonly count: number;
+    };
+
 export interface WeaponRuntimeData {
   readonly slot: SlotRefData;
   readonly moduleId: string;
@@ -126,6 +225,11 @@ export interface CombatData {
   readonly signatureRadiusMetres: number;
   readonly capacitorCharge: number;
   readonly capacitorCapacity: number;
+  readonly defenses: DefenseStateData | null;
+  readonly capacitor: CapacitorStateData | null;
+  readonly modules: readonly ModuleRuntimeData[];
+  readonly targetDefenses: readonly DefenseStateData[];
+  readonly events: readonly CombatEventData[];
   readonly locks: readonly LockData[];
   readonly motion: readonly TargetMotionData[];
   readonly weapons: readonly WeaponRuntimeData[];

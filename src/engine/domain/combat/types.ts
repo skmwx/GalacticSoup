@@ -1,3 +1,4 @@
+import type { DefenseLayer, DamageProfile, DamageType, ModuleCategory } from '@engine/ports';
 import type { AmmunitionId } from '@shared';
 
 import type { EntityId } from '../campaign/identity';
@@ -93,17 +94,106 @@ export interface WeaponState {
   readonly stopReason: WeaponStopReason | null;
 }
 
+/**
+ * One paid cycle of a non-weapon active module (Functional Specification 9.8).
+ *
+ * Propulsion receives its effect for the duration of this record. Repair
+ * modules apply their result when the boundary completes. The committed cost
+ * is retained explicitly so a save in the middle of a cycle cannot pay twice
+ * or receive a refund after reload.
+ */
+export interface ActiveModuleCycleState {
+  readonly startedAtMs: number;
+  readonly completesAtMs: number;
+  readonly boundaryEntryId: EntityId;
+  readonly committedCapacitor: number;
+}
+
+export const ACTIVE_MODULE_STOP_REASONS = [
+  'deactivated',
+  'insufficientCapacitor',
+  'destroyed',
+  'siteLeft',
+] as const;
+export type ActiveModuleStopReason = (typeof ACTIVE_MODULE_STOP_REASONS)[number];
+
+export interface ActiveModuleState {
+  /** The operator should continue starting cycles until deactivated. */
+  readonly repeating: boolean;
+  readonly cycle: ActiveModuleCycleState | null;
+  /** A repeating module with no cycle retries after capacitor regeneration. */
+  readonly waitingForCapacitor: boolean;
+  readonly stopReason: ActiveModuleStopReason | null;
+}
+
+/** A persisted recent-change window for the capacitor display. */
+export interface CapacitorTrendState {
+  readonly windowStartedAtMs: number;
+  readonly lastChangedAtMs: number;
+  /** Regeneration is positive and cycle payments are negative. */
+  readonly netChange: number;
+}
+
 export interface ShipCombatState {
   readonly locks: readonly LockState[];
   /** Weapon runtime by slot key, for the weapon slots that have been used. */
   readonly weapons: Readonly<Record<string, WeaponState>>;
+  /** Non-weapon active-module runtime by fitted slot key. */
+  readonly modules: Readonly<Record<string, ActiveModuleState>>;
+  /** Set after all committed completions at the timestamp have resolved. */
+  readonly destroyedAtMs: number | null;
+  readonly capacitorTrend: CapacitorTrendState | null;
 }
+
+export interface AggregatedDamageEvent {
+  readonly kind: 'damage';
+  readonly firstAtMs: number;
+  readonly lastAtMs: number;
+  readonly sourceId: string;
+  readonly targetId: string;
+  readonly slotKey: string;
+  readonly count: number;
+  readonly rawDamage: DamageProfile;
+  /** Damage removed from hit-point layers, after resistance. */
+  readonly appliedDamage: DamageProfile;
+}
+
+export interface AggregatedRepairEvent {
+  readonly kind: 'repair';
+  readonly firstAtMs: number;
+  readonly lastAtMs: number;
+  readonly shipId: string;
+  readonly slotKey: string;
+  readonly layer: DefenseLayer;
+  readonly count: number;
+  readonly repairedHitPoints: number;
+}
+
+export interface DestructionCombatEvent {
+  readonly kind: 'destruction';
+  readonly firstAtMs: number;
+  readonly lastAtMs: number;
+  readonly shipId: string;
+  readonly count: 1;
+}
+
+/**
+ * The bounded, persisted combat recorder (Technical Specification 10.3).
+ * Routine repeated damage and repairs are aggregated while the semantic
+ * domain events for each individual completion are still published.
+ */
+export type CombatEventRecord =
+  | AggregatedDamageEvent
+  | AggregatedRepairEvent
+  | DestructionCombatEvent;
 
 export interface CombatState {
   /** Changes whenever any combat runtime changes, for projection binding. */
   readonly version: number;
   /** Combat runtime by ship entity id. A ship outside a site holds none. */
   readonly ships: Readonly<Record<string, ShipCombatState>>;
+  /** Oldest first, capped by the recorder. */
+  readonly events: readonly CombatEventRecord[];
 }
 
 /** One resolved turret shot (Functional Specification 9.5). */
@@ -119,6 +209,15 @@ export interface ShotOutcome {
   /** 0 on a miss; the variation or critical multiplier on a hit. */
   readonly damageMultiplier: number;
   /** Raw damage before any resistance, by damage type. */
-  readonly damage: Readonly<Record<string, number>>;
+  readonly damage: DamageProfile;
   readonly totalDamage: number;
 }
+
+/** A fitted module category that has a player-controlled repeating operator. */
+export type OperatedModuleCategory = Extract<
+  ModuleCategory,
+  'propulsion' | 'shieldBooster' | 'armorRepairer'
+>;
+
+/** Applied damage by component is kept structurally complete. */
+export type AppliedDamageByType = Readonly<Record<DamageType, number>>;

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/client-request.schema.json",
   "title": "ClientRequest",
-  "description": "Protocol version 8 request envelope and payloads.",
+  "description": "Protocol version 9 request envelope and payloads.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 8
+      "const": 9
     },
     "requestId": {
       "type": "string",
@@ -65,6 +65,8 @@
         "market.listings",
         "market.previewBuy",
         "market.previewSell",
+        "module.activate",
+        "module.deactivate",
         "movement.approach",
         "movement.keepRange",
         "movement.moveToPoint",
@@ -102,6 +104,28 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "module.activate",
+              "module.deactivate"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/moduleSlotPayload"
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": {
@@ -1646,6 +1670,24 @@
       "properties": {
         "slotKind": {
           "const": "weapon"
+        },
+        "slotIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        }
+      }
+    },
+    "moduleSlotPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slotKind",
+        "slotIndex"
+      ],
+      "properties": {
+        "slotKind": {
+          "const": "system"
         },
         "slotIndex": {
           "type": "integer",

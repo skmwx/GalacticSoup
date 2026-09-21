@@ -1,7 +1,12 @@
 import type { ContentRepository, HullDefinition } from '@engine/ports';
 import type { AmmunitionId } from '@shared';
 
-import { attributeValue, deriveShipAttributes, type DerivedShipAttributes } from '../attributes';
+import {
+  attributeValue,
+  deriveShipAttributes,
+  PROPULSION_ACTIVE,
+  type DerivedShipAttributes,
+} from '../attributes';
 import { shipFit } from '../fitting/fit';
 import { slotKey, type FitDescription, type FittedSlotDescription, type SlotRef } from '../fitting/types';
 import type { ShipIdentity } from '../assets/types';
@@ -9,7 +14,13 @@ import type { EntityId } from '../campaign/identity';
 import type { CampaignDraft, CampaignState } from '../campaign/state';
 import type { SiteObjectState } from '../navigation/types';
 
-import type { LockState, ShipCombatState, WeaponState } from './types';
+import type {
+  ActiveModuleState,
+  CapacitorTrendState,
+  LockState,
+  ShipCombatState,
+  WeaponState,
+} from './types';
 
 /**
  * Reading and changing combat runtime (Technical Specification 8.2, 10.3).
@@ -33,7 +44,20 @@ export const IDLE_WEAPON: WeaponState = {
   stopReason: null,
 };
 
-const NO_COMBAT: ShipCombatState = { locks: [], weapons: {} };
+export const IDLE_ACTIVE_MODULE: ActiveModuleState = {
+  repeating: false,
+  cycle: null,
+  waitingForCapacitor: false,
+  stopReason: null,
+};
+
+const NO_COMBAT: ShipCombatState = {
+  locks: [],
+  weapons: {},
+  modules: {},
+  destroyedAtMs: null,
+  capacitorTrend: null,
+};
 
 /** The runtime of one ship, or an empty one when it holds none. */
 export function shipCombat(state: CampaignState, shipId: string): ShipCombatState {
@@ -42,6 +66,14 @@ export function shipCombat(state: CampaignState, shipId: string): ShipCombatStat
 
 export function weaponState(combat: ShipCombatState, key: string): WeaponState {
   return combat.weapons[key] ?? IDLE_WEAPON;
+}
+
+export function activeModuleState(combat: ShipCombatState, key: string): ActiveModuleState {
+  return combat.modules[key] ?? IDLE_ACTIVE_MODULE;
+}
+
+export function isDestroyed(state: CampaignState, shipId: string): boolean {
+  return shipCombat(state, shipId).destroyedAtMs !== null;
 }
 
 export function lockOn(combat: ShipCombatState, targetId: string): LockState | null {
@@ -60,6 +92,9 @@ export function completedLocks(combat: ShipCombatState): readonly LockState[] {
 export interface MutableShipCombat {
   locks: LockState[];
   weapons: Record<string, WeaponState>;
+  modules: Record<string, ActiveModuleState>;
+  destroyedAtMs: number | null;
+  capacitorTrend: CapacitorTrendState | null;
 }
 
 /** The runtime of one ship in a draft, created on demand. */
@@ -69,7 +104,13 @@ export function mutableCombat(draft: CampaignDraft, shipId: string): MutableShip
   if (existing !== undefined) {
     return existing;
   }
-  const created: MutableShipCombat = { locks: [], weapons: {} };
+  const created: MutableShipCombat = {
+    locks: [],
+    weapons: {},
+    modules: {},
+    destroyedAtMs: null,
+    capacitorTrend: null,
+  };
   ships[shipId] = created;
   return created;
 }
@@ -86,6 +127,45 @@ export function setWeapon(
 ): void {
   mutableCombat(draft, shipId).weapons[key] = { ...weapon };
 }
+
+export function setActiveModule(
+  draft: CampaignDraft,
+  shipId: string,
+  key: string,
+  module: ActiveModuleState,
+): void {
+  mutableCombat(draft, shipId).modules[key] = { ...module };
+}
+
+export function setDestroyedAt(
+  draft: CampaignDraft,
+  shipId: string,
+  destroyedAtMs: number,
+): void {
+  mutableCombat(draft, shipId).destroyedAtMs = destroyedAtMs;
+}
+
+/** Records a bounded recent capacitor delta without storing sampled frames. */
+export function recordCapacitorChange(
+  draft: CampaignDraft,
+  shipId: string,
+  delta: number,
+  atMs: number,
+): void {
+  if (Math.abs(delta) <= 1e-12) return;
+  const combat = mutableCombat(draft, shipId);
+  const previous = combat.capacitorTrend;
+  const reset = previous === null || atMs - previous.windowStartedAtMs >= CAPACITOR_TREND_WINDOW_MS;
+  combat.capacitorTrend = reset
+    ? { windowStartedAtMs: atMs, lastChangedAtMs: atMs, netChange: delta }
+    : {
+        windowStartedAtMs: previous.windowStartedAtMs,
+        lastChangedAtMs: atMs,
+        netChange: Math.round((previous.netChange + delta) * 1e9) / 1e9,
+      };
+}
+
+export const CAPACITOR_TREND_WINDOW_MS = 5_000;
 
 /** Marks the runtime changed, so bound projections refresh. */
 export function combatChanged(draft: CampaignDraft): void {
@@ -106,7 +186,18 @@ export function pruneCombat(draft: CampaignDraft, shipId: string): void {
       delete combat.weapons[key];
     }
   }
-  if (combat.locks.length === 0 && Object.keys(combat.weapons).length === 0) {
+  for (const key of Object.keys(combat.modules)) {
+    if (isIdleActiveModule(combat.modules[key] ?? IDLE_ACTIVE_MODULE)) {
+      delete combat.modules[key];
+    }
+  }
+  if (
+    combat.locks.length === 0 &&
+    Object.keys(combat.weapons).length === 0 &&
+    Object.keys(combat.modules).length === 0 &&
+    combat.destroyedAtMs === null &&
+    combat.capacitorTrend === null
+  ) {
     delete (draft.combat.ships as unknown as Record<string, MutableShipCombat>)[shipId];
   }
 }
@@ -120,6 +211,15 @@ export function isIdle(weapon: WeaponState): boolean {
     weapon.pendingReload === null &&
     weapon.lastAmmunitionId === null &&
     weapon.stopReason === null
+  );
+}
+
+export function isIdleActiveModule(module: ActiveModuleState): boolean {
+  return (
+    !module.repeating &&
+    module.cycle === null &&
+    !module.waitingForCapacitor &&
+    module.stopReason === null
   );
 }
 
@@ -167,16 +267,39 @@ export function combatantOf(
     return null;
   }
   const fit = shipFit(state.assets, shipId);
+  const combat = shipCombat(state, shipId);
+  const conditions = activeAttributeConditions(fit, content, combat);
   return {
     shipId: shipId as EntityId,
     ship,
     object,
     hull,
     fit,
-    derived: deriveShipAttributes({ hull, fit, content }),
-    combat: shipCombat(state, shipId),
+    derived: deriveShipAttributes({ hull, fit, content, conditions }),
+    combat,
   };
 }
+
+/** Conditions contributed by cycles that are active at this instant. */
+export function activeAttributeConditions(
+  fit: FitDescription,
+  content: ContentRepository,
+  combat: ShipCombatState,
+): ReadonlySet<string> {
+  for (const fitted of fit) {
+    const module = content.module(fitted.moduleId);
+    if (
+      fitted.online &&
+      module?.category === 'propulsion' &&
+      activeModuleState(combat, slotKey(fitted.slot)).cycle !== null
+    ) {
+      return new Set([PROPULSION_ACTIVE]);
+    }
+  }
+  return EMPTY_CONDITIONS;
+}
+
+const EMPTY_CONDITIONS: ReadonlySet<string> = new Set<string>();
 
 /**
  * The player's ship as a combatant, or `null` while it is docked, in warp or
@@ -219,16 +342,8 @@ export function targetSignatureMetres(
   content: ContentRepository,
   object: SiteObjectState,
 ): number {
-  if (object.id === state.assets.activeShipId) {
-    const ship = state.assets.ships[object.id];
-    const hull = ship === undefined ? undefined : content.hull(ship.hullId);
-    if (ship !== undefined && hull !== undefined) {
-      return attributeValue(
-        deriveShipAttributes({ hull, fit: shipFit(state.assets, object.id), content }),
-        'signatureRadiusMetres',
-      );
-    }
-  }
+  const combatant = combatantOf(state, content, object.id);
+  if (combatant !== null) return attributeValue(combatant.derived, 'signatureRadiusMetres');
   return content.hull(object.definitionId)?.signatureRadiusMetres ?? 0;
 }
 

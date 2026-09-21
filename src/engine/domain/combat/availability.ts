@@ -1,4 +1,9 @@
-import type { ContentRepository, TurretModuleDefinition } from '@engine/ports';
+import type {
+  ContentRepository,
+  PropulsionModuleDefinition,
+  RepairModuleDefinition,
+  TurretModuleDefinition,
+} from '@engine/ports';
 import type { AmmunitionId } from '@shared';
 
 import { stacksIn } from '../assets/inventory';
@@ -10,7 +15,9 @@ import { distance } from '../navigation/geometry';
 
 import {
   activeCombatant,
+  activeModuleState,
   hasCompletedLock,
+  isDestroyed,
   lockOn,
   isLockable,
   turretAt,
@@ -36,6 +43,8 @@ export const COMBAT_COMMANDS = [
   'weapon.deactivate',
   'weapon.reload',
   'weapon.changeAmmunition',
+  'module.activate',
+  'module.deactivate',
 ] as const;
 
 export type CombatCommand = (typeof COMBAT_COMMANDS)[number];
@@ -61,6 +70,10 @@ export const COMBAT_REFUSALS = [
   'weaponReloading',
   'weaponSlotUnavailable',
   'weaponUnloadNoSpace',
+  'moduleAlreadyActive',
+  'moduleNotActive',
+  'moduleSlotUnavailable',
+  'shipDestroyed',
 ] as const;
 
 export type CombatRefusal = (typeof COMBAT_REFUSALS)[number];
@@ -84,6 +97,37 @@ export interface WeaponContext {
   readonly loadedRounds: number;
   /** Rounds a new cycle may draw on. */
   readonly availableRounds: number;
+}
+
+export type OperatedModuleDefinition = PropulsionModuleDefinition | RepairModuleDefinition;
+
+export interface ActiveModuleContext {
+  readonly slot: SlotRef;
+  readonly key: string;
+  readonly fitted: FittedSlotDescription;
+  readonly module: OperatedModuleDefinition;
+}
+
+/** The online, player-operated non-weapon module in one slot. */
+export function activeModuleContext(
+  input: CombatRuleInput,
+  combatant: CombatantContext,
+  slot: SlotRef,
+): ActiveModuleContext | null {
+  const key = slotKey(slot);
+  const fitted = combatant.fit.find((entry) => slotKey(entry.slot) === key);
+  if (fitted === undefined || !fitted.online) return null;
+  const module = input.content.module(fitted.moduleId);
+  if (
+    module === undefined ||
+    (module.category !== 'propulsion' &&
+      module.category !== 'shieldBooster' &&
+      module.category !== 'armorRepairer') ||
+    module.activation === undefined
+  ) {
+    return null;
+  }
+  return { slot, key, fitted, module };
 }
 
 export function weaponContext(
@@ -156,7 +200,9 @@ export function compatibleCargoAmmunition(
 
 /** Refuses everything that needs the ship to be present in a loaded site. */
 export function combatRefusal(input: CombatRuleInput): CombatCommandRefusal {
-  return activeCombatant(input.state, input.content) === null ? 'combatUnavailable' : null;
+  const combatant = activeCombatant(input.state, input.content);
+  if (combatant === null) return 'combatUnavailable';
+  return combatant.combat.destroyedAtMs === null ? null : 'shipDestroyed';
 }
 
 /** Refuses starting a lock on one object (Functional Specification 9.2). */
@@ -165,8 +211,14 @@ export function lockRefusal(input: CombatRuleInput, targetId: string): CombatCom
   if (combatant === null) {
     return 'combatUnavailable';
   }
+  if (combatant.combat.destroyedAtMs !== null) return 'shipDestroyed';
   const target = input.state.navigation.currentSite?.objects[targetId];
-  if (target === undefined || target.id === combatant.shipId || !isLockable(target)) {
+  if (
+    target === undefined ||
+    target.id === combatant.shipId ||
+    !isLockable(target) ||
+    isDestroyed(input.state, target.id)
+  ) {
     return 'lockTargetUnavailable';
   }
   if (lockOn(combatant.combat, targetId) !== null) {
@@ -187,6 +239,7 @@ export function unlockRefusal(input: CombatRuleInput, targetId: string): CombatC
   if (combatant === null) {
     return 'combatUnavailable';
   }
+  if (combatant.combat.destroyedAtMs !== null) return 'shipDestroyed';
   return lockOn(combatant.combat, targetId) === null ? 'lockNotHeld' : null;
 }
 
@@ -206,6 +259,7 @@ export function activateRefusal(
   if (combatant === null) {
     return 'combatUnavailable';
   }
+  if (combatant.combat.destroyedAtMs !== null) return 'shipDestroyed';
   const weapon = weaponContext(input, combatant, slot);
   if (weapon === null) {
     return 'weaponSlotUnavailable';
@@ -238,6 +292,7 @@ export function deactivateRefusal(input: CombatRuleInput, slot: SlotRef): Combat
   if (combatant === null) {
     return 'combatUnavailable';
   }
+  if (combatant.combat.destroyedAtMs !== null) return 'shipDestroyed';
   const weapon = weaponContext(input, combatant, slot);
   if (weapon === null) {
     return 'weaponSlotUnavailable';
@@ -251,6 +306,7 @@ export function reloadRefusal(input: CombatRuleInput, slot: SlotRef): CombatComm
   if (combatant === null) {
     return 'combatUnavailable';
   }
+  if (combatant.combat.destroyedAtMs !== null) return 'shipDestroyed';
   const weapon = weaponContext(input, combatant, slot);
   if (weapon === null) {
     return 'weaponSlotUnavailable';
@@ -284,6 +340,7 @@ export function changeAmmunitionRefusal(
   if (combatant === null) {
     return 'combatUnavailable';
   }
+  if (combatant.combat.destroyedAtMs !== null) return 'shipDestroyed';
   const weapon = weaponContext(input, combatant, slot);
   if (weapon === null) {
     return 'weaponSlotUnavailable';
@@ -304,6 +361,33 @@ export function changeAmmunitionRefusal(
     return 'weaponNoAmmunition';
   }
   return unloadFits(input, combatant, weapon) ? null : 'weaponUnloadNoSpace';
+}
+
+/** Refuses starting an operated module, using the same predicate as the UI. */
+export function activateModuleRefusal(
+  input: CombatRuleInput,
+  slot: SlotRef,
+): CombatCommandRefusal {
+  const combatant = activeCombatant(input.state, input.content);
+  if (combatant === null) return 'combatUnavailable';
+  if (combatant.combat.destroyedAtMs !== null) return 'shipDestroyed';
+  const module = activeModuleContext(input, combatant, slot);
+  if (module === null) return 'moduleSlotUnavailable';
+  return activeModuleState(combatant.combat, module.key).repeating
+    ? 'moduleAlreadyActive'
+    : null;
+}
+
+/** Refuses stopping an operated module which is not repeating. */
+export function deactivateModuleRefusal(
+  input: CombatRuleInput,
+  slot: SlotRef,
+): CombatCommandRefusal {
+  const combatant = activeCombatant(input.state, input.content);
+  if (combatant === null) return 'combatUnavailable';
+  const module = activeModuleContext(input, combatant, slot);
+  if (module === null) return 'moduleSlotUnavailable';
+  return activeModuleState(combatant.combat, module.key).repeating ? null : 'moduleNotActive';
 }
 
 /**
@@ -343,4 +427,12 @@ export function capacitorPerCycle(weapon: WeaponContext): number {
 
 export function cycleMilliseconds(weapon: WeaponContext): number {
   return Math.max(1, Math.round((weapon.module.activation?.cycleSeconds ?? 0) * 1000));
+}
+
+export function activeModuleCapacitorPerCycle(module: ActiveModuleContext): number {
+  return module.module.activation?.capacitorPerCycle ?? 0;
+}
+
+export function activeModuleCycleMilliseconds(module: ActiveModuleContext): number {
+  return Math.max(1, Math.round((module.module.activation?.cycleSeconds ?? 0) * 1000));
 }

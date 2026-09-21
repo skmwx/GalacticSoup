@@ -1,4 +1,11 @@
 import {
+  activeModuleCapacitorPerCycle,
+  activeModuleContext,
+  activeModuleCycleMilliseconds,
+  activeModuleState,
+  activeAttributeConditions,
+  applyLayeredDamage,
+  applyRepair,
   attributeValue,
   capacitorPerCycle,
   cargoStacks,
@@ -10,17 +17,29 @@ import {
   distance,
   drawChance,
   drawUnitInterval,
+  deriveShipAttributes,
   inventoryService,
   listedDamage,
   lockTime,
+  mutableCombat,
   parseSlotKey,
+  payCapacitor,
   PLAIN_STATE,
   pruneCombat,
+  recordCapacitorChange,
+  recordDamageEvent,
+  recordDestructionEvent,
+  recordRepairEvent,
+  regeneratePool,
+  resistanceAttribute,
   relativeMotion,
   scaleDamage,
+  setActiveModule,
+  setDestroyedAt,
   setLocks,
   setWeapon,
   shotDamageMultiplier,
+  shipFit,
   targetSignatureMetres,
   totalDamage,
   turretAccuracy,
@@ -37,7 +56,7 @@ import {
   type WeaponState,
   type WeaponStopReason,
 } from '@engine/domain';
-import { DAMAGE_TYPES } from '@engine/ports';
+import { DAMAGE_TYPES, DEFENSE_LAYERS } from '@engine/ports';
 import type { AmmunitionId } from '@shared';
 
 import type { SimulationContext } from './context';
@@ -58,8 +77,8 @@ import { cancelBoundary, scheduleBoundary } from './scheduler';
  * opponent to issue the same module commands through an AI adapter rather than
  * through a second implementation of the rules.
  *
- * A shot is resolved here and published; applying its damage to the target's
- * layers belongs to the next phase, so nothing here writes to a target.
+ * A shot is resolved here and applied to the target's defensive layers. Hull
+ * depletion is finalized after the full boundary batch at that timestamp.
  *
  * @implements FUNC-9.2, FUNC-9.3, FUNC-9.4, FUNC-9.5, FUNC-22.5, FUNC-22.11, TECH-9.2, TECH-9.4, TECH-10.3, MVP-AC-03, MVP-AC-04
  */
@@ -67,6 +86,7 @@ import { cancelBoundary, scheduleBoundary } from './scheduler';
 export const LOCK_COMPLETE_BOUNDARY = 'combat.lockComplete';
 export const WEAPON_CYCLE_BOUNDARY = 'combat.weaponCycle';
 export const RELOAD_COMPLETE_BOUNDARY = 'combat.reloadComplete';
+export const MODULE_CYCLE_BOUNDARY = 'combat.moduleCycle';
 
 /**
  * Boundary priorities. A cycle that is due at the same instant as a lock
@@ -77,6 +97,8 @@ export const RELOAD_COMPLETE_BOUNDARY = 'combat.reloadComplete';
 const CYCLE_PRIORITY = 40;
 const LOCK_PRIORITY = 50;
 const RELOAD_PRIORITY = 60;
+/** Repair resolves before the damage completion batch at the same instant. */
+const MODULE_PRIORITY = 30;
 
 /**
  * Evaluates lock range and target presence after movement has been integrated
@@ -87,10 +109,64 @@ export function advanceCombat(
   fromTimeMs: number,
   toTimeMs: number,
 ): void {
-  if (toTimeMs <= fromTimeMs) return;
-  if (context.draft.navigation.currentSite === null) return;
-  for (const shipId of combatantIds(context.draft)) {
-    evaluateLocks(context, shipId, toTimeMs);
+  if (toTimeMs > fromTimeMs) {
+    regenerateShips(context, toTimeMs - fromTimeMs);
+    if (context.draft.navigation.currentSite !== null) {
+      for (const shipId of combatantIds(context.draft)) {
+        evaluateLocks(context, shipId, toTimeMs);
+      }
+      retryWaitingModules(context, toTimeMs);
+    }
+  }
+
+  // The clock also calls continuous systems with a zero-length interval after
+  // the last completion at one timestamp. Destruction is therefore detected
+  // after the whole committed batch, never between two simultaneous shots.
+  finalizeDestruction(context);
+  if (toTimeMs === fromTimeMs) startEligibleRepeatingActions(context);
+}
+
+/** Shield and capacitor regenerate continuously, including in warp. */
+function regenerateShips(context: SimulationContext, elapsedMs: number): void {
+  for (const shipId of Object.keys(context.draft.assets.ships).sort()) {
+    const ship = context.draft.assets.ships[shipId];
+    if (ship === undefined || shipCombatOf(context.draft, shipId).destroyedAtMs !== null) continue;
+    const hull = context.content.hull(ship.hullId);
+    if (hull === undefined) continue;
+    const fit = shipFit(context.draft.assets, shipId);
+    const combat = shipCombatOf(context.draft, shipId);
+    const conditions = activeAttributeConditions(fit, context.content, combat);
+    const derived = deriveShipAttributes({ hull, fit, content: context.content, conditions });
+
+    const capacitor = regeneratePool(
+      ship.condition.capacitorCharge,
+      attributeValue(derived, 'capacitorCapacity'),
+      attributeValue(derived, 'capacitorRechargeSeconds'),
+      elapsedMs,
+    );
+    const shieldMaximum = attributeValue(derived, 'shieldHitPoints');
+    const shieldCurrent = Math.max(0, shieldMaximum - ship.condition.damage.shield);
+    const shield = regeneratePool(
+      shieldCurrent,
+      shieldMaximum,
+      attributeValue(derived, 'shieldRechargeSeconds'),
+      elapsedMs,
+    );
+
+    if (capacitor.regenerated > 0 || shield.regenerated > 0) {
+      ship.condition.capacitorCharge = capacitor.after;
+      ship.condition.damage.shield = round(Math.max(0, shieldMaximum - shield.after));
+      context.draft.assets.version += 1;
+      recordCapacitorChange(
+        context.draft,
+        shipId,
+        capacitor.regenerated,
+        context.draft.time.simulationTimeMs + elapsedMs,
+      );
+      context.invalidate('ship');
+      context.invalidate('combat');
+      context.invalidate('frame');
+    }
   }
 }
 
@@ -227,9 +303,9 @@ export function resolveWeaponCycle(context: SimulationContext, entry: SchedulerE
   if (outcome !== null) {
     consumeRound(context, combatant, slot);
     publishShot(context, outcome);
+    applyShotDamage(context, outcome);
   }
 
-  startNextCycle(context, shipId, slot);
   touch(context, shipId);
 }
 
@@ -257,10 +333,44 @@ export function resolveReloadComplete(context: SimulationContext, entry: Schedul
 
   if (loaded === 0) {
     stopWeapon(context, shipId, key, 'ammunitionExhausted');
-  } else {
-    startNextCycle(context, shipId, slot);
   }
   touch(context, shipId);
+}
+
+/** Completes one paid propulsion or repair cycle. */
+export function resolveModuleCycle(context: SimulationContext, entry: SchedulerEntry): void {
+  const ownerId = entry.ownerId;
+  if (ownerId === null) return;
+  const combatant = combatantOf(context.draft, context.content, ownerId);
+  if (combatant === null) return;
+
+  for (const key of Object.keys(combatant.combat.modules).sort()) {
+    const runtime = combatant.combat.modules[key];
+    const slot = parseSlotKey(key);
+    if (runtime?.cycle?.boundaryEntryId !== entry.entryId || slot === null) continue;
+    const operated = activeModuleContext(
+      { state: context.draft, content: context.content },
+      combatant,
+      slot,
+    );
+    if (operated === null) return;
+
+    setActiveModule(context.draft, ownerId, key, { ...runtime, cycle: null });
+    if (
+      operated.module.category === 'shieldBooster' ||
+      operated.module.category === 'armorRepairer'
+    ) {
+      applyModuleRepair(context, ownerId, key, operated.module.repair.layer,
+        operated.module.repair.amountHitPoints);
+    }
+    context.publish('combat.moduleCycleCompleted', {
+      shipId: ownerId,
+      slot: key,
+      moduleId: operated.module.id,
+    });
+    touch(context, ownerId);
+    return;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -421,6 +531,68 @@ export function requestReload(
   return true;
 }
 
+/** Starts a repeating non-weapon module operator. */
+export function activateModule(
+  context: SimulationContext,
+  shipId: string,
+  slot: SlotRef,
+): boolean {
+  const combatant = combatantOf(context.draft, context.content, shipId);
+  if (combatant === null) return false;
+  const operated = activeModuleContext(
+    { state: context.draft, content: context.content },
+    combatant,
+    slot,
+  );
+  if (operated === null) return false;
+
+  setActiveModule(context.draft, shipId, operated.key, {
+    ...activeModuleState(combatant.combat, operated.key),
+    repeating: true,
+    waitingForCapacitor: false,
+    stopReason: null,
+  });
+  context.publish('combat.moduleActivated', {
+    shipId,
+    slot: operated.key,
+    moduleId: operated.module.id,
+  });
+  startNextModuleCycle(context, shipId, slot);
+  touch(context, shipId);
+  return true;
+}
+
+/** Stops repetition; a cycle already paid for still completes. */
+export function deactivateModule(
+  context: SimulationContext,
+  shipId: string,
+  slot: SlotRef,
+): boolean {
+  const combatant = combatantOf(context.draft, context.content, shipId);
+  if (combatant === null) return false;
+  const operated = activeModuleContext(
+    { state: context.draft, content: context.content },
+    combatant,
+    slot,
+  );
+  if (operated === null) return false;
+  const runtime = activeModuleState(combatant.combat, operated.key);
+  setActiveModule(context.draft, shipId, operated.key, {
+    ...runtime,
+    repeating: false,
+    waitingForCapacitor: false,
+    stopReason: 'deactivated',
+  });
+  context.publish('combat.moduleStopped', {
+    shipId,
+    slot: operated.key,
+    moduleId: operated.module.id,
+    reason: 'deactivated',
+  });
+  touch(context, shipId);
+  return true;
+}
+
 /**
  * Drops every lock, cycle and reload one ship holds, because it left the site
  * (Functional Specification 9.2; Technical Specification 10.1).
@@ -435,6 +607,9 @@ export function clearCombat(context: SimulationContext, shipId: string): void {
   for (const weapon of Object.values(combat.weapons)) {
     if (weapon.cycle !== null) cancelBoundary(context.draft, weapon.cycle.boundaryEntryId);
     if (weapon.reload !== null) cancelBoundary(context.draft, weapon.reload.boundaryEntryId);
+  }
+  for (const module of Object.values(combat.modules)) {
+    if (module.cycle !== null) cancelBoundary(context.draft, module.cycle.boundaryEntryId);
   }
   delete (context.draft.combat.ships as Record<string, unknown>)[shipId];
   combatChanged(context.draft);
@@ -497,7 +672,8 @@ function startNextCycle(context: SimulationContext, shipId: string, slot: SlotRe
   const cost = capacitorPerCycle(weapon);
   const ship = context.draft.assets.ships[shipId];
   if (ship === undefined) return;
-  if (ship.condition.capacitorCharge < cost) {
+  const payment = payCapacitor(ship.condition.capacitorCharge, cost);
+  if (!payment.paid) {
     stopWeapon(context, shipId, weapon.key, 'insufficientCapacitor');
     return;
   }
@@ -510,8 +686,14 @@ function startNextCycle(context: SimulationContext, shipId: string, slot: SlotRe
     ownerId: combatant.shipId,
   });
 
-  ship.condition.capacitorCharge = round(ship.condition.capacitorCharge - cost);
+  ship.condition.capacitorCharge = payment.after;
   context.draft.assets.version += 1;
+  recordCapacitorChange(
+    context.draft,
+    shipId,
+    -payment.committed,
+    context.draft.time.simulationTimeMs,
+  );
   setWeapon(context.draft, shipId, weapon.key, {
     ...weaponState(combatant.combat, weapon.key),
     cycle: {
@@ -521,9 +703,146 @@ function startNextCycle(context: SimulationContext, shipId: string, slot: SlotRe
       targetId,
       ammunitionId: weapon.ammunitionId,
       reservedRounds: 1,
-      committedCapacitor: cost,
+      committedCapacitor: payment.committed,
     },
     lastAmmunitionId: weapon.ammunitionId ?? runtime.lastAmmunitionId,
+  });
+  context.invalidate('ship');
+}
+
+/** Starts the next paid active-module cycle or leaves it waiting for charge. */
+function startNextModuleCycle(
+  context: SimulationContext,
+  shipId: string,
+  slot: SlotRef,
+  startedAtMs: number = context.draft.time.simulationTimeMs,
+): void {
+  const combatant = combatantOf(context.draft, context.content, shipId);
+  if (combatant === null || combatant.combat.destroyedAtMs !== null) return;
+  const operated = activeModuleContext(
+    { state: context.draft, content: context.content },
+    combatant,
+    slot,
+  );
+  if (operated === null) return;
+  const runtime = activeModuleState(combatant.combat, operated.key);
+  if (!runtime.repeating || runtime.cycle !== null) return;
+
+  const ship = context.draft.assets.ships[shipId];
+  if (ship === undefined) return;
+  const payment = payCapacitor(
+    ship.condition.capacitorCharge,
+    activeModuleCapacitorPerCycle(operated),
+  );
+  if (!payment.paid) {
+    if (!runtime.waitingForCapacitor) {
+      context.publish('combat.moduleWaiting', {
+        shipId,
+        slot: operated.key,
+        moduleId: operated.module.id,
+        reason: 'insufficientCapacitor',
+      });
+    }
+    setActiveModule(context.draft, shipId, operated.key, {
+      ...runtime,
+      waitingForCapacitor: true,
+      stopReason: 'insufficientCapacitor',
+    });
+    return;
+  }
+
+  const dueAtMs = startedAtMs + activeModuleCycleMilliseconds(operated);
+  const boundary = scheduleBoundary(context.draft, {
+    kind: MODULE_CYCLE_BOUNDARY,
+    dueAtMs,
+    priority: MODULE_PRIORITY,
+    ownerId: combatant.shipId,
+  });
+  ship.condition.capacitorCharge = payment.after;
+  context.draft.assets.version += 1;
+  recordCapacitorChange(
+    context.draft,
+    shipId,
+    -payment.committed,
+    startedAtMs,
+  );
+  setActiveModule(context.draft, shipId, operated.key, {
+    ...activeModuleState(shipCombatOf(context.draft, shipId), operated.key),
+    cycle: {
+      startedAtMs,
+      completesAtMs: dueAtMs,
+      boundaryEntryId: boundary.entryId,
+      committedCapacitor: payment.committed,
+    },
+    waitingForCapacitor: false,
+    stopReason: null,
+  });
+  context.publish('combat.moduleCycleStarted', {
+    shipId,
+    slot: operated.key,
+    moduleId: operated.module.id,
+    committedCapacitor: payment.committed,
+  });
+  context.invalidate('ship');
+  context.invalidate('navigation');
+  context.invalidate('site');
+}
+
+/** Capacitor recharge wakes repeating modules without a host timer. */
+function retryWaitingModules(context: SimulationContext, atMs: number): void {
+  for (const shipId of Object.keys(context.draft.combat.ships).sort()) {
+    const combat = shipCombatOf(context.draft, shipId);
+    for (const key of Object.keys(combat.modules).sort()) {
+      const runtime = combat.modules[key];
+      const slot = parseSlotKey(key);
+      if (runtime?.waitingForCapacitor === true && slot !== null) {
+        startNextModuleCycle(context, shipId, slot, atMs);
+      }
+    }
+  }
+}
+
+/** Starts next cycles only after destruction for the completion batch. */
+function startEligibleRepeatingActions(context: SimulationContext): void {
+  for (const shipId of Object.keys(context.draft.combat.ships).sort()) {
+    const combat = shipCombatOf(context.draft, shipId);
+    if (combat.destroyedAtMs !== null) continue;
+    for (const key of Object.keys(combat.weapons).sort()) {
+      const slot = parseSlotKey(key);
+      if (slot !== null) startNextCycle(context, shipId, slot);
+    }
+    const current = shipCombatOf(context.draft, shipId);
+    for (const key of Object.keys(current.modules).sort()) {
+      const slot = parseSlotKey(key);
+      if (slot !== null) startNextModuleCycle(context, shipId, slot);
+    }
+  }
+}
+
+function applyModuleRepair(
+  context: SimulationContext,
+  shipId: string,
+  slotKey: string,
+  layer: (typeof DEFENSE_LAYERS)[number],
+  amount: number,
+): void {
+  const ship = context.draft.assets.ships[shipId];
+  if (ship === undefined) return;
+  const result = applyRepair(ship.condition.damage[layer], amount);
+  ship.condition.damage[layer] = result.afterDamage;
+  if (result.repairedHitPoints <= 0) return;
+  context.draft.assets.version += 1;
+  recordRepairEvent(context.draft, {
+    shipId,
+    slotKey,
+    layer,
+    repairedHitPoints: result.repairedHitPoints,
+  });
+  context.publish('combat.repairApplied', {
+    shipId,
+    slot: slotKey,
+    layer,
+    repairedHitPoints: result.repairedHitPoints,
   });
   context.invalidate('ship');
 }
@@ -707,6 +1026,141 @@ function publishShot(context: SimulationContext, outcome: ShotOutcome): void {
   });
 }
 
+/** Applies one resolved raw vector to shield, armour and hull together. */
+function applyShotDamage(context: SimulationContext, outcome: ShotOutcome): void {
+  if (!outcome.hit || outcome.totalDamage <= 0) return;
+  const target = combatantOf(context.draft, context.content, outcome.targetId);
+  if (target === null || target.combat.destroyedAtMs !== null) return;
+
+  const layers = DEFENSE_LAYERS.map((layer) => {
+    const maximumHitPoints = attributeValue(target.derived, `${layer}HitPoints`);
+    return {
+      layer,
+      maximumHitPoints,
+      currentHitPoints: Math.max(0, maximumHitPoints - target.ship.condition.damage[layer]),
+      resistances: Object.fromEntries(
+        DAMAGE_TYPES.map((type) => [
+          type,
+          attributeValue(target.derived, resistanceAttribute(layer, type)),
+        ]),
+      ) as Record<(typeof DAMAGE_TYPES)[number], number>,
+    };
+  });
+  const result = applyLayeredDamage(outcome.damage, layers);
+  const ship = context.draft.assets.ships[outcome.targetId];
+  if (ship === undefined) return;
+  for (const layer of result.layers) {
+    const maximum = attributeValue(target.derived, `${layer.layer}HitPoints`);
+    ship.condition.damage[layer.layer] = round(Math.max(0, maximum - layer.afterHitPoints));
+  }
+  context.draft.assets.version += 1;
+  recordDamageEvent(context.draft, {
+    sourceId: outcome.attackerId,
+    targetId: outcome.targetId,
+    slotKey: outcome.slotKey,
+    rawDamage: outcome.damage,
+    appliedDamage: result.appliedDamage,
+  });
+  context.publish('combat.damageApplied', {
+    attackerId: outcome.attackerId,
+    targetId: outcome.targetId,
+    slot: outcome.slotKey,
+    appliedDamage: result.appliedTotal,
+    shieldDamage: result.layers.find((layer) => layer.layer === 'shield')?.appliedTotal ?? 0,
+    armorDamage: result.layers.find((layer) => layer.layer === 'armor')?.appliedTotal ?? 0,
+    hullDamage: result.layers.find((layer) => layer.layer === 'hull')?.appliedTotal ?? 0,
+  });
+  context.invalidate('ship');
+  context.invalidate('combat');
+}
+
+/**
+ * Marks zero-hull ships after every completion at this timestamp resolved.
+ * This is deliberately separate from applying a shot: a ship destroyed by
+ * simultaneous fire still contributes the cycle it had already committed.
+ */
+function finalizeDestruction(context: SimulationContext): void {
+  const site = context.draft.navigation.currentSite;
+  if (site === null) return;
+  for (const shipId of Object.keys(site.objects).sort()) {
+    const combatant = combatantOf(context.draft, context.content, shipId);
+    if (combatant === null || combatant.combat.destroyedAtMs !== null) continue;
+    const hullMaximum = attributeValue(combatant.derived, 'hullHitPoints');
+    if (combatant.ship.condition.damage.hull + 1e-9 < hullMaximum) continue;
+
+    stopAllOperationsForDestruction(context, shipId);
+    setDestroyedAt(context.draft, shipId, context.draft.time.simulationTimeMs);
+    for (const attackerId of Object.keys(context.draft.combat.ships).sort()) {
+      if (attackerId !== shipId) stopLocksTargetingDestroyed(context, attackerId, shipId);
+    }
+    recordDestructionEvent(context.draft, shipId);
+    context.publish('combat.shipDestroyed', { shipId });
+    combatChanged(context.draft);
+    context.invalidate('ship');
+    context.invalidate('combat');
+    context.invalidate('site');
+    context.invalidate('frame');
+  }
+}
+
+function stopAllOperationsForDestruction(context: SimulationContext, shipId: string): void {
+  const combat = shipCombatOf(context.draft, shipId);
+  for (const lock of combat.locks) {
+    if (lock.boundaryEntryId !== null) cancelBoundary(context.draft, lock.boundaryEntryId);
+  }
+  for (const weapon of Object.values(combat.weapons)) {
+    if (weapon.cycle !== null) cancelBoundary(context.draft, weapon.cycle.boundaryEntryId);
+    if (weapon.reload !== null) cancelBoundary(context.draft, weapon.reload.boundaryEntryId);
+  }
+  for (const module of Object.values(combat.modules)) {
+    if (module.cycle !== null) cancelBoundary(context.draft, module.cycle.boundaryEntryId);
+  }
+  const mutable = mutableCombat(context.draft, shipId);
+  mutable.locks = [];
+  for (const key of Object.keys(mutable.weapons)) {
+    mutable.weapons[key] = {
+      ...mutable.weapons[key]!,
+      repeating: false,
+      targetId: null,
+      cycle: null,
+      reload: null,
+      pendingReload: null,
+      stopReason: 'targetMissing',
+    };
+  }
+  for (const key of Object.keys(mutable.modules)) {
+    mutable.modules[key] = {
+      ...mutable.modules[key]!,
+      repeating: false,
+      cycle: null,
+      waitingForCapacitor: false,
+      stopReason: 'destroyed',
+    };
+  }
+}
+
+function stopLocksTargetingDestroyed(
+  context: SimulationContext,
+  shipId: string,
+  destroyedId: string,
+): void {
+  const combat = shipCombatOf(context.draft, shipId);
+  const lock = combat.locks.find((candidate) => candidate.targetId === destroyedId);
+  if (lock === undefined) return;
+  if (lock.boundaryEntryId !== null) cancelBoundary(context.draft, lock.boundaryEntryId);
+  stopWeaponsTargeting(context, shipId, destroyedId, 'targetMissing');
+  setLocks(
+    context.draft,
+    shipId,
+    combat.locks.filter((candidate) => candidate.targetId !== destroyedId),
+  );
+  context.publish('combat.lockLost', {
+    shipId,
+    targetId: destroyedId,
+    reason: 'targetMissing',
+  });
+}
+
 function stopWeapon(
   context: SimulationContext,
   shipId: string,
@@ -817,7 +1271,13 @@ function shipCombatOf(draft: CampaignDraft, shipId: string): ShipCombatState {
   return draft.combat.ships[shipId] ?? EMPTY_COMBAT;
 }
 
-const EMPTY_COMBAT: ShipCombatState = { locks: [], weapons: {} };
+const EMPTY_COMBAT: ShipCombatState = {
+  locks: [],
+  weapons: {},
+  modules: {},
+  destroyedAtMs: null,
+  capacitorTrend: null,
+};
 
 function changedLocks(before: readonly LockState[], after: readonly LockState[]): boolean {
   if (before.length !== after.length) return true;

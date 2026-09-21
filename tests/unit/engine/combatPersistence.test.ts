@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   campaignStateHash,
+  activeModuleState,
   COMBAT_REFUSALS,
   LOCK_COMPLETE_KIND,
+  MODULE_CYCLE_KIND,
   readCampaignState,
   RELOAD_COMPLETE_KIND,
   shipCombat,
@@ -11,20 +13,30 @@ import {
   WEAPON_CYCLE_KIND,
   weaponState,
   type CampaignState,
+  type CampaignDraft,
   type SlotRef,
 } from '@engine/domain';
 import {
+  activateModule,
   activateWeapon,
   beginLock,
   releaseLock,
   LOCK_COMPLETE_BOUNDARY,
+  MODULE_CYCLE_BOUNDARY,
   RELOAD_COMPLETE_BOUNDARY,
   requestReload,
   WEAPON_CYCLE_BOUNDARY,
 } from '@engine/simulation';
 import { RULE_VIOLATION_REASONS } from '@protocol';
 
-import { advance, combatFixture, FIRST_WEAPON, FUSION } from '../../support/combat.ts';
+import { testSimulation } from '../../support/campaign.ts';
+import {
+  advance,
+  combatFixture,
+  FIRST_WEAPON,
+  FUSION,
+  type CombatFixture,
+} from '../../support/combat.ts';
 
 /**
  * Combat runtime as saved state (Technical Specification 11.2, 11.4, 15.3).
@@ -35,6 +47,7 @@ import { advance, combatFixture, FIRST_WEAPON, FUSION } from '../../support/comb
  */
 
 const WEAPON: SlotRef = { kind: 'weapon', index: 0 };
+const BOOSTER: SlotRef = { kind: 'system', index: 0 };
 
 function fighting(): CampaignState {
   const fixture = combatFixture({
@@ -152,6 +165,39 @@ describe('combat runtime in a snapshot', () => {
     const combat = shipCombat(restored.state, restored.state.assets.activeShipId);
     expect(weaponState(combat, FIRST_WEAPON).reload?.ammunitionId).toBe(FUSION);
   });
+
+  it('round-trips a paid active-module cycle and its regeneration trend [TECH-11.4, FUNC-9.8]', () => {
+    const fixture = combatFixture({ armTarget: false });
+    const ship = fixture.draft.assets.ships[fixture.playerId]!;
+    ship.condition.damage.shield = 80;
+    activateModule(fixture.context, fixture.playerId, BOOSTER);
+    advance(fixture, 1_000);
+
+    const before = activeModuleState(shipCombat(fixture.draft, fixture.playerId), 'system:0');
+    const restored = readCampaignState(JSON.parse(JSON.stringify(fixture.draft)) as unknown);
+
+    expect(before.cycle).not.toBeNull();
+    expect(restored.ok).toBe(true);
+    if (!restored.ok) return;
+    const combat = shipCombat(restored.state, restored.state.assets.activeShipId);
+    expect(activeModuleState(combat, 'system:0')).toEqual(before);
+    expect(combat.capacitorTrend).not.toBeNull();
+    expect(validateCampaign(restored.state, fixture.content)).toEqual([]);
+
+    const restoredDraft = restored.state as CampaignDraft;
+    const resumed: CombatFixture = {
+      ...fixture,
+      draft: restoredDraft,
+      context: testSimulation(restoredDraft, fixture.content),
+    };
+    advance(fixture, 3_000);
+    advance(resumed, 3_000);
+    expect(restoredDraft.assets.ships[fixture.playerId]?.condition)
+      .toEqual(fixture.draft.assets.ships[fixture.playerId]?.condition);
+    expect(activeModuleState(shipCombat(restoredDraft, fixture.playerId), 'system:0'))
+      .toEqual(activeModuleState(shipCombat(fixture.draft, fixture.playerId), 'system:0'));
+    expect(restoredDraft.combat.events).toEqual(fixture.draft.combat.events);
+  });
 });
 
 describe('combat vocabularies', () => {
@@ -166,5 +212,6 @@ describe('combat vocabularies', () => {
     expect(LOCK_COMPLETE_KIND).toBe(LOCK_COMPLETE_BOUNDARY);
     expect(WEAPON_CYCLE_KIND).toBe(WEAPON_CYCLE_BOUNDARY);
     expect(RELOAD_COMPLETE_KIND).toBe(RELOAD_COMPLETE_BOUNDARY);
+    expect(MODULE_CYCLE_KIND).toBe(MODULE_CYCLE_BOUNDARY);
   });
 });

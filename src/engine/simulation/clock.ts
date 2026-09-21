@@ -117,7 +117,12 @@ function resolveThrough(
     const queued = nextBoundary(context.draft.scheduler);
     const stepEnd = queued !== null && queued.dueAtMs <= targetMs ? queued.dueAtMs : targetMs;
     const from = context.draft.time.simulationTimeMs;
-    for (const system of continuousSystems) system(context, from, stepEnd);
+    // Do not interleave a zero-length continuous pass between completions at
+    // the same timestamp. The whole committed batch resolves first; the
+    // explicit pass below finalizes staged effects once the timestamp changes.
+    if (stepEnd > from) {
+      for (const system of continuousSystems) system(context, from, stepEnd);
+    }
     context.draft.time.simulationTimeMs = stepEnd;
 
     const entry = takeBoundaryDue(context.draft, stepEnd);
@@ -143,6 +148,14 @@ function resolveThrough(
         kind: entry.kind,
         entryId: entry.entryId,
       });
+    }
+
+    // Completion effects such as destruction are finalized only after every
+    // entry already committed for this timestamp has resolved. A zero-length
+    // continuous pass gives systems that batch boundary results that hook
+    // without advancing regeneration or movement.
+    if (nextBoundary(context.draft.scheduler)?.dueAtMs !== entry.dueAtMs) {
+      for (const system of continuousSystems) system(context, entry.dueAtMs, entry.dueAtMs);
     }
 
     resolved += 1;

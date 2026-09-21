@@ -110,6 +110,12 @@ describe('targeting and weapon contracts', () => {
     expect(flying.data.maxLockedTargets).toBeGreaterThan(0);
     expect(flying.data.maxLockRangeKm).toBeGreaterThan(0);
     expect(flying.data.capacitorCapacity).toBeGreaterThan(0);
+    expect(flying.data.defenses?.layers.map((layer) => layer.layer)).toEqual([
+      'shield', 'armor', 'hull',
+    ]);
+    expect(flying.data.capacitor?.rechargePerSecond).toBeGreaterThan(0);
+    expect(flying.data.modules.some((module) => module.moduleId === 'module.shield.booster.small'))
+      .toBe(true);
 
     const weapon = flying.data.weapons[0];
     expect(weapon?.moduleId).toBe('module.turret.autocannon.small');
@@ -120,6 +126,31 @@ describe('targeting and weapon contracts', () => {
     const activate = weapon?.commands.find((command) => command.command === 'weapon.activate');
     expect(activate?.available).toBe(false);
     expect(activate?.unavailableReason).toBe('error.ruleViolation.lockNotHeld');
+  });
+
+  it('operates the fitted active defense through protocol commands [FUNC-9.7, FUNC-9.8, TECH-7.2]', async () => {
+    const host = await openCampaign();
+    await ask(host, 'ship.undock', EMPTY_PAYLOAD, 'req-undock');
+
+    const activated = await ask(host, 'module.activate', {
+      slotKind: 'system',
+      slotIndex: 0,
+    }, 'req-module-on');
+    expect(activated.ok).toBe(true);
+
+    const combat = await ask<CombatData>(host, 'combat.state', EMPTY_PAYLOAD, 'req-module-state');
+    expect(combat.ok).toBe(true);
+    if (!combat.ok) return;
+    const booster = combat.data.modules.find((module) =>
+      module.moduleId === 'module.shield.booster.small');
+    expect(booster?.repeating).toBe(true);
+    expect(booster?.cycle?.committedCapacitor).toBe(15);
+
+    const deactivated = await ask(host, 'module.deactivate', {
+      slotKind: 'system',
+      slotIndex: 0,
+    }, 'req-module-off');
+    expect(deactivated.ok).toBe(true);
   });
 
   it('carries lock availability on every object in the site [TECH-12.3, FUNC-19.2]', async () => {
@@ -171,6 +202,8 @@ describe('targeting and weapon contracts', () => {
     if (!capabilities.ok) return;
     for (const type of [
       'combat.state',
+      'module.activate',
+      'module.deactivate',
       'targeting.lock',
       'targeting.unlock',
       'weapon.activate',

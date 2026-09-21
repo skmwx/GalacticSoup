@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/save/campaign-state.schema.json",
   "title": "CampaignState",
-  "description": "Authoritative campaign state version 6: phase 11 targeting, weapon-cycle and reload runtime on top of the version 5 site, movement, warp, docking and station state (Technical Specification 8-11).",
+  "description": "Authoritative campaign state version 7: phase 12 layered damage, regeneration, active modules, destruction state and bounded combat events (Technical Specification 8-11).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -25,7 +25,7 @@
   ],
   "properties": {
     "stateVersion": {
-      "const": 6
+      "const": 7
     },
     "campaignId": {
       "type": "string",
@@ -1116,7 +1116,8 @@
       "additionalProperties": false,
       "required": [
         "version",
-        "ships"
+        "ships",
+        "events"
       ],
       "properties": {
         "version": {
@@ -1131,6 +1132,13 @@
           },
           "additionalProperties": {
             "$ref": "#/$defs/shipCombatState"
+          }
+        },
+        "events": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/combatEventRecord"
           }
         }
       }
@@ -1714,12 +1722,121 @@
         }
       }
     },
+    "damageProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["electromagnetic", "thermal", "kinetic", "explosive"],
+      "properties": {
+        "electromagnetic": { "type": "number", "minimum": 0 },
+        "thermal": { "type": "number", "minimum": 0 },
+        "kinetic": { "type": "number", "minimum": 0 },
+        "explosive": { "type": "number", "minimum": 0 }
+      }
+    },
+    "activeModuleCycleState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startedAtMs", "completesAtMs", "boundaryEntryId", "committedCapacitor"],
+      "properties": {
+        "startedAtMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "completesAtMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "boundaryEntryId": { "$ref": "#/$defs/entityId" },
+        "committedCapacitor": { "type": "number", "minimum": 0 }
+      }
+    },
+    "activeModuleState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repeating", "cycle", "waitingForCapacitor", "stopReason"],
+      "properties": {
+        "repeating": { "type": "boolean" },
+        "cycle": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/activeModuleCycleState" }
+          ]
+        },
+        "waitingForCapacitor": { "type": "boolean" },
+        "stopReason": {
+          "anyOf": [
+            { "type": "null" },
+            { "enum": ["deactivated", "insufficientCapacitor", "destroyed", "siteLeft"] }
+          ]
+        }
+      }
+    },
+    "capacitorTrendState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["windowStartedAtMs", "lastChangedAtMs", "netChange"],
+      "properties": {
+        "windowStartedAtMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "lastChangedAtMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "netChange": { "type": "number" }
+      }
+    },
+    "combatEventRecord": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind", "firstAtMs", "lastAtMs", "sourceId", "targetId", "slotKey",
+            "count", "rawDamage", "appliedDamage"
+          ],
+          "properties": {
+            "kind": { "const": "damage" },
+            "firstAtMs": { "type": "integer", "minimum": 0 },
+            "lastAtMs": { "type": "integer", "minimum": 0 },
+            "sourceId": { "$ref": "#/$defs/entityId" },
+            "targetId": { "$ref": "#/$defs/entityId" },
+            "slotKey": { "type": "string" },
+            "count": { "type": "integer", "minimum": 1 },
+            "rawDamage": { "$ref": "#/$defs/damageProfile" },
+            "appliedDamage": { "$ref": "#/$defs/damageProfile" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind", "firstAtMs", "lastAtMs", "shipId", "slotKey", "layer", "count",
+            "repairedHitPoints"
+          ],
+          "properties": {
+            "kind": { "const": "repair" },
+            "firstAtMs": { "type": "integer", "minimum": 0 },
+            "lastAtMs": { "type": "integer", "minimum": 0 },
+            "shipId": { "$ref": "#/$defs/entityId" },
+            "slotKey": { "type": "string" },
+            "layer": { "enum": ["shield", "armor", "hull"] },
+            "count": { "type": "integer", "minimum": 1 },
+            "repairedHitPoints": { "type": "number", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "firstAtMs", "lastAtMs", "shipId", "count"],
+          "properties": {
+            "kind": { "const": "destruction" },
+            "firstAtMs": { "type": "integer", "minimum": 0 },
+            "lastAtMs": { "type": "integer", "minimum": 0 },
+            "shipId": { "$ref": "#/$defs/entityId" },
+            "count": { "const": 1 }
+          }
+        }
+      ]
+    },
     "shipCombatState": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "locks",
-        "weapons"
+        "weapons",
+        "modules",
+        "destroyedAtMs",
+        "capacitorTrend"
       ],
       "properties": {
         "locks": {
@@ -1736,6 +1853,27 @@
           "additionalProperties": {
             "$ref": "#/$defs/weaponState"
           }
+        },
+        "modules": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(weapon|system|engineering|utility):(0|[1-9][0-9]?)$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/activeModuleState"
+          }
+        },
+        "destroyedAtMs": {
+          "anyOf": [
+            { "type": "null" },
+            { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+          ]
+        },
+        "capacitorTrend": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/capacitorTrendState" }
+          ]
         }
       }
     }

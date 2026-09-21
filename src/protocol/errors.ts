@@ -125,6 +125,10 @@ export const RULE_VIOLATION_REASONS = [
   'weaponReloading',
   'weaponSlotUnavailable',
   'weaponUnloadNoSpace',
+  'moduleAlreadyActive',
+  'moduleNotActive',
+  'moduleSlotUnavailable',
+  'shipDestroyed',
   'noResumableSave',
 ] as const;
 

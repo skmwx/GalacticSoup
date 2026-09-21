@@ -15,6 +15,11 @@
     "signatureRadiusMetres",
     "capacitorCharge",
     "capacitorCapacity",
+    "defenses",
+    "capacitor",
+    "modules",
+    "targetDefenses",
+    "events",
     "locks",
     "motion",
     "weapons",
@@ -64,6 +69,31 @@
     "capacitorCapacity": {
       "type": "number",
       "minimum": 0
+    },
+    "defenses": {
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/defenseState" }
+      ]
+    },
+    "capacitor": {
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/capacitorState" }
+      ]
+    },
+    "modules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/moduleRuntime" }
+    },
+    "targetDefenses": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/defenseState" }
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 128,
+      "items": { "$ref": "#/$defs/combatEvent" }
     },
     "locks": {
       "type": "array",
@@ -580,6 +610,191 @@
           }
         }
       }
+    },
+    "numberMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "defenseLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layer", "currentHitPoints", "maximumHitPoints", "damageTaken",
+        "fractionRemaining", "resistances", "hitPointsTrace", "resistanceTraces"
+      ],
+      "properties": {
+        "layer": { "enum": ["shield", "armor", "hull"] },
+        "currentHitPoints": { "type": "number", "minimum": 0 },
+        "maximumHitPoints": { "type": "number", "minimum": 0 },
+        "damageTaken": { "type": "number", "minimum": 0 },
+        "fractionRemaining": { "type": "number", "minimum": 0, "maximum": 1 },
+        "resistances": { "$ref": "#/$defs/numberMap" },
+        "hitPointsTrace": { "$ref": "#/$defs/formulaTrace" },
+        "resistanceTraces": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/formulaTrace" }
+        }
+      }
+    },
+    "defenseState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipId", "destroyed", "destroyedAtMs", "layers"],
+      "properties": {
+        "shipId": { "$ref": "#/$defs/entityId" },
+        "destroyed": { "type": "boolean" },
+        "destroyedAtMs": {
+          "anyOf": [
+            { "type": "null" },
+            { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+          ]
+        },
+        "layers": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/defenseLayer" }
+        }
+      }
+    },
+    "capacitorState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "charge", "capacity", "rechargePerSecond", "recentNetChangePerSecond",
+        "projectedUsePerSecond", "projectedNetChangePerSecond", "enduranceSeconds",
+        "stable", "capacityTrace", "rechargeTrace", "enduranceTrace"
+      ],
+      "properties": {
+        "charge": { "type": "number", "minimum": 0 },
+        "capacity": { "type": "number", "minimum": 0 },
+        "rechargePerSecond": { "type": "number", "minimum": 0 },
+        "recentNetChangePerSecond": { "type": "number" },
+        "projectedUsePerSecond": { "type": "number", "minimum": 0 },
+        "projectedNetChangePerSecond": { "type": "number" },
+        "enduranceSeconds": {
+          "anyOf": [{ "type": "null" }, { "type": "number", "minimum": 0 }]
+        },
+        "stable": { "type": "boolean" },
+        "capacityTrace": { "$ref": "#/$defs/formulaTrace" },
+        "rechargeTrace": { "$ref": "#/$defs/formulaTrace" },
+        "enduranceTrace": { "$ref": "#/$defs/formulaTrace" }
+      }
+    },
+    "activeModuleCycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startedAtMs", "completesAtMs", "remainingSeconds", "committedCapacitor"],
+      "properties": {
+        "startedAtMs": { "type": "integer", "minimum": 0 },
+        "completesAtMs": { "type": "integer", "minimum": 0 },
+        "remainingSeconds": { "type": "number", "minimum": 0 },
+        "committedCapacitor": { "type": "number", "minimum": 0 }
+      }
+    },
+    "moduleEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind", "layer", "amountPerCycle", "sustainedPerSecond", "baseValue",
+        "activeValue", "values", "trace"
+      ],
+      "properties": {
+        "kind": { "enum": ["propulsion", "repair", "resistance", "capacitorSupport"] },
+        "layer": { "type": ["string", "null"] },
+        "amountPerCycle": { "type": "number", "minimum": 0 },
+        "sustainedPerSecond": { "type": "number", "minimum": 0 },
+        "baseValue": { "type": "number" },
+        "activeValue": { "type": "number" },
+        "values": { "$ref": "#/$defs/numberMap" },
+        "trace": { "$ref": "#/$defs/formulaTrace" }
+      }
+    },
+    "moduleRuntime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot", "moduleId", "nameKey", "category", "online", "passive", "repeating",
+        "waitingForCapacitor", "status", "cycleSeconds", "capacitorPerCycle", "cycle",
+        "stopReason", "effect", "commands"
+      ],
+      "properties": {
+        "slot": { "$ref": "#/$defs/slotRef" },
+        "moduleId": { "type": "string" },
+        "nameKey": { "type": "string" },
+        "category": { "type": "string" },
+        "online": { "type": "boolean" },
+        "passive": { "type": "boolean" },
+        "repeating": { "type": "boolean" },
+        "waitingForCapacitor": { "type": "boolean" },
+        "status": { "enum": ["offline", "passive", "inactive", "active", "waiting", "deactivating"] },
+        "cycleSeconds": { "type": "number", "minimum": 0 },
+        "capacitorPerCycle": { "type": "number", "minimum": 0 },
+        "cycle": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/activeModuleCycle" }]
+        },
+        "stopReason": { "type": ["string", "null"] },
+        "effect": { "$ref": "#/$defs/moduleEffect" },
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/commandAvailability" }
+        }
+      }
+    },
+    "combatEvent": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind", "firstAtMs", "lastAtMs", "sourceId", "targetId", "slotKey",
+            "count", "rawDamage", "appliedDamage"
+          ],
+          "properties": {
+            "kind": { "const": "damage" },
+            "firstAtMs": { "type": "integer", "minimum": 0 },
+            "lastAtMs": { "type": "integer", "minimum": 0 },
+            "sourceId": { "$ref": "#/$defs/entityId" },
+            "targetId": { "$ref": "#/$defs/entityId" },
+            "slotKey": { "type": "string" },
+            "count": { "type": "integer", "minimum": 1 },
+            "rawDamage": { "$ref": "#/$defs/numberMap" },
+            "appliedDamage": { "$ref": "#/$defs/numberMap" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind", "firstAtMs", "lastAtMs", "shipId", "slotKey", "layer", "count",
+            "repairedHitPoints"
+          ],
+          "properties": {
+            "kind": { "const": "repair" },
+            "firstAtMs": { "type": "integer", "minimum": 0 },
+            "lastAtMs": { "type": "integer", "minimum": 0 },
+            "shipId": { "$ref": "#/$defs/entityId" },
+            "slotKey": { "type": "string" },
+            "layer": { "enum": ["shield", "armor", "hull"] },
+            "count": { "type": "integer", "minimum": 1 },
+            "repairedHitPoints": { "type": "number", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "firstAtMs", "lastAtMs", "shipId", "count"],
+          "properties": {
+            "kind": { "const": "destruction" },
+            "firstAtMs": { "type": "integer", "minimum": 0 },
+            "lastAtMs": { "type": "integer", "minimum": 0 },
+            "shipId": { "$ref": "#/$defs/entityId" },
+            "count": { "const": 1 }
+          }
+        }
+      ]
     },
     "objectLockAvailability": {
       "type": "object",

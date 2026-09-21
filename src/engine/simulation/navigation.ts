@@ -1,5 +1,6 @@
 import {
   activeSiteObject,
+  activeAttributeConditions,
   angularDifference,
   attributeValue,
   deterministicDirection,
@@ -12,6 +13,7 @@ import {
   replaceSiteObject,
   scale,
   shipFit,
+  shipCombat,
   siteDefinitionPosition,
   subtract,
   deriveShipAttributes,
@@ -293,10 +295,12 @@ function warpReady(
 function movementAttributes(context: SimulationContext, draft: CampaignDraft) {
   const ship = draft.assets.ships[draft.assets.activeShipId];
   if (ship === undefined) throw new TypeError('The active ship does not exist.');
+  const fit = shipFit(draft.assets, ship.id);
   const derived = deriveShipAttributes({
     hull: context.content.requireHull(ship.hullId),
-    fit: shipFit(draft.assets, ship.id),
+    fit,
     content: context.content,
+    conditions: activeAttributeConditions(fit, context.content, shipCombat(draft, ship.id)),
   });
   return {
     maxSpeedKmPerSecond: attributeValue(derived, 'maxSpeedKmPerSecond'),

@@ -1,15 +1,22 @@
 import {
+  activeModuleState,
+  activateModuleRefusal,
   activateRefusal,
   activeCombatant,
   attributeValue,
+  CAPACITOR_TREND_WINDOW_MS,
   capacitorPerCycle,
   changeAmmunitionRefusal,
   compatibleCargoAmmunition,
+  combatantOf,
   deactivateRefusal,
+  deactivateModuleRefusal,
+  deriveShipAttributes,
   listedDamage,
   lockRefusal,
   lockTime,
   relativeMotion,
+  resistanceAttribute,
   reloadRefusal,
   targetSignatureMetres,
   totalDamage,
@@ -22,14 +29,25 @@ import {
   type CombatCommandRefusal,
   type CombatRuleInput,
   type LockState,
+  type FittedSlotDescription,
   type WeaponContext,
 } from '@engine/domain';
-import { DAMAGE_TYPES, type ContentRepository, type DamageProfile } from '@engine/ports';
+import {
+  DAMAGE_TYPES,
+  DEFENSE_LAYERS,
+  type ContentRepository,
+  type DamageProfile,
+  type ModuleDefinition,
+} from '@engine/ports';
 import type {
   CombatData,
+  CapacitorStateData,
   CommandAvailabilityData,
+  DefenseStateData,
   FormulaTraceData,
   LockData,
+  ModuleEffectData,
+  ModuleRuntimeData,
   ObjectLockAvailabilityData,
   TargetMotionData,
   WeaponEffectData,
@@ -64,6 +82,11 @@ export function combatProjection(state: CampaignState, content: ContentRepositor
       signatureRadiusMetres: 0,
       capacitorCharge: 0,
       capacitorCapacity: 0,
+      defenses: null,
+      capacitor: null,
+      modules: [],
+      targetDefenses: [],
+      events: state.combat.events.map((event) => ({ ...event })),
       locks: [],
       motion: [],
       weapons: [],
@@ -75,6 +98,12 @@ export function combatProjection(state: CampaignState, content: ContentRepositor
   const maxLockRangeKm = attributeValue(combatant.derived, 'maxLockRangeKm');
   const locks = [...combatant.combat.locks].sort((a, b) => a.targetId.localeCompare(b.targetId));
   const weapons = weaponSlots(rules, combatant);
+  const modules = fittedModules(rules, combatant);
+  const targetCombatants = Object.values(site?.objects ?? {})
+    .filter((object) => object.id !== combatant.shipId && object.kind === 'ship')
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((object) => combatantOf(state, content, object.id))
+    .filter((target): target is CombatantContext => target !== null);
 
   return deepFreeze({
     revision: state.revision,
@@ -86,6 +115,11 @@ export function combatProjection(state: CampaignState, content: ContentRepositor
     signatureRadiusMetres: attributeValue(combatant.derived, 'signatureRadiusMetres'),
     capacitorCharge: combatant.ship.condition.capacitorCharge,
     capacitorCapacity: attributeValue(combatant.derived, 'capacitorCapacity'),
+    defenses: defenseData(combatant),
+    capacitor: capacitorData(rules, combatant, modules),
+    modules: modules.map((module) => moduleData(rules, combatant, module)),
+    targetDefenses: targetCombatants.map(defenseData),
+    events: state.combat.events.map((event) => ({ ...event })),
     locks: locks.map((lock) => lockData(rules, combatant, lock)),
     motion: Object.values(site?.objects ?? {})
       .filter((object) => object.id !== combatant.shipId && object.kind === 'ship')
@@ -115,6 +149,255 @@ export function combatProjection(state: CampaignState, content: ContentRepositor
         }),
       ),
   });
+}
+
+interface ProjectedModule {
+  readonly fitted: FittedSlotDescription;
+  readonly module: Exclude<ModuleDefinition, { readonly category: 'turret' }>;
+}
+
+function fittedModules(
+  rules: CombatRuleInput,
+  combatant: CombatantContext,
+): readonly ProjectedModule[] {
+  return combatant.fit
+    .map((fitted) => {
+      const module = rules.content.module(fitted.moduleId);
+      return module === undefined || module.category === 'turret' ? null : { fitted, module };
+    })
+    .filter((entry): entry is ProjectedModule => entry !== null)
+    .sort((a, b) =>
+      a.fitted.slot.kind.localeCompare(b.fitted.slot.kind) ||
+      a.fitted.slot.index - b.fitted.slot.index);
+}
+
+function defenseData(combatant: CombatantContext): DefenseStateData {
+  return {
+    shipId: combatant.shipId,
+    destroyed: combatant.combat.destroyedAtMs !== null,
+    destroyedAtMs: combatant.combat.destroyedAtMs,
+    layers: DEFENSE_LAYERS.map((layer) => {
+      const hitPoints = combatant.derived.attributes[`${layer}HitPoints`];
+      const maximumHitPoints = hitPoints?.value ?? 0;
+      const damageTaken = Math.min(maximumHitPoints, combatant.ship.condition.damage[layer]);
+      const currentHitPoints = Math.max(0, maximumHitPoints - damageTaken);
+      return {
+        layer,
+        currentHitPoints,
+        maximumHitPoints,
+        damageTaken,
+        fractionRemaining: maximumHitPoints > 0 ? currentHitPoints / maximumHitPoints : 0,
+        resistances: Object.fromEntries(
+          DAMAGE_TYPES.map((type) => [
+            type,
+            attributeValue(combatant.derived, resistanceAttribute(layer, type)),
+          ]),
+        ),
+        hitPointsTrace: attributeTrace(
+          hitPoints ?? { attribute: `${layer}HitPoints`, base: 0, value: 0, clamped: false, steps: [] },
+        ),
+        resistanceTraces: Object.fromEntries(
+          DAMAGE_TYPES.map((type) => {
+            const attribute = resistanceAttribute(layer, type);
+            const derived = combatant.derived.attributes[attribute] ?? {
+              attribute, base: 0, value: 0, clamped: false, steps: [],
+            };
+            return [type, attributeTrace(derived)];
+          }),
+        ),
+      };
+    }),
+  };
+}
+
+function capacitorData(
+  rules: CombatRuleInput,
+  combatant: CombatantContext,
+  modules: readonly ProjectedModule[],
+): CapacitorStateData {
+  const state = rules.state;
+  const capacity = attributeValue(combatant.derived, 'capacitorCapacity');
+  const rechargeSeconds = attributeValue(combatant.derived, 'capacitorRechargeSeconds');
+  const rechargePerSecond = rechargeSeconds > 0 ? capacity / rechargeSeconds : 0;
+  const moduleUse = modules.reduce((total, entry) => {
+    const runtime = activeModuleState(combatant.combat, slotOf(entry.fitted));
+    const activation = entry.module.activation;
+    return total + (runtime.repeating && activation !== undefined && activation.cycleSeconds > 0
+      ? activation.capacitorPerCycle / activation.cycleSeconds
+      : 0);
+  }, 0);
+  const weaponUse = weaponSlots(rules, combatant).reduce(
+    (total, weapon) => {
+      const runtime = weaponState(combatant.combat, weapon.key);
+      const seconds = weapon.module.activation?.cycleSeconds ?? 0;
+      return total + (runtime.repeating && seconds > 0 ? capacitorPerCycle(weapon) / seconds : 0);
+    },
+    0,
+  );
+  const projectedUsePerSecond = moduleUse + weaponUse;
+  const projectedNetChangePerSecond = rechargePerSecond - projectedUsePerSecond;
+  const stable = projectedNetChangePerSecond >= 0;
+  const enduranceSeconds = stable
+    ? null
+    : combatant.ship.condition.capacitorCharge / -projectedNetChangePerSecond;
+  const trend = combatant.combat.capacitorTrend;
+  const recentNetChangePerSecond =
+    trend === null || state.time.simulationTimeMs - trend.lastChangedAtMs > CAPACITOR_TREND_WINDOW_MS
+      ? 0
+      : trend.netChange /
+        Math.max(0.001, (state.time.simulationTimeMs - trend.windowStartedAtMs) / 1000);
+  const capacityDerived = combatant.derived.attributes['capacitorCapacity']!;
+  const rechargeDerived = combatant.derived.attributes['capacitorRechargeSeconds']!;
+
+  return {
+    charge: combatant.ship.condition.capacitorCharge,
+    capacity,
+    rechargePerSecond,
+    recentNetChangePerSecond,
+    projectedUsePerSecond,
+    projectedNetChangePerSecond,
+    enduranceSeconds,
+    stable,
+    capacityTrace: attributeTrace(capacityDerived),
+    rechargeTrace: attributeTrace(rechargeDerived),
+    enduranceTrace: {
+      formulaKey: 'combat.formula.capacitorEndurance',
+      operands: [
+        { key: 'charge', value: combatant.ship.condition.capacitorCharge },
+        { key: 'rechargePerSecond', value: rechargePerSecond },
+        { key: 'usePerSecond', value: projectedUsePerSecond },
+        { key: 'netPerSecond', value: projectedNetChangePerSecond },
+      ],
+      unroundedResult: enduranceSeconds ?? -1,
+      displayResult: enduranceSeconds === null ? -1 : Math.round(enduranceSeconds * 10) / 10,
+    },
+  };
+}
+
+function moduleData(
+  rules: CombatRuleInput,
+  combatant: CombatantContext,
+  entry: ProjectedModule,
+): ModuleRuntimeData {
+  const key = slotOf(entry.fitted);
+  const runtime = activeModuleState(combatant.combat, key);
+  const cycleSeconds = entry.module.activation?.cycleSeconds ?? 0;
+  const passive = entry.module.activation === undefined;
+  const status: ModuleRuntimeData['status'] = !entry.fitted.online
+    ? 'offline'
+    : passive
+      ? 'passive'
+      : runtime.waitingForCapacitor
+        ? 'waiting'
+        : runtime.cycle !== null && !runtime.repeating
+          ? 'deactivating'
+          : runtime.cycle !== null
+            ? 'active'
+            : 'inactive';
+
+  return {
+    slot: { ...entry.fitted.slot },
+    moduleId: entry.module.id,
+    nameKey: entry.module.nameKey,
+    category: entry.module.category,
+    online: entry.fitted.online,
+    passive,
+    repeating: runtime.repeating,
+    waitingForCapacitor: runtime.waitingForCapacitor,
+    status,
+    cycleSeconds,
+    capacitorPerCycle: entry.module.activation?.capacitorPerCycle ?? 0,
+    cycle: runtime.cycle === null ? null : {
+      startedAtMs: runtime.cycle.startedAtMs,
+      completesAtMs: runtime.cycle.completesAtMs,
+      remainingSeconds: Math.max(0, runtime.cycle.completesAtMs - rules.state.time.simulationTimeMs) / 1000,
+      committedCapacitor: runtime.cycle.committedCapacitor,
+    },
+    stopReason: runtime.stopReason,
+    effect: moduleEffect(rules, combatant, entry),
+    commands: passive ? [] : [
+      availability('module.activate', activateModuleRefusal(rules, entry.fitted.slot)),
+      availability('module.deactivate', deactivateModuleRefusal(rules, entry.fitted.slot)),
+    ],
+  };
+}
+
+function moduleEffect(
+  rules: CombatRuleInput,
+  combatant: CombatantContext,
+  entry: ProjectedModule,
+): ModuleEffectData {
+  const module = entry.module;
+  if (module.category === 'propulsion') {
+    const base = deriveShipAttributes({
+      hull: combatant.hull,
+      fit: combatant.fit,
+      content: rules.content,
+      conditions: new Set<string>(),
+    });
+    const baseValue = attributeValue(base, 'maxSpeedKmPerSecond');
+    const active = deriveShipAttributes({
+      hull: combatant.hull,
+      fit: combatant.fit,
+      content: rules.content,
+      conditions: new Set(['propulsion.active']),
+    });
+    const activeValue = attributeValue(active, 'maxSpeedKmPerSecond');
+    return effect('propulsion', null, 0, 0, baseValue, activeValue,
+      { speedBonusFraction: module.propulsion.speedBonusFraction },
+      attributeTrace(active.attributes['maxSpeedKmPerSecond']!));
+  }
+  if (module.category === 'shieldBooster' || module.category === 'armorRepairer') {
+    const amount = module.repair.amountHitPoints;
+    return effect('repair', module.repair.layer, amount,
+      cycleRate(amount, module.activation?.cycleSeconds ?? 0), 0, 0, {}, {
+        formulaKey: 'combat.formula.repairRate',
+        operands: [
+          { key: 'amountHitPoints', value: amount },
+          { key: 'cycleSeconds', value: module.activation?.cycleSeconds ?? 0 },
+        ],
+        unroundedResult: cycleRate(amount, module.activation?.cycleSeconds ?? 0),
+        displayResult: Math.round(cycleRate(amount, module.activation?.cycleSeconds ?? 0) * 10) / 10,
+      });
+  }
+  if (module.category === 'resistancePlating') {
+    const values = Object.fromEntries(DAMAGE_TYPES.map((type) => [type, module.resistance.bonuses[type]]));
+    return effect('resistance', module.resistance.layer, 0, 0, 0, 0, values, {
+      formulaKey: 'combat.formula.resistanceModifier', operands: [], unroundedResult: 0, displayResult: 0,
+    });
+  }
+  if (module.category === 'capacitorBattery') {
+    const values = {
+      capacityBonus: module.capacitorSupport.capacityBonus,
+      rechargeBonusFraction: module.capacitorSupport.rechargeBonusFraction,
+    };
+    return effect('capacitorSupport', null, 0, 0,
+      combatant.hull.capacitor.capacity,
+      attributeValue(combatant.derived, 'capacitorCapacity'), values,
+      attributeTrace(combatant.derived.attributes['capacitorCapacity']!));
+  }
+  throw new TypeError(`Unsupported projected module ${module.id}.`);
+}
+
+function effect(
+  kind: ModuleEffectData['kind'],
+  layer: string | null,
+  amountPerCycle: number,
+  sustainedPerSecond: number,
+  baseValue: number,
+  activeValue: number,
+  values: Readonly<Record<string, number>>,
+  trace: FormulaTraceData,
+): ModuleEffectData {
+  return { kind, layer, amountPerCycle, sustainedPerSecond, baseValue, activeValue, values, trace };
+}
+
+function cycleRate(amount: number, seconds: number): number {
+  return seconds > 0 ? amount / seconds : 0;
+}
+
+function slotOf(fitted: FittedSlotDescription): string {
+  return `${fitted.slot.kind}:${String(fitted.slot.index)}`;
 }
 
 /** Every weapon slot the hull offers, whether or not it holds a turret. */
@@ -285,6 +568,30 @@ function availability(command: string, refusal: CombatCommandRefusal): CommandAv
     command,
     available: refusal === null,
     unavailableReason: refusal === null ? null : ruleViolationMessageKey(refusal),
+  };
+}
+
+function attributeTrace(derived: {
+  readonly attribute: string;
+  readonly base: number;
+  readonly value: number;
+  readonly steps: readonly {
+    readonly sourceId: string;
+    readonly effectiveValue: number;
+    readonly result: number;
+  }[];
+}): FormulaTraceData {
+  return {
+    formulaKey: `attribute.${derived.attribute}`,
+    operands: [
+      { key: 'base', value: derived.base },
+      ...derived.steps.flatMap((step, index) => [
+        { key: `modifier.${String(index)}.value`, value: step.effectiveValue },
+        { key: `modifier.${String(index)}.result`, value: step.result },
+      ]),
+    ],
+    unroundedResult: derived.value,
+    displayResult: Math.round(derived.value * 10) / 10,
   };
 }
 

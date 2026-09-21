@@ -52,6 +52,14 @@ export const DOMAIN_EVENT_KINDS = [
   'combat.reloadStarted',
   'combat.reloadCompleted',
   'combat.ammunitionChanged',
+  'combat.damageApplied',
+  'combat.repairApplied',
+  'combat.moduleActivated',
+  'combat.moduleStopped',
+  'combat.moduleWaiting',
+  'combat.moduleCycleStarted',
+  'combat.moduleCycleCompleted',
+  'combat.shipDestroyed',
 ] as const;
 
 export type DomainEventKind = (typeof DOMAIN_EVENT_KINDS)[number];

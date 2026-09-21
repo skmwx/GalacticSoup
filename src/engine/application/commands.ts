@@ -5,8 +5,10 @@ import {
   advanceTime,
   DOCK_COMPLETE_BOUNDARY,
   LOCK_COMPLETE_BOUNDARY,
+  MODULE_CYCLE_BOUNDARY,
   RELOAD_COMPLETE_BOUNDARY,
   resolveLockComplete,
+  resolveModuleCycle,
   resolveReloadComplete,
   resolveWeaponCycle,
   WEAPON_CYCLE_BOUNDARY,
@@ -53,6 +55,7 @@ export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {
   [WARP_ARRIVAL_BOUNDARY]: resolveWarpArrival,
   [DOCK_COMPLETE_BOUNDARY]: resolveDockComplete,
   [LOCK_COMPLETE_BOUNDARY]: resolveLockComplete,
+  [MODULE_CYCLE_BOUNDARY]: resolveModuleCycle,
   [WEAPON_CYCLE_BOUNDARY]: resolveWeaponCycle,
   [RELOAD_COMPLETE_BOUNDARY]: resolveReloadComplete,
 };

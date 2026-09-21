@@ -125,6 +125,8 @@ function apply(transaction: Transaction, request: CommandRequest): CommandOutcom
       return handleNavigationCommand(transaction, request.type, request.payload);
     case 'targeting.lock':
     case 'targeting.unlock':
+    case 'module.activate':
+    case 'module.deactivate':
     case 'weapon.activate':
     case 'weapon.deactivate':
     case 'weapon.reload':

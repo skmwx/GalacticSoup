@@ -269,7 +269,7 @@ describe('weapon cycles', () => {
     expect(capacitorOf(fixture)).toBe(before - cost);
   });
 
-  it('stops when the capacitor cannot pay for the next cycle [FUNC-9.4]', () => {
+  it('uses continuous regeneration when the next weapon cycle starts [FUNC-9.4, FUNC-9.8]', () => {
     const fixture = railgunFixture();
     lockTarget(fixture);
     activateWeapon(fixture.context, fixture.playerId, WEAPON, fixture.targetId);
@@ -280,8 +280,9 @@ describe('weapon cycles', () => {
 
     expect(fixture.context.events.filter((event) => event.kind === 'combat.shotResolved'))
       .toHaveLength(1);
-    expect(weapon(fixture).repeating).toBe(false);
-    expect(weapon(fixture).stopReason).toBe('insufficientCapacitor');
+    expect(weapon(fixture).repeating).toBe(true);
+    expect(weapon(fixture).cycle?.committedCapacitor).toBe(4);
+    expect(weapon(fixture).stopReason).toBeNull();
   });
 
   it('refuses activation the capacitor could not pay for [FUNC-9.4, FUNC-22.10]', () => {

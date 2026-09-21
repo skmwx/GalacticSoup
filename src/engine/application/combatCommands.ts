@@ -1,8 +1,10 @@
 import {
   activateRefusal,
+  activateModuleRefusal,
   activeCombatant,
   changeAmmunitionRefusal,
   deactivateRefusal,
+  deactivateModuleRefusal,
   lockRefusal,
   reloadRefusal,
   unlockRefusal,
@@ -13,8 +15,10 @@ import {
   type SlotRef,
 } from '@engine/domain';
 import {
+  activateModule,
   activateWeapon,
   beginLock,
+  deactivateModule,
   deactivateWeapon,
   releaseLock,
   requestReload,
@@ -48,7 +52,9 @@ export function handleCombatCommand(
     | 'weapon.activate'
     | 'weapon.deactivate'
     | 'weapon.reload'
-    | 'weapon.changeAmmunition',
+    | 'weapon.changeAmmunition'
+    | 'module.activate'
+    | 'module.deactivate',
   payload: unknown,
 ): CommandOutcome {
   const rules: CombatRuleInput = { state: transaction.requireDraft(), content: transaction.content };
@@ -66,6 +72,10 @@ export function handleCombatCommand(
       return reload(transaction, rules, payload as WeaponSlotPayload);
     case 'weapon.changeAmmunition':
       return changeAmmunition(transaction, rules, payload as ChangeAmmunitionPayload);
+    case 'module.activate':
+      return operateModule(transaction, rules, payload as WeaponSlotPayload, true);
+    case 'module.deactivate':
+      return operateModule(transaction, rules, payload as WeaponSlotPayload, false);
     default:
       return assertUnreachable(type);
   }
@@ -165,6 +175,23 @@ function changeAmmunition(
   return requestReload(transaction.simulation(), shipOf(rules), slot, ammunitionId, true)
     ? APPLIED
     : reject('weaponSlotUnavailable');
+}
+
+function operateModule(
+  transaction: Transaction,
+  rules: CombatRuleInput,
+  payload: WeaponSlotPayload,
+  activate: boolean,
+): CommandOutcome {
+  const slot: SlotRef = { kind: payload.slotKind as SlotRef['kind'], index: payload.slotIndex };
+  const refused = refuse(
+    activate ? activateModuleRefusal(rules, slot) : deactivateModuleRefusal(rules, slot),
+  );
+  if (refused !== null) return refused;
+  const applied = activate
+    ? activateModule(transaction.simulation(), shipOf(rules), slot)
+    : deactivateModule(transaction.simulation(), shipOf(rules), slot);
+  return applied ? APPLIED : reject('moduleSlotUnavailable');
 }
 
 /** The charge a plain reload refills with: the loaded one, or the last one. */

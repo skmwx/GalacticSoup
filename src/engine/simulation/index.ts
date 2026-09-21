@@ -8,16 +8,20 @@
 export { advanceTime, MAX_BOUNDARIES_PER_QUANTUM } from './clock';
 export type { AdvanceOutcome, BoundaryResolver, BoundaryResolvers, ContinuousSystem } from './clock';
 export {
+  activateModule,
   activateWeapon,
   advanceCombat,
   beginLock,
   clearCombat,
+  deactivateModule,
   deactivateWeapon,
   LOCK_COMPLETE_BOUNDARY,
+  MODULE_CYCLE_BOUNDARY,
   releaseLock,
   RELOAD_COMPLETE_BOUNDARY,
   requestReload,
   resolveLockComplete,
+  resolveModuleCycle,
   resolveReloadComplete,
   resolveWeaponCycle,
   WEAPON_CYCLE_BOUNDARY,

@@ -231,6 +231,14 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
       return null;
     }
 
+    case 'module.activate':
+    case 'module.deactivate': {
+      const unexpected = unexpectedField(fields, ['slotKind', 'slotIndex']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (fields['slotKind'] !== 'system') return payloadField(type, 'slotKind', 'format');
+      return isIndex(fields['slotIndex']) ? null : payloadField(type, 'slotIndex', 'format');
+    }
+
     case 'navigation.dock': {
       const unexpected = unexpectedField(fields, ['stationId']);
       if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');

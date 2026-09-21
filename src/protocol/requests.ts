@@ -1,10 +1,10 @@
 /**
- * Protocol version 8 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 9 request catalogue (Technical Specification 7.1, 18).
  *
- * Adds targeting and weapon commands and the tactical combat view to the
- * navigation and station contracts of version 7. Capabilities list the
- * accepted request types. Older clients are rejected at the envelope boundary,
- * before any command can mutate campaign state.
+ * Adds active module commands and the complete defensive, capacitor and module
+ * runtime view to the targeting and weapon contracts of version 8. Capabilities
+ * list the accepted request types. Older clients are rejected at the envelope
+ * boundary, before any command can mutate campaign state.
  */
 
 import type { EngineError } from './errors';
@@ -308,6 +308,8 @@ export interface SaveSlotData {
 
 export interface ProtocolContract {
   'combat.state': { payload: EmptyPayload; data: CombatData };
+  'module.activate': { payload: WeaponSlotPayload; data: CommandResultData };
+  'module.deactivate': { payload: WeaponSlotPayload; data: CommandResultData };
   'targeting.lock': { payload: TargetPayloadData; data: CommandResultData };
   'targeting.unlock': { payload: TargetPayloadData; data: CommandResultData };
   'weapon.activate': { payload: ActivateWeaponPayload; data: CommandResultData };
@@ -414,6 +416,8 @@ export const REQUEST_TYPES = [
   'market.listings',
   'market.previewBuy',
   'market.previewSell',
+  'module.activate',
+  'module.deactivate',
   'movement.approach',
   'movement.keepRange',
   'movement.moveToPoint',
@@ -463,6 +467,8 @@ export const COMMAND_TYPES = [
   'insurance.confirm',
   'market.confirmBuy',
   'market.confirmSell',
+  'module.activate',
+  'module.deactivate',
   'movement.approach',
   'movement.keepRange',
   'movement.moveToPoint',

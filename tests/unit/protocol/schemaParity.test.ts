@@ -642,7 +642,7 @@ describe('campaign protocol schema parity', () => {
   });
 
   it('validates the golden save against the published save schema [TECH-11.2, TECH-17]', () => {
-    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-6.json');
+    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-7.json');
 
     expect(validateSaveEnvelope(JSON.parse(readFileSync(file, 'utf8')))).toBe(true);
   });

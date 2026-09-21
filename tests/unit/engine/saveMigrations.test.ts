@@ -24,7 +24,7 @@ const step = (from: number, apply: (save: Record<string, unknown>) => void): Sav
 describe('save migrations', () => {
   it('ships no migration before the first released format change [TECH-11.4]', () => {
     expect(SAVE_MIGRATIONS).toEqual([]);
-    expect(SAVE_FORMAT_VERSION).toBe(6);
+    expect(SAVE_FORMAT_VERSION).toBe(7);
   });
 
   it('is a no-op for a save already at the current version [TECH-11.4]', () => {

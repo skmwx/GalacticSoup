@@ -1,11 +1,11 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
- * Version 8 adds the targeting and weapon commands, the tactical combat view
- * and the lock availability the site objects now carry. Version 7 added
- * projected command availability to the navigation views.
+ * Version 9 adds active module commands plus layered defenses, capacitor,
+ * module runtime and significant combat events to the tactical combat view.
+ * Version 8 added targeting and weapon commands.
  */
-export const PROTOCOL_VERSION = 8;
+export const PROTOCOL_VERSION = 9;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

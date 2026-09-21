@@ -3,6 +3,7 @@ import {
   applyDraftTo,
   instantiateSite,
   inventoryService,
+  shipFit,
   slotKey,
   stacksIn,
   type CampaignDraft,
@@ -31,6 +32,9 @@ export const COMBAT_SITE_ID = 'site.borrell.verge' as SiteId;
 export const STATION_SITE_ID = 'site.borrell.station' as SiteId;
 export const AUTOCANNON = 'module.turret.autocannon.small' as ModuleId;
 export const RAILGUN = 'module.turret.railgun.small' as ModuleId;
+export const AFTERBURNER = 'module.propulsion.afterburner.small' as ModuleId;
+export const ARMOR_PLATING = 'module.plating.armor.small' as ModuleId;
+export const CAPACITOR_BATTERY = 'module.capacitor.battery.small' as ModuleId;
 export const FUSION = 'ammo.projectile.small.fusion' as AmmunitionId;
 export const PHASED = 'ammo.projectile.small.phased' as AmmunitionId;
 export const IRON = 'ammo.hybrid.small.iron' as AmmunitionId;
@@ -61,6 +65,10 @@ export interface CombatFixtureOptions {
     readonly ammunitionId: AmmunitionId;
     readonly rounds?: number;
   };
+  /** Refit the player's first system slot before undocking. */
+  readonly playerSystemModule?: ModuleId;
+  /** Refit the player's first engineering slot before undocking. */
+  readonly playerEngineeringModule?: ModuleId;
 }
 
 export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture {
@@ -85,20 +93,49 @@ export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture
     }
   }
 
-  if (options.playerTurret !== undefined) {
+  if (
+    options.playerTurret !== undefined ||
+    options.playerSystemModule !== undefined ||
+    options.playerEngineeringModule !== undefined
+  ) {
+    const slots = Object.fromEntries(shipFit(draft.assets, playerId).map((fitted) => [
+      slotKey(fitted.slot),
+      {
+        moduleId: fitted.moduleId,
+        online: fitted.online,
+        ammunitionId: fitted.charge?.ammunitionId ?? null,
+      },
+    ]));
     const turret = options.playerTurret;
-    service.add(hangar, turret.moduleId, 1, granted(1));
-    service.add(hangar, turret.ammunitionId, turret.rounds ?? 25, granted(turret.rounds ?? 25));
+    if (turret !== undefined) {
+      service.add(hangar, turret.moduleId, 1, granted(1));
+      service.add(hangar, turret.ammunitionId, turret.rounds ?? 25, granted(turret.rounds ?? 25));
+      slots[FIRST_WEAPON] = {
+        moduleId: turret.moduleId,
+        online: true,
+        ammunitionId: turret.ammunitionId,
+      };
+    }
+    if (options.playerSystemModule !== undefined) {
+      service.add(hangar, options.playerSystemModule, 1, granted(1));
+      slots[FIRST_SYSTEM] = {
+        moduleId: options.playerSystemModule,
+        online: true,
+        ammunitionId: null,
+      };
+    }
+    if (options.playerEngineeringModule !== undefined) {
+      service.add(hangar, options.playerEngineeringModule, 1, granted(1));
+      slots[FIRST_ENGINEERING] = {
+        moduleId: options.playerEngineeringModule,
+        online: true,
+        ammunitionId: null,
+      };
+    }
     const missing = applyDraftTo(draft, content, {
       shipId: playerId,
       baseRevision: draft.revision,
-      slots: {
-        [FIRST_WEAPON]: {
-          moduleId: turret.moduleId,
-          online: true,
-          ammunitionId: turret.ammunitionId,
-        },
-      },
+      slots,
     });
     if (missing.length > 0) {
       throw new Error(`The player could not be refitted: ${missing[0]?.definitionId ?? ''}`);
@@ -148,6 +185,8 @@ export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture
 
 /** The slot key of the player's and the target's first weapon. */
 export const FIRST_WEAPON = slotKey({ kind: 'weapon', index: 0 });
+export const FIRST_SYSTEM = slotKey({ kind: 'system', index: 0 });
+export const FIRST_ENGINEERING = slotKey({ kind: 'engineering', index: 0 });
 
 function armedTarget(
   draft: CampaignDraft,
