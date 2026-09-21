@@ -5,6 +5,8 @@ import type { AssetState } from '../assets/types';
 import type { FittingDraft } from '../fitting/types';
 import { startingEconomy } from '../economy/state';
 import type { EconomyState } from '../economy/types';
+import { startingNavigation } from '../navigation/start';
+import type { NavigationState } from '../navigation/types';
 
 import { deriveCampaignId, type CampaignId } from './identity';
 import { emptyScheduler, type SchedulerState } from './scheduler';
@@ -26,7 +28,7 @@ import { seedStreams, type RandomStreams } from '../random/streams';
  */
 
 /** Shape version of the authoritative payload, carried by every snapshot. */
-export const CAMPAIGN_STATE_VERSION = 4;
+export const CAMPAIGN_STATE_VERSION = 5;
 
 /** Upper bound on simulation time, about 31 simulated years. */
 export const MAX_SIMULATION_TIME_MS = 1_000_000_000_000;
@@ -53,6 +55,7 @@ export interface CampaignState {
    * ship wore when the draft was opened.
    */
   readonly fitting: FittingDraft | null;
+  readonly navigation: NavigationState;
   readonly stateVersion: number;
   readonly campaignId: CampaignId;
   readonly displayName: string;
@@ -98,6 +101,7 @@ export function createCampaign(input: CreateCampaignInput, content: ContentRepos
     assets: starting.assets,
     economy: startingEconomy(content),
     fitting: null,
+    navigation: startingNavigation(content),
     stateVersion: CAMPAIGN_STATE_VERSION,
     campaignId,
     displayName: input.displayName,

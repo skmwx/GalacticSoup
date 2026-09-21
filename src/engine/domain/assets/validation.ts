@@ -23,6 +23,20 @@ function docked(value: unknown): boolean {
   return shape(value, ['kind', 'stationId', 'systemId']) && value['kind'] === 'station' &&
     definition(value['stationId'], 'station') && definition(value['systemId'], 'system');
 }
+function shipLocation(value: unknown): boolean {
+  if (docked(value)) return true;
+  if (!record(value)) return false;
+  if (value['kind'] === 'site') {
+    return shape(value, ['kind', 'siteId', 'systemId']) &&
+      definition(value['siteId'], 'site') && definition(value['systemId'], 'system');
+  }
+  if (value['kind'] === 'warp') {
+    return shape(value, ['kind', 'fromSiteId', 'toSiteId', 'systemId']) &&
+      definition(value['fromSiteId'], 'site') && definition(value['toSiteId'], 'site') &&
+      definition(value['systemId'], 'system');
+  }
+  return false;
+}
 function location(value: unknown): boolean {
   if (!record(value)) return false;
   switch (value['kind']) {
@@ -71,13 +85,13 @@ function insurance(value: unknown): boolean {
 export function isAssetState(value: unknown): value is AssetState {
   if (!shape(value, ['version', 'credits', 'location', 'activeShipId', 'ships', 'inventories', 'stacks']) ||
       !isCount(value['version']) || value['version'] === 0 || !isCount(value['credits']) ||
-      !docked(value['location']) || !isEntityId(value['activeShipId'])) return false;
+      !shipLocation(value['location']) || !isEntityId(value['activeShipId'])) return false;
   const ships = value['ships'], inventories = value['inventories'], stacks = value['stacks'];
   if (!record(ships) || !record(inventories) || !record(stacks)) return false;
   if (![ships, inventories, stacks].every((map) => Object.keys(map).every(isEntityId))) return false;
   if (!Object.values(ships).every((ship) => shape(ship, ['id', 'hullId', 'cargoInventoryId', 'fittingInventoryId', 'location', 'condition', 'insurance']) &&
     isEntityId(ship['id']) && definition(ship['hullId'], 'hull') && isEntityId(ship['cargoInventoryId']) &&
-    isEntityId(ship['fittingInventoryId']) && docked(ship['location']) && condition(ship['condition']) &&
+    isEntityId(ship['fittingInventoryId']) && shipLocation(ship['location']) && condition(ship['condition']) &&
     insurance(ship['insurance']))) return false;
   if (!Object.values(inventories).every((inv) => shape(inv, ['id', 'location', 'capacity']) &&
     isEntityId(inv['id']) && location(inv['location']) && capacity(inv['capacity']))) return false;
@@ -134,7 +148,23 @@ export function validateAssets(state: CampaignState, add: Report, content?: Cont
     if (fitting?.location.kind !== 'fitting' || fitting.location.shipId !== ship.id) fail(`ships.${ship.id}`, 'Ship fitting store does not resolve.');
     if (content) {
       if (!content.hull(ship.hullId)?.playerUsable) fail(`ships.${ship.id}.hullId`, 'Hull is not player-usable.');
-      if (content.station(ship.location.stationId)?.systemId !== ship.location.systemId) fail(`ships.${ship.id}.location`, 'Station and system do not agree.');
+      const system = content.system(ship.location.systemId);
+      if (system === undefined) {
+        fail(`ships.${ship.id}.location`, 'System does not resolve.');
+      } else if (ship.location.kind === 'station') {
+        if (content.station(ship.location.stationId)?.systemId !== ship.location.systemId) {
+          fail(`ships.${ship.id}.location`, 'Station and system do not agree.');
+        }
+      } else {
+        const siteIds = new Set(system.sites.map((site) => site.id));
+        if (ship.location.kind === 'site' && !siteIds.has(ship.location.siteId)) {
+          fail(`ships.${ship.id}.location`, 'Site and system do not agree.');
+        }
+        if (ship.location.kind === 'warp' &&
+          (!siteIds.has(ship.location.fromSiteId) || !siteIds.has(ship.location.toSiteId))) {
+          fail(`ships.${ship.id}.location`, 'Warp endpoints and system do not agree.');
+        }
+      }
     }
   }
   for (const stack of Object.values(a.stacks)) {

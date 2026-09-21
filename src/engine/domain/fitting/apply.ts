@@ -41,6 +41,9 @@ export function applyDraftTo(
   if (ship === undefined) {
     throw new InventoryError('itemNotFound');
   }
+  if (ship.location.kind !== 'station') {
+    throw new InventoryError('inventoryUnavailable');
+  }
 
   const service = inventoryService(work, content);
   const fitting = ship.fittingInventoryId;

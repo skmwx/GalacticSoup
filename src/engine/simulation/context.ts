@@ -21,4 +21,6 @@ export interface SimulationContext {
   readonly content: ContentRepository;
   publish(kind: DomainEventKind, params?: DomainEventParams): void;
   invalidate(topic: ProjectionTopic): void;
+  /** A simulation boundary reached a functional autosave point. */
+  requestAutosave(): void;
 }

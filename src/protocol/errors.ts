@@ -98,6 +98,18 @@ export const RULE_VIOLATION_REASONS = [
   'noCampaignOpen',
   'campaignMismatch',
   'unsupportedTimeRate',
+  'destinationSelectionUnavailable',
+  'destinationUnknown',
+  'destinationCurrent',
+  'undockUnavailable',
+  'undockInvalidFit',
+  'movementUnavailable',
+  'movementTargetUnavailable',
+  'warpUnavailable',
+  'warpTooClose',
+  'invalidArrivalDistance',
+  'retreatUnavailable',
+  'dockUnavailable',
   'noResumableSave',
 ] as const;
 

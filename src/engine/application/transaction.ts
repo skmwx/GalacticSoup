@@ -180,6 +180,9 @@ export function beginTransaction(
         invalidate: (topic) => {
           transaction.invalidate(topic);
         },
+        requestAutosave: () => {
+          transaction.requestAutosave();
+        },
       };
     },
   };

@@ -265,6 +265,7 @@ function resolves(id: string, content: ContentRepository): boolean {
     content.tradeable(id) !== undefined ||
     content.hull(id) !== undefined ||
     content.system(id) !== undefined ||
+    content.site(id) !== undefined ||
     content.station(id) !== undefined ||
     content.npcProfile(id) !== undefined ||
     content.lootTable(id) !== undefined ||

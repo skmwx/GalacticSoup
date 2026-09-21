@@ -168,4 +168,28 @@ describe('command payload validation', () => {
       expect(validateClientRequest(envelope({ type, payload: { extra: 1 } })).ok).toBe(false);
     },
   );
+
+  it.each([
+    ['navigation.selectDestination', { encounterId: 'encounter.scout.1' }, true],
+    ['navigation.selectDestination', { encounterId: 'site.scout.1' }, false],
+    ['movement.approach', { targetId: 'station.harbour', distanceKm: 2 }, true],
+    ['movement.orbit', { targetId: 'c0123456789abcdef01234567-e4', distanceKm: 10 }, true],
+    ['movement.keepRange', { targetId: 'station.harbour', distanceKm: -1 }, false],
+    ['movement.moveToPoint', { xKm: -12.5, yKm: 8 }, true],
+    ['movement.moveToPoint', { xKm: Number.POSITIVE_INFINITY, yKm: 8 }, false],
+    ['navigation.warp', { destinationSiteId: 'site.scout.1', arrivalDistanceKm: 30 }, true],
+    ['navigation.warp', { destinationSiteId: 'encounter.scout.1', arrivalDistanceKm: 30 }, false],
+    ['navigation.dock', { stationId: 'station.harbour' }, true],
+    ['navigation.dock', { stationId: 'site.harbour' }, false],
+  ])('validates %s navigation payloads [TECH-7.1, FUNC-7.1, FUNC-7.3, FUNC-7.4]', (type, payload, expected) => {
+    expect(validateClientRequest(envelope({ type, payload })).ok).toBe(expected);
+  });
+
+  it.each(['navigation.destinations', 'navigation.site', 'ship.undock', 'movement.stop', 'navigation.retreat'])(
+    'requires an empty payload for %s [TECH-7.1, FUNC-7.1]',
+    (type) => {
+      expect(validateClientRequest(envelope({ type, payload: EMPTY_PAYLOAD })).ok).toBe(true);
+      expect(validateClientRequest(envelope({ type, payload: { extra: 1 } })).ok).toBe(false);
+    },
+  );
 });

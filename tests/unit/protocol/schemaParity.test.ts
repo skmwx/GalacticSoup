@@ -49,6 +49,8 @@ let validateSaveEnvelope: Validator;
 let validateStationServicesData: Validator;
 let validateMarketListingsData: Validator;
 let validateTransactionPreviewData: Validator;
+let validateNavigationSiteData: Validator;
+let validateNavigationDestinationsData: Validator;
 
 const content = shippedContent();
 
@@ -102,6 +104,12 @@ beforeAll(() => {
   ) as Validator;
   validateTransactionPreviewData = ajv.compile(
     loadSchema('transaction-preview.data.schema.json'),
+  ) as Validator;
+  validateNavigationSiteData = ajv.compile(
+    loadSchema('navigation.site.data.schema.json'),
+  ) as Validator;
+  validateNavigationDestinationsData = ajv.compile(
+    loadSchema('navigation.destinations.data.schema.json'),
   ) as Validator;
 
   const saves = new AjvConstructor({ allErrors: true, strict: true });
@@ -545,6 +553,28 @@ describe('campaign protocol schema parity', () => {
     expect(validateFittingDraftData(data)).toBe(true);
   });
 
+  it('publishes schemas for destination and loaded-site navigation projections [TECH-7.1, TECH-10.1, FUNC-5.2, FUNC-7.1]', async () => {
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
+    await ask(
+      host,
+      'campaign.create',
+      { displayName: 'Vela', seed, createdAtRealMs: 1_700_000_000_000 },
+      'req-create-navigation',
+    );
+    const destinations = await ask(host, 'navigation.destinations', EMPTY_PAYLOAD, 'req-destinations');
+    const dockedSite = await ask(host, 'navigation.site', EMPTY_PAYLOAD, 'req-docked-site');
+    const undock = await ask(host, 'ship.undock', EMPTY_PAYLOAD, 'req-undock');
+    const loadedSite = await ask(host, 'navigation.site', EMPTY_PAYLOAD, 'req-loaded-site');
+    const dataOf = (response: unknown): unknown => (response as { data: unknown }).data;
+
+    for (const response of [destinations, dockedSite, undock, loadedSite]) {
+      expect(validateResponse(response)).toBe(true);
+    }
+    expect(validateNavigationDestinationsData(dataOf(destinations))).toBe(true);
+    expect(validateNavigationSiteData(dataOf(dockedSite))).toBe(true);
+    expect(validateNavigationSiteData(dataOf(loadedSite))).toBe(true);
+  });
+
   it('publishes a schema for every save response shape [TECH-7.1, TECH-11.3]', async () => {
     const host = createEngineHost({ content, saves: createMemorySaveStore() });
 
@@ -590,7 +620,7 @@ describe('campaign protocol schema parity', () => {
   });
 
   it('validates the golden save against the published save schema [TECH-11.2, TECH-17]', () => {
-    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-4.json');
+    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-5.json');
 
     expect(validateSaveEnvelope(JSON.parse(readFileSync(file, 'utf8')))).toBe(true);
   });

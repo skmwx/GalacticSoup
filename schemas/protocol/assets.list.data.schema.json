@@ -23,28 +23,7 @@
       "maximum": 9007199254740991
     },
     "location": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "kind",
-        "stationId",
-        "systemId"
-      ],
-      "properties": {
-        "kind": {
-          "const": "station"
-        },
-        "stationId": {
-          "type": "string",
-          "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
-          "maxLength": 96
-        },
-        "systemId": {
-          "type": "string",
-          "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
-          "maxLength": 96
-        }
-      }
+      "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/shipLocation"
     },
     "activeShipId": {
       "type": "string",

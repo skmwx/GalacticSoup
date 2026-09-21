@@ -32,7 +32,7 @@ import type {
   StationServicesData,
   TransactionPreviewData,
 } from '@protocol';
-import { canonicalJson, deepFreeze, sha256Hex } from '@shared';
+import { canonicalJson, deepFreeze, sha256Hex, type StationId } from '@shared';
 
 import { itemDataOf } from './items';
 
@@ -63,7 +63,7 @@ export function stationServicesProjection(
   const station = content.station(stationId);
   if (station === undefined) throw new EconomyError('stationNotFound');
   const economy = requireStationEconomy(state.economy, stationId);
-  const docked = state.assets.location.stationId === stationId;
+  const docked = state.assets.location.kind === 'station' && state.assets.location.stationId === stationId;
   const names = ['market', 'fitting', 'repair', 'resupply', 'insurance'] as const;
   return deepFreeze({
     revision: state.revision,
@@ -92,7 +92,7 @@ export function marketListingsProjection(
   const station = content.station(stationId);
   if (station === undefined) throw new EconomyError('stationNotFound');
   const economy = requireStationEconomy(state.economy, stationId);
-  const docked = state.assets.location.stationId === stationId;
+  const docked = state.assets.location.kind === 'station' && state.assets.location.stationId === stationId;
   const marketAvailable = economy.services.market.available;
   const unavailableReason = !docked ? REASON.notDocked : marketAvailable ? null : REASON.service;
 
@@ -223,7 +223,7 @@ export function repairPreview(
   payload: ShipEconomicPayload,
 ): RepairPreviewData {
   const ship = requireShip(state, payload.shipId);
-  const station = content.requireStation(ship.location.stationId);
+  const station = content.requireStation(stationForShip(ship.location, content));
   const hull = content.requireHull(ship.hullId);
   const derived = deriveShipAttributes({ hull, fit: shipFit(state.assets, ship.id), content });
   const armorMaximum = attributeValue(derived, 'armorHitPoints');
@@ -270,7 +270,7 @@ export function insurancePreview(
   payload: ShipEconomicPayload,
 ): InsurancePreviewData {
   const ship = requireShip(state, payload.shipId);
-  const stationId = ship.location.stationId;
+  const stationId = stationForShip(ship.location, content);
   const hull = content.requireHull(ship.hullId);
   const rules = content.rules.economy;
   const premium = Math.ceil(hull.referenceValueCredits * rules.enhancedInsurancePremiumFraction);
@@ -303,7 +303,7 @@ export function resupplyPreview(
   payload: ShipEconomicPayload,
 ): ResupplyPreviewData {
   const ship = requireShip(state, payload.shipId);
-  const stationId = ship.location.stationId;
+  const stationId = stationForShip(ship.location, content);
   let unavailableReason = serviceReason(state, stationId, 'resupply');
   let total = 0;
   const traces: FormulaTraceData[] = [];
@@ -446,7 +446,7 @@ function serviceReason(
   stationId: string,
   service: EconomyServiceName,
 ): string | null {
-  if (state.assets.location.stationId !== stationId) return REASON.notDocked;
+  if (state.assets.location.kind !== 'station' || state.assets.location.stationId !== stationId) return REASON.notDocked;
   return requireStationEconomy(state.economy, stationId).services[service].available ? null : REASON.service;
 }
 
@@ -461,8 +461,20 @@ function stationHangarId(state: CampaignState, stationId: string): string {
 function inventoryAtStation(state: CampaignState, inventoryId: string, stationId: string): boolean {
   const inventory = requireInventory(state.assets, inventoryId);
   if (inventory.location.kind === 'hangar') return inventory.location.stationId === stationId;
-  if (inventory.location.kind === 'cargo') return state.assets.ships[inventory.location.shipId]?.location.stationId === stationId;
+  if (inventory.location.kind === 'cargo') {
+    const location = state.assets.ships[inventory.location.shipId]?.location;
+    return location?.kind === 'station' && location.stationId === stationId;
+  }
   return false;
+}
+
+function stationForShip(
+  location: CampaignState['assets']['location'],
+  content: ContentRepository,
+): StationId {
+  if (location.kind === 'station') return location.stationId;
+  return content.stations().find((station) => station.systemId === location.systemId)?.id ??
+    content.rules.economy.startingStationId as StationId;
 }
 
 function allocateOwnedRounds(

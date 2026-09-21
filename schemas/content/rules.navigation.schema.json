@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/rules.navigation.schema.json",
+  "title": "Navigation rules",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "values"],
+  "properties": {
+    "kind": { "const": "rules.navigation" },
+    "values": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approachToleranceKm",
+        "minimumKeepRangeToleranceKm",
+        "keepRangeToleranceFraction",
+        "warpMinimumDistanceKm",
+        "warpAlignmentRadians",
+        "warpMinimumSpeedFraction",
+        "warpPreparationMs",
+        "dockRangeKm",
+        "dockDurationMs",
+        "undockDistanceKm",
+        "stationRadiusKm",
+        "separationSpeedKmPerSecond",
+        "arrivalDistancesKm"
+      ],
+      "properties": {
+        "approachToleranceKm": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },
+        "minimumKeepRangeToleranceKm": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },
+        "keepRangeToleranceFraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "warpMinimumDistanceKm": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },
+        "warpAlignmentRadians": { "type": "number", "exclusiveMinimum": 0, "maximum": 3.141592653589793 },
+        "warpMinimumSpeedFraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "warpPreparationMs": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount" },
+        "dockRangeKm": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },
+        "dockDurationMs": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount" },
+        "undockDistanceKm": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },
+        "stationRadiusKm": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },
+        "separationSpeedKmPerSecond": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },
+        "arrivalDistancesKm": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber" }
+        }
+      }
+    },
+    "$comment": { "type": "string" }
+  }
+}

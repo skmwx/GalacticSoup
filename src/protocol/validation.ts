@@ -157,8 +157,54 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
     case 'campaign.saves':
     case 'campaign.session':
     case 'campaign.frame':
+    case 'navigation.destinations':
+    case 'navigation.site':
+    case 'ship.undock':
+    case 'movement.stop':
+    case 'navigation.retreat':
     case 'diagnostics.stateHash':
       return expectNoFields(type, fields);
+
+    case 'navigation.selectDestination': {
+      const unexpected = unexpectedField(fields, ['encounterId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      return isDefinitionIdIn(fields['encounterId'], 'encounter')
+        ? null : payloadField(type, 'encounterId', 'format');
+    }
+
+    case 'movement.approach':
+    case 'movement.orbit':
+    case 'movement.keepRange': {
+      const unexpected = unexpectedField(fields, ['targetId', 'distanceKm']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (!isSiteObjectId(fields['targetId'])) return payloadField(type, 'targetId', 'format');
+      return isFiniteNonNegative(fields['distanceKm'])
+        ? null : payloadField(type, 'distanceKm', 'format');
+    }
+
+    case 'movement.moveToPoint': {
+      const unexpected = unexpectedField(fields, ['xKm', 'yKm']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (!isFiniteCoordinate(fields['xKm'])) return payloadField(type, 'xKm', 'format');
+      return isFiniteCoordinate(fields['yKm']) ? null : payloadField(type, 'yKm', 'format');
+    }
+
+    case 'navigation.warp': {
+      const unexpected = unexpectedField(fields, ['destinationSiteId', 'arrivalDistanceKm']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (!isDefinitionIdIn(fields['destinationSiteId'], 'site')) {
+        return payloadField(type, 'destinationSiteId', 'format');
+      }
+      return isFiniteNonNegative(fields['arrivalDistanceKm'])
+        ? null : payloadField(type, 'arrivalDistanceKm', 'format');
+    }
+
+    case 'navigation.dock': {
+      const unexpected = unexpectedField(fields, ['stationId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      return isDefinitionIdIn(fields['stationId'], 'station')
+        ? null : payloadField(type, 'stationId', 'format');
+    }
 
     case 'inventory.transfer':
     case 'inventory.split':
@@ -391,6 +437,18 @@ function isLocaleTag(value: unknown): value is string {
 
 function isEntityId(value: unknown): value is string {
   return typeof value === 'string' && value.length <= 128 && ENTITY_ID_PATTERN.test(value);
+}
+
+function isSiteObjectId(value: unknown): value is string {
+  return isEntityId(value) || isDefinitionIdIn(value, 'station');
+}
+
+function isFiniteNonNegative(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1_000_000_000;
+}
+
+function isFiniteCoordinate(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000;
 }
 
 function isIndex(value: unknown): value is number {

@@ -30,6 +30,28 @@ export interface TimeRules {
   readonly maxFrameDeltaMs: number;
 }
 
+/**
+ * Tunable navigation thresholds (Functional Specification 7.2-7.4).
+ *
+ * Angles use radians and durations use whole simulation milliseconds after
+ * loading. The authored JSON uses the same canonical units for this group.
+ */
+export interface NavigationRules {
+  readonly approachToleranceKm: number;
+  readonly minimumKeepRangeToleranceKm: number;
+  readonly keepRangeToleranceFraction: number;
+  readonly warpMinimumDistanceKm: number;
+  readonly warpAlignmentRadians: number;
+  readonly warpMinimumSpeedFraction: number;
+  readonly warpPreparationMs: number;
+  readonly dockRangeKm: number;
+  readonly dockDurationMs: number;
+  readonly undockDistanceKm: number;
+  readonly stationRadiusKm: number;
+  readonly separationSpeedKmPerSecond: number;
+  readonly arrivalDistancesKm: readonly number[];
+}
+
 export interface CombatRules {
   /** Upper bound applied to any resistance (Functional Specification 4.2). */
   readonly resistanceMaximum: number;
@@ -101,9 +123,10 @@ export interface EconomyRules {
 
 export interface RulesContent {
   readonly time: TimeRules;
+  readonly navigation: NavigationRules;
   readonly combat: CombatRules;
   readonly economy: EconomyRules;
 }
 
-export const RULE_GROUPS = ['time', 'combat', 'economy'] as const;
+export const RULE_GROUPS = ['time', 'navigation', 'combat', 'economy'] as const;
 export type RuleGroup = (typeof RULE_GROUPS)[number];

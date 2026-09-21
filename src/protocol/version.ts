@@ -1,11 +1,10 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
- * Version 5 adds the authored content catalogue the interface resolves
- * projection message keys against, and the per-slot fitting candidates the
- * fitting screen offers, to the station preparation contracts of version 4.
+ * Version 6 adds the phase 9 site, destination, movement, warp and dock
+ * command/query contracts.
  */
-export const PROTOCOL_VERSION = 5;
+export const PROTOCOL_VERSION = 6;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

@@ -49,7 +49,9 @@ describe('asset persistence and ownership', () => {
     ['foreign campaign id', (d: ReturnType<typeof prepared>) => { d.campaignId = 'c000000000000000000000000' as typeof d.campaignId; }],
     ['reserve cycle', (d: ReturnType<typeof prepared>) => { const i = Object.values(d.assets.inventories).find((i) => i.location.kind === 'reserve')!; i.capacity = { kind: 'shared', inventoryId: i.id }; }],
     ['missing reserve owner', (d: ReturnType<typeof prepared>) => { const i = Object.values(d.assets.inventories).find((i) => i.location.kind === 'reserve')!; if (i.location.kind === 'reserve') i.location.ownerId = entityIdOf(d.campaignId, 999); }],
-    ['wrong campaign location', (d: ReturnType<typeof prepared>) => { d.assets.location.stationId = 'station.other' as StationId; }],
+    ['wrong campaign location', (d: ReturnType<typeof prepared>) => {
+      if (d.assets.location.kind === 'station') d.assets.location.stationId = 'station.other' as StationId;
+    }],
   ])('refuses %s without changing stored bytes [TECH-15.3, FUNC-22.3, TECH-11.4]', (_name, mutate) => {
     const draft = prepared(); mutate(draft);
     expect(validateCampaign(draft, content).length).toBeGreaterThan(0);

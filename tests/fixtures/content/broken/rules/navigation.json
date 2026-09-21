@@ -1,0 +1,18 @@
+{
+  "kind": "rules.navigation",
+  "values": {
+    "approachToleranceKm": 0.05,
+    "minimumKeepRangeToleranceKm": 0.5,
+    "keepRangeToleranceFraction": 0.05,
+    "warpMinimumDistanceKm": 100,
+    "warpAlignmentRadians": 0.2617993877991494,
+    "warpMinimumSpeedFraction": 0.75,
+    "warpPreparationMs": 3000,
+    "dockRangeKm": 1,
+    "dockDurationMs": 3000,
+    "undockDistanceKm": 2,
+    "stationRadiusKm": 0.5,
+    "separationSpeedKmPerSecond": 0.2,
+    "arrivalDistancesKm": [0, 10, 30, 50, 100]
+  }
+}

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/client-request.schema.json",
   "title": "ClientRequest",
-  "description": "Protocol version 5 request envelope and payloads.",
+  "description": "Protocol version 6 request envelope and payloads.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 5
+      "const": 6
     },
     "requestId": {
       "type": "string",
@@ -64,11 +64,23 @@
         "market.listings",
         "market.previewBuy",
         "market.previewSell",
+        "movement.approach",
+        "movement.keepRange",
+        "movement.moveToPoint",
+        "movement.orbit",
+        "movement.stop",
+        "navigation.destinations",
+        "navigation.dock",
+        "navigation.retreat",
+        "navigation.selectDestination",
+        "navigation.site",
+        "navigation.warp",
         "repair.confirm",
         "repair.preview",
         "resupply.confirm",
         "resupply.preview",
         "ship.get",
+        "ship.undock",
         "ship.undockValidity",
         "station.services",
         "system.capabilities",
@@ -83,6 +95,40 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": ["navigation.destinations", "navigation.site", "ship.undock", "movement.stop", "navigation.retreat"]
+          }
+        },
+        "required": ["type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "navigation.selectDestination" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/selectDestinationPayload" } } }
+    },
+    {
+      "if": {
+        "properties": { "type": { "enum": ["movement.approach", "movement.orbit", "movement.keepRange"] } },
+        "required": ["type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/targetRangePayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "movement.moveToPoint" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/moveToPointPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "navigation.warp" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/warpPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "navigation.dock" } }, "required": ["type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/stationPayload" } } }
+    },
     {
       "if": {
         "properties": {
@@ -1053,6 +1099,16 @@
       "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
       "maxLength": 96
     },
+    "siteId": {
+      "type": "string",
+      "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
+    "encounterId": {
+      "type": "string",
+      "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
+    },
     "definitionId": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9][a-z0-9-]*)+$",
@@ -1062,6 +1118,39 @@
       "type": "integer",
       "minimum": 1,
       "maximum": 9007199254740991
+    },
+    "selectDestinationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["encounterId"],
+      "properties": { "encounterId": { "$ref": "#/$defs/encounterId" } }
+    },
+    "targetRangePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetId", "distanceKm"],
+      "properties": {
+        "targetId": { "oneOf": [{ "$ref": "#/$defs/entityId" }, { "$ref": "#/$defs/stationId" }] },
+        "distanceKm": { "type": "number", "minimum": 0, "maximum": 1000000000 }
+      }
+    },
+    "moveToPointPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["xKm", "yKm"],
+      "properties": {
+        "xKm": { "type": "number", "minimum": -1000000000, "maximum": 1000000000 },
+        "yKm": { "type": "number", "minimum": -1000000000, "maximum": 1000000000 }
+      }
+    },
+    "warpPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["destinationSiteId", "arrivalDistanceKm"],
+      "properties": {
+        "destinationSiteId": { "$ref": "#/$defs/siteId" },
+        "arrivalDistanceKm": { "type": "number", "minimum": 0, "maximum": 1000000000 }
+      }
     },
     "stationPayload": {
       "type": "object",

@@ -6,6 +6,7 @@
  */
 export * from './assets';
 export * from './economy';
+export { destinationsProjection, siteProjection } from './navigation';
 export { itemDataOf } from './items';
 export { comparisonProjection } from './comparison';
 export {

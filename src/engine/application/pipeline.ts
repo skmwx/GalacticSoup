@@ -32,6 +32,7 @@ import {
   type Transaction,
 } from './transaction';
 import { handleEconomyCommand } from './economyCommands';
+import { handleNavigationCommand } from './navigationCommands';
 
 /**
  * The command pipeline (Technical Specification 7.2).
@@ -110,6 +111,17 @@ export function runCommand(request: CommandRequest): CommandResult {
 
 function apply(transaction: Transaction, request: CommandRequest): CommandOutcome {
   switch (request.type) {
+    case 'navigation.selectDestination':
+    case 'ship.undock':
+    case 'movement.approach':
+    case 'movement.orbit':
+    case 'movement.keepRange':
+    case 'movement.moveToPoint':
+    case 'movement.stop':
+    case 'navigation.warp':
+    case 'navigation.retreat':
+    case 'navigation.dock':
+      return handleNavigationCommand(transaction, request.type, request.payload);
     case 'market.confirmBuy':
     case 'market.confirmSell':
     case 'repair.confirm':

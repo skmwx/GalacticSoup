@@ -78,6 +78,7 @@ export { RULE_GROUPS } from './content/rules.ts';
 export type {
   CombatRules,
   EconomyRules,
+  NavigationRules,
   RuleGroup,
   RulesContent,
   StartingFitEntry,

@@ -219,7 +219,7 @@ function localDefinitionCounts(
   for (const inventory of Object.values(state.assets.inventories)) {
     if (
       inventory.location.kind === 'hangar' &&
-      inventory.location.stationId === ship.location.stationId
+      ship.location.kind === 'station' && inventory.location.stationId === ship.location.stationId
     ) {
       sources.add(inventory.id);
     }

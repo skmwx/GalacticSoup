@@ -8,6 +8,7 @@ import type {
   MessageKey,
   ModuleId,
   NpcProfileId,
+  SiteId,
   StationId,
   SystemId,
 } from '@shared';
@@ -22,6 +23,7 @@ import type {
   ModuleDefinition,
   NpcProfileDefinition,
   StationDefinition,
+  SiteDefinition,
   SystemDefinition,
   TradeableDefinition,
 } from './definitions.ts';
@@ -61,6 +63,7 @@ export interface ContentRepository extends ContentIdentity {
   /** An item, module or ammunition definition: anything a hold can contain. */
   tradeable(id: string): TradeableDefinition | undefined;
   system(id: string): SystemDefinition | undefined;
+  site(id: string): SiteDefinition | undefined;
   station(id: string): StationDefinition | undefined;
   npcProfile(id: string): NpcProfileDefinition | undefined;
   lootTable(id: string): LootTableDefinition | undefined;
@@ -72,6 +75,7 @@ export interface ContentRepository extends ContentIdentity {
   requireItem(id: ItemId): ItemDefinition;
   requireTradeable(id: DefinitionId): TradeableDefinition;
   requireSystem(id: SystemId): SystemDefinition;
+  requireSite(id: SiteId): SiteDefinition;
   requireStation(id: StationId): StationDefinition;
   requireNpcProfile(id: NpcProfileId): NpcProfileDefinition;
   requireLootTable(id: LootTableId): LootTableDefinition;

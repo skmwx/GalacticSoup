@@ -7,6 +7,7 @@ export type { ClientRequest, EngineFailure, EngineResponse, EngineSuccess } from
 export * from './assets';
 export * from './fitting';
 export * from './economy';
+export * from './navigation';
 export {
   contentError,
   contentErrorMessageKey,

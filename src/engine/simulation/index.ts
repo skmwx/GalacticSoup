@@ -6,8 +6,17 @@
  * own: everything it changes lives in the campaign draft it is given.
  */
 export { advanceTime, MAX_BOUNDARIES_PER_QUANTUM } from './clock';
-export type { AdvanceOutcome, BoundaryResolver, BoundaryResolvers } from './clock';
+export type { AdvanceOutcome, BoundaryResolver, BoundaryResolvers, ContinuousSystem } from './clock';
 export { resolveEconomyHour } from './economy';
+export {
+  advanceNavigation,
+  DOCK_COMPLETE_BOUNDARY,
+  resolveDockComplete,
+  resolveWarpArrival,
+  resolveWarpPrepared,
+  WARP_ARRIVAL_BOUNDARY,
+  WARP_PREPARED_BOUNDARY,
+} from './navigation';
 export type { SimulationContext } from './context';
 export {
   cancelBoundariesOwnedBy,

@@ -1,5 +1,17 @@
 import { createCampaign, type CampaignState } from '@engine/domain';
-import { advanceTime, resolveEconomyHour, scheduleBoundary, type BoundaryResolvers } from '@engine/simulation';
+import {
+  advanceNavigation,
+  advanceTime,
+  DOCK_COMPLETE_BOUNDARY,
+  resolveDockComplete,
+  resolveEconomyHour,
+  resolveWarpArrival,
+  resolveWarpPrepared,
+  scheduleBoundary,
+  WARP_ARRIVAL_BOUNDARY,
+  WARP_PREPARED_BOUNDARY,
+  type BoundaryResolvers,
+} from '@engine/simulation';
 import type { AdvanceTimePayload, CreateCampaignPayload, SetTimePayload } from '@protocol';
 
 import {
@@ -30,6 +42,9 @@ import {
  */
 export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {
   'economy.hour': resolveEconomyHour,
+  [WARP_PREPARED_BOUNDARY]: resolveWarpPrepared,
+  [WARP_ARRIVAL_BOUNDARY]: resolveWarpArrival,
+  [DOCK_COMPLETE_BOUNDARY]: resolveDockComplete,
 };
 
 /**
@@ -72,6 +87,9 @@ export function handleCreateCampaign(
   transaction.invalidate('repair');
   transaction.invalidate('resupply');
   transaction.invalidate('insurance');
+  transaction.invalidate('navigation');
+  transaction.invalidate('site');
+  transaction.invalidate('destinations');
   // A new campaign must be resumable before the player touches anything
   // (Functional Specification 3.4).
   transaction.requestAutosave();
@@ -109,6 +127,9 @@ export function handleResumeCampaign(
   transaction.invalidate('repair');
   transaction.invalidate('resupply');
   transaction.invalidate('insurance');
+  transaction.invalidate('navigation');
+  transaction.invalidate('site');
+  transaction.invalidate('destinations');
   return APPLIED;
 }
 
@@ -138,6 +159,9 @@ export function handleCloseCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('repair');
   transaction.invalidate('resupply');
   transaction.invalidate('insurance');
+  transaction.invalidate('navigation');
+  transaction.invalidate('site');
+  transaction.invalidate('destinations');
   return APPLIED;
 }
 
@@ -167,6 +191,9 @@ export function handleResetCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('repair');
   transaction.invalidate('resupply');
   transaction.invalidate('insurance');
+  transaction.invalidate('navigation');
+  transaction.invalidate('site');
+  transaction.invalidate('destinations');
   return APPLIED;
 }
 
@@ -218,6 +245,7 @@ export function handleAdvanceTime(
     transaction.simulation(),
     payload.elapsedRealMs,
     INSTALLED_BOUNDARY_RESOLVERS,
+    [advanceNavigation],
   );
 
   return outcome.changed ? APPLIED : UNCHANGED;

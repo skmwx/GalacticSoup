@@ -2,6 +2,7 @@ import { isDefinitionId, type DefinitionId } from '@shared';
 import { isAssetState } from '../assets/validation';
 import { parseSlotKey } from '../fitting/types';
 import { isEconomyState } from '../economy/validation';
+import { isNavigationState } from '../navigation/validation';
 
 import { isCampaignId, isCampaignSeed, isEntityId, MAX_ORDINAL } from './identity';
 import { isRandomStreams } from '../random/streams';
@@ -104,6 +105,7 @@ export function readCampaignState(value: unknown): CampaignReadResult {
   readScheduler(value['scheduler'], add);
   if (!isAssetState(value['assets'])) add('assetShape', 'state.assets', 'Saved assets are missing or malformed.');
   if (!isEconomyState(value['economy'])) add('economyShape', 'state.economy', 'Saved station economies are missing or malformed.');
+  if (!isNavigationState(value['navigation'])) add('navigationShape', 'state.navigation', 'Saved navigation is missing or malformed.');
   readFittingDraft(value['fitting'], add);
 
   if (issues.length > 0) {
@@ -131,8 +133,12 @@ export function readCampaignState(value: unknown): CampaignReadResult {
  * later phases extend this set whenever they persist another definition ID.
  */
 export function campaignDefinitionReferences(state: CampaignState): readonly DefinitionId[] {
-  const references: DefinitionId[] = [state.assets.location.stationId, state.assets.location.systemId];
-  for (const ship of Object.values(state.assets.ships)) references.push(ship.hullId, ship.location.stationId, ship.location.systemId);
+  const references: DefinitionId[] = [];
+  addLocationReferences(references, state.assets.location);
+  for (const ship of Object.values(state.assets.ships)) {
+    references.push(ship.hullId);
+    addLocationReferences(references, ship.location);
+  }
   for (const inventory of Object.values(state.assets.inventories)) {
     if (inventory.location.kind === 'hangar') references.push(inventory.location.stationId);
   }
@@ -145,13 +151,32 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
     references.push(station.stationId);
     for (const listing of Object.values(station.listings)) references.push(listing.itemId);
   }
+  references.push(...state.navigation.knownDestinationSiteIds);
+  if (state.navigation.selectedEncounterId !== null) references.push(state.navigation.selectedEncounterId);
+  if (state.navigation.currentSite !== null) {
+    references.push(state.navigation.currentSite.systemId, state.navigation.currentSite.siteId);
+    for (const object of Object.values(state.navigation.currentSite.objects)) {
+      if (isDefinitionId(object.definitionId)) references.push(object.definitionId);
+    }
+  }
   return [...new Set(references)].sort();
+}
+
+function addLocationReferences(
+  references: DefinitionId[],
+  location: CampaignState['assets']['location'],
+): void {
+  references.push(location.systemId);
+  if (location.kind === 'station') references.push(location.stationId);
+  if (location.kind === 'site') references.push(location.siteId);
+  if (location.kind === 'warp') references.push(location.fromSiteId, location.toSiteId);
 }
 
 const STATE_FIELDS: readonly string[] = [
   'assets',
   'economy',
   'fitting',
+  'navigation',
   'stateVersion',
   'campaignId',
   'displayName',

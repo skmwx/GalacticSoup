@@ -154,6 +154,16 @@ export function useStationData(options: StationDataOptions): StationData {
         publish({ loading: false, error: assets.error });
         return;
       }
+      if (assets.data.location.kind !== 'station') {
+        publish({
+          loading: false,
+          error: {
+            code: 'RULE_VIOLATION',
+            messageKey: 'error.ruleViolation.destinationSelectionUnavailable',
+          },
+        });
+        return;
+      }
       const stationId = assets.data.location.stationId;
       const shipId = assets.data.activeShipId;
       const wanted = new Set(targets);

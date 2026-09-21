@@ -6,7 +6,10 @@ export interface MergeInventoryPayload { readonly sourceStackId: string; readonl
 export interface MaximumInventoryPayload extends StackPayload { readonly destinationInventoryId: string }
 export interface HangarPayload { readonly stationId: string }
 export interface CargoPayload { readonly shipId: string }
-export interface LocationData { readonly kind: 'station'; readonly stationId: string; readonly systemId: string }
+export type LocationData =
+  | { readonly kind: 'station'; readonly stationId: string; readonly systemId: string }
+  | { readonly kind: 'site'; readonly siteId: string; readonly systemId: string }
+  | { readonly kind: 'warp'; readonly fromSiteId: string; readonly toSiteId: string; readonly systemId: string };
 export type InventoryLocationData =
   | { readonly kind: 'hangar'; readonly stationId: string }
   | { readonly kind: 'cargo'; readonly shipId: string }

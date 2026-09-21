@@ -280,10 +280,13 @@ function consumeOwnedAmmunition(
     const stack = draft.assets.stacks[stackId];
     if (stack === undefined || stack.definitionId !== ammunitionId || stack.state.kind !== 'plain') continue;
     const inventory = requireInventory(draft.assets, stack.inventoryId);
+    const shipLocation = inventory.location.kind === 'cargo'
+      ? draft.assets.ships[inventory.location.shipId]?.location
+      : undefined;
     const atStation = inventory.location.kind === 'hangar'
       ? inventory.location.stationId === stationId
       : inventory.location.kind === 'cargo' &&
-        draft.assets.ships[inventory.location.shipId]?.location.stationId === stationId;
+        shipLocation?.kind === 'station' && shipLocation.stationId === stationId;
     if (!atStation || !isLocalInventory(draft.assets, inventory)) continue;
     const removed = service.remove(stack.id, Math.min(remaining, stack.quantity));
     provenance.grantedQuantity += removed.provenance.grantedQuantity;

@@ -129,6 +129,8 @@ describe.each(['direct', 'channel'] as const)('fitting through %s transport', (k
     expect((await ask(gateway, 'fitting.draft', {})).draft).toBeNull();
 
     // The rounds went back where they came from, undiminished.
+    expect(assets.location.kind).toBe('station');
+    if (assets.location.kind !== 'station') throw new Error('Campaign did not start docked.');
     const hangar = await ask(gateway, 'inventory.hangar', { stationId: assets.location.stationId });
     expect(
       hangar.stacks.find((stack) => stack.item.definitionId === 'ammo.projectile.small.fusion')

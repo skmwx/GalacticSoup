@@ -4,6 +4,7 @@ import { assetsProjection, walletProjection, hangarProjection, cargoProjection,
   fittingDraftProjection, shipProjection, undockValidityProjection } from '@engine/projections';
 import { insurancePreview, marketBuyPreview, marketListingsProjection, marketSellPreview,
   repairPreview, resupplyPreview, stationServicesProjection } from '@engine/projections';
+import { destinationsProjection, siteProjection } from '@engine/projections';
 import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload,
   ComparePayload, ShipPayload } from '@protocol';
 import type { MarketBuyPreviewPayload, MarketSellPreviewPayload, ShipEconomicPayload,
@@ -201,7 +202,7 @@ async function route(
     return successResponse(requestId, revision, await session.saves.slot());
   }
 
-  if (isAssetQuery(type) && session.campaign === null) {
+  if (isCampaignQuery(type) && session.campaign === null) {
     return failureResponse(requestId, ruleViolation('noCampaignOpen'), revision);
   }
 
@@ -378,12 +379,13 @@ function checkCampaign(
 }
 
 /** Queries that read a campaign and therefore need one to be open. */
-function isAssetQuery(type: RequestType): boolean {
+function isCampaignQuery(type: RequestType): boolean {
   return [
     'assets.list', 'wallet.get', 'inventory.hangar', 'inventory.cargo', 'item.inspect',
     'inventory.maximum', 'ship.get', 'ship.undockValidity', 'fitting.draft', 'item.compare',
     'station.services', 'market.listings', 'market.previewBuy', 'market.previewSell',
     'repair.preview', 'resupply.preview', 'insurance.preview',
+    'navigation.destinations', 'navigation.site',
   ].includes(type);
 }
 
@@ -396,6 +398,10 @@ function query(session: Session, type: RequestType, payload: unknown): unknown {
   };
 
   switch (type) {
+    case 'navigation.destinations':
+      return destinationsProjection(session.campaign!, session.content);
+    case 'navigation.site':
+      return siteProjection(session.campaign!, session.content);
     case 'assets.list': return assetsProjection(session.campaign!, session.content);
     case 'wallet.get': return walletProjection(session.campaign!);
     case 'inventory.hangar': return hangarProjection(session.campaign!, session.content, (payload as HangarPayload).stationId);

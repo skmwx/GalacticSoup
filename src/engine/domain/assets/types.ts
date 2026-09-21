@@ -1,17 +1,33 @@
 import type { DefenseLayer } from '@engine/ports';
-import type { DefinitionId, HullId, StationId, SystemId, Mutable } from '@shared';
+import type { DefinitionId, HullId, SiteId, StationId, SystemId, Mutable } from '@shared';
 import type { CampaignId, EntityId } from '../campaign/identity';
 import type { SlotRef } from '../fitting/types';
 
 declare const inventoryBrand: unique symbol;
 export type InventoryId = EntityId & { readonly [inventoryBrand]: 'inventory' };
 
-/** Only locations implemented by this phase are stored. Travel adds its own cases. */
 export interface DockedLocation {
   readonly kind: 'station';
   readonly stationId: StationId;
   readonly systemId: SystemId;
 }
+
+/** The ship is present in one loaded tactical site. */
+export interface SiteLocation {
+  readonly kind: 'site';
+  readonly siteId: SiteId;
+  readonly systemId: SystemId;
+}
+
+/** The ship has left its source site and has not reached its destination. */
+export interface WarpLocation {
+  readonly kind: 'warp';
+  readonly fromSiteId: SiteId;
+  readonly toSiteId: SiteId;
+  readonly systemId: SystemId;
+}
+
+export type ShipLocation = DockedLocation | SiteLocation | WarpLocation;
 export type InventoryLocation =
   | { readonly kind: 'hangar'; readonly stationId: StationId }
   | { readonly kind: 'cargo'; readonly shipId: EntityId }
@@ -80,7 +96,7 @@ export interface ShipIdentity {
   readonly cargoInventoryId: InventoryId;
   /** Holds the physical units of every fitted module and loaded charge. */
   readonly fittingInventoryId: InventoryId;
-  readonly location: DockedLocation;
+  readonly location: ShipLocation;
   readonly condition: ShipCondition;
   readonly insurance: {
     readonly coverage: 'basic' | 'enhanced';
@@ -91,7 +107,7 @@ export interface AssetState {
   /** Version of the asset aggregate used to bind economic previews. */
   readonly version: number;
   readonly credits: number;
-  readonly location: DockedLocation;
+  readonly location: ShipLocation;
   readonly activeShipId: EntityId;
   readonly ships: Readonly<Record<string, ShipIdentity>>;
   readonly inventories: Readonly<Record<string, Inventory>>;

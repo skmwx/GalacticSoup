@@ -9,6 +9,7 @@ import type {
   ModuleDefinition,
   NpcProfileDefinition,
   StationDefinition,
+  SiteDefinition,
   SystemDefinition,
   TradeableDefinition,
 } from '@engine/ports';
@@ -47,6 +48,7 @@ export function createContentRepository(
   const ammunition = index('ammunition', content.ammunition);
   const items = index('item', content.items);
   const systems = index('system', content.systems);
+  const sites = index('site', content.systems.flatMap((system) => system.sites));
   const stations = index('station', content.stations);
   const npcProfiles = index('npcProfile', content.npcProfiles);
   const lootTables = index('lootTable', content.lootTables);
@@ -92,6 +94,7 @@ export function createContentRepository(
     'market.listings': content.listings.length,
     modules: content.modules.length,
     'npc.profiles': content.npcProfiles.length,
+    sites: sites.size,
     stations: content.stations.length,
     systems: content.systems.length,
   };
@@ -116,6 +119,7 @@ export function createContentRepository(
     item: (id) => items.get(id),
     tradeable: (id) => tradeables.get(id),
     system: (id) => systems.get(id),
+    site: (id) => sites.get(id),
     station: (id) => stations.get(id),
     npcProfile: (id) => npcProfiles.get(id),
     lootTable: (id) => lootTables.get(id),
@@ -127,6 +131,7 @@ export function createContentRepository(
     requireItem: (id) => require('item', id, items.get(id)),
     requireTradeable: (id) => require('tradeable', id, tradeables.get(id)),
     requireSystem: (id) => require('system', id, systems.get(id)),
+    requireSite: (id) => require('site', id, sites.get(id)),
     requireStation: (id) => require('station', id, stations.get(id)),
     requireNpcProfile: (id) => require('npcProfile', id, npcProfiles.get(id)),
     requireLootTable: (id) => require('lootTable', id, lootTables.get(id)),
@@ -162,6 +167,7 @@ type Identified =
   | AmmunitionDefinition
   | ItemDefinition
   | SystemDefinition
+  | SiteDefinition
   | StationDefinition
   | NpcProfileDefinition
   | LootTableDefinition

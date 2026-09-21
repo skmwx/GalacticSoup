@@ -242,7 +242,12 @@ function hasFittingService(
   shipId: string,
 ): boolean {
   const ship = draft.assets.ships[shipId];
-  if (ship === undefined || ship.location.stationId !== draft.assets.location.stationId) {
+  if (
+    ship === undefined ||
+    ship.location.kind !== 'station' ||
+    draft.assets.location.kind !== 'station' ||
+    ship.location.stationId !== draft.assets.location.stationId
+  ) {
     return false;
   }
   return content.station(ship.location.stationId)?.services.includes('fitting') === true;

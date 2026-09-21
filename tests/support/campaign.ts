@@ -72,5 +72,8 @@ export function testSimulation(
     invalidate(topic: ProjectionTopic): void {
       invalidations.add(topic);
     },
+    requestAutosave(): void {
+      // Individual simulation-system tests inspect state and events only.
+    },
   };
 }

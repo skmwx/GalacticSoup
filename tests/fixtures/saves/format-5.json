@@ -1,6 +1,6 @@
 {
   "format": "galactic-soup/save",
-  "formatVersion": 4,
+  "formatVersion": 5,
   "protocolVersion": 4,
   "engineVersion": "1.0.0",
   "contentVersion": "1.0.0+000000000000",
@@ -196,7 +196,19 @@
       }
     },
     "fitting": null,
-    "stateVersion": 4,
+    "navigation": {
+      "version": 1,
+      "knownDestinationSiteIds": [
+        "site.test.field",
+        "site.test.station"
+      ],
+      "selectedEncounterId": null,
+      "currentSite": null,
+      "movement": null,
+      "travel": null,
+      "lastCancellation": null
+    },
+    "stateVersion": 5,
     "campaignId": "cd4befff9414cec4ed0dace04",
     "displayName": "Golden Pilot",
     "seed": "0123456789abcdef0123456789abcdef",
@@ -252,5 +264,5 @@
       "nextInsertionOrdinal": 1
     }
   },
-  "checksum": "18aa2a02f9562b72e805c7270c39677b28da230bd55730bade43a184dc7beb81"
+  "checksum": "9de658d8165f6e82f4291db082d77c7a38810edaa017e3d5f79f4c0141675672"
 }

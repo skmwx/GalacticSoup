@@ -30,6 +30,18 @@ export const DOMAIN_EVENT_KINDS = [
   'scheduler.boundaryResolved',
   'scheduler.boundaryUnhandled',
   'time.settingChanged',
+  'navigation.destinationSelected',
+  'navigation.undocked',
+  'navigation.movementOrdered',
+  'navigation.movementCancelled',
+  'navigation.warpOrdered',
+  'navigation.retreatOrdered',
+  'navigation.warpPreparing',
+  'navigation.warpStarted',
+  'navigation.warpArrived',
+  'navigation.dockOrdered',
+  'navigation.dockPreparing',
+  'navigation.docked',
 ] as const;
 
 export type DomainEventKind = (typeof DOMAIN_EVENT_KINDS)[number];
@@ -51,6 +63,7 @@ export interface DomainEvent {
 export const PROJECTION_TOPICS = [
   'session', 'frame', 'saves', 'assets', 'inventory', 'wallet', 'ship', 'fitting',
   'station', 'market', 'repair', 'resupply', 'insurance',
+  'navigation', 'site', 'destinations',
 ] as const;
 
 export type ProjectionTopic = (typeof PROJECTION_TOPICS)[number];

@@ -37,7 +37,7 @@ const DEFINITION_KINDS = [
   'systems',
 ];
 
-const RULE_KINDS = ['rules.time', 'rules.combat', 'rules.economy'];
+const RULE_KINDS = ['rules.time', 'rules.navigation', 'rules.combat', 'rules.economy'];
 
 /** Keys stripped from the canonical bundle: they exist for authors only. */
 const AUTHORING_KEYS = new Set(['$comment', '$schema']);
@@ -273,6 +273,7 @@ function canonicalise(collected) {
     locales: [...collected.manifest.value.locales].sort(compare),
     rules: {
       time: strip(collected.rules.time.values),
+      navigation: strip(collected.rules.navigation.values),
       combat: strip(collected.rules.combat.values),
       economy: strip(collected.rules.economy.values),
     },

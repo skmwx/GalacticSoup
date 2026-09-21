@@ -1,5 +1,5 @@
 /**
- * Protocol version 5 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 6 request catalogue (Technical Specification 7.1, 18).
  *
  * Adds the authored content catalogue to the station contracts of version 4.
  * Capabilities list the accepted request types. Older clients are rejected at
@@ -25,6 +25,15 @@ import type {
   StationPayload,
   StationServicesData,
 } from './economy';
+import type {
+  DestinationsData,
+  DockPayload,
+  MoveToPointPayload,
+  SelectDestinationPayload,
+  SiteData,
+  TargetRangePayload,
+  WarpPayload,
+} from './navigation';
 
 /** Payload for requests that take no arguments. */
 export type EmptyPayload = Record<string, never>;
@@ -290,6 +299,18 @@ export interface SaveSlotData {
 }
 
 export interface ProtocolContract {
+  'navigation.destinations': { payload: EmptyPayload; data: DestinationsData };
+  'navigation.site': { payload: EmptyPayload; data: SiteData };
+  'navigation.selectDestination': { payload: SelectDestinationPayload; data: CommandResultData };
+  'ship.undock': { payload: EmptyPayload; data: CommandResultData };
+  'movement.approach': { payload: TargetRangePayload; data: CommandResultData };
+  'movement.orbit': { payload: TargetRangePayload; data: CommandResultData };
+  'movement.keepRange': { payload: TargetRangePayload; data: CommandResultData };
+  'movement.moveToPoint': { payload: MoveToPointPayload; data: CommandResultData };
+  'movement.stop': { payload: EmptyPayload; data: CommandResultData };
+  'navigation.warp': { payload: WarpPayload; data: CommandResultData };
+  'navigation.retreat': { payload: EmptyPayload; data: CommandResultData };
+  'navigation.dock': { payload: DockPayload; data: CommandResultData };
   'assets.list': { payload: EmptyPayload; data: AssetsData };
   'ship.get': { payload: ShipPayload; data: ShipData };
   'ship.undockValidity': { payload: ShipPayload; data: UndockValidityData };
@@ -377,11 +398,23 @@ export const REQUEST_TYPES = [
   'market.listings',
   'market.previewBuy',
   'market.previewSell',
+  'movement.approach',
+  'movement.keepRange',
+  'movement.moveToPoint',
+  'movement.orbit',
+  'movement.stop',
+  'navigation.destinations',
+  'navigation.dock',
+  'navigation.retreat',
+  'navigation.selectDestination',
+  'navigation.site',
+  'navigation.warp',
   'repair.confirm',
   'repair.preview',
   'resupply.confirm',
   'resupply.preview',
   'ship.get',
+  'ship.undock',
   'ship.undockValidity',
   'station.services',
   'system.capabilities',
@@ -408,8 +441,18 @@ export const COMMAND_TYPES = [
   'insurance.confirm',
   'market.confirmBuy',
   'market.confirmSell',
+  'movement.approach',
+  'movement.keepRange',
+  'movement.moveToPoint',
+  'movement.orbit',
+  'movement.stop',
+  'navigation.dock',
+  'navigation.retreat',
+  'navigation.selectDestination',
+  'navigation.warp',
   'repair.confirm',
   'resupply.confirm',
+  'ship.undock',
   'campaign.close',
   'campaign.create',
   'campaign.reset',

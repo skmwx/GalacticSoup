@@ -139,6 +139,8 @@ describe.each(['direct', 'channel'] as const)('station economy through %s transp
     await create(gateway);
     const assets = await ask(gateway, 'assets.list', {});
     const cargo = assets.inventories.find((inventory) => inventory.location.kind === 'cargo')!;
+    expect(assets.location.kind).toBe('station');
+    if (assets.location.kind !== 'station') throw new Error('Campaign did not start docked.');
     const stationId = assets.location.stationId;
     const before = await ask(gateway, 'diagnostics.stateHash', {});
     const preview: MarketTransactionPreviewData = await ask(gateway, 'market.previewBuy', {

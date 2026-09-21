@@ -2,6 +2,41 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json",
   "$defs": {
+    "shipLocation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "stationId", "systemId"],
+          "properties": {
+            "kind": { "const": "station" },
+            "stationId": { "type": "string", "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
+            "systemId": { "type": "string", "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "siteId", "systemId"],
+          "properties": {
+            "kind": { "const": "site" },
+            "siteId": { "type": "string", "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
+            "systemId": { "type": "string", "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "fromSiteId", "toSiteId", "systemId"],
+          "properties": {
+            "kind": { "const": "warp" },
+            "fromSiteId": { "type": "string", "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
+            "toSiteId": { "type": "string", "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 },
+            "systemId": { "type": "string", "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$", "maxLength": 96 }
+          }
+        }
+      ]
+    },
     "item": {
       "type": "object",
       "additionalProperties": false,
@@ -285,28 +320,7 @@
           "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
         },
         "location": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "kind",
-            "stationId",
-            "systemId"
-          ],
-          "properties": {
-            "kind": {
-              "const": "station"
-            },
-            "stationId": {
-              "type": "string",
-              "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
-              "maxLength": 96
-            },
-            "systemId": {
-              "type": "string",
-              "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
-              "maxLength": 96
-            }
-          }
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/shipLocation"
         },
         "nameKey": {
           "type": "string"

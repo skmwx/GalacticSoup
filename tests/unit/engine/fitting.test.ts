@@ -365,7 +365,11 @@ describe('committing a fit', () => {
       ...state,
       assets: {
         ...state.assets,
-        location: { ...state.assets.location, stationId: 'station.elsewhere' as never },
+        location: {
+          kind: 'station',
+          systemId: state.assets.location.systemId,
+          stationId: 'station.elsewhere' as never,
+        },
       },
     };
     const result = apply(elsewhere, 'fitting.begin', { shipId: state.assets.activeShipId });
