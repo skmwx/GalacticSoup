@@ -1,10 +1,10 @@
 import type { JSX } from 'react';
 
-import type { CommandAvailabilityData } from '@protocol';
-import type { MessageKey } from '@shared';
+import type { DestinationData, ShipData } from '@protocol';
 
-import { ActionButton, type ActionRunner } from '../actions';
-import { useTranslate } from '../localization';
+import { ActionButton, commandAvailability, type ActionRunner } from '../actions';
+import { formatCredits } from '../format/numbers';
+import { useLocalizer, useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
 import styles from './Station.module.css';
 
@@ -19,9 +19,18 @@ import styles from './Station.module.css';
  *
  * Tier and the reward summary are guidance shown before entry, not a gate:
  * every site stays visible, and whether it can be chosen comes from the
- * engine's projected availability.
+ * engine's projected availability. The summary names the opponents the site
+ * is authored to hold, with their roles and bounties, the total bounty, the
+ * loot they can drop and how often the site has been cleared, so the choice
+ * of site - and of fit - is made knowing what waits there.
  *
- * @implements FUNC-19.5, MVP-AC-02, MVP-AC-03, MVP-AC-07
+ * Before the undock control it warns about what the player would regret in a
+ * fight: a weapon with no ammunition loaded, a ship with nothing that can
+ * shoot, and armour or hull that has not been repaired (Functional
+ * Specification 10). The warnings are the fit's own and the layers are the
+ * ship's; a warning never blocks undocking.
+ *
+ * @implements FUNC-19.5, FUNC-18, MVP-AC-02, MVP-AC-03, MVP-AC-07, MVP-AC-09
  */
 
 export interface DeparturePanelProps {
@@ -32,7 +41,7 @@ export interface DeparturePanelProps {
 export function DeparturePanel({ data, runner }: DeparturePanelProps): JSX.Element {
   const translate = useTranslate();
   const destinations = data.destinations?.destinations ?? [];
-  const undock = availability(data.site?.commands ?? [], 'ship.undock');
+  const undock = commandAvailability(data.site?.commands, 'ship.undock');
   const selected = destinations.find((entry) => entry.selected) ?? null;
 
   return (
@@ -54,7 +63,7 @@ export function DeparturePanel({ data, runner }: DeparturePanelProps): JSX.Eleme
           </thead>
           <tbody>
             {destinations.map((entry) => {
-              const choose = availability(entry.commands, 'navigation.selectDestination');
+              const choose = commandAvailability(entry.commands, 'navigation.selectDestination');
               return (
                 <tr key={entry.encounterId} data-destination={entry.encounterId}>
                   <th scope="row">
@@ -62,7 +71,10 @@ export function DeparturePanel({ data, runner }: DeparturePanelProps): JSX.Eleme
                     <span className={styles['muted']}> {translate(entry.descriptionKey)}</span>
                   </th>
                   <td>{translate('departure.tierValue', { tier: entry.tier })}</td>
-                  <td>{translate(entry.rewardSummaryKey)}</td>
+                  <td>
+                    {translate(entry.rewardSummaryKey)}
+                    <Disclosure entry={entry} />
+                  </td>
                   <td>
                     <ActionButton
                       actionId="navigation.selectDestination"
@@ -96,6 +108,8 @@ export function DeparturePanel({ data, runner }: DeparturePanelProps): JSX.Eleme
           : translate('departure.currentSelection', { site: translate(selected.nameKey) })}
       </p>
 
+      <UndockWarnings ship={data.ship} />
+
       <div className={styles['toolbar']}>
         <ActionButton
           actionId="ship.undock"
@@ -112,12 +126,73 @@ export function DeparturePanel({ data, runner }: DeparturePanelProps): JSX.Eleme
   );
 }
 
-function availability(
-  commands: readonly CommandAvailabilityData[],
-  command: string,
-): { available: boolean; unavailableReason: MessageKey | null } {
-  const entry = commands.find((candidate) => candidate.command === command);
-  return entry === undefined
-    ? { available: false, unavailableReason: null }
-    : { available: entry.available, unavailableReason: entry.unavailableReason };
+/** The fit warnings that matter in a fight, and unrepaired damage. */
+const UNDOCK_WARNING_CODES: readonly string[] = ['noAmmunition', 'noWeapon'];
+
+function UndockWarnings({ ship }: { readonly ship: ShipData | null }): JSX.Element | null {
+  const translate = useTranslate();
+  if (ship === null) {
+    return null;
+  }
+  const warnings = ship.warnings.filter((warning) => UNDOCK_WARNING_CODES.includes(warning.code));
+  const damaged = ship.layers.filter(
+    (layer) => layer.layer !== 'shield' && layer.hitPoints < layer.maximumHitPoints,
+  );
+  if (warnings.length === 0 && damaged.length === 0) {
+    return null;
+  }
+  return (
+    <ul className={styles['issues']} aria-label={translate('departure.warnings')} data-undock-warnings>
+      {warnings.map((warning) => (
+        <li key={`${warning.code}:${warning.slot?.index ?? 'fit'}`} className={styles['warning']}>
+          {warning.slot === null
+            ? translate(warning.messageKey, warning.params)
+            : translate('departure.slotWarning', {
+                slot: `${translate(`slot.${warning.slot.kind}`)} ${String(warning.slot.index + 1)}`,
+                warning: translate(warning.messageKey, warning.params),
+              })}
+        </li>
+      ))}
+      {damaged.length === 0 ? null : (
+        <li className={styles['warning']}>
+          {translate('departure.damaged', {
+            layers: damaged.map((layer) => translate(`layer.${layer.layer}`)).join(', '),
+          })}
+        </li>
+      )}
+    </ul>
+  );
+}
+
+/** What a site discloses before entry (MVP Scope 4.2). */
+function Disclosure({ entry }: { readonly entry: DestinationData }): JSX.Element {
+  const translate = useTranslate();
+  const { locale } = useLocalizer();
+  return (
+    <ul className={styles['disclosureList']} data-disclosure={entry.encounterId}>
+      {entry.spawns.map((spawn) => (
+        <li key={spawn.npcProfileId}>
+          {translate('departure.spawn', {
+            count: spawn.count,
+            name: translate(spawn.nameKey),
+            role: translate(`role.${spawn.role}`),
+            bounty: formatCredits(spawn.bountyCredits, locale),
+          })}
+        </li>
+      ))}
+      <li>
+        {translate('departure.totalBounty', {
+          bounty: formatCredits(entry.totalBountyCredits, locale),
+        })}
+      </li>
+      <li>
+        {entry.possibleLoot.length === 0
+          ? translate('departure.noLoot')
+          : translate('departure.loot', {
+              items: entry.possibleLoot.map((item) => translate(item.nameKey)).join(', '),
+            })}
+      </li>
+      <li>{translate('departure.completions', { count: entry.completionCount })}</li>
+    </ul>
+  );
 }

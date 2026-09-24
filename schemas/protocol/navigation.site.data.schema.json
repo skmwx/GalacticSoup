@@ -221,6 +221,7 @@
         "kind",
         "definitionId",
         "nameKey",
+        "attitude",
         "position",
         "velocity",
         "facingRadians",
@@ -245,6 +246,10 @@
         },
         "nameKey": {
           "type": "string"
+        },
+        "attitude": {
+          "description": "How the player stands toward the object (Functional Specification 9.1).",
+          "enum": ["own", "hostile", "neutral"]
         },
         "position": {
           "$ref": "#/$defs/vector"

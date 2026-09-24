@@ -1174,6 +1174,39 @@ function stopWeapon(
     stopReason: reason,
   });
   context.publish('combat.weaponStopped', { shipId, slot: key, reason });
+  if (reason === 'lockLost' || reason === 'targetMissing') {
+    reloadIfEmpty(context, shipId, key);
+  }
+}
+
+/**
+ * Refills an empty magazine when a weapon stops for want of a target
+ * (Functional Specification 9.4).
+ *
+ * The shot that destroys a target can be the magazine's last round. A
+ * repeating weapon reloads an empty magazine before its next cycle, but with
+ * the target gone there is no next cycle, and an empty magazine holds no
+ * charge to remember once the ship docks - so the gun would come home unable
+ * to be resupplied. Reload may be automatic when empty, so it is: from the
+ * charge it last held when the hold still carries it, otherwise from the first
+ * compatible charge there. Nothing is reloaded when the hold has none.
+ */
+function reloadIfEmpty(context: SimulationContext, shipId: string, key: string): void {
+  const slot = parseSlotKey(key);
+  const combatant = combatantOf(context.draft, context.content, shipId);
+  if (slot === null || combatant === null || combatant.combat.destroyedAtMs !== null) return;
+  const rules = { state: context.draft, content: context.content };
+  const weapon = weaponContext(rules, combatant, slot);
+  if (weapon === null || weapon.loadedRounds > 0) return;
+  const runtime = weaponState(combatant.combat, key);
+  if (runtime.reload !== null || runtime.pendingReload !== null || runtime.cycle !== null) return;
+
+  const options = compatibleCargoAmmunition(rules, combatant, weapon);
+  const preferred = runtime.lastAmmunitionId;
+  const chosen = preferred !== null && options.includes(preferred) ? preferred : options[0] ?? null;
+  if (chosen !== null) {
+    beginReload(context, shipId, slot, chosen, false);
+  }
 }
 
 function stopWeaponsTargeting(

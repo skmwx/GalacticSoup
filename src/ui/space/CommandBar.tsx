@@ -1,9 +1,16 @@
 import { useEffect, useState, type JSX } from 'react';
 
-import type { CommandAvailabilityData, SiteData, SiteObjectData } from '@protocol';
-import type { MessageKey } from '@shared';
+import type { SiteData, SiteObjectData } from '@protocol';
 
-import { ActionButton, ActionIcon, actionById, useActionShortcuts, type ActionRunner } from '../actions';
+import {
+  ActionButton,
+  ActionIcon,
+  actionById,
+  commandAvailability as availability,
+  useActionShortcuts,
+  type ActionRunner,
+  type CommandAvailability as Availability,
+} from '../actions';
 import { formatDistanceKm } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
@@ -32,11 +39,12 @@ export interface CommandBarProps {
   onChoosingPointChange(choosing: boolean): void;
   /** The point a click on the view last chose, in kilometres. */
   readonly point: { readonly x: number; readonly y: number };
-}
-
-interface Availability {
-  readonly available: boolean;
-  readonly unavailableReason: MessageKey | null;
+  /**
+   * The distance range orders use. The screen holds it, because the context
+   * menu gives the same orders at the same distance.
+   */
+  readonly rangeKm: number;
+  onRangeChange(rangeKm: number): void;
 }
 
 const REFUSED: Availability = { available: false, unavailableReason: null };
@@ -49,11 +57,12 @@ export function CommandBar({
   choosingPoint,
   onChoosingPointChange,
   point,
+  rangeKm,
+  onRangeChange,
 }: CommandBarProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const presets = site.rangePresetsKm;
-  const [rangeKm, setRangeKm] = useState<number>(presets[0] ?? 0);
   const [arrivalKm, setArrivalKm] = useState<number>(
     site.arrivalDistancesKm[site.arrivalDistancesKm.length - 1] ?? 0,
   );
@@ -70,8 +79,13 @@ export function CommandBar({
   const pointUsable =
     Number.isFinite(destinationPoint.x) && Number.isFinite(destinationPoint.y);
 
+  // Choosing a site at the station marks it as the destination (MVP Scope 3),
+  // so the warp control offers that site until the player picks another.
   const chosenDestination =
-    warpable.find((entry) => entry.siteId === destinationSiteId) ?? warpable[0] ?? null;
+    warpable.find((entry) => entry.siteId === destinationSiteId) ??
+    warpable.find((entry) => entry.selected) ??
+    warpable[0] ??
+    null;
 
   const siteCommand = (command: string): Availability => availability(site.commands, command);
   const targetCommand = (command: string): Availability =>
@@ -139,6 +153,16 @@ export function CommandBar({
         await data.send('navigation.retreat', {});
       });
     },
+    'navigation.warp': () => {
+      if (chosenDestination !== null && warp.available) {
+        runner.run('navigation.warp', async () => {
+          await data.send('navigation.warp', {
+            destinationSiteId: chosenDestination.siteId,
+            arrivalDistanceKm: arrivalKm,
+          });
+        });
+      }
+    },
     'navigation.dock': () => {
       if (dockTarget !== null) {
         runner.run('navigation.dock', async () => {
@@ -160,7 +184,7 @@ export function CommandBar({
           <select
             value={String(rangeKm)}
             onChange={(event) => {
-              setRangeKm(Number(event.target.value));
+              onRangeChange(Number(event.target.value));
             }}
           >
             {presets.map((preset) => (
@@ -332,17 +356,6 @@ export function CommandBar({
       ) : null}
     </section>
   );
-}
-
-function availability(
-  commands: readonly CommandAvailabilityData[],
-  command: string,
-): Availability {
-  const entry = commands.find((candidate) => candidate.command === command);
-  if (entry === undefined) {
-    return REFUSED;
-  }
-  return { available: entry.available, unavailableReason: entry.unavailableReason };
 }
 
 function asText(point: { readonly x: number; readonly y: number }): {

@@ -923,7 +923,38 @@ function checkRules(collected) {
     }
   }
 
+  issues.push(...checkWreckReach(collected));
   return issues;
+}
+
+/**
+ * The closest approach order must end inside wreck access range
+ * (Functional Specification 7.2, 9.11; Technical Specification 6.2).
+ *
+ * An approach stops within its tolerance of the chosen distance, so a wreck
+ * can be opened with an ordinary order only if the shortest authored range
+ * plus that tolerance reaches it. Otherwise loot would be unreachable through
+ * the interface, which is a content error rather than a player mistake.
+ */
+function checkWreckReach(collected) {
+  const navigation = collected.rules.navigation;
+  const combat = collected.rules.combat;
+  const presets = navigation?.values.rangePresetsKm;
+  const tolerance = navigation?.values.approachToleranceKm;
+  const reach = combat?.values.wreckAccessRangeKm;
+  if (!Array.isArray(presets) || presets.length === 0) return [];
+  if (typeof tolerance !== 'number' || typeof reach !== 'number') return [];
+  const closest = Math.min(...presets);
+  return closest + tolerance <= reach
+    ? []
+    : [
+        issue(
+          'invalidValue',
+          navigation.file,
+          'values.rangePresetsKm',
+          `the closest approach of ${String(closest)} km plus the ${String(tolerance)} km tolerance does not reach the ${String(reach)} km wreck access range`,
+        ),
+      ];
 }
 
 /** Every referenced message key must exist in every declared locale. */

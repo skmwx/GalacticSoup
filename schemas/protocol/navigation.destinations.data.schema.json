@@ -45,6 +45,7 @@
           "spawns",
           "totalBountyCredits",
           "possibleLootItemIds",
+          "possibleLoot",
           "completionCount",
           "commands"
         ],
@@ -135,6 +136,23 @@
               "type": "string",
               "pattern": "^(item|module|ammo)(?:\\.[a-z0-9][a-z0-9-]*)+$",
               "maxLength": 96
+            }
+          },
+          "possibleLoot": {
+            "description": "The disclosed loot with the names it is shown by (MVP Scope 4.2).",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["itemId", "nameKey"],
+              "properties": {
+                "itemId": {
+                  "type": "string",
+                  "pattern": "^(item|module|ammo)(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                  "maxLength": 96
+                },
+                "nameKey": { "type": "string", "minLength": 1 }
+              }
             }
           },
           "completionCount": {

@@ -1,11 +1,10 @@
 /**
- * Protocol version 10 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 11 request catalogue (Technical Specification 7.1, 18).
  *
- * Adds the encounter lifecycle, opponent, wreck and loot contracts to the
- * combat view of version 9, together with the disclosed reward summary each
- * destination carries. Capabilities list the accepted request types. Older
- * clients are rejected at the envelope boundary, before any command can mutate
- * campaign state.
+ * The request types are those of version 10; version 11 widens the tactical,
+ * site and destination views the combat interface reads. Capabilities list
+ * the accepted request types. Older clients are rejected at the envelope
+ * boundary, before any command can mutate campaign state.
  */
 
 import type { EngineError } from './errors';

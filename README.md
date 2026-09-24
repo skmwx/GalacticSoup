@@ -157,7 +157,7 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 10 exposes `encounter.state`, `loot.contents` and `loot.take` alongside
+Protocol version 11 exposes `encounter.state`, `loot.contents` and `loot.take` alongside
 `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`, `weapon.deactivate`,
 `weapon.reload`, `weapon.changeAmmunition`, `module.activate`, `module.deactivate`, `ship.get`,
 `ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market, repair,
@@ -236,8 +236,9 @@ Every cost a cycle commits is written on the cycle. Starting one spends its capa
 round back from the magazine; applying the shot consumes that round; a target that disappears or a
 lock that breaks first leaves the round loaded and does not refund the capacitor, which is what the
 functional specification asks for. An empty magazine reloads itself from cargo while compatible
-rounds remain and only then reports the weapon exhausted, and a reload asked for mid-cycle waits for
-that cycle rather than interrupting it.
+rounds remain and only then reports the weapon exhausted - including when the round that emptied it
+destroyed the target, so a gun never comes home empty with rounds in the hold - and a reload asked
+for mid-cycle waits for that cycle rather than interrupting it.
 
 `src/engine/domain/combat/formulas.ts` holds lock time, relative motion, turret accuracy and shot
 variation as pure functions of plain numbers. Each returns the trace that produced it, so
@@ -280,6 +281,37 @@ hold that is too small keeps the goods where they are rather than destroying the
 instance that made it and expires on its own scheduled boundary, so warping out and back does not
 make it vanish. `navigation.destinations` discloses each site's opponents, total bounty and possible
 loot before entry, and records how often it has been completed.
+
+## The combat interface
+
+The space view is where a fight is read and commanded, and it decides nothing. Hostility is the
+engine's answer (`attitude` on every site object: own, hostile or neutral), and it is drawn as a
+shape - a hostile ship wears a diamond, a lock is a ringed crosshair, a lock in progress a broken
+ring - as well as written beside the object in the list. The effects layer draws each weapon's
+fire, every ship that has locked the player, and recent damage and repairs beside the ship they
+happened to. Weapon and lock ranges are drawn on demand.
+
+The panels beneath the view read the tactical projection. Status shows layers, resistances,
+capacitor with its endurance calculation, and who has locked the ship. Weapons are grouped by
+turret and charge; each group shows its hit chance against the aimed target, which half of the
+turret formula limits it (`limitingFactor`), and the formula with the engine's operands written
+into it. Each weapon shows its magazine, cycle and reload, and every charge it could change to with
+what that charge would do. Modules are toggles; locks show their lock-time calculation; the
+encounter panel lists the opponents by role and bounty; the combat log summarises the engine's
+aggregated events and can be filtered. Selecting a wreck opens it, and the loot panel takes what
+the hold accepts, asking the engine afresh between stacks.
+
+The weapons aim at the selected object when it is locked, otherwise at the first completed lock.
+A secondary click on an object - or the context-menu key or Shift+F10 on its list entry - opens
+its commands, the same list the selected-object panel renders. Every combat action is a registry
+entry with a shortcut: `l` lock, `n` unlock, `e` fire, `q` cease fire, `v` reload, `1`-`4` toggle
+active modules, `t` take all, `]` and `[` step the selection, `b` draw ranges.
+
+Back at the station the hub summarises the last sortie and what the hold carries, and the
+departure panel discloses each site's opponents, bounties, possible loot and completion count, and
+warns - without blocking - about an unloaded weapon or unrepaired armour and hull before undocking.
+Docking refreshes every station surface, so a campaign reopened in space finds the market current
+when it comes home.
 
 ## Content
 

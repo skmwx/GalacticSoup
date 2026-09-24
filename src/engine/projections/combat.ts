@@ -6,6 +6,7 @@ import {
   attributeValue,
   CAPACITOR_TREND_WINDOW_MS,
   capacitorPerCycle,
+  cargoRounds,
   changeAmmunitionRefusal,
   compatibleCargoAmmunition,
   combatantOf,
@@ -18,9 +19,12 @@ import {
   relativeMotion,
   resistanceAttribute,
   reloadRefusal,
+  shipCombat,
+  slotKey,
   targetSignatureMetres,
   totalDamage,
   turretAccuracy,
+  turretLimitingFactor,
   unlockRefusal,
   weaponContext,
   weaponState,
@@ -40,11 +44,14 @@ import {
   type ModuleDefinition,
 } from '@engine/ports';
 import type {
+  ActiveEffectData,
+  AmmunitionOptionData,
   CombatData,
   CapacitorStateData,
   CommandAvailabilityData,
   DefenseStateData,
   FormulaTraceData,
+  HostileLockData,
   LockData,
   ModuleEffectData,
   ModuleRuntimeData,
@@ -54,7 +61,7 @@ import type {
   WeaponRuntimeData,
 } from '@protocol';
 import { ruleViolationMessageKey } from '@protocol';
-import { deepFreeze } from '@shared';
+import { deepFreeze, type AmmunitionId } from '@shared';
 
 /**
  * The tactical view (Functional Specification 9.2-9.5, 19.3).
@@ -86,6 +93,7 @@ export function combatProjection(state: CampaignState, content: ContentRepositor
       capacitor: null,
       modules: [],
       targetDefenses: [],
+      hostileLocks: [],
       events: state.combat.events.map((event) => ({ ...event })),
       locks: [],
       motion: [],
@@ -115,10 +123,11 @@ export function combatProjection(state: CampaignState, content: ContentRepositor
     signatureRadiusMetres: attributeValue(combatant.derived, 'signatureRadiusMetres'),
     capacitorCharge: combatant.ship.condition.capacitorCharge,
     capacitorCapacity: attributeValue(combatant.derived, 'capacitorCapacity'),
-    defenses: defenseData(combatant),
+    defenses: defenseData(rules, combatant),
     capacitor: capacitorData(rules, combatant, modules),
     modules: modules.map((module) => moduleData(rules, combatant, module)),
-    targetDefenses: targetCombatants.map(defenseData),
+    targetDefenses: targetCombatants.map((target) => defenseData(rules, target)),
+    hostileLocks: hostileLocks(rules, combatant, targetCombatants),
     events: state.combat.events.map((event) => ({ ...event })),
     locks: locks.map((lock) => lockData(rules, combatant, lock)),
     motion: Object.values(site?.objects ?? {})
@@ -171,7 +180,50 @@ function fittedModules(
       a.fitted.slot.index - b.fitted.slot.index);
 }
 
-function defenseData(combatant: CombatantContext): DefenseStateData {
+/**
+ * Who in the site is locking or has locked the player's ship
+ * (Functional Specification 19.1, 19.7).
+ */
+function hostileLocks(
+  rules: CombatRuleInput,
+  combatant: CombatantContext,
+  others: readonly CombatantContext[],
+): readonly HostileLockData[] {
+  return others.flatMap((other): HostileLockData[] => {
+    const lock = shipCombat(rules.state, other.shipId).locks.find(
+      (candidate) => candidate.targetId === combatant.shipId,
+    );
+    return lock === undefined || other.combat.destroyedAtMs !== null
+      ? []
+      : [{ shipId: other.shipId, status: lock.status }];
+  });
+}
+
+/**
+ * The modules one ship has in a paid cycle, which is when their effect
+ * applies (Functional Specification 9.7-9.8, 19.3).
+ */
+function activeEffects(
+  rules: CombatRuleInput,
+  combatant: CombatantContext,
+): readonly ActiveEffectData[] {
+  return combatant.fit
+    .filter((fitted) => activeModuleState(combatant.combat, slotKey(fitted.slot)).cycle !== null)
+    .sort((a, b) => a.slot.kind.localeCompare(b.slot.kind) || a.slot.index - b.slot.index)
+    .flatMap((fitted): ActiveEffectData[] => {
+      const module = rules.content.module(fitted.moduleId);
+      return module === undefined
+        ? []
+        : [{
+            slot: { ...fitted.slot },
+            moduleId: module.id,
+            nameKey: module.nameKey,
+            category: module.category,
+          }];
+    });
+}
+
+function defenseData(rules: CombatRuleInput, combatant: CombatantContext): DefenseStateData {
   return {
     shipId: combatant.shipId,
     destroyed: combatant.combat.destroyedAtMs !== null,
@@ -207,6 +259,7 @@ function defenseData(combatant: CombatantContext): DefenseStateData {
         ),
       };
     }),
+    activeEffects: activeEffects(rules, combatant),
   };
 }
 
@@ -465,6 +518,7 @@ function weaponData(
     nameKey: weapon.module.nameKey,
     online: weapon.fitted.online,
     ammunitionId: weapon.ammunitionId,
+    ammunitionNameKey: charge?.nameKey ?? null,
     loadedRounds: weapon.loadedRounds,
     magazineSize: turret.magazineSize,
     cycleSeconds: weapon.module.activation?.cycleSeconds ?? 0,
@@ -499,6 +553,7 @@ function weaponData(
           },
     stopReason: runtime.stopReason,
     compatibleAmmunition: compatibleCargoAmmunition(rules, combatant, weapon),
+    ammunitionOptions: ammunitionOptions(rules, combatant, weapon),
     effects: locks.map((lock) => weaponEffect(rules, combatant, weapon, lock, listed)),
     commands: [
       availability('weapon.activate', activateRefusal(rules, weapon.slot, null)),
@@ -507,6 +562,42 @@ function weaponData(
       availability('weapon.changeAmmunition', changeAmmunitionRefusal(rules, weapon.slot, null)),
     ],
   };
+}
+
+/**
+ * Every charge one weapon could fire: the loaded one and each accepted one in
+ * the hold, with what it would do in this turret
+ * (Functional Specification 9.4, 19.6).
+ */
+function ammunitionOptions(
+  rules: CombatRuleInput,
+  combatant: CombatantContext,
+  weapon: WeaponContext,
+): readonly AmmunitionOptionData[] {
+  const ids = new Set<AmmunitionId>(compatibleCargoAmmunition(rules, combatant, weapon));
+  if (weapon.ammunitionId !== null) ids.add(weapon.ammunitionId);
+  const turret = weapon.module.turret;
+  return [...ids].sort().flatMap((ammunitionId): AmmunitionOptionData[] => {
+    const charge = rules.content.ammunition(ammunitionId);
+    if (charge === undefined) return [];
+    const listed = listedDamage(charge.damagePerShot, turret.damageMultiplier);
+    return [{
+      ammunitionId,
+      nameKey: charge.nameKey,
+      loaded: ammunitionId === weapon.ammunitionId,
+      cargoRounds: cargoRounds(rules, combatant, ammunitionId),
+      listedDamage: Object.fromEntries(DAMAGE_TYPES.map((type) => [type, listed[type]])),
+      optimalRangeKm: turret.optimalRangeKm * charge.optimalRangeMultiplier,
+      falloffKm: turret.falloffKm * charge.falloffMultiplier,
+      trackingRadiansPerSecond: turret.trackingRadiansPerSecond * charge.trackingMultiplier,
+      commands: [
+        availability(
+          'weapon.changeAmmunition',
+          changeAmmunitionRefusal(rules, weapon.slot, ammunitionId),
+        ),
+      ],
+    }];
+  });
 }
 
 function weaponEffect(
@@ -544,6 +635,7 @@ function weaponEffect(
     trackingStrain: Number.isFinite(accuracy.trackingStrain) ? accuracy.trackingStrain : 0,
     rangeStrain: accuracy.rangeStrain,
     withinAbsoluteRange: accuracy.withinAbsoluteRange,
+    limitingFactor: turretLimitingFactor(accuracy),
     listedDamage: Object.fromEntries(DAMAGE_TYPES.map((type) => [type, listed[type]])),
     expectedDamagePerShot: accuracy.hitChance * totalDamage(listed),
     trace: traceData(accuracy.trace),

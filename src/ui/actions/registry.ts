@@ -17,7 +17,15 @@ import type { MessageKey } from '@shared';
  */
 
 /** Remapping categories, so a settings screen can group shortcuts. */
-export const ACTION_CATEGORIES = ['navigation', 'station', 'flight', 'view', 'campaign', 'time'] as const;
+export const ACTION_CATEGORIES = [
+  'navigation',
+  'station',
+  'flight',
+  'combat',
+  'view',
+  'campaign',
+  'time',
+] as const;
 
 export type ActionCategory = (typeof ACTION_CATEGORIES)[number];
 
@@ -53,9 +61,20 @@ export const ACTION_ICONS = [
   'warp',
   'retreat',
   'dock',
+  'lock',
+  'unlock',
+  'fire',
+  'ceaseFire',
+  'reload',
+  'ammunition',
+  'module',
+  'loot',
   'zoomIn',
   'zoomOut',
   'centre',
+  'ranges',
+  'next',
+  'previous',
   'play',
   'pause',
   'save',
@@ -77,11 +96,23 @@ export interface ActionDefinition {
 }
 
 /**
- * Every action the station surfaces offer.
+ * How many active modules a toggle shortcut can reach, by position in the
+ * ship's fitted order. The number is a property of the keyboard, not of the
+ * hull: a ship with fewer active modules leaves the rest unbound.
+ */
+export const MODULE_TOGGLE_COUNT = 4;
+
+/** The action id of the toggle for the active module at one position. */
+export function moduleToggleActionId(position: number): string {
+  return `module.toggle.${String(position)}`;
+}
+
+/**
+ * Every action the station and space surfaces offer.
  *
- * Shortcuts are single letters that do not collide, and none of them is a key
- * a text field or an activated control needs. Continuous key state never
- * steers anything: each shortcut issues one discrete action.
+ * Shortcuts are single keys that do not collide, and none of them is a key a
+ * text field or an activated control needs. Continuous key state never steers
+ * anything: each shortcut issues one discrete action.
  */
 export const ACTIONS: readonly ActionDefinition[] = [
   {
@@ -317,6 +348,142 @@ export const ACTIONS: readonly ActionDefinition[] = [
     category: 'flight',
   },
   {
+    id: 'targeting.lock',
+    labelKey: 'action.targeting.lock',
+    descriptionKey: null,
+    icon: 'lock',
+    shortcut: 'l',
+    category: 'combat',
+  },
+  {
+    id: 'targeting.unlock',
+    labelKey: 'action.targeting.unlock',
+    descriptionKey: null,
+    icon: 'unlock',
+    shortcut: 'n',
+    category: 'combat',
+  },
+  {
+    id: 'weapons.fire',
+    labelKey: 'action.weapons.fire',
+    descriptionKey: 'action.weapons.fire.detail',
+    icon: 'fire',
+    shortcut: 'e',
+    category: 'combat',
+  },
+  {
+    id: 'weapons.cease',
+    labelKey: 'action.weapons.cease',
+    descriptionKey: null,
+    icon: 'ceaseFire',
+    shortcut: 'q',
+    category: 'combat',
+  },
+  {
+    id: 'weapons.reload',
+    labelKey: 'action.weapons.reload',
+    descriptionKey: null,
+    icon: 'reload',
+    shortcut: 'v',
+    category: 'combat',
+  },
+  {
+    id: 'weapon.activate',
+    labelKey: 'action.weapon.activate',
+    descriptionKey: null,
+    icon: 'fire',
+    shortcut: null,
+    category: 'combat',
+  },
+  {
+    id: 'weapon.deactivate',
+    labelKey: 'action.weapon.deactivate',
+    descriptionKey: null,
+    icon: 'ceaseFire',
+    shortcut: null,
+    category: 'combat',
+  },
+  {
+    id: 'weapon.reload',
+    labelKey: 'action.weapon.reload',
+    descriptionKey: null,
+    icon: 'reload',
+    shortcut: null,
+    category: 'combat',
+  },
+  {
+    id: 'weapon.changeAmmunition',
+    labelKey: 'action.weapon.changeAmmunition',
+    descriptionKey: null,
+    icon: 'ammunition',
+    shortcut: null,
+    category: 'combat',
+  },
+  {
+    id: 'module.activate',
+    labelKey: 'action.module.activate',
+    descriptionKey: null,
+    icon: 'module',
+    shortcut: null,
+    category: 'combat',
+  },
+  {
+    id: 'module.deactivate',
+    labelKey: 'action.module.deactivate',
+    descriptionKey: null,
+    icon: 'module',
+    shortcut: null,
+    category: 'combat',
+  },
+  ...Array.from({ length: MODULE_TOGGLE_COUNT }, (_, index): ActionDefinition => ({
+    id: moduleToggleActionId(index + 1),
+    labelKey: 'action.module.toggle',
+    descriptionKey: null,
+    icon: 'module',
+    shortcut: String(index + 1),
+    category: 'combat',
+  })),
+  {
+    id: 'loot.take',
+    labelKey: 'action.loot.take',
+    descriptionKey: null,
+    icon: 'loot',
+    shortcut: null,
+    category: 'combat',
+  },
+  {
+    id: 'loot.takeAll',
+    labelKey: 'action.loot.takeAll',
+    descriptionKey: null,
+    icon: 'loot',
+    shortcut: 't',
+    category: 'combat',
+  },
+  {
+    id: 'space.selectNext',
+    labelKey: 'action.space.selectNext',
+    descriptionKey: null,
+    icon: 'next',
+    shortcut: ']',
+    category: 'view',
+  },
+  {
+    id: 'space.selectPrevious',
+    labelKey: 'action.space.selectPrevious',
+    descriptionKey: null,
+    icon: 'previous',
+    shortcut: '[',
+    category: 'view',
+  },
+  {
+    id: 'space.ranges',
+    labelKey: 'action.space.ranges',
+    descriptionKey: null,
+    icon: 'ranges',
+    shortcut: 'b',
+    category: 'view',
+  },
+  {
     id: 'space.zoomIn',
     labelKey: 'action.space.zoomIn',
     descriptionKey: null,
@@ -396,6 +563,10 @@ export function defaultShortcuts(): ReadonlyMap<string, string> {
 }
 
 /** Every message key the registry can surface, for catalogue coverage checks. */
-export const ACTION_MESSAGE_KEYS: readonly MessageKey[] = ACTIONS.flatMap((action) =>
-  action.descriptionKey === null ? [action.labelKey] : [action.labelKey, action.descriptionKey],
-).sort();
+export const ACTION_MESSAGE_KEYS: readonly MessageKey[] = [
+  ...new Set(
+    ACTIONS.flatMap((action) =>
+      action.descriptionKey === null ? [action.labelKey] : [action.labelKey, action.descriptionKey],
+    ),
+  ),
+].sort();

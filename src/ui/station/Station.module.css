@@ -281,3 +281,24 @@
   padding: var(--gs-space-2) var(--gs-space-3);
   cursor: pointer;
 }
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+  padding: var(--gs-space-3);
+  border: var(--gs-border);
+  border-inline-start: 3px solid var(--gs-color-accent);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface-raised);
+}
+
+.summary p {
+  margin: 0;
+}
+
+.disclosureList {
+  margin: 0;
+  padding-inline-start: var(--gs-space-3);
+  font-size: var(--gs-font-small);
+}

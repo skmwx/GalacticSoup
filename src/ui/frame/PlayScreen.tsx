@@ -74,6 +74,7 @@ export function PlayScreen({ gateway, session, sessionState }: PlayScreenProps):
           <SpaceScreen
             data={data}
             runner={runner}
+            gateway={gateway}
             simulationTimeMs={clock.simulationTimeMs}
             paused={paused}
           />

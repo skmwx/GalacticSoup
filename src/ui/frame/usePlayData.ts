@@ -9,8 +9,10 @@ import {
 import {
   EMPTY_PAYLOAD,
   type AssetsData,
+  type CombatData,
   type CommandResultData,
   type DestinationsData,
+  type EncounterData,
   type EngineError,
   type FittingDraftData,
   type LocationData,
@@ -20,6 +22,7 @@ import {
   type SiteData,
   type StationServicesData,
   type UndockValidityData,
+  type WreckContentsData,
 } from '@protocol';
 import type { MessageKey } from '@shared';
 
@@ -38,6 +41,10 @@ import type { MessageKey } from '@shared';
  * place at a time: the location the engine reports decides which projections
  * are worth asking for, and both screens then read the same snapshot.
  *
+ * Which wreck is open is presentation, but its contents are a projection, so
+ * the store holds the id the player opened and reads what the engine says the
+ * wreck holds - including, when it is out of reach, why it cannot be taken.
+ *
  * @implements TECH-7.3, TECH-12.1
  */
 
@@ -50,6 +57,10 @@ export interface PlayProjections {
   readonly undock: UndockValidityData | null;
   readonly site: SiteData | null;
   readonly destinations: DestinationsData | null;
+  readonly combat: CombatData | null;
+  readonly encounter: EncounterData | null;
+  /** The contents of the wreck the player opened, or `null`. */
+  readonly wreck: WreckContentsData | null;
 }
 
 export interface PlayDataState extends PlayProjections {
@@ -57,6 +68,8 @@ export interface PlayDataState extends PlayProjections {
   /** The last refused command, cleared when the next one starts. */
   readonly error: EngineError | null;
   readonly transportMessageKey: MessageKey | null;
+  /** The wreck the player opened, which is presentation state. */
+  readonly openWreckId: string | null;
 }
 
 export interface PlayData extends PlayDataState {
@@ -68,6 +81,8 @@ export interface PlayData extends PlayDataState {
   refresh(): Promise<void>;
   /** Re-reads only the projections these topics cover. */
   applyInvalidations(topics: readonly string[]): void;
+  /** Opens one wreck's contents, or closes them with `null`. */
+  openWreck(wreckId: string | null): void;
   /**
    * Sends a command, reports its refusal, re-reads what it invalidated and
    * answers any autosave trigger it carried.
@@ -102,6 +117,15 @@ export type PlayCommand =
   | 'repair.confirm'
   | 'resupply.confirm'
   | 'insurance.confirm'
+  | 'targeting.lock'
+  | 'targeting.unlock'
+  | 'weapon.activate'
+  | 'weapon.deactivate'
+  | 'weapon.reload'
+  | 'weapon.changeAmmunition'
+  | 'module.activate'
+  | 'module.deactivate'
+  | 'loot.take'
   | 'movement.approach'
   | 'movement.orbit'
   | 'movement.keepRange'
@@ -120,21 +144,32 @@ type ProjectionName = keyof PlayProjections;
 const TOPIC_TARGETS: Readonly<Record<string, readonly ProjectionName[]>> = {
   assets: ['assets', 'ship', 'undock'],
   wallet: ['assets'],
-  inventory: ['assets', 'fitting'],
-  ship: ['ship', 'undock', 'assets', 'fitting'],
+  // What the hold carries decides which charges a weapon may change to and
+  // how much of a wreck's contents would still fit.
+  inventory: ['assets', 'fitting', 'combat', 'wreck'],
+  ship: ['ship', 'undock', 'assets', 'fitting', 'combat'],
   fitting: ['fitting', 'ship', 'undock'],
-  station: ['services'],
+  // Docking and undocking invalidate the station. Nothing station-only is read
+  // while the ship is away - including after a campaign reopened in space - so
+  // arriving refreshes every surface a docked ship can use.
+  station: ['services', 'market', 'fitting', 'undock'],
   market: ['market'],
   repair: ['services', 'ship'],
   resupply: ['services', 'ship', 'assets'],
   insurance: ['services'],
-  navigation: ['site'],
-  site: ['site'],
+  // A wreck opens and closes with range, which moves whenever the ship does.
+  navigation: ['site', 'wreck'],
+  site: ['site', 'wreck'],
   destinations: ['destinations'],
+  combat: ['combat'],
+  encounter: ['encounter', 'wreck'],
 };
 
 /** Projections only a docked ship can answer for. */
 const STATION_ONLY: readonly ProjectionName[] = ['services', 'market', 'fitting', 'undock'];
+
+/** Projections that say nothing while the ship is docked. */
+const SPACE_ONLY: readonly ProjectionName[] = ['combat', 'wreck'];
 
 const EVERYTHING: readonly ProjectionName[] = [
   'assets',
@@ -145,6 +180,9 @@ const EVERYTHING: readonly ProjectionName[] = [
   'undock',
   'site',
   'destinations',
+  'combat',
+  'encounter',
+  'wreck',
 ];
 
 const INITIAL: PlayDataState = {
@@ -157,8 +195,12 @@ const INITIAL: PlayDataState = {
   undock: null,
   site: null,
   destinations: null,
+  combat: null,
+  encounter: null,
+  wreck: null,
   error: null,
   transportMessageKey: null,
+  openWreckId: null,
 };
 
 export interface PlayDataOptions {
@@ -178,6 +220,7 @@ export function usePlayData(options: PlayDataOptions): PlayData {
   const queued = useRef(new Set<ProjectionName>());
   /** Where the ship was at the last read, so a tactical refresh costs one request. */
   const placement = useRef<{ location: LocationData; shipId: string } | null>(null);
+  const openWreckId = useRef<string | null>(null);
 
   useEffect(() => {
     // React StrictMode intentionally runs an extra setup/cleanup cycle in
@@ -221,9 +264,22 @@ export function usePlayData(options: PlayDataOptions): PlayData {
       const docked = stationId !== null;
       const shipId = placed.shipId;
       const ask = (name: ProjectionName): boolean =>
-        wanted.has(name) && (docked || !STATION_ONLY.includes(name));
+        wanted.has(name) &&
+        (docked ? !SPACE_ONLY.includes(name) : !STATION_ONLY.includes(name));
+      const wreckId = openWreckId.current;
 
-      const [services, market, ship, fitting, undock, site, destinations] = await Promise.all([
+      const [
+        services,
+        market,
+        ship,
+        fitting,
+        undock,
+        site,
+        destinations,
+        combat,
+        encounter,
+        wreck,
+      ] = await Promise.all([
         ask('services') && stationId !== null ? gateway.request('station.services', { stationId }) : null,
         ask('market') && stationId !== null ? gateway.request('market.listings', { stationId }) : null,
         ask('ship') ? gateway.request('ship.get', { shipId }) : null,
@@ -231,6 +287,9 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         ask('undock') ? gateway.request('ship.undockValidity', { shipId }) : null,
         ask('site') ? gateway.request('navigation.site', EMPTY_PAYLOAD) : null,
         ask('destinations') ? gateway.request('navigation.destinations', EMPTY_PAYLOAD) : null,
+        ask('combat') ? gateway.request('combat.state', EMPTY_PAYLOAD) : null,
+        ask('encounter') ? gateway.request('encounter.state', EMPTY_PAYLOAD) : null,
+        ask('wreck') && wreckId !== null ? gateway.request('loot.contents', { wreckId }) : null,
       ]);
 
       // A later read has already published; this one is stale and dropped
@@ -249,6 +308,20 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         ...(undock?.ok === true ? { undock: undock.data } : {}),
         ...(site?.ok === true ? { site: site.data } : {}),
         ...(destinations?.ok === true ? { destinations: destinations.data } : {}),
+        ...(combat?.ok === true ? { combat: combat.data } : {}),
+        ...(encounter?.ok === true ? { encounter: encounter.data } : {}),
+        // A wreck that expired or was left behind answers with an error, and
+        // the open panel empties rather than showing what it used to hold.
+        ...(wanted.has('wreck')
+          ? {
+              wreck:
+                wreck?.ok === true && wreck.data.wreckId === openWreckId.current
+                  ? wreck.data
+                  : null,
+            }
+          : {}),
+        // Docked, there is no tactical view to keep showing.
+        ...(docked ? { combat: null, wreck: null } : {}),
       });
     },
     [gateway, campaignId, publish],
@@ -341,9 +414,23 @@ export function usePlayData(options: PlayDataOptions): PlayData {
     [gateway, session, publish, applyInvalidations, refresh],
   );
 
+  const openWreck = useCallback(
+    (wreckId: string | null): void => {
+      openWreckId.current = wreckId;
+      publish({ openWreckId: wreckId, wreck: null });
+      if (wreckId !== null) {
+        void readOnce(['wreck']).catch((error: unknown) => {
+          publish({ transportMessageKey: describeThrown(error) });
+        });
+      }
+    },
+    [readOnce, publish],
+  );
+
   useEffect(() => {
     if (campaignId === null) {
       placement.current = null;
+      openWreckId.current = null;
       setState(INITIAL);
       return;
     }
@@ -363,10 +450,11 @@ export function usePlayData(options: PlayDataOptions): PlayData {
       docked: location?.kind === 'station',
       refresh,
       applyInvalidations,
+      openWreck,
       send,
       clearError,
     }),
-    [state, location, refresh, applyInvalidations, send, clearError],
+    [state, location, refresh, applyInvalidations, openWreck, send, clearError],
   );
 }
 

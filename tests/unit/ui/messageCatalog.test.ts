@@ -3,7 +3,51 @@ import { describe, expect, it } from 'vitest';
 import { GATEWAY_MESSAGE_KEYS } from '@gateway';
 import { PROTOCOL_MESSAGE_KEYS } from '@protocol';
 import { createLocalizer, formatMessage } from '@shared';
-import { ACTION_MESSAGE_KEYS, catalogFor, CATALOGS, DEFAULT_LOCALE } from '@ui';
+import { ACTION_MESSAGE_KEYS, catalogFor, CATALOGS, COMBAT_LOG_FILTERS, DEFAULT_LOCALE } from '@ui';
+import {
+  ACTIVE_MODULE_STOP_REASONS,
+  ENCOUNTER_STATUSES,
+  LOCK_STATUSES,
+  lockTime,
+  TURRET_LIMITING_FACTORS,
+  turretAccuracy,
+  WEAPON_STOP_REASONS,
+} from '@engine/domain';
+import { DAMAGE_TYPES, DEFENSE_LAYERS } from '@engine/ports';
+import { combatProjection } from '@engine/projections';
+
+import { combatFixture } from '../../support/combat.ts';
+import { shippedContent } from '../../support/content.ts';
+
+/**
+ * Every operand key a combat formula trace can carry: the two pure formulas,
+ * and the capacitor and repair traces the tactical projection builds.
+ */
+function combatOperandKeys(): readonly string[] {
+  const rules = shippedContent().rules.combat;
+  const fixture = combatFixture();
+  const combat = combatProjection(fixture.draft, fixture.content);
+  const traces = [
+    lockTime({ scanResolution: 100, targetSignatureMetres: 40 }, rules).trace,
+    turretAccuracy(
+      {
+        optimalRangeKm: 1,
+        falloffKm: 1,
+        trackingRadiansPerSecond: 1,
+        signatureResolutionMetres: 40,
+        targetSignatureMetres: 40,
+        rangeKm: 1,
+        angularVelocityRadiansPerSecond: 0,
+      },
+      rules,
+    ).trace,
+    ...(combat.capacitor === null ? [] : [combat.capacitor.enduranceTrace]),
+    ...combat.modules
+      .filter((module) => module.effect.kind === 'repair')
+      .map((module) => module.effect.trace),
+  ];
+  return [...new Set(traces.flatMap((trace) => trace.operands.map((operand) => operand.key)))];
+}
 
 /**
  * Rules and contracts carry message keys; only the catalogue carries text
@@ -66,6 +110,36 @@ describe('message catalogue', () => {
       ),
       ...['aligning', 'preparing', 'transit'].map((phase) => `space.travel.warp.${phase}`),
       ...['approaching', 'preparing'].map((phase) => `space.travel.dock.${phase}`),
+    ];
+
+    const missing = required.filter((key) => !createLocalizer({ locale: 'en', catalog }).has(key));
+    expect(missing).toEqual([]);
+  });
+
+  /**
+   * The combat surfaces compose keys from projected vocabularies: attitudes,
+   * roles, limiting factors, lock states, stop reasons, log filters and the
+   * operands of every combat formula trace (Technical Specification 12.5).
+   */
+  it('covers every key the combat surfaces compose at runtime [TECH-12.5, FUNC-19.3, FUNC-19.6]', () => {
+    const required = [
+      'space.kind.wreck',
+      ...['own', 'hostile', 'neutral'].map((attitude) => `tactical.attitude.${attitude}`),
+      ...Object.keys(shippedContent().rules.combat.npcRoles).map((role) => `role.${role}`),
+      ...TURRET_LIMITING_FACTORS.map((factor) => `tactical.limiting.${factor}`),
+      ...LOCK_STATUSES.map((status) => `combat.lock.${status}`),
+      ...LOCK_STATUSES.map((status) => `tactical.hostileLock.${status}`),
+      ...LOCK_STATUSES.map((status) => `tactical.targetingYou.${status}`),
+      ...[...WEAPON_STOP_REASONS, ...ACTIVE_MODULE_STOP_REASONS].map((reason) => `combat.stop.${reason}`),
+      ...COMBAT_LOG_FILTERS.map((filter) => `tactical.log.filter.${filter}`),
+      ...ENCOUNTER_STATUSES.filter((status) => status !== 'active').map((status) => `sortie.${status}`),
+      ...DEFENSE_LAYERS.map((layer) => `layer.${layer}`),
+      ...DAMAGE_TYPES.map((type) => `damage.${type}`),
+      'combat.formula.hitChance',
+      'combat.formula.lockTime',
+      'combat.formula.capacitorEndurance',
+      'combat.formula.repairRate',
+      ...combatOperandKeys().map((key) => `operand.${key}`),
     ];
 
     const missing = required.filter((key) => !createLocalizer({ locale: 'en', catalog }).has(key));

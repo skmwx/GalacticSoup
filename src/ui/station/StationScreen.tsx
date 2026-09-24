@@ -10,6 +10,7 @@ import { HangarPanel } from './HangarPanel';
 import { MarketPanel } from './MarketPanel';
 import { ServicesPanel } from './ServicesPanel';
 import { ShipPanel } from './ShipPanel';
+import { SortieSummary } from './SortieSummary';
 import styles from './Station.module.css';
 import type { PlayData } from '../frame/usePlayData';
 
@@ -137,6 +138,8 @@ export function StationScreen({ gateway, data, runner }: StationScreenProps): JS
           {translate(data.transportMessageKey)}
         </p>
       )}
+
+      {open === 'station.hub' ? <SortieSummary encounter={data.encounter} assets={data.assets} /> : null}
 
       {open === 'station.hub' ? (
         <div className={styles['tiles']}>

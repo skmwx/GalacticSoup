@@ -191,6 +191,32 @@ export function turretAccuracy(input: TurretAccuracyInput, rules: CombatRules): 
   };
 }
 
+export const TURRET_LIMITING_FACTORS = ['none', 'range', 'tracking'] as const;
+
+export type TurretLimitingFactor = (typeof TURRET_LIMITING_FACTORS)[number];
+
+/**
+ * Which half of the turret formula costs the shot the most
+ * (Functional Specification 9.5, 19.3).
+ *
+ * Hit chance falls with the sum of the squared range and tracking strains, so
+ * the larger square is the larger loss. A target beyond absolute range is
+ * limited by range whatever its motion, because nothing about tracking could
+ * make that shot possible. Equal strains name range, the factor a movement
+ * order changes most directly. No threshold is involved: a 97% shot still has
+ * a main limiting factor, and only a shot that loses nothing to either has
+ * none.
+ */
+export function turretLimitingFactor(accuracy: TurretAccuracy): TurretLimitingFactor {
+  if (!accuracy.withinAbsoluteRange) return 'range';
+  const range = accuracy.rangeStrain * accuracy.rangeStrain;
+  const tracking = Number.isFinite(accuracy.trackingStrain)
+    ? accuracy.trackingStrain * accuracy.trackingStrain
+    : Number.POSITIVE_INFINITY;
+  if (range === 0 && tracking === 0) return 'none';
+  return range >= tracking ? 'range' : 'tracking';
+}
+
 /**
  * What one hit deals, as a share of listed damage
  * (Functional Specification 9.5).

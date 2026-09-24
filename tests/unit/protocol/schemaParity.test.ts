@@ -13,11 +13,14 @@ import {
   PROTOCOL_VERSION,
   REQUEST_TYPES,
   validateClientRequest,
+  type CombatData,
+  type EncounterData,
 } from '@protocol';
 
 import { REPO_ROOT } from '../../../config/aliases.mjs';
 import { shippedContent } from '../../support/content.ts';
 import { GOLDEN_CAPTURE } from '../../support/goldenSave.ts';
+import { arriveAtScout, destroyOpponent, lockOpponent, startSortie } from '../../support/sortie.ts';
 
 /**
  * The runtime validator is hand-written so the engine carries no library
@@ -629,6 +632,34 @@ describe('campaign protocol schema parity', () => {
       }
     }
   }, 30_000);
+
+  it('holds the tactical projections to their schemas through a whole fight [TECH-7.1, TECH-10.3, FUNC-19.3, MVP-AC-04]', async () => {
+    const sortie = await startSortie();
+    const opponent = await arriveAtScout(sortie);
+    await lockOpponent(sortie, opponent);
+    await sortie.data('weapon.activate', { slotKind: 'weapon', slotIndex: 0, targetId: opponent });
+    await sortie.data('module.activate', { slotKind: 'system', slotIndex: 0 });
+    await sortie.until(async () => false, 10);
+
+    // Every optional part of the contract is populated mid-fight.
+    const fighting = await sortie.data<CombatData>('combat.state');
+    expect(fighting.locks.length).toBeGreaterThan(0);
+    expect(fighting.weapons[0]?.effects.length).toBeGreaterThan(0);
+    expect(fighting.weapons[0]?.ammunitionOptions.length).toBeGreaterThan(0);
+    expect(fighting.hostileLocks.length).toBeGreaterThan(0);
+    expect(fighting.defenses?.activeEffects.length).toBeGreaterThan(0);
+    expect(fighting.events.length).toBeGreaterThan(0);
+    expect(validateCombatData(fighting)).toBe(true);
+    expect(validateNavigationSiteData(await sortie.data('navigation.site'))).toBe(true);
+    expect(validateEncounterData(await sortie.data('encounter.state'))).toBe(true);
+
+    await destroyOpponent(sortie, opponent);
+    const cleared = await sortie.data<EncounterData>('encounter.state');
+    expect(cleared.wrecks.length).toBeGreaterThan(0);
+    expect(validateEncounterData(cleared)).toBe(true);
+    expect(validateCombatData(await sortie.data('combat.state'))).toBe(true);
+    expect(validateNavigationDestinationsData(await sortie.data('navigation.destinations'))).toBe(true);
+  }, 60_000);
 
   it('publishes a schema for every save response shape [TECH-7.1, TECH-11.3]', async () => {
     const host = createEngineHost({ content, saves: createMemorySaveStore() });

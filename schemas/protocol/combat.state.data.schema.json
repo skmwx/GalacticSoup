@@ -19,6 +19,7 @@
     "capacitor",
     "modules",
     "targetDefenses",
+    "hostileLocks",
     "events",
     "locks",
     "motion",
@@ -89,6 +90,11 @@
     "targetDefenses": {
       "type": "array",
       "items": { "$ref": "#/$defs/defenseState" }
+    },
+    "hostileLocks": {
+      "description": "Ships in the site locking or locked onto the player (Functional Specification 19.1, 19.7).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/hostileLock" }
     },
     "events": {
       "type": "array",
@@ -354,6 +360,7 @@
         "trackingStrain",
         "rangeStrain",
         "withinAbsoluteRange",
+        "limitingFactor",
         "listedDamage",
         "expectedDamagePerShot",
         "trace"
@@ -377,6 +384,10 @@
         },
         "withinAbsoluteRange": {
           "type": "boolean"
+        },
+        "limitingFactor": {
+          "description": "Which half of the turret formula costs the shot the most (Functional Specification 19.3).",
+          "enum": ["none", "range", "tracking"]
         },
         "listedDamage": {
           "$ref": "#/$defs/damageProfile"
@@ -476,6 +487,7 @@
         "nameKey",
         "online",
         "ammunitionId",
+        "ammunitionNameKey",
         "loadedRounds",
         "magazineSize",
         "cycleSeconds",
@@ -490,6 +502,7 @@
         "reload",
         "stopReason",
         "compatibleAmmunition",
+        "ammunitionOptions",
         "effects",
         "commands"
       ],
@@ -597,6 +610,13 @@
             "type": "string"
           }
         },
+        "ammunitionNameKey": {
+          "anyOf": [{ "type": "null" }, { "type": "string" }]
+        },
+        "ammunitionOptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ammunitionOption" }
+        },
         "effects": {
           "type": "array",
           "items": {
@@ -641,7 +661,7 @@
     "defenseState": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["shipId", "destroyed", "destroyedAtMs", "layers"],
+      "required": ["shipId", "destroyed", "destroyedAtMs", "layers", "activeEffects"],
       "properties": {
         "shipId": { "$ref": "#/$defs/entityId" },
         "destroyed": { "type": "boolean" },
@@ -656,6 +676,54 @@
           "minItems": 3,
           "maxItems": 3,
           "items": { "$ref": "#/$defs/defenseLayer" }
+        },
+        "activeEffects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/activeEffect" }
+        }
+      }
+    },
+    "activeEffect": {
+      "description": "A module a ship is running now, as another pilot would see it (Functional Specification 19.3).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slot", "moduleId", "nameKey", "category"],
+      "properties": {
+        "slot": { "$ref": "#/$defs/slotRef" },
+        "moduleId": { "type": "string" },
+        "nameKey": { "type": "string" },
+        "category": { "type": "string" }
+      }
+    },
+    "hostileLock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipId", "status"],
+      "properties": {
+        "shipId": { "$ref": "#/$defs/entityId" },
+        "status": { "enum": ["locking", "locked"] }
+      }
+    },
+    "ammunitionOption": {
+      "description": "One charge a weapon could fire, after the turret's own multipliers (Functional Specification 9.4, 19.6).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ammunitionId", "nameKey", "loaded", "cargoRounds", "listedDamage",
+        "optimalRangeKm", "falloffKm", "trackingRadiansPerSecond", "commands"
+      ],
+      "properties": {
+        "ammunitionId": { "type": "string" },
+        "nameKey": { "type": "string" },
+        "loaded": { "type": "boolean" },
+        "cargoRounds": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "listedDamage": { "$ref": "#/$defs/damageProfile" },
+        "optimalRangeKm": { "type": "number", "minimum": 0 },
+        "falloffKm": { "type": "number", "minimum": 0 },
+        "trackingRadiansPerSecond": { "type": "number", "minimum": 0 },
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/commandAvailability" }
         }
       }
     },

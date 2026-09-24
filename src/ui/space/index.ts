@@ -29,6 +29,17 @@ export { MINIMUM_HIT_DIAMETER_PX, SiteView } from './SiteView';
 export type { SiteViewProps } from './SiteView';
 export { SpaceScreen, SPACE_VIEWPORT } from './SpaceScreen';
 export type { SpaceScreenProps } from './SpaceScreen';
+export {
+  COMBAT_LOG_FILTERS,
+  damageBreakdown,
+  fireAvailability,
+  matchesFilter,
+  subjectName,
+  weaponGroups,
+  weaponTargetId,
+} from './tactical';
+export type { CombatLogFilter, FireAvailability, SubjectName, WeaponGroup } from './tactical';
+export { EFFECT_WINDOW_MS } from './SiteView';
 export { TravelStatus } from './TravelStatus';
 export type { TravelStatusProps } from './TravelStatus';
 export { DEFAULT_PIXELS_PER_KM, useCamera } from './useCamera';

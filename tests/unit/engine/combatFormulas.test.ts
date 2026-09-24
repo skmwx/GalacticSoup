@@ -9,6 +9,7 @@ import {
   shotDamageMultiplier,
   totalDamage,
   turretAccuracy,
+  turretLimitingFactor,
 } from '@engine/domain';
 
 import { shippedContent } from '../../support/content.ts';
@@ -201,6 +202,31 @@ describe('turret accuracy', () => {
     expect(trace.formulaKey).toBe('combat.formula.hitChance');
     expect(operands['rangeStrain']).toBeCloseTo(1, 12);
     expect(operands['trackingStrain']).toBeCloseTo(1, 12);
+  });
+  it('names the larger squared strain as the main limiting factor [FUNC-19.3]', () => {
+    const limit = (input: Partial<typeof base>): string =>
+      turretLimitingFactor(turretAccuracy({ ...base, ...input }, rules));
+
+    expect(limit({})).toBe('none');
+    expect(limit({ rangeKm: 12 })).toBe('range');
+    expect(limit({ angularVelocityRadiansPerSecond: 0.2 })).toBe('tracking');
+    // Both strains present: the larger one wins, even at a high hit chance.
+    expect(limit({ rangeKm: 11, angularVelocityRadiansPerSecond: 0.05 })).toBe('range');
+    expect(limit({ rangeKm: 10.5, angularVelocityRadiansPerSecond: 0.4 })).toBe('tracking');
+    // Equal strains name range, the factor a movement order changes directly.
+    expect(limit({ rangeKm: 15, angularVelocityRadiansPerSecond: 0.5 })).toBe('range');
+  });
+
+  it('blames range for a shot beyond absolute range whatever the motion [FUNC-9.5, FUNC-19.3]', () => {
+    const beyond = turretAccuracy(
+      { ...base, rangeKm: 40, angularVelocityRadiansPerSecond: 5 },
+      rules,
+    );
+    expect(beyond.withinAbsoluteRange).toBe(false);
+    expect(turretLimitingFactor(beyond)).toBe('range');
+    expect(
+      turretLimitingFactor(turretAccuracy({ ...base, falloffKm: 0, rangeKm: 10.5 }, rules)),
+    ).toBe('range');
   });
 });
 

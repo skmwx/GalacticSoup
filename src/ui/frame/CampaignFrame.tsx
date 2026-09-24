@@ -5,7 +5,7 @@ import type { SaveSlotData } from '@protocol';
 
 import { ActionButton, useActionShortcuts, type ActionRunner } from '../actions';
 import { formatSimulationDuration } from '../format/duration';
-import { formatCredits, formatSpeedKmPerSecond } from '../format/numbers';
+import { formatCredits, formatPercent, formatSpeedKmPerSecond } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import styles from './CampaignFrame.module.css';
 import type { PlayData } from './usePlayData';
@@ -22,11 +22,12 @@ import type { PlayData } from './usePlayData';
  *
  * While undocked it additionally reports where the ship is, how dangerous the
  * system is, how fast the ship is travelling and what it has been ordered to
- * do. The defensive, capacitor, lock and module readouts Functional
- * Specification 19.1 also lists arrive with the phases that give those systems
- * a value to report; notifications arrive with the notification phase.
+ * do, and - from the tactical view - shield, armour, hull and capacitor, the
+ * locks the ship holds, the modules it is running and how many ships have
+ * locked it, which are the hostile effects the included systems can produce.
+ * Notifications arrive with the notification phase.
  *
- * @implements FUNC-19.1, FUNC-3.3, TECH-12.1
+ * @implements FUNC-19.1, FUNC-3.3, TECH-12.1, MVP-AC-03
  */
 
 export interface CampaignFrameProps {
@@ -108,6 +109,63 @@ export function CampaignFrame({
               <dt>{translate('frame.order')}</dt>
               <dd data-readout="order">{describeOrder(data, translate)}</dd>
             </div>
+            {data.combat?.defenses === null || data.combat === null ? null : (
+              <>
+                <div className={styles['readout']}>
+                  <dt>{translate('frame.defenses')}</dt>
+                  <dd data-readout="defenses">
+                    {data.combat.defenses.layers
+                      .map((layer) =>
+                        translate('frame.layer', {
+                          layer: translate(`layer.${layer.layer}`),
+                          percent: formatPercent(layer.fractionRemaining, locale),
+                        }),
+                      )
+                      .join(' · ')}
+                  </dd>
+                </div>
+                <div className={styles['readout']}>
+                  <dt>{translate('frame.capacitor')}</dt>
+                  <dd data-readout="capacitor">
+                    {formatPercent(
+                      data.combat.capacitorCapacity > 0
+                        ? data.combat.capacitorCharge / data.combat.capacitorCapacity
+                        : 0,
+                      locale,
+                    )}
+                  </dd>
+                </div>
+                <div className={styles['readout']}>
+                  <dt>{translate('frame.locks')}</dt>
+                  <dd data-readout="locks">
+                    {translate('frame.locksValue', {
+                      held: data.combat.locks.filter((lock) => lock.status === 'locked').length,
+                      maximum: data.combat.maxLockedTargets,
+                    })}
+                  </dd>
+                </div>
+                <div className={styles['readout']}>
+                  <dt>{translate('frame.modules')}</dt>
+                  <dd data-readout="modules">
+                    {translate('frame.modulesValue', {
+                      active: data.combat.modules.filter((module) => module.cycle !== null).length,
+                      weapons: data.combat.weapons.filter((weapon) => weapon.repeating).length,
+                    })}
+                  </dd>
+                </div>
+                <div className={styles['readout']}>
+                  <dt>{translate('frame.threats')}</dt>
+                  <dd
+                    data-readout="threats"
+                    className={data.combat.hostileLocks.length > 0 ? styles['alert'] : undefined}
+                  >
+                    {data.combat.hostileLocks.length === 0
+                      ? translate('frame.threatsNone')
+                      : translate('frame.threatsValue', { count: data.combat.hostileLocks.length })}
+                  </dd>
+                </div>
+              </>
+            )}
           </>
         )}
       </dl>

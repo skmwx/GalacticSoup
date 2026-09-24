@@ -13,6 +13,8 @@ export type {
   EncounterRefusal,
   EncounterRuleInput,
 } from './availability';
+export { OBJECT_ATTITUDES, objectAttitude } from './attitude';
+export type { ObjectAttitude } from './attitude';
 export { preferredRangeKm, selectNpcIntent } from './behavior';
 export type { NpcIntent, NpcSituation } from './behavior';
 export { possibleLoot, rollLoot } from './loot';

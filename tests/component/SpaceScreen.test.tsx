@@ -100,7 +100,16 @@ describe('space view', () => {
       layer.getAttribute('data-layer'),
     );
 
-    expect(layers).toEqual(['background', 'ranges', 'intent', 'objects', 'labels', 'offscreen', 'hits']);
+    expect(layers).toEqual([
+      'background',
+      'ranges',
+      'intent',
+      'objects',
+      'effects',
+      'labels',
+      'offscreen',
+      'hits',
+    ]);
 
     harness.gateway.dispose();
   });
@@ -260,6 +269,26 @@ describe('command bar', () => {
     });
     // The travel status and the persistent frame both report the phase.
     expect((await screen.findAllByText(/Aligning for warp/)).length).toBeGreaterThan(0);
+
+    harness.gateway.dispose();
+  });
+
+  it('warps to the destination chosen at the station with the w shortcut [MVP-AC-03, FUNC-20, TECH-12.3]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await undock(harness);
+
+    // Pirate Scout was chosen at the station, so it is the warp destination.
+    expect(screen.getByLabelText('Destination')).toHaveValue('site.borrell.verge');
+    await harness.user.keyboard('w');
+
+    await waitFor(async () => {
+      const current = await site(harness);
+      expect(current.travelStatus).toMatchObject({
+        kind: 'warp',
+        destinationSiteId: 'site.borrell.verge',
+      });
+    });
 
     harness.gateway.dispose();
   });

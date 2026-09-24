@@ -24,11 +24,19 @@ export interface CommandAvailabilityData {
   readonly unavailableReason: string | null;
 }
 
+/**
+ * How the player stands toward an object (Functional Specification 9.1).
+ * The engine decides it; the interface draws it with a shape as well as a
+ * colour.
+ */
+export type ObjectAttitudeData = 'own' | 'hostile' | 'neutral';
+
 export interface SiteObjectData {
   readonly id: string;
   readonly kind: 'ship' | 'station' | 'wreck';
   readonly definitionId: string;
   readonly nameKey: string;
+  readonly attitude: ObjectAttitudeData;
   readonly position: VectorData;
   readonly velocity: VectorData;
   readonly facingRadians: number;
@@ -102,6 +110,12 @@ export interface DestinationSpawnData {
   readonly bountyCredits: number;
 }
 
+/** One item an encounter's opponents can drop (MVP Scope 4.2). */
+export interface DestinationLootData {
+  readonly itemId: string;
+  readonly nameKey: string;
+}
+
 export interface DestinationData {
   readonly encounterId: string;
   readonly siteId: string;
@@ -118,6 +132,8 @@ export interface DestinationData {
   readonly totalBountyCredits: number;
   /** Every item its loot tables can drop, in stable order. */
   readonly possibleLootItemIds: readonly string[];
+  /** The same items with the names they are shown by, in the same order. */
+  readonly possibleLoot: readonly DestinationLootData[];
   /** How often the player has completed it; sites stay repeatable (MVP-AC-09). */
   readonly completionCount: number;
   /** Choosing this encounter, and warping to its site. */

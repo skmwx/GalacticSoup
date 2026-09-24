@@ -424,6 +424,18 @@ describe('rule consistency', () => {
     expect(issue?.path).toBe('values.elasticityMinimum');
   });
 
+  it('rejects range presets whose closest approach cannot open a wreck [TECH-6.2, FUNC-9.11]', () => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'rules/navigation.json', (document) => {
+        (document['values'] as Record<string, unknown>)['rangePresetsKm'] = [1, 5, 10];
+      }),
+    );
+
+    const issue = issues.find((entry) => entry.path === 'values.rangePresetsKm');
+    expect(issue?.reason).toBe('invalidValue');
+    expect(issue?.detail).toContain('wreck access range');
+  });
+
   it('rejects a hull resistance above the combat rules maximum [TECH-6.2, FUNC-4.2]', () => {
     const issues = issuesFor(
       editDocument(minimalPack(), 'rules/combat.json', (document) => {

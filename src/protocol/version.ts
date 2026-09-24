@@ -1,11 +1,15 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
- * Version 10 adds the encounter, opponent, wreck and loot contracts, the
+ * Version 11 makes the tactical view an acceptance contract for the combat
+ * interface: site objects carry the player's attitude toward them, the combat
+ * view names who has locked the player, what each ship is running, which half
+ * of the turret formula limits a shot and every charge a weapon could change
+ * to, and a destination names the loot it discloses.
+ * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
- * Version 9 added active module commands and the full tactical combat view.
  */
-export const PROTOCOL_VERSION = 10;
+export const PROTOCOL_VERSION = 11;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

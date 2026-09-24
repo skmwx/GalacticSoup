@@ -6,6 +6,8 @@ import {
   possibleLoot,
   dockRefusal,
   movementRefusal,
+  npcOf,
+  objectAttitude,
   retreatRefusal,
   selectDestinationRefusal,
   targetOrderRefusal,
@@ -17,6 +19,7 @@ import type { ContentRepository } from '@engine/ports';
 import type {
   CommandAvailabilityData,
   DestinationData,
+  DestinationLootData,
   DestinationSpawnData,
   DestinationsData,
   SiteData,
@@ -70,7 +73,8 @@ export function siteProjection(state: CampaignState, content: ContentRepository)
                 id: object.id,
                 kind: object.kind,
                 definitionId: object.definitionId,
-                nameKey: object.nameKey,
+                nameKey: displayNameKey(state, content, object.id, object.nameKey),
+                attitude: objectAttitude(state, object.id),
                 position: { ...object.position },
                 velocity: { ...object.velocity },
                 facingRadians: object.facingRadians,
@@ -124,6 +128,12 @@ export function destinationsProjection(
         0,
       ),
       possibleLootItemIds: disclosedLoot(content, encounter.spawns),
+      possibleLoot: disclosedLoot(content, encounter.spawns).map(
+        (itemId): DestinationLootData => ({
+          itemId,
+          nameKey: content.tradeable(itemId)?.nameKey ?? '',
+        }),
+      ),
       completionCount: completionCount(state, encounter.id),
       commands: [
         availability(
@@ -158,6 +168,22 @@ function disclosedLoot(
     if (table !== undefined) for (const item of possibleLoot(table)) items.add(item);
   }
   return [...items].sort();
+}
+
+/**
+ * The name an object is shown by. An opponent's ship carries its hull's name,
+ * but the player meets it as the encounter's opponent - the name the roster,
+ * the reward summary and the combat log use - so the site shows it by that
+ * name too. Everything else is shown by the name it carries.
+ */
+function displayNameKey(
+  state: CampaignState,
+  content: ContentRepository,
+  objectId: string,
+  nameKey: string,
+): string {
+  const npc = npcOf(state, objectId);
+  return npc === null ? nameKey : (content.npcProfile(npc.profileId)?.nameKey ?? nameKey);
 }
 
 /** The orders that do not name a target object (Functional Specification 7.1). */

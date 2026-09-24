@@ -4,6 +4,8 @@ import {
   activateRefusal,
   changeAmmunitionRefusal,
   combatantOf,
+  inventoryService,
+  PLAIN_STATE,
   lockRefusal,
   reloadRefusal,
   shipCombat,
@@ -428,6 +430,42 @@ describe('reloading', () => {
     expect(eventKinds(fixture)).toContain('combat.reloadStarted');
     advance(fixture, 5000);
     expect(loadedRounds(fixture, fixture.playerId)).toBeGreaterThan(0);
+  });
+
+  it('reloads an emptied magazine when the last round destroys the target [FUNC-9.4]', () => {
+    const fixture = combatFixture({
+      targetPositionKm: { x: 1, y: 0 },
+      playerCargoRounds: [{ ammunitionId: FUSION, rounds: 40 }],
+    });
+    // Leave one round in the magazine, unloading the rest into the hold.
+    const ship = fixture.draft.assets.ships[fixture.playerId]!;
+    const magazine = stacksIn(fixture.draft.assets, ship.fittingInventoryId).find(
+      (stack) => stack.state.kind === 'charge',
+    );
+    if (magazine === undefined) throw new Error('The starter turret is not loaded.');
+    inventoryService(fixture.draft, fixture.content).transferAs(
+      magazine.id,
+      ship.cargoInventoryId,
+      magazine.quantity - 1,
+      PLAIN_STATE,
+    );
+    expect(loadedRounds(fixture, fixture.playerId)).toBe(1);
+    lockTarget(fixture);
+    // One hit from destruction, and a still target inside optimal: the only
+    // round in the magazine is the one that destroys it.
+    fixture.draft.assets.ships[fixture.targetId]!.condition.damage = { shield: 350, armor: 300, hull: 249 };
+    activateWeapon(fixture.context, fixture.playerId, WEAPON, fixture.targetId);
+    advance(fixture, 2_500);
+
+    expect(shipCombat(fixture.draft, fixture.targetId).destroyedAtMs).not.toBeNull();
+    expect(weapon(fixture).repeating).toBe(false);
+    expect(['lockLost', 'targetMissing']).toContain(weapon(fixture).stopReason);
+    // With no target left there is no next cycle to reload for, yet the gun
+    // does not come home empty.
+    expect(weapon(fixture).reload?.ammunitionId).toBe(FUSION);
+    advance(fixture, 5_000);
+    expect(loadedRounds(fixture, fixture.playerId)).toBe(20);
+    expect(weapon(fixture).repeating).toBe(false);
   });
 
   it('stops with an exhausted magazine when no ammunition remains [FUNC-9.4]', () => {

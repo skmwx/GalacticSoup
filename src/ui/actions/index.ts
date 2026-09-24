@@ -13,7 +13,11 @@ export {
   ACTION_MESSAGE_KEYS,
   actionById,
   defaultShortcuts,
+  MODULE_TOGGLE_COUNT,
+  moduleToggleActionId,
 } from './registry';
+export { commandAvailability } from './availability';
+export type { CommandAvailability } from './availability';
 export type { ActionCategory, ActionDefinition, ActionIcon as ActionIconName } from './registry';
 export { useActionRunner, useActionShortcuts } from './useActionRunner';
 export type { ActionRunner } from './useActionRunner';

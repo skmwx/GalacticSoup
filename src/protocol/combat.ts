@@ -58,6 +58,12 @@ export interface TargetMotionData {
   readonly withinLockRange: boolean;
 }
 
+/**
+ * Which half of the turret formula costs a shot the most
+ * (Functional Specification 19.3). `none` only when neither costs anything.
+ */
+export type LimitingFactorData = 'none' | 'range' | 'tracking';
+
 /** What one weapon would do against one target right now. */
 export interface WeaponEffectData {
   readonly targetId: string;
@@ -65,6 +71,7 @@ export interface WeaponEffectData {
   readonly trackingStrain: number;
   readonly rangeStrain: number;
   readonly withinAbsoluteRange: boolean;
+  readonly limitingFactor: LimitingFactorData;
   /** Listed damage of one shot, before variation and before resistances. */
   readonly listedDamage: Readonly<Record<string, number>>;
   readonly expectedDamagePerShot: number;
@@ -99,11 +106,56 @@ export interface DefenseLayerData {
   readonly resistanceTraces: Readonly<Record<string, FormulaTraceData>>;
 }
 
+/**
+ * A module a ship is running right now, as another pilot would see it
+ * (Functional Specification 19.3). Burning propulsion or cycling a repairer
+ * is visible, so it is published for opponents as well as for the player.
+ */
+export interface ActiveEffectData {
+  readonly slot: SlotRefData;
+  readonly moduleId: string;
+  readonly nameKey: string;
+  readonly category: string;
+}
+
 export interface DefenseStateData {
   readonly shipId: string;
   readonly destroyed: boolean;
   readonly destroyedAtMs: number | null;
   readonly layers: readonly DefenseLayerData[];
+  /** Modules the ship is cycling, in slot order. */
+  readonly activeEffects: readonly ActiveEffectData[];
+}
+
+/**
+ * Another ship's lock on the player's ship
+ * (Functional Specification 19.1, 19.7). Being targeted is the first warning
+ * a fight gives, so the tactical view publishes it rather than leaving the
+ * player to infer it from incoming fire.
+ */
+export interface HostileLockData {
+  readonly shipId: string;
+  readonly status: 'locking' | 'locked';
+}
+
+/**
+ * One charge a weapon could fire, and what firing it would mean
+ * (Functional Specification 9.4, 19.6). Values are after the turret's own
+ * multipliers, so two options compare directly.
+ */
+export interface AmmunitionOptionData {
+  readonly ammunitionId: string;
+  readonly nameKey: string;
+  /** True for the charge in the magazine now. */
+  readonly loaded: boolean;
+  /** Rounds of it in the ship's hold. */
+  readonly cargoRounds: number;
+  readonly listedDamage: Readonly<Record<string, number>>;
+  readonly optimalRangeKm: number;
+  readonly falloffKm: number;
+  readonly trackingRadiansPerSecond: number;
+  /** Whether the weapon could change to it now, and why not. */
+  readonly commands: readonly CommandAvailabilityData[];
 }
 
 export interface CapacitorStateData {
@@ -193,6 +245,7 @@ export interface WeaponRuntimeData {
   readonly nameKey: string;
   readonly online: boolean;
   readonly ammunitionId: string | null;
+  readonly ammunitionNameKey: string | null;
   readonly loadedRounds: number;
   readonly magazineSize: number;
   readonly cycleSeconds: number;
@@ -209,6 +262,8 @@ export interface WeaponRuntimeData {
   readonly stopReason: string | null;
   /** Ammunition in cargo this weapon accepts, in stable order. */
   readonly compatibleAmmunition: readonly string[];
+  /** The loaded charge and every accepted one in cargo, in stable order. */
+  readonly ammunitionOptions: readonly AmmunitionOptionData[];
   /** Effectiveness against each locked target, in the order of `locks`. */
   readonly effects: readonly WeaponEffectData[];
   readonly commands: readonly CommandAvailabilityData[];
@@ -229,6 +284,8 @@ export interface CombatData {
   readonly capacitor: CapacitorStateData | null;
   readonly modules: readonly ModuleRuntimeData[];
   readonly targetDefenses: readonly DefenseStateData[];
+  /** Ships in the site locking or locked onto the player, by ship id. */
+  readonly hostileLocks: readonly HostileLockData[];
   readonly events: readonly CombatEventData[];
   readonly locks: readonly LockData[];
   readonly motion: readonly TargetMotionData[];
