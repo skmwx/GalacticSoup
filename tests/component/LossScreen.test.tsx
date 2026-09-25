@@ -13,7 +13,7 @@ import {
   type SiteData,
 } from '@protocol';
 import type { LocalizationIssue } from '@shared';
-import { GameRoot, LocalizationProvider } from '@ui';
+import { formatSimulationDuration, GameRoot, LocalizationProvider } from '@ui';
 
 import { closeSortie, startSortie, type Sortie } from '../support/sortie.ts';
 
@@ -125,7 +125,7 @@ describe('the loss report', () => {
     expect(loss).toHaveAttribute('data-recovery', 'noShip');
     expect(
       within(loss).getByText(
-        'Your Wayfarer was destroyed at Outpost Cradle fighting Pirate Base, at simulation time 1m 40s. You were recovered at Borrell Harbour.',
+        `Your Wayfarer was destroyed at Outpost Cradle fighting Pirate Base, at simulation time ${formatSimulationDuration(report.destroyedAtMs)}. You were recovered at Borrell Harbour.`,
       ),
     ).toBeInTheDocument();
 
@@ -147,9 +147,9 @@ describe('the loss report', () => {
     ).toBeInTheDocument();
 
     const final = loss.querySelector('[data-final-damage]');
-    expect(final?.textContent).toMatch(
-      /^Final damage came from Pirate (Gunner|Warden|Marksman) \(Weapon \d\) at simulation time 1m 40s: \d+ x hit for \d+ damage after resistances, \d+ before \(.+\)\.$/,
-    );
+    expect(final?.textContent).toMatch(new RegExp(
+      String.raw`^Final damage came from Pirate (Gunner|Warden|Marksman) \(Weapon \d\) at simulation time ${formatSimulationDuration(report.destroyedAtMs)}: \d+ x hit for \d+ damage after resistances, \d+ before \(.+\)\.$`,
+    ));
     expect(report.finalDamage?.appliedTotal ?? 0).toBeGreaterThan(0);
 
     expect(report.disablingEffects).toEqual([]);

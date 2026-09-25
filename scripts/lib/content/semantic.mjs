@@ -140,6 +140,10 @@ export function validateSemantics(collected) {
   issues.push(...checkLootTables(collected, tradeable));
   issues.push(...checkStations(collected, { systems, sites }));
   issues.push(...checkEncounters(collected, { systems, sites, npcProfiles }));
+  issues.push(...checkEncounterReach(collected, { stations, sites }));
+  issues.push(...checkEncounterDistinctness(collected));
+  issues.push(...checkRewardSummaries(collected, { npcProfiles }));
+  issues.push(...checkLootOutlets(collected, { hulls, modules, ammunition }));
   issues.push(...checkSiteUse(collected, sites, encounters));
   issues.push(...checkMarket(collected, { stations, sellable }));
   issues.push(...checkStarterReachability(collected, { stations, hulls, modules }));
@@ -560,9 +564,11 @@ function checkStations(collected, { systems, sites }) {
 function checkEncounters(collected, { systems, sites, npcProfiles }) {
   const issues = [];
   let starterTier = 0;
+  const tiers = new Set();
 
   for (const entry of collected.definitions.encounters) {
     const encounter = entry.value;
+    tiers.add(encounter.tier);
     if (!systems.has(encounter.systemId)) {
       issues.push(
         issue(
@@ -631,6 +637,158 @@ function checkEncounters(collected, { systems, sites, npcProfiles }) {
     );
   }
 
+  // Tier is guidance for the next step (MVP Scope 4.2; Functional
+  // Specification 18): a missing tier between the easiest and the hardest
+  // leaves no encounter to learn that step on.
+  const highest = Math.max(0, ...tiers);
+  for (let tier = 1; tier < highest; tier += 1) {
+    if (!tiers.has(tier)) {
+      issues.push(
+        issue(
+          'catalogRelationship',
+          '',
+          '',
+          `no tier ${String(tier)} encounter exists between tier 1 and tier ${String(highest)}`,
+        ),
+      );
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Every encounter can be reached from where the campaign starts
+ * (Functional Specification 7.3; Technical Specification 6.2).
+ *
+ * The player undocks at the starting station's site and warps. Without gates
+ * that means the same system, and a warp needs its minimum distance, so a site
+ * closer than that could never be entered at all.
+ */
+function checkEncounterReach(collected, { stations, sites }) {
+  const economy = collected.rules.economy?.values;
+  const navigation = collected.rules.navigation?.values;
+  const station = economy === undefined ? undefined : stations.get(economy.startingStationId);
+  const home = station === undefined ? undefined : sites.get(station.siteId);
+  if (home === undefined || navigation === undefined) return [];
+
+  const issues = [];
+  for (const entry of collected.definitions.encounters) {
+    const site = sites.get(entry.value.siteId);
+    if (site === undefined) continue;
+    if (site.systemId !== home.systemId) {
+      issues.push(issue('catalogRelationship', entry.file, `${entry.path}.siteId`,
+        `"${entry.value.siteId}" is in ${site.systemId}, which the starting station in ${home.systemId} has no route to`));
+      continue;
+    }
+    const distance = Math.hypot(
+      site.value.position.xKm - home.value.position.xKm,
+      site.value.position.yKm - home.value.position.yKm,
+    );
+    if (distance < navigation.warpMinimumDistanceKm) {
+      issues.push(issue('catalogRelationship', entry.file, `${entry.path}.siteId`,
+        `"${entry.value.siteId}" is ${String(Math.round(distance))} km from the starting station, closer than the ${String(navigation.warpMinimumDistanceKm)} km a warp needs`));
+    }
+  }
+  return issues;
+}
+
+/**
+ * Two encounters must differ in more than numbers
+ * (Functional Specification 21; MVP Scope 4.2).
+ *
+ * Encounters that spawn the same profiles at the same distances differ only
+ * in how many opponents there are, which the specification does not count as
+ * a distinct encounter. Composition or initial positioning must change.
+ */
+function checkEncounterDistinctness(collected) {
+  const issues = [];
+  const seen = new Map();
+  for (const entry of collected.definitions.encounters) {
+    const signature = [...new Set(
+      entry.value.spawns.map((spawn) => `${spawn.npcProfileId}@${String(spawn.spawnDistanceKm)}`),
+    )].sort().join(',');
+    const previous = seen.get(signature);
+    if (previous !== undefined) {
+      issues.push(issue('catalogRelationship', entry.file, `${entry.path}.spawns`,
+        `spawns the same opponents at the same distances as "${previous}"; only their numbers differ`));
+      continue;
+    }
+    seen.set(signature, entry.value.id);
+  }
+  return issues;
+}
+
+/**
+ * A reward summary may not state a bounty the opponents do not carry
+ * (MVP Scope 4.2).
+ *
+ * The station shows the authored total beside the summary, so the summary
+ * need not repeat it; when it does, every credit figure in it must be that
+ * total, in every locale, or the two would contradict each other the first
+ * time a bounty is retuned.
+ */
+function checkRewardSummaries(collected, { npcProfiles }) {
+  const issues = [];
+  for (const entry of collected.definitions.encounters) {
+    const total = entry.value.spawns.reduce(
+      (sum, spawn) => sum + spawn.count * (npcProfiles.get(spawn.npcProfileId)?.bountyCredits ?? 0),
+      0,
+    );
+    for (const [locale, table] of Object.entries(collected.localization)) {
+      const text = table.messages[entry.value.rewardSummaryKey];
+      if (typeof text !== 'string') continue;
+      for (const figure of creditFigures(text)) {
+        if (figure !== total) {
+          issues.push(issue('invalidValue', table.file, `messages.${entry.value.rewardSummaryKey}`,
+            `the ${locale} reward summary states ${String(figure)} credits, but the authored bounties total ${String(total)}`));
+        }
+      }
+    }
+  }
+  return issues;
+}
+
+/** Whole numbers of at least 100 in a text, with digit-group separators removed. */
+function creditFigures(text) {
+  const figures = [];
+  for (const match of text.matchAll(/\d{1,3}(?:[,.\u00a0\u202f ]\d{3})+|\d+/g)) {
+    const value = Number(match[0].replace(/\D/g, ''));
+    if (value >= 100) figures.push(value);
+  }
+  return figures;
+}
+
+/**
+ * Everything a wreck can hold is worth taking home
+ * (Functional Specification 9.11; MVP-AC-06).
+ *
+ * Loot must be sellable at some station, or be equipment a player-usable hull
+ * can fit or load. Anything else would fill the hold and convert into
+ * nothing.
+ */
+function checkLootOutlets(collected, { hulls, modules, ammunition }) {
+  const listed = new Set(
+    collected.listings.flatMap((table) => table.listings.map((listing) => listing.itemId)),
+  );
+  const playerHulls = [...hulls.values()].filter((hull) => hull.playerUsable);
+  const fittable = (module) => playerHulls.some((hull) =>
+    (hull.slots[module.slot] ?? 0) > 0 &&
+    (module.hardpoint === undefined || (hull.hardpoints[module.hardpoint] ?? 0) > 0));
+  const loadable = (charge) => [...modules.values()].some((module) =>
+    module.category === 'turret' && module.turret.ammunitionGroup === charge.group && fittable(module));
+
+  const issues = [];
+  for (const entry of collected.definitions['loot.tables']) {
+    for (const [index, lootEntry] of entry.value.entries.entries()) {
+      if (listed.has(lootEntry.itemId)) continue;
+      const module = modules.get(lootEntry.itemId);
+      const charge = ammunition.get(lootEntry.itemId);
+      if ((module !== undefined && fittable(module)) || (charge !== undefined && loadable(charge))) continue;
+      issues.push(issue('catalogRelationship', entry.file, `${entry.path}.entries[${index}].itemId`,
+        `"${lootEntry.itemId}" is sold at no station and no player-usable hull can use it`));
+    }
+  }
   return issues;
 }
 
@@ -754,6 +912,7 @@ function checkStartingFit(start, hull, { modules, ammunition }) {
   const hardpoints = new Map();
   let power = 0;
   let processing = 0;
+  let armed = false;
 
   for (const [index, entry] of entries.entries()) {
     const module = modules.get(entry.moduleId);
@@ -810,7 +969,17 @@ function checkStartingFit(start, hull, { modules, ammunition }) {
     } else if (charge.group !== module.turret.ammunitionGroup) {
       issues.push(issue('catalogRelationship', start.file, at(index, 'ammunitionId'),
         `"${entry.ammunitionId}" is not in the "${module.turret.ammunitionGroup}" group`));
+    } else if (entry.online) {
+      armed = true;
     }
+  }
+
+  // The starter fit must be able to attempt the easiest encounter without a
+  // purchase (Functional Specification 3.1; MVP Scope 4.1), which it cannot
+  // do without a loaded gun.
+  if (entries.length > 0 && !armed) {
+    issues.push(issue('catalogRelationship', start.file, 'values.startingFit',
+      'the starting fit arms no online turret with a charge, so the starter ship could not fight'));
   }
 
   for (const [definitionId, count] of used) {

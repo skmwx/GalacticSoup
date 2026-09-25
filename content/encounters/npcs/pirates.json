@@ -1,6 +1,6 @@
 {
   "kind": "npc.profiles",
-  "$comment": "Roles differ by range behaviour and module use, not only by hit points. Reserve rounds let an opponent reload from its hold; the tier-1 scout carries none.",
+  "$comment": "Roles differ by range behaviour, damage profile and module use, not only by hit points. Reserve rounds let an opponent reload from its hold; the tier-1 scout carries none, so the easiest site cannot outlast a starter ship. Values are provisional tuning; the balance pass owns them.",
   "definitions": [
     {
       "id": "npc.pirate.scout",
@@ -18,6 +18,23 @@
       "lootTableId": "loot.pirate.scout"
     },
     {
+      "id": "npc.pirate.cutter",
+      "nameKey": "content.npc.pirate.cutter.name",
+      "role": "skirmisher",
+      "hullId": "hull.pirate.scout",
+      "loadout": {
+        "modules": [
+          "module.turret.autocannon.small",
+          "module.turret.autocannon.small",
+          "module.propulsion.afterburner.small"
+        ],
+        "ammunitionId": "ammo.projectile.small.phased",
+        "reserveRounds": 120
+      },
+      "bountyCredits": 6000,
+      "lootTableId": "loot.pirate.cutter"
+    },
+    {
       "id": "npc.pirate.marksman",
       "nameKey": "content.npc.pirate.marksman.name",
       "role": "sniper",
@@ -28,9 +45,9 @@
           "module.plating.armor.small"
         ],
         "ammunitionId": "ammo.hybrid.small.iron",
-        "reserveRounds": 50
+        "reserveRounds": 80
       },
-      "bountyCredits": 4800,
+      "bountyCredits": 9000,
       "lootTableId": "loot.pirate.patrol"
     },
     {
@@ -45,10 +62,10 @@
           "module.plating.armor.small"
         ],
         "ammunitionId": "ammo.projectile.small.fusion",
-        "reserveRounds": 80
+        "reserveRounds": 120
       },
-      "bountyCredits": 5200,
-      "lootTableId": "loot.pirate.patrol"
+      "bountyCredits": 8000,
+      "lootTableId": "loot.pirate.gunner"
     },
     {
       "id": "npc.pirate.warden",
@@ -58,15 +75,14 @@
       "loadout": {
         "modules": [
           "module.turret.autocannon.small",
-          "module.turret.autocannon.small",
           "module.repair.armor.small",
           "module.plating.armor.small",
-          "module.capacitor.battery.small"
+          "module.plating.armor.small"
         ],
         "ammunitionId": "ammo.projectile.small.phased",
-        "reserveRounds": 80
+        "reserveRounds": 120
       },
-      "bountyCredits": 9000,
+      "bountyCredits": 12000,
       "lootTableId": "loot.pirate.base"
     }
   ]

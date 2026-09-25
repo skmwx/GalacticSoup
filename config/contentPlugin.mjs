@@ -24,10 +24,12 @@ const SCHEMA_ROOT = path.join(REPO_ROOT, 'schemas', 'content');
 
 /**
  * Compiles the authored content, throwing an error that names every problem.
+ * The shipped content is also held to the MVP content floor; another root -
+ * a fixture pack - is held to the game's rules alone.
  * @param {string} [root]
  */
 export function compileContentOrThrow(root = CONTENT_ROOT) {
-  const result = compileContent(readContentFiles(root));
+  const result = compileContent(readContentFiles(root), { floor: root === CONTENT_ROOT });
   if (!result.ok) {
     throw new Error(
       [

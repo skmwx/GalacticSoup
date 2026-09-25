@@ -30,14 +30,14 @@
       "repeatable": true,
       "spawns": [
         {
-          "npcProfileId": "npc.pirate.scout",
+          "npcProfileId": "npc.pirate.cutter",
           "count": 2,
-          "spawnDistanceKm": 18
+          "spawnDistanceKm": 16
         },
         {
           "npcProfileId": "npc.pirate.marksman",
           "count": 1,
-          "spawnDistanceKm": 32
+          "spawnDistanceKm": 30
         }
       ]
     },

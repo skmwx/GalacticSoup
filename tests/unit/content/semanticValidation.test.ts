@@ -532,3 +532,89 @@ describe('rule consistency', () => {
     ).toBe(true);
   });
 });
+
+describe('encounters the loop can reach and tell apart', () => {
+  it('rejects a gap between the easiest and the hardest tier [TECH-6.2, FUNC-18, MVP-AC-07]', () => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'encounters/templates.json', (document) => {
+        (definitionsOf(document)[0] as Record<string, unknown>)['tier'] = 3;
+      }),
+    );
+
+    expect(issues.some((entry) => entry.detail.includes('no tier 2 encounter exists between tier 1 and tier 3'))).toBe(true);
+  });
+
+  it('rejects an encounter closer to the starting station than a warp can go [TECH-6.2, FUNC-7.3]', () => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'universe/systems.json', (document) => {
+        const sites = definitionsOf(document)[0]?.['sites'] as Record<string, unknown>[];
+        (sites[1] as Record<string, unknown>)['position'] = { xKm: 60, yKm: 0 };
+      }),
+    );
+
+    const issue = issues.find((entry) => entry.detail.includes('closer than'));
+    expect(issue?.reason).toBe('catalogRelationship');
+    expect(issue?.path).toBe('definitions[0].siteId');
+  });
+
+  it('rejects two encounters that differ only in how many opponents they spawn [TECH-6.2, FUNC-21]', () => {
+    let pack = editDocument(minimalPack(), 'universe/systems.json', (document) => {
+      const sites = definitionsOf(document)[0]?.['sites'] as Record<string, unknown>[];
+      sites.push({ ...sites[1], id: 'site.test.lane', position: { xKm: -20_000, yKm: 5_000 } });
+    });
+    pack = editDocument(pack, 'encounters/templates.json', (document) => {
+      const definitions = definitionsOf(document);
+      const first = definitions[0] as Record<string, unknown>;
+      const spawns = first['spawns'] as Record<string, unknown>[];
+      definitions.push({
+        ...first,
+        id: 'encounter.test.bigger',
+        siteId: 'site.test.lane',
+        tier: 2,
+        spawns: spawns.map((spawn) => ({ ...spawn, count: 3 })),
+      });
+    });
+
+    const issue = issuesFor(pack).find((entry) => entry.detail.includes('only their numbers differ'));
+    expect(issue?.path).toBe('definitions[1].spawns');
+    expect(issue?.detail).toContain('encounter.test.skirmish');
+  });
+
+  it('rejects a reward summary that states a different bounty, and accepts the authored one [TECH-6.2, MVP-AC-05]', () => {
+    const stating = (text: string) => editDocument(minimalPack(), 'localization/en.json', (document) => {
+      (document['messages'] as Record<string, string>)['content.encounter.test.skirmish.reward'] = text;
+    });
+
+    const issue = issuesFor(stating('About 5,000 credits in bounty.')).find((entry) => entry.reason === 'invalidValue');
+    expect(issue?.path).toBe('messages.content.encounter.test.skirmish.reward');
+    expect(issue?.detail).toContain('states 5000 credits, but the authored bounties total 3000');
+
+    expect(compilePack(stating('About 3,000 credits for 1 pirate.')).ok).toBe(true);
+  });
+
+  it('rejects loot that no station buys and no player hull can use [TECH-6.2, FUNC-9.11, MVP-AC-06]', () => {
+    let pack = editDocument(minimalPack(), 'catalog/items.json', (document) => {
+      const definitions = definitionsOf(document);
+      definitions.push({ ...definitions[0], id: 'item.test.junk' });
+    });
+    pack = editDocument(pack, 'encounters/loot.json', (document) => {
+      const entries = definitionsOf(document)[0]?.['entries'] as Record<string, unknown>[];
+      entries.push({ ...entries[0], itemId: 'item.test.junk' });
+    });
+
+    const issue = issuesFor(pack).find((entry) => entry.detail.includes('item.test.junk'));
+    expect(issue?.reason).toBe('catalogRelationship');
+    expect(issue?.path).toBe('definitions[0].entries[1].itemId');
+  });
+
+  it('rejects a starting fit that arms no turret [TECH-6.2, FUNC-3.1]', () => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'rules/economy.json', (document) => {
+        const fit = (document['values'] as Record<string, unknown>)['startingFit'] as Record<string, unknown>[];
+        delete (fit[0] as Record<string, unknown>)['ammunitionId'];
+      }),
+    );
+
+    expect(issues.some((entry) => entry.detail.includes('arms no online turret'))).toBe(true);
+  });
+});

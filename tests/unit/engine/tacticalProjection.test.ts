@@ -186,7 +186,8 @@ describe('weapon effectiveness', () => {
       turret.turret.optimalRangeKm * phasedCharge.optimalRangeMultiplier,
       12,
     );
-    expect(phased?.listedDamage['thermal']).toBe(phasedCharge.damagePerShot.thermal);
+    expect(phased?.listedDamage['thermal'])
+      .toBeCloseTo(phasedCharge.damagePerShot.thermal * turret.turret.damageMultiplier, 12);
     expect(phased?.commands).toEqual([
       { command: 'weapon.changeAmmunition', available: true, unavailableReason: null },
     ]);

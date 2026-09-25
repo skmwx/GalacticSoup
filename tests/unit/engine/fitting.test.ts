@@ -480,8 +480,10 @@ describe('what a fit does', () => {
         content.rules.combat.absoluteRangeFalloffMultiples * (weapon?.falloffKm ?? 0),
       12,
     );
-    expect(weapon?.volleyDamage).toBe(12);
-    expect(weapon?.damagePerSecond).toBeCloseTo(12 / cycleSeconds, 12);
+    const volley = Object.values(charge.damagePerShot).reduce((total, value) => total + value, 0) *
+      turret.turret.damageMultiplier;
+    expect(weapon?.volleyDamage).toBeCloseTo(volley, 12);
+    expect(weapon?.damagePerSecond).toBeCloseTo(volley / cycleSeconds, 12);
   });
 
   it('warns about missing ammunition, offline modules and an unstable capacitor [FUNC-8.5, MVP-AC-04]', () => {

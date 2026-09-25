@@ -482,8 +482,10 @@ describe('the loss report', () => {
       expect(layered).toBeCloseTo(applied, 6);
       hullTaken += source.layerDamage.hull;
     }
-    // Every hull point the ship had came off through the recorded fire.
-    expect(hullTaken).toBeCloseTo(hull.defenses.hull.hitPoints, 6);
+    // Every hull point the ship had came off through the recorded fire. The
+    // stored damage is rounded to a millionth at each hit, so the recorded
+    // totals agree with it only to within that rounding per hit.
+    expect(hullTaken).toBeCloseTo(hull.defenses.hull.hitPoints, 4);
 
     const final = loss.finalDamage;
     expect(final).not.toBeNull();

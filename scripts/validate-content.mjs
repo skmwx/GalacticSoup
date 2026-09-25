@@ -7,6 +7,8 @@
  * and the production build use, so a problem found here is a problem that
  * would have stopped any of them.
  *
+ * The shipped content is also held to the MVP content floor (MVP Scope 4.1-4.2).
+ *
  * On success it writes the compiled bundle to `reports/content-bundle.json`
  * for inspection. That file is a diagnostic; the build does not read it.
  */
@@ -28,7 +30,7 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-const result = compileContent(files);
+const result = compileContent(files, { floor: true });
 
 if (!result.ok) {
   process.stderr.write(`Content validation failed (${String(result.issues.length)}):\n\n`);

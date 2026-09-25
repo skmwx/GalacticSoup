@@ -64,7 +64,7 @@ describe('encounter instantiation', () => {
     expect(instance?.objective).toEqual({ kind: 'destroyGroup', destroyed: 0, required: 3 });
 
     const profiles = instance?.npcs.map((npc) => npc.profileId);
-    expect(profiles).toEqual(['npc.pirate.scout', 'npc.pirate.scout', 'npc.pirate.marksman']);
+    expect(profiles).toEqual(['npc.pirate.cutter', 'npc.pirate.cutter', 'npc.pirate.marksman']);
 
     for (const shipId of opponentIds(fixture)) {
       const ship = fixture.draft.assets.ships[shipId];
@@ -109,13 +109,12 @@ describe('encounter instantiation', () => {
 
     expect(planned.map((entry) => `${entry.slot.kind}:${String(entry.slot.index)}`)).toEqual([
       'weapon:0',
-      'weapon:1',
       'system:0',
       'engineering:0',
       'engineering:1',
     ]);
     // Only turrets receive the authored charge.
-    expect(planned.filter((entry) => entry.ammunitionId !== null)).toHaveLength(2);
+    expect(planned.filter((entry) => entry.ammunitionId !== null)).toHaveLength(1);
   });
 });
 
@@ -225,7 +224,7 @@ describe('encounter resolution', () => {
       encounterId: 'encounter.borrell.pirate-patrol',
       status: 'abandoned',
       resolvedAtMs: 0,
-      bountyCreditsPaid: 3000,
+      bountyCreditsPaid: content.requireNpcProfile('npc.pirate.cutter' as never).bountyCredits,
       npcsDestroyed: 1,
       npcsTotal: 3,
     });

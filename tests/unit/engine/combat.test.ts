@@ -283,7 +283,8 @@ describe('weapon cycles', () => {
     expect(fixture.context.events.filter((event) => event.kind === 'combat.shotResolved'))
       .toHaveLength(1);
     expect(weapon(fixture).repeating).toBe(true);
-    expect(weapon(fixture).cycle?.committedCapacitor).toBe(4);
+    expect(weapon(fixture).cycle?.committedCapacitor)
+      .toBe(fixture.content.module(RAILGUN)?.activation?.capacitorPerCycle);
     expect(weapon(fixture).stopReason).toBeNull();
   });
 

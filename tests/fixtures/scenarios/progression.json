@@ -1,0 +1,296 @@
+{
+  "$comment": "Representative fits and the encounters each one is meant for (MVP Implementation Plan phase 16; MVP Scope 4.1-4.3). Fits name only definitions and quantities: tests/support/progression/assemble.ts buys and fits them through the ordinary station commands, so every item here must be sold at the starting station. Tactics are what a competent pilot does with the ordinary controls, using only the range and arrival distances the interface offers. Seeds fix each campaign's random streams; a scenario with several sorties per seed proves the site stays repeatable.",
+  "fits": [
+    {
+      "id": "starter",
+      "description": "The fit a new campaign starts with: one autocannon loaded with fusion rounds and a shield booster, with the granted rounds in the hold.",
+      "modules": [
+        {
+          "slot": "weapon",
+          "index": 0,
+          "moduleId": "module.turret.autocannon.small",
+          "ammunitionId": "ammo.projectile.small.fusion"
+        },
+        {
+          "slot": "system",
+          "index": 0,
+          "moduleId": "module.shield.booster.small"
+        }
+      ],
+      "cargo": [
+        {
+          "definitionId": "ammo.projectile.small.fusion",
+          "quantity": 100
+        }
+      ]
+    },
+    {
+      "id": "intermediate",
+      "description": "A second autocannon bought from the starting credits, both guns on phased plasma: thermal damage for the cutters' shields and more reach toward the marksman.",
+      "modules": [
+        {
+          "slot": "weapon",
+          "index": 0,
+          "moduleId": "module.turret.autocannon.small",
+          "ammunitionId": "ammo.projectile.small.phased"
+        },
+        {
+          "slot": "weapon",
+          "index": 1,
+          "moduleId": "module.turret.autocannon.small",
+          "ammunitionId": "ammo.projectile.small.phased"
+        },
+        {
+          "slot": "system",
+          "index": 0,
+          "moduleId": "module.shield.booster.small"
+        }
+      ],
+      "cargo": [
+        {
+          "definitionId": "ammo.projectile.small.phased",
+          "quantity": 200
+        }
+      ]
+    },
+    {
+      "id": "mastery",
+      "description": "The close-range approach completed: twin phased autocannons, an afterburner to choose the range against faster gunners, the shield booster with a capacitor battery behind it, and armour plating.",
+      "modules": [
+        {
+          "slot": "weapon",
+          "index": 0,
+          "moduleId": "module.turret.autocannon.small",
+          "ammunitionId": "ammo.projectile.small.phased"
+        },
+        {
+          "slot": "weapon",
+          "index": 1,
+          "moduleId": "module.turret.autocannon.small",
+          "ammunitionId": "ammo.projectile.small.phased"
+        },
+        {
+          "slot": "system",
+          "index": 0,
+          "moduleId": "module.shield.booster.small"
+        },
+        {
+          "slot": "system",
+          "index": 1,
+          "moduleId": "module.propulsion.afterburner.small"
+        },
+        {
+          "slot": "engineering",
+          "index": 0,
+          "moduleId": "module.plating.armor.small"
+        },
+        {
+          "slot": "engineering",
+          "index": 1,
+          "moduleId": "module.capacitor.battery.small"
+        }
+      ],
+      "cargo": [
+        {
+          "definitionId": "ammo.projectile.small.phased",
+          "quantity": 300
+        }
+      ]
+    },
+    {
+      "id": "lancer",
+      "description": "The long-range approach: twin railguns on iron charges that out-range every brawler, the shield booster, a capacitor battery and armour plating.",
+      "modules": [
+        {
+          "slot": "weapon",
+          "index": 0,
+          "moduleId": "module.turret.railgun.small",
+          "ammunitionId": "ammo.hybrid.small.iron"
+        },
+        {
+          "slot": "weapon",
+          "index": 1,
+          "moduleId": "module.turret.railgun.small",
+          "ammunitionId": "ammo.hybrid.small.iron"
+        },
+        {
+          "slot": "system",
+          "index": 0,
+          "moduleId": "module.shield.booster.small"
+        },
+        {
+          "slot": "engineering",
+          "index": 0,
+          "moduleId": "module.plating.armor.small"
+        },
+        {
+          "slot": "engineering",
+          "index": 1,
+          "moduleId": "module.capacitor.battery.small"
+        }
+      ],
+      "cargo": [
+        {
+          "definitionId": "ammo.hybrid.small.iron",
+          "quantity": 300
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "scout.starter",
+      "description": "The starter fit clears the easiest site without a purchase, repeatedly (MVP Scope 4.1-4.2).",
+      "encounterId": "encounter.borrell.pirate-scout",
+      "fitId": "starter",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "patrol.intermediate",
+      "description": "Killing the cutters first with thermal rounds, then the marksman, clears the multi-opponent site repeatedly.",
+      "encounterId": "encounter.borrell.pirate-patrol",
+      "fitId": "intermediate",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.cutter"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "base.mastery",
+      "description": "Kiting the gunners at 10 km behind an afterburner, where their fusion rounds and the warden's phased ones fall off, then the warden and the marksman, clears the mastery site repeatedly.",
+      "encounterId": "encounter.borrell.pirate-base",
+      "fitId": "mastery",
+      "tactics": {
+        "arrivalDistanceKm": 30,
+        "targetPriority": [
+          "npc.pirate.gunner",
+          "npc.pirate.warden"
+        ],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 10
+        },
+        "propulsion": "always",
+        "repairBelowFraction": 0.8,
+        "repairCapacitorFloor": 0.3
+      },
+      "expect": "completed",
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "base.lancer",
+      "description": "The long-range approach also clears the mastery site in most fights: back away toward 20 km, kill the marksman that can answer at range first, then the warden and the gunners.",
+      "encounterId": "encounter.borrell.pirate-base",
+      "fitId": "lancer",
+      "tactics": {
+        "arrivalDistanceKm": 50,
+        "targetPriority": [
+          "npc.pirate.marksman",
+          "npc.pirate.warden"
+        ],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 20
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8,
+        "repairCapacitorFloor": 0.4
+      },
+      "expect": "completed",
+      "minimumCompletedShare": 0.6,
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "patrol.starter",
+      "description": "The starter fit cannot clear the multi-opponent site: tier 2 asks for more than the ship you were given.",
+      "encounterId": "encounter.borrell.pirate-patrol",
+      "fitId": "starter",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.cutter"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "notCompleted",
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "base.starter",
+      "description": "The starter fit cannot clear the mastery site.",
+      "encounterId": "encounter.borrell.pirate-base",
+      "fitId": "starter",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.gunner",
+          "npc.pirate.warden"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "notCompleted",
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 1
+    }
+  ]
+}

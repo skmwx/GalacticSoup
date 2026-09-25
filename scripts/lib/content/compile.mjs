@@ -22,6 +22,7 @@ import { CONTENT_LIMITS } from '../../../src/adapters/content/limits.ts';
 
 import { issue, sortIssues } from './issues.mjs';
 import { validateBundle, validateDocument } from './schema.mjs';
+import { validateContentFloor } from './floor.mjs';
 import { validateSemantics } from './semantic.mjs';
 
 /** Collection kinds that become `definitions.<kind>` in the bundle. */
@@ -52,13 +53,18 @@ const AUTHORING_KEYS = new Set(['$comment', '$schema']);
  * @property {object | null} bundle
  * @property {import('./issues.mjs').ContentIssue[]} issues
  * @property {{ files: number, definitions: number, messages: number }} stats
+ *
+ * @typedef {object} CompileOptions
+ * @property {boolean} [floor]  Also hold the set to the MVP content floor
+ *   (`floor.mjs`); true for the shipped bundle, false for fixture packs.
  */
 
 /**
  * @param {ContentFile[]} files
+ * @param {CompileOptions} [options]
  * @returns {CompileResult}
  */
-export function compileContent(files) {
+export function compileContent(files, options = {}) {
   /** @type {import('./issues.mjs').ContentIssue[]} */
   const issues = [];
   const documents = [];
@@ -109,6 +115,9 @@ export function compileContent(files) {
   }
 
   issues.push(...validateSemantics(collected));
+  if (options.floor === true) {
+    issues.push(...validateContentFloor(collected));
+  }
   if (issues.length > 0) {
     return failure(issues);
   }

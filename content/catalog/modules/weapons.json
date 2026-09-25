@@ -24,7 +24,7 @@
         "falloffKm": 6,
         "trackingRadiansPerSecond": 0.45,
         "signatureResolutionMetres": 40,
-        "damageMultiplier": 1,
+        "damageMultiplier": 1.5,
         "magazineSize": 20,
         "ammunitionGroup": "small-projectile"
       }
@@ -43,7 +43,7 @@
       "category": "turret",
       "hardpoint": "turret",
       "activation": {
-        "capacitorPerCycle": 4,
+        "capacitorPerCycle": 1.5,
         "cycleSeconds": 3.2
       },
       "turret": {
@@ -51,7 +51,7 @@
         "falloffKm": 4,
         "trackingRadiansPerSecond": 0.22,
         "signatureResolutionMetres": 40,
-        "damageMultiplier": 1.15,
+        "damageMultiplier": 1.7,
         "magazineSize": 25,
         "ammunitionGroup": "small-hybrid"
       }

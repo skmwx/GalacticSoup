@@ -40,8 +40,17 @@ export function minimalPack(): ContentFile[] {
   return readContentFiles(MINIMAL_ROOT) as ContentFile[];
 }
 
-export function compilePack(files: readonly ContentFile[]): CompileResult {
-  return compileContent(files as ContentFile[]) as CompileResult;
+/**
+ * Compiles a pack. `floor` also holds it to the MVP content floor, which only
+ * the shipped content is otherwise held to.
+ */
+export function compilePack(files: readonly ContentFile[], options: { readonly floor?: boolean } = {}): CompileResult {
+  return compileContent(files as ContentFile[], options) as CompileResult;
+}
+
+/** The shipped content files, for a test that changes one thing in them. */
+export function shippedPack(): ContentFile[] {
+  return readContentFiles() as ContentFile[];
 }
 
 /** Replaces the text of the one fixture file whose path ends with `suffix`. */

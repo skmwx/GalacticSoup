@@ -83,7 +83,7 @@
       "playerUsable": false,
       "defenses": {
         "shield": {
-          "hitPoints": 420,
+          "hitPoints": 150,
           "resistances": {
             "electromagnetic": 0.0,
             "thermal": 0.2,
@@ -92,7 +92,7 @@
           }
         },
         "armor": {
-          "hitPoints": 520,
+          "hitPoints": 180,
           "resistances": {
             "electromagnetic": 0.5,
             "thermal": 0.35,
@@ -101,7 +101,7 @@
           }
         },
         "hull": {
-          "hitPoints": 380,
+          "hitPoints": 120,
           "resistances": {
             "electromagnetic": 0,
             "thermal": 0,
@@ -112,13 +112,13 @@
       },
       "shieldRechargeSeconds": 700,
       "capacitor": {
-        "capacity": 340,
-        "rechargeSeconds": 240
+        "capacity": 60,
+        "rechargeSeconds": 300
       },
       "movement": {
-        "maxSpeedKmPerSecond": 0.27,
-        "accelerationKmPerSecondSquared": 0.0675,
-        "brakingKmPerSecondSquared": 0.135,
+        "maxSpeedKmPerSecond": 0.36,
+        "accelerationKmPerSecondSquared": 0.09,
+        "brakingKmPerSecondSquared": 0.18,
         "turnRateRadiansPerSecond": 0.8,
         "warpSpeedKmPerSecond": 4000
       },
