@@ -60,6 +60,8 @@ export interface EncounterInstanceData {
 
 export interface WreckData {
   readonly wreckId: string;
+  /** `player` for the pilot's own wreck, which is theirs to recover. */
+  readonly owner: 'npc' | 'player';
   readonly nameKey: string;
   readonly hullId: string;
   readonly position: VectorData;
@@ -75,7 +77,8 @@ export interface WreckData {
 export interface EncounterOutcomeData {
   readonly encounterId: string;
   readonly nameKey: string;
-  readonly status: 'completed' | 'abandoned';
+  /** `lost` when the attempt ended with the player's ship destroyed. */
+  readonly status: 'completed' | 'abandoned' | 'lost';
   readonly resolvedAtMs: number;
   readonly bountyCreditsPaid: number;
   readonly npcsDestroyed: number;

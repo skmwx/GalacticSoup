@@ -89,7 +89,7 @@ describe('movement controllers', () => {
     const station = content.requireStation(
       content.rules.economy.startingStationId as StationId,
     );
-    const ship = draft.assets.ships[draft.assets.activeShipId];
+    const ship = draft.assets.ships[draft.assets.activeShipId!];
     if (ship === undefined) throw new Error('The test campaign has no active ship.');
     const location: SiteLocation = {
       kind: 'site',

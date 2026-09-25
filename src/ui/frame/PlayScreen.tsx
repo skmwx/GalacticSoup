@@ -22,9 +22,13 @@ import { useSimulationClock } from './useSimulationClock';
  *
  * Which screen is shown is not a choice this component makes. It is the
  * location the engine reported, so undocking and docking move the player
- * between surfaces only once the engine has said they did.
+ * between surfaces only once the engine has said they did - including the
+ * station a destroyed pilot is recovered at.
  *
- * @implements FUNC-19.1, FUNC-19.2, FUNC-19.5, TECH-12.1
+ * It also answers the autosave triggers the clock's advances raise, which
+ * the store coalesces with those its commands raise.
+ *
+ * @implements FUNC-19.1, FUNC-19.2, FUNC-19.5, FUNC-3.4, TECH-11.3, TECH-12.1
  */
 
 export interface PlayScreenProps {
@@ -40,6 +44,13 @@ export function PlayScreen({ gateway, session, sessionState }: PlayScreenProps):
   const data = usePlayData({ gateway, session, campaignId });
   const paused = sessionState.session?.time.paused ?? true;
 
+  // An advance that reached a durable point asks for a save; it is answered
+  // through the store, which folds a trigger raised mid-write into one more.
+  const { requestAutosave } = data;
+  const answerAutosave = useCallback(() => {
+    void requestAutosave();
+  }, [requestAutosave]);
+
   const onPlayTime = useCallback(
     (elapsedRealMs: number) => {
       session.notePlayTime(elapsedRealMs, paused);
@@ -53,6 +64,7 @@ export function PlayScreen({ gateway, session, sessionState }: PlayScreenProps):
     initialSimulationTimeMs: sessionState.frame?.simulationTimeMs ?? 0,
     paused,
     onInvalidations: data.applyInvalidations,
+    onAutosaveRequested: answerAutosave,
     onPlayTime,
   });
 
@@ -69,7 +81,12 @@ export function PlayScreen({ gateway, session, sessionState }: PlayScreenProps):
         {data.location === null ? (
           <p role="status">{translate('play.loading')}</p>
         ) : data.docked ? (
-          <StationScreen gateway={gateway} data={data} runner={runner} />
+          <StationScreen
+            gateway={gateway}
+            data={data}
+            runner={runner}
+            simulationTimeMs={clock.simulationTimeMs}
+          />
         ) : (
           <SpaceScreen
             data={data}

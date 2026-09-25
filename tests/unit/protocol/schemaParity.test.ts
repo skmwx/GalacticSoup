@@ -5,22 +5,41 @@ import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { createMemorySaveStore } from '@adapters/persistence';
-import { captureSnapshot, createCampaign, createEngineHost } from '@engine';
+import { createMemorySaveStore, type MemorySaveStore } from '@adapters/persistence';
+import {
+  captureSnapshot,
+  createCampaign,
+  createEngineHost,
+  readCampaignState,
+  type CampaignState,
+} from '@engine';
 import {
   CONTENT_ERROR_REASONS,
   EMPTY_PAYLOAD,
   PROTOCOL_VERSION,
   REQUEST_TYPES,
   validateClientRequest,
+  type AssetsData,
   type CombatData,
+  type DestinationsData,
   type EncounterData,
+  type LossReportData,
+  type MarketTransactionPreviewData,
+  type ShipData,
+  type SiteData,
 } from '@protocol';
 
 import { REPO_ROOT } from '../../../config/aliases.mjs';
 import { shippedContent } from '../../support/content.ts';
 import { GOLDEN_CAPTURE } from '../../support/goldenSave.ts';
-import { arriveAtScout, destroyOpponent, lockOpponent, startSortie } from '../../support/sortie.ts';
+import {
+  arriveAtScout,
+  destroyOpponent,
+  lockOpponent,
+  SORTIE_SEED,
+  startSortie,
+  type Sortie,
+} from '../../support/sortie.ts';
 
 /**
  * The runtime validator is hand-written so the engine carries no library
@@ -56,8 +75,18 @@ let validateNavigationSiteData: Validator;
 let validateNavigationDestinationsData: Validator;
 let validateCombatData: Validator;
 let validateEncounterData: Validator;
+let validateAssetsData: Validator;
+let validateShipData: Validator;
+let validateLossReportData: Validator;
+let validateCampaignState: Validator;
 
 const content = shippedContent();
+
+/** Asserts a schema accepts a value, naming what it objected to when it does not. */
+function expectValid(validate: Validator, value: unknown): void {
+  const valid = validate(value);
+  expect(valid, JSON.stringify((validate as { errors?: unknown }).errors ?? null)).toBe(true);
+}
 
 function loadSchema(name: string): object {
   const file = path.join(REPO_ROOT, 'schemas', 'protocol', name);
@@ -120,10 +149,16 @@ beforeAll(() => {
   validateEncounterData = ajv.compile(
     loadSchema('encounter.state.data.schema.json'),
   ) as Validator;
+  validateAssetsData = ajv.compile(loadSchema('assets.list.data.schema.json')) as Validator;
+  validateShipData = ajv.compile(loadSchema('ship.get.data.schema.json')) as Validator;
+  validateLossReportData = ajv.compile(loadSchema('loss.report.data.schema.json')) as Validator;
 
   const saves = new AjvConstructor({ allErrors: true, strict: true });
   saves.addSchema(loadSaveSchema('campaign-state.schema.json'));
   validateSaveEnvelope = saves.compile(loadSaveSchema('save-envelope.schema.json')) as Validator;
+  validateCampaignState = saves.getSchema(
+    'https://galacticsoup.invalid/schemas/save/campaign-state.schema.json',
+  ) as unknown as Validator;
 });
 
 function loadSaveSchema(name: string): object {
@@ -377,7 +412,94 @@ const JSON_FIXTURES: readonly { readonly label: string; readonly message: unknow
       payload: { locale: 'not a locale' },
     },
   },
+  {
+    label: 'a well-formed loss.report',
+    message: { protocolVersion: PROTOCOL_VERSION, requestId: 'r', type: 'loss.report', payload: {} },
+  },
+  {
+    label: 'a loss.report carrying payload fields',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'loss.report',
+      payload: { lossId: 'c0123456789abcdef01234567-e1' },
+    },
+  },
+  {
+    label: 'a well-formed navigation.selectBookmark',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'navigation.selectBookmark',
+      payload: { bookmarkId: 'c0123456789abcdef01234567-e12' },
+    },
+  },
+  {
+    label: 'a navigation.selectBookmark naming a site instead of a bookmark',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'navigation.selectBookmark',
+      payload: { bookmarkId: 'site.borrell.outpost-cradle' },
+    },
+  },
+  {
+    label: 'a navigation.selectBookmark with no bookmark',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'navigation.selectBookmark',
+      payload: {},
+    },
+  },
+  {
+    label: 'a well-formed navigation.warpToBookmark',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'navigation.warpToBookmark',
+      payload: { bookmarkId: 'c0123456789abcdef01234567-e12', arrivalDistanceKm: 10 },
+    },
+  },
+  {
+    label: 'a navigation.warpToBookmark with a negative arrival distance',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'navigation.warpToBookmark',
+      payload: { bookmarkId: 'c0123456789abcdef01234567-e12', arrivalDistanceKm: -1 },
+    },
+  },
+  {
+    label: 'a navigation.warpToBookmark carrying a destination site',
+    message: {
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'r',
+      type: 'navigation.warpToBookmark',
+      payload: {
+        bookmarkId: 'c0123456789abcdef01234567-e12',
+        arrivalDistanceKm: 10,
+        destinationSiteId: 'site.borrell.outpost-cradle',
+      },
+    },
+  },
   { label: 'a message that is not an object', message: 'nonsense' },
+];
+
+/**
+ * Payloads of the requests protocol version 12 added, each with every
+ * malformed variant a field can take (Functional Specification 5.4, 9.12).
+ */
+const BOOKMARK_ID = 'c0123456789abcdef01234567-e12';
+const PHASE_15_PAYLOADS: readonly (readonly [string, Record<string, unknown>])[] = [
+  ['loss.report', {}],
+  ['navigation.selectBookmark', { bookmarkId: BOOKMARK_ID }],
+  ['navigation.warpToBookmark', { bookmarkId: BOOKMARK_ID, arrivalDistanceKm: 10 }],
+];
+const MALFORMED_VALUES: readonly unknown[] = [
+  null, true, '', 'x', 0, -1, 1.5, 1_000_000_001, Number.MAX_SAFE_INTEGER + 1, [], {},
+  'c0123456789abcdef01234567-e0', 'C0123456789ABCDEF01234567-E1', `c0123456789abcdef01234567-e${'1'.repeat(110)}`,
+  'site.borrell.outpost-cradle',
 ];
 
 describe('protocol schema parity', () => {
@@ -385,6 +507,26 @@ describe('protocol schema parity', () => {
     'agrees with the runtime validator on $label [TECH-7.1]',
     ({ message }) => {
       expect(validateRequest(message)).toBe(validateClientRequest(message).ok);
+    },
+  );
+
+  it.each(PHASE_15_PAYLOADS)(
+    'agrees with the runtime validator on %s and its malformed variants [TECH-7.1, TECH-17, FUNC-9.12]',
+    (type, payload) => {
+      const variants: Record<string, unknown>[] = [payload, { ...payload, unexpected: 1 }];
+      for (const key of Object.keys(payload)) {
+        const missing = { ...payload };
+        delete missing[key];
+        variants.push(missing);
+        for (const bad of MALFORMED_VALUES) variants.push({ ...payload, [key]: bad });
+      }
+      for (const variant of variants) {
+        const request = { protocolVersion: PROTOCOL_VERSION, requestId: 'r', type, payload: variant };
+        expect(validateRequest(request), JSON.stringify(request)).toBe(validateClientRequest(request).ok);
+      }
+      const valid = { protocolVersion: PROTOCOL_VERSION, requestId: 'r', type, payload };
+      expect(validateRequest(valid)).toBe(true);
+      expect(validateClientRequest(valid).ok).toBe(true);
     },
   );
 
@@ -706,7 +848,7 @@ describe('campaign protocol schema parity', () => {
   });
 
   it('validates the golden save against the published save schema [TECH-11.2, TECH-17]', () => {
-    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-8.json');
+    const file = path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', 'format-9.json');
 
     expect(validateSaveEnvelope(JSON.parse(readFileSync(file, 'utf8')))).toBe(true);
   });
@@ -722,4 +864,309 @@ describe('campaign protocol schema parity', () => {
     expect(validateFrameData((frame as { data: unknown }).data)).toBe(true);
     expect(validateStateHashData((hash as { data: unknown }).data)).toBe(true);
   });
+});
+
+/**
+ * The destruction, loss-report and recovery contracts
+ * (Functional Specification 5.4, 9.12; Technical Specification 7.1, 11.2).
+ *
+ * A real destruction, not a hand-built one, populates them: an idle ship left
+ * at the Pirate Base is destroyed in under two simulated minutes and its pilot
+ * is recovered docked at the station. With the sortie seed and the starting
+ * wallet the settlement leaves enough credits for a starter hull, so the pilot
+ * is left shipless; spending most of the wallet first leaves too little, so
+ * the recovery service grants a ship instead.
+ */
+describe('loss and recovery schema parity', () => {
+  const LOSS_SITE = 'site.borrell.outpost-cradle';
+  const SAVED_AT_REAL_MS = 1_700_000_200_000;
+
+  interface Lost {
+    readonly sortie: Sortie;
+    readonly store: MemorySaveStore;
+    /** The envelope the client-stamped autosave after the loss wrote. */
+    readonly envelope: Record<string, unknown>;
+  }
+
+  /** Waits for the next snapshot the store writes and returns it. */
+  async function nextSave(store: MemorySaveStore, previous: readonly string[]): Promise<Record<string, unknown>> {
+    let saveId: string | undefined;
+    for (let attempt = 0; attempt < 100 && saveId === undefined; attempt += 1) {
+      saveId = store.saveIds().find((id) => !previous.includes(id));
+      if (saveId === undefined) await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    const envelope = saveId === undefined ? null : await store.readSave('slot-1', saveId);
+    if (envelope === null) throw new Error('The snapshot was never written.');
+    return envelope as Record<string, unknown>;
+  }
+
+  /** Flies the active ship into the Pirate Base and waits for the pilot to be recovered docked. */
+  async function loseShip(sortie: Sortie, onArrival?: () => Promise<void>): Promise<void> {
+    await sortie.data('ship.undock');
+    await sortie.data('navigation.warp', { destinationSiteId: LOSS_SITE, arrivalDistanceKm: 10 });
+    await sortie.data('time.set', { paused: false, rate: 1 });
+    if (onArrival !== undefined) {
+      const arrived = await sortie.until(async () => {
+        const site = await sortie.data<SiteData>('navigation.site');
+        return site.location.kind === 'site' && site.location.siteId === LOSS_SITE;
+      }, 120);
+      if (!arrived) throw new Error('The ship never arrived at the Pirate Base.');
+      await onArrival();
+    }
+    const recovered = await sortie.until(
+      async () => (await sortie.data<SiteData>('navigation.site')).location.kind === 'station',
+      600,
+    );
+    if (!recovered) throw new Error('The pilot was never recovered to the station.');
+    await sortie.data('time.set', { paused: true, rate: 1 });
+  }
+
+  /** Loses the only ship with enough credits left for a starter hull, then stamps the autosave. */
+  async function loseOnlyShip(): Promise<Lost> {
+    const store = createMemorySaveStore();
+    const sortie = await startSortie(SORTIE_SEED, 'Vela', store);
+    // A shield booster left running until the capacitor gives out is what
+    // puts a disabling effect in the report.
+    await loseShip(sortie, async () => {
+      await sortie.data('module.activate', { slotKind: 'system', slotIndex: 0 });
+    });
+    const previous = store.saveIds();
+    await sortie.data('campaign.save', { kind: 'auto', savedAtRealMs: SAVED_AT_REAL_MS });
+    return { sortie, store, envelope: await nextSave(store, previous) };
+  }
+
+  // One destruction shared by the checks below, made on first use so each
+  // check still runs on its own.
+  let shipless: Promise<Lost> | undefined;
+  const lostOnlyShip = (): Promise<Lost> => (shipless ??= loseOnlyShip());
+
+  it('publishes a schema for the loss report before any loss [TECH-7.1, FUNC-9.12]', async () => {
+    const host = createEngineHost({ content, saves: createMemorySaveStore() });
+    await host.handle({
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'req-create-loss',
+      type: 'campaign.create',
+      payload: { displayName: 'Vela', seed: SORTIE_SEED, createdAtRealMs: 1_700_000_000_000 },
+    });
+    const response = await host.handle({
+      protocolVersion: PROTOCOL_VERSION,
+      requestId: 'req-loss-report',
+      type: 'loss.report',
+      payload: EMPTY_PAYLOAD,
+    });
+
+    expect(validateResponse(response)).toBe(true);
+    const report = (response as { data: LossReportData }).data;
+    expect(report.losses).toBe(0);
+    expect(report.report).toBeNull();
+    expectValid(validateLossReportData, report);
+  });
+
+  it('publishes a schema for a loss report with every part populated [TECH-7.1, TECH-10.3, FUNC-9.12, FUNC-19.6, MVP-AC-08]', async () => {
+    const { sortie } = await lostOnlyShip();
+    const response = await sortie.ask<LossReportData>('loss.report');
+    expect(validateResponse(response)).toBe(true);
+    if (!response.ok) throw new Error(response.error.messageKey);
+
+    const loss = response.data.report;
+    expect(response.data.losses).toBe(1);
+    expect(loss?.encounterId).not.toBeNull();
+    expect(loss?.encounterNameKey).not.toBeNull();
+    expect(loss?.incoming.length).toBeGreaterThan(0);
+    expect(loss?.finalDamage).not.toBeNull();
+    expect(loss?.disablingEffects.length).toBeGreaterThan(0);
+    expect(loss?.items.some((item) => item.survived)).toBe(true);
+    expect(loss?.items.some((item) => !item.survived)).toBe(true);
+    expect(loss?.wreck.present).toBe(true);
+    expect(loss?.recovery.outcome).toBe('noShip');
+    expect(loss?.recovery.activeShipId).toBeNull();
+    expectValid(validateLossReportData, response.data);
+  }, 60_000);
+
+  it('publishes schemas for a shipless pilot at the station [TECH-7.1, FUNC-9.12, FUNC-22.1]', async () => {
+    const { sortie } = await lostOnlyShip();
+
+    const assets = await sortie.data<AssetsData>('assets.list');
+    expect(assets.activeShipId).toBeNull();
+    expect(assets.ships).toEqual([]);
+    expect(assets.lastDockedStationId).toBe(content.rules.economy.startingStationId);
+    expectValid(validateAssetsData, assets);
+
+    // The views the station still reads for a pilot who owns no ship.
+    const encounter = await sortie.data<EncounterData>('encounter.state');
+    expect(encounter.lastOutcome?.status).toBe('lost');
+    expectValid(validateEncounterData, encounter);
+    const combat = await sortie.data<CombatData>('combat.state');
+    expect(combat.events.some((event) => event.kind === 'damage')).toBe(true);
+    expectValid(validateCombatData, combat);
+    expectValid(validateNavigationSiteData, await sortie.data('navigation.site'));
+    expectValid(validateFrameData, await sortie.data('campaign.frame'));
+    expectValid(validateSessionData, await sortie.data('campaign.session'));
+  }, 60_000);
+
+  it('publishes a schema for the player-wreck bookmark among the destinations [TECH-7.1, FUNC-5.4, FUNC-9.12]', async () => {
+    const { sortie } = await lostOnlyShip();
+    const lost = (await sortie.data<LossReportData>('loss.report')).report;
+
+    const destinations = await sortie.data<DestinationsData>('navigation.destinations');
+    const bookmark = destinations.bookmarks[0];
+    expect(bookmark?.kind).toBe('playerWreck');
+    expect(bookmark?.bookmarkId).toBe(lost?.wreck.wreckId);
+    expect(bookmark?.encounterId).not.toBeNull();
+    expect(bookmark?.itemCount).toBeGreaterThan(0);
+    expectValid(validateNavigationDestinationsData, destinations);
+
+    const selected = await sortie.ask('navigation.selectBookmark', { bookmarkId: bookmark?.bookmarkId });
+    expect(validateResponse(selected)).toBe(true);
+    expectValid(validateCommandResultData, (selected as { data: unknown }).data);
+
+    const chosen = await sortie.data<DestinationsData>('navigation.destinations');
+    expect(chosen.selectedBookmarkId).toBe(bookmark?.bookmarkId);
+    expect(chosen.bookmarks[0]?.selected).toBe(true);
+    expectValid(validateNavigationDestinationsData, chosen);
+    const report = await sortie.data<LossReportData>('loss.report');
+    expect(report.report?.wreck.selected).toBe(true);
+    expectValid(validateLossReportData, report);
+  }, 60_000);
+
+  it('validates the saved post-loss campaign against the published save schemas [TECH-11.2, TECH-17, FUNC-9.12]', async () => {
+    const { envelope } = await lostOnlyShip();
+    const state = envelope['state'] as CampaignState;
+
+    expect(state.recovery.losses).toBe(1);
+    expect(state.recovery.lastLoss?.recovery.outcome).toBe('noShip');
+    expect(state.assets.activeShipId).toBeNull();
+    expect(Object.values(state.encounter.wrecks).some((wreck) => wreck.owner === 'player')).toBe(true);
+    expect(state.encounter.lastOutcome?.status).toBe('lost');
+    expect(state.combat.events.some((event) => event.kind === 'damage')).toBe(true);
+    expectValid(validateSaveEnvelope, envelope);
+    expectValid(validateCampaignState, state);
+    expect(readCampaignState(state).ok).toBe(true);
+  }, 60_000);
+
+  it('agrees with the runtime reader on malformed loss and recovery state [TECH-11.2, TECH-11.4, TECH-15.3, FUNC-9.12]', async () => {
+    const { envelope } = await lostOnlyShip();
+    // The cases write values the state type forbids, so they reshape a plain
+    // copy of the saved payload rather than assigning through the type.
+    type Loss = NonNullable<CampaignState['recovery']['lastLoss']>;
+    const lossOf = (draft: CampaignState): Loss => {
+      if (draft.recovery.lastLoss === null) throw new Error('The saved state recorded no loss.');
+      return draft.recovery.lastLoss;
+    };
+    const cases: readonly (readonly [string, boolean, (draft: CampaignState) => void])[] = [
+      ['unchanged', true, () => undefined],
+      ['a loss record cleared', true, (d) => { Object.assign(d.recovery, { lastLoss: null }); }],
+      ['a loss outside any encounter', true, (d) => { Object.assign(lossOf(d), { encounterId: null }); }],
+      ['no final burst', true, (d) => { Object.assign(lossOf(d), { finalDamage: null }); }],
+      ['a zero recovery version', false, (d) => { Object.assign(d.recovery, { version: 0 }); }],
+      ['an unknown recovery field', false, (d) => { Object.assign(d.recovery, { extra: 1 }); }],
+      ['an unknown loss field', false, (d) => { Object.assign(lossOf(d), { extra: 1 }); }],
+      ['surviving loaded ammunition', false, (d) => {
+        Object.assign(lossOf(d).items[0]!, { origin: 'loaded', survived: true });
+      }],
+      ['a zero-quantity item', false, (d) => { Object.assign(lossOf(d).items[0]!, { quantity: 0 }); }],
+      ['unconsumed enhanced cover', false, (d) => { Object.assign(lossOf(d).insurance, { coverage: 'enhanced' }); }],
+      ['consumed basic cover', false, (d) => { Object.assign(lossOf(d).insurance, { enhancedConsumed: true }); }],
+      ['a paying recovery-grant hull', false, (d) => {
+        Object.assign(lossOf(d).insurance, { recoveryGrantHull: true });
+      }],
+      ['a payout fraction above one', false, (d) => { Object.assign(lossOf(d).insurance, { payoutFraction: 1.5 }); }],
+      ['a granted ship that is not there', false, (d) => { Object.assign(lossOf(d).recovery, { outcome: 'granted' }); }],
+      ['a shipless outcome naming a ship', false, (d) => {
+        Object.assign(lossOf(d).recovery, { activeShipId: lossOf(d).shipId });
+      }],
+      ['an out-of-range final slot', false, (d) => { Object.assign(lossOf(d).finalDamage!, { slotKey: 'weapon:16' }); }],
+      ['an out-of-range disabled slot', false, (d) => {
+        Object.assign(lossOf(d).disablingEffects[0]!.slot, { index: 16 });
+      }],
+      ['an unknown disabling kind', false, (d) => { Object.assign(lossOf(d).disablingEffects[0]!, { kind: 'jammed' }); }],
+      ['an attacker with no name', false, (d) => { Object.assign(lossOf(d).incoming[0]!, { nameKey: '' }); }],
+      ['an attacker without hull damage', false, (d) => {
+        Reflect.deleteProperty(lossOf(d).incoming[0]!.layerDamage, 'hull');
+      }],
+      ['a negative layer damage', false, (d) => { Object.assign(lossOf(d).incoming[0]!.layerDamage, { armor: -1 }); }],
+      ['a hull in the wrong namespace', false, (d) => {
+        Object.assign(lossOf(d), { hullId: 'module.turret.autocannon.small' });
+      }],
+      ['an unknown wreck owner', false, (d) => {
+        Object.assign(Object.values(d.encounter.wrecks)[0]!, { owner: 'station' });
+      }],
+      ['an unknown sortie outcome', false, (d) => { Object.assign(d.encounter.lastOutcome!, { status: 'destroyed' }); }],
+      ['a malformed recovery station', false, (d) => {
+        Object.assign(d.assets, { lastDockedStationId: 'site.borrell.station' });
+      }],
+      ['an unmarked stack', false, (d) => {
+        Reflect.deleteProperty(Object.values(d.assets.stacks)[0]!, 'recoveryGrant');
+      }],
+      ['a malformed bookmark selection', false, (d) => {
+        Object.assign(d.navigation, { selectedBookmarkId: 'site.borrell.outpost-cradle' });
+      }],
+      ['damage history without layers', false, (d) => {
+        const damage = d.combat.events.find((event) => event.kind === 'damage');
+        if (damage !== undefined) Reflect.deleteProperty(damage, 'layerDamage');
+      }],
+    ];
+
+    for (const [label, valid, mutate] of cases) {
+      const draft = structuredClone(envelope['state']) as CampaignState;
+      mutate(draft);
+      expect(validateCampaignState(draft), label).toBe(valid);
+      expect(readCampaignState(draft).ok, label).toBe(valid);
+    }
+  }, 60_000);
+
+  it('publishes schemas for a recovery-grant ship and a warp to the player\'s own wreck [TECH-7.1, TECH-11.2, FUNC-5.4, FUNC-7.3, FUNC-9.12]', async () => {
+    const store = createMemorySaveStore();
+    const sortie = await startSortie(SORTIE_SEED, 'Vela', store);
+    // Spending most of the wallet first leaves the settlement short of a
+    // starter hull, so the recovery service grants one.
+    const preview = await sortie.data<MarketTransactionPreviewData>('market.previewBuy', {
+      stationId: content.rules.economy.startingStationId,
+      itemId: 'module.turret.autocannon.small',
+      quantity: 1,
+    });
+    await sortie.data('market.confirmBuy', { token: preview.token });
+    await loseShip(sortie);
+
+    const report = await sortie.data<LossReportData>('loss.report');
+    expect(report.report?.recovery.outcome).toBe('granted');
+    expectValid(validateLossReportData, report);
+
+    const assets = await sortie.data<AssetsData>('assets.list');
+    const granted = assets.ships.find((ship) => ship.active);
+    expect(granted?.id).toBe(assets.activeShipId);
+    expect(granted?.recoveryGrant).toBe(true);
+    const stacks = assets.inventories.flatMap((inventory) => inventory.stacks);
+    expect(stacks.some((stack) => stack.recoveryGrant)).toBe(true);
+    expect(stacks.some((stack) => !stack.recoveryGrant)).toBe(true);
+    expectValid(validateAssetsData, assets);
+
+    const ship = await sortie.data<ShipData>('ship.get', { shipId: assets.activeShipId });
+    expect(ship.recoveryGrant).toBe(true);
+    expect(ship.insuranceCoverage).toBe('basic');
+    expectValid(validateShipData, ship);
+
+    // The granted ship flies back to the wreck through the station choice.
+    const bookmarkId = (await sortie.data<DestinationsData>('navigation.destinations')).bookmarks[0]?.bookmarkId;
+    await sortie.data('navigation.selectBookmark', { bookmarkId });
+    await sortie.data('ship.undock');
+    const warp = await sortie.ask('navigation.warpToBookmark', { bookmarkId, arrivalDistanceKm: 10 });
+    expect(validateResponse(warp)).toBe(true);
+    expectValid(validateCommandResultData, (warp as { data: unknown }).data);
+
+    const site = await sortie.data<SiteData>('navigation.site');
+    expect(site.travelStatus?.kind).toBe('warp');
+    expect(site.travelStatus?.kind === 'warp' && site.travelStatus.bookmarkId).toBe(bookmarkId);
+    expectValid(validateNavigationSiteData, site);
+    expectValid(validateNavigationDestinationsData, await sortie.data('navigation.destinations'));
+
+    const previous = store.saveIds();
+    await sortie.data('campaign.save', { kind: 'manual', savedAtRealMs: SAVED_AT_REAL_MS });
+    const envelope = await nextSave(store, previous);
+    const state = envelope['state'] as CampaignState;
+    expect(state.navigation.travel?.kind === 'warp' && state.navigation.travel.bookmarkId).toBe(bookmarkId);
+    expect(Object.values(state.assets.ships).some((entry) => entry.recoveryGrant)).toBe(true);
+    expectValid(validateSaveEnvelope, envelope);
+    expectValid(validateCampaignState, state);
+  }, 60_000);
 });

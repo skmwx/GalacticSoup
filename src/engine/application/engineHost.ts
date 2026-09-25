@@ -5,7 +5,7 @@ import { assetsProjection, walletProjection, hangarProjection, cargoProjection,
 import { insurancePreview, marketBuyPreview, marketListingsProjection, marketSellPreview,
   repairPreview, resupplyPreview, stationServicesProjection } from '@engine/projections';
 import { combatProjection, destinationsProjection, siteProjection } from '@engine/projections';
-import { encounterProjection, wreckContentsProjection } from '@engine/projections';
+import { encounterProjection, lossReportProjection, wreckContentsProjection } from '@engine/projections';
 import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload,
   ComparePayload, ShipPayload } from '@protocol';
 import type { MarketBuyPreviewPayload, MarketSellPreviewPayload, ShipEconomicPayload,
@@ -387,7 +387,7 @@ function isCampaignQuery(type: RequestType): boolean {
     'station.services', 'market.listings', 'market.previewBuy', 'market.previewSell',
     'repair.preview', 'resupply.preview', 'insurance.preview',
     'navigation.destinations', 'navigation.site', 'combat.state',
-    'encounter.state', 'loot.contents',
+    'encounter.state', 'loot.contents', 'loss.report',
   ].includes(type);
 }
 
@@ -408,6 +408,8 @@ function query(session: Session, type: RequestType, payload: unknown): unknown {
       return combatProjection(session.campaign!, session.content);
     case 'encounter.state':
       return encounterProjection(session.campaign!, session.content);
+    case 'loss.report':
+      return lossReportProjection(session.campaign!, session.content);
     case 'loot.contents':
       return wreckContentsProjection(
         session.campaign!,

@@ -337,6 +337,7 @@ function checkNpcProfiles(collected, { hulls, modules, ammunition, lootTables })
     }
 
     const turrets = fitted.filter((module) => module.category === 'turret');
+    issues.push(...checkReserveRounds(entry, hull, turrets, ammunition));
     if (turrets.length > 0) {
       const charge = profile.loadout.ammunitionId === undefined
         ? undefined
@@ -368,6 +369,31 @@ function checkNpcProfiles(collected, { hulls, modules, ammunition, lootTables })
   }
 
   return issues;
+}
+
+/**
+ * Reserve rounds reload the loadout's own turrets from the hold
+ * (Functional Specification 9.4, 9.10), so they need turrets and a named
+ * charge to load, and they must fit the hull's cargo hold.
+ */
+function checkReserveRounds(entry, hull, turrets, ammunition) {
+  const profile = entry.value;
+  const reserve = profile.loadout.reserveRounds ?? 0;
+  if (reserve === 0) return [];
+  const path = `${entry.path}.loadout.reserveRounds`;
+  const charge = profile.loadout.ammunitionId === undefined
+    ? undefined
+    : ammunition.get(profile.loadout.ammunitionId);
+  if (turrets.length === 0 || charge === undefined) {
+    return [issue('catalogRelationship', entry.file, path, 'reserve rounds need a turret and a named ammunition')];
+  }
+  if (hull === undefined) return [];
+  const needed = Math.round(reserve * charge.volumeCubicMetres * 1000);
+  const hold = Math.round(hull.cargoCapacityCubicMetres * 1000);
+  return needed <= hold
+    ? []
+    : [issue('catalogRelationship', entry.file, path,
+        `${String(reserve)} rounds need ${String(needed)} dm3 but "${hull.id}" holds ${String(hold)} dm3`)];
 }
 
 /** Functional Specification 8.4: slots, hardpoints, power and processing. */
@@ -851,6 +877,7 @@ function checkStarterReachability(collected, { stations, hulls, modules }) {
         );
       }
     }
+    issues.push(...checkRecoveryReach(collected, table, hulls));
 
     const turrets = [...modules.values()].filter(
       (module) => module.category === 'turret' && fixed.has(module.id),
@@ -888,6 +915,43 @@ function checkStarterReachability(collected, { stations, hulls, modules }) {
   }
 
   return issues;
+}
+
+/**
+ * A shipless pilot is never stranded (Functional Specification 9.12, 22.1).
+ *
+ * The recovery service grants a starter ship only below the starter hull's
+ * reference value. A pilot at or above it must therefore be able to buy that
+ * hull where they were recovered, so the recovery station's fixed quote for it
+ * may not exceed the reference value.
+ */
+function checkRecoveryReach(collected, table, hulls) {
+  const economy = collected.rules.economy?.values;
+  if (economy === undefined) return [];
+  const starter = hulls.get(economy.starterHullId);
+  const index = table.listings.findIndex(
+    (listing) => listing.itemId === economy.starterHullId && listing.supply === 'fixed',
+  );
+  const listing = table.listings[index];
+  if (starter === undefined || listing === undefined) return [];
+  const spread = Math.min(
+    economy.effectiveSpreadMaximum,
+    Math.max(economy.effectiveSpreadMinimum, listing.baseSpread),
+  );
+  const price = Math.max(
+    economy.minimumUnitPriceCredits,
+    Math.round(listing.basePriceCredits * listing.regionalPriceFactor * (1 + spread)),
+  );
+  return price <= starter.referenceValueCredits
+    ? []
+    : [
+        issue(
+          'catalogRelationship',
+          table.file,
+          `listings[${String(index)}].basePriceCredits`,
+          `the starter hull sells for ${String(price)} credits, above the ${String(starter.referenceValueCredits)} credits below which recovery grants one`,
+        ),
+      ];
 }
 
 /** Bounds inside a rule group must be internally consistent. */

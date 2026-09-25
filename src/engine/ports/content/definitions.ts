@@ -258,6 +258,12 @@ export interface NpcProfileDefinition {
   readonly loadout: {
     readonly modules: readonly ModuleId[];
     readonly ammunitionId?: AmmunitionId;
+    /**
+     * Rounds of that ammunition carried in the hold, so the opponent reloads
+     * the way the player does rather than falling silent after one magazine
+     * (Functional Specification 9.4, 9.10). Absent means none.
+     */
+    readonly reserveRounds?: number;
   };
   readonly bountyCredits: number;
   readonly lootTableId: LootTableId;

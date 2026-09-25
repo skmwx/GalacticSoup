@@ -1,10 +1,10 @@
 /**
- * Protocol version 11 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 12 request catalogue (Technical Specification 7.1, 18).
  *
- * The request types are those of version 10; version 11 widens the tactical,
- * site and destination views the combat interface reads. Capabilities list
- * the accepted request types. Older clients are rejected at the envelope
- * boundary, before any command can mutate campaign state.
+ * Version 12 adds the loss report and the two bookmark commands the player's
+ * own wreck needs. Capabilities list the accepted request types. Older
+ * clients are rejected at the envelope boundary, before any command can
+ * mutate campaign state.
  */
 
 import type { EngineError } from './errors';
@@ -43,11 +43,14 @@ import type {
   DestinationsData,
   DockPayload,
   MoveToPointPayload,
+  SelectBookmarkPayload,
   SelectDestinationPayload,
   SiteData,
   TargetRangePayload,
   WarpPayload,
+  WarpToBookmarkPayload,
 } from './navigation';
+import type { LossReportData } from './loss';
 
 /** Payload for requests that take no arguments. */
 export type EmptyPayload = Record<string, never>;
@@ -317,6 +320,7 @@ export interface ProtocolContract {
   'encounter.state': { payload: EmptyPayload; data: EncounterData };
   'loot.contents': { payload: WreckPayload; data: WreckContentsData };
   'loot.take': { payload: TakeLootPayload; data: CommandResultData };
+  'loss.report': { payload: EmptyPayload; data: LossReportData };
   'module.activate': { payload: WeaponSlotPayload; data: CommandResultData };
   'module.deactivate': { payload: WeaponSlotPayload; data: CommandResultData };
   'targeting.lock': { payload: TargetPayloadData; data: CommandResultData };
@@ -328,6 +332,8 @@ export interface ProtocolContract {
   'navigation.destinations': { payload: EmptyPayload; data: DestinationsData };
   'navigation.site': { payload: EmptyPayload; data: SiteData };
   'navigation.selectDestination': { payload: SelectDestinationPayload; data: CommandResultData };
+  'navigation.selectBookmark': { payload: SelectBookmarkPayload; data: CommandResultData };
+  'navigation.warpToBookmark': { payload: WarpToBookmarkPayload; data: CommandResultData };
   'ship.undock': { payload: EmptyPayload; data: CommandResultData };
   'movement.approach': { payload: TargetRangePayload; data: CommandResultData };
   'movement.orbit': { payload: TargetRangePayload; data: CommandResultData };
@@ -423,6 +429,7 @@ export const REQUEST_TYPES = [
   'insurance.preview',
   'loot.contents',
   'loot.take',
+  'loss.report',
   'market.confirmBuy',
   'market.confirmSell',
   'market.listings',
@@ -438,9 +445,11 @@ export const REQUEST_TYPES = [
   'navigation.destinations',
   'navigation.dock',
   'navigation.retreat',
+  'navigation.selectBookmark',
   'navigation.selectDestination',
   'navigation.site',
   'navigation.warp',
+  'navigation.warpToBookmark',
   'repair.confirm',
   'repair.preview',
   'resupply.confirm',
@@ -489,8 +498,10 @@ export const COMMAND_TYPES = [
   'movement.stop',
   'navigation.dock',
   'navigation.retreat',
+  'navigation.selectBookmark',
   'navigation.selectDestination',
   'navigation.warp',
+  'navigation.warpToBookmark',
   'repair.confirm',
   'resupply.confirm',
   'ship.undock',

@@ -20,7 +20,12 @@ import type { PlayData } from '../frame/usePlayData';
  * a stack is an engine command; the interface only names the stack, the
  * destination and the quantity.
  *
- * @implements FUNC-6.2, FUNC-19.5, MVP-AC-02
+ * A pilot who lost their only ship has no hold (Functional Specification
+ * 9.12), so the hangar is shown alone and says why nothing can be loaded.
+ * Recovery-grant stacks are labelled in words, because they can be used and
+ * refitted but never sold or insured.
+ *
+ * @implements FUNC-6.2, FUNC-19.5, FUNC-9.12, MVP-AC-02, MVP-AC-08
  */
 
 export interface HangarPanelProps {
@@ -54,6 +59,7 @@ export function HangarPanel({ gateway, data, runner }: HangarPanelProps): JSX.El
     (inventory) =>
       inventory.location.kind === 'cargo' && inventory.location.shipId === assets.activeShipId,
   );
+  const shipless = assets !== null && assets.activeShipId === null;
 
   return (
     <section className={styles['panel']} aria-labelledby="hangar-heading">
@@ -61,7 +67,22 @@ export function HangarPanel({ gateway, data, runner }: HangarPanelProps): JSX.El
         {translate('hangar.heading')}
       </h3>
 
-      {hangar === undefined || cargo === undefined ? (
+      {hangar !== undefined && shipless ? (
+        <>
+          <InventoryTable
+            inventory={hangar}
+            title={translate('hangar.stationHangar')}
+            destination={null}
+            destinationLabel={translate('hangar.toCargo')}
+            data={data}
+            runner={runner}
+            onInspect={inspect}
+          />
+          <p className={styles['muted']} data-no-hold>
+            {translate('hangar.noShip')}
+          </p>
+        </>
+      ) : hangar === undefined || cargo === undefined ? (
         <p className={styles['muted']}>{translate('hangar.loading')}</p>
       ) : (
         <>
@@ -130,7 +151,8 @@ export function HangarPanel({ gateway, data, runner }: HangarPanelProps): JSX.El
 interface InventoryTableProps {
   readonly inventory: InventoryData;
   readonly title: string;
-  readonly destination: InventoryData;
+  /** Where a stack can be moved, or `null` when there is nowhere to move it. */
+  readonly destination: InventoryData | null;
   readonly destinationLabel: string;
   readonly data: PlayData;
   readonly runner: ActionRunner;
@@ -180,8 +202,11 @@ function InventoryTable({
             </thead>
             <tbody>
               {plain.map((stack) => (
-                <tr key={stack.id}>
-                  <th scope="row">{translate(stack.item.nameKey)}</th>
+                <tr key={stack.id} data-recovery-grant={stack.recoveryGrant ? 'true' : undefined}>
+                  <th scope="row">
+                    {translate(stack.item.nameKey)}
+                    {stack.recoveryGrant ? <RecoveryGrantLabel /> : null}
+                  </th>
                   <td className={styles['numeric']}>{formatQuantity(stack.quantity, locale)}</td>
                   <td className={styles['numeric']}>
                     {translate('volume.cubicMetres', {
@@ -193,13 +218,15 @@ function InventoryTable({
                   </td>
                   <td>
                     <div className={styles['rowActions']}>
-                      <TransferControl
-                        stack={stack}
-                        destination={destination}
-                        destinationLabel={destinationLabel}
-                        data={data}
-                        runner={runner}
-                      />
+                      {destination === null ? null : (
+                        <TransferControl
+                          stack={stack}
+                          destination={destination}
+                          destinationLabel={destinationLabel}
+                          data={data}
+                          runner={runner}
+                        />
+                      )}
                       <ActionButton
                         actionId="item.inspect"
                         runner={runner}
@@ -281,6 +308,20 @@ function TransferControl({
   );
 }
 
+/**
+ * The word that marks a recovery-grant stack (Functional Specification 9.12):
+ * usable and refittable, never saleable or insurable.
+ */
+export function RecoveryGrantLabel(): JSX.Element {
+  const translate = useTranslate();
+  return (
+    <span className={styles['grant']} data-recovery-grant-label>
+      {' '}
+      {translate('recovery.grant')}
+    </span>
+  );
+}
+
 function StackDetail({ stack }: { readonly stack: StackData }): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
@@ -306,6 +347,9 @@ function StackDetail({ stack }: { readonly stack: StackData }): JSX.Element {
             purchased: formatQuantity(stack.provenance.purchasedQuantity, locale),
           }),
         },
+        ...(stack.recoveryGrant
+          ? [{ label: translate('recovery.grant'), value: translate('recovery.grantDetail') }]
+          : []),
       ]}
     />
   );

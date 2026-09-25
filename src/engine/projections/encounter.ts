@@ -1,4 +1,5 @@
 import {
+  activeShip,
   distance,
   isDestroyed,
   maximumThatFits,
@@ -11,6 +12,7 @@ import {
   type CampaignState,
   type EncounterCommandRefusal,
   type EncounterRuleInput,
+  type SiteObjectState,
   type WreckState,
 } from '@engine/domain';
 import { InventoryError } from '@engine/domain';
@@ -47,7 +49,7 @@ export function encounterProjection(
   content: ContentRepository,
 ): EncounterData {
   const site = state.navigation.currentSite;
-  const player = site?.objects[state.assets.activeShipId];
+  const player = playerObject(state);
   const instance = state.encounter.active;
 
   return deepFreeze({
@@ -67,7 +69,7 @@ function instanceData(state: CampaignState, content: ContentRepository): Encount
   if (instance === null) return null;
   const definition = content.encounter(instance.encounterId);
   const site = state.navigation.currentSite;
-  const player = site?.objects[state.assets.activeShipId];
+  const player = playerObject(state);
 
   return {
     instanceId: instance.instanceId,
@@ -117,10 +119,10 @@ function wreckData(
   entry: WreckState,
 ): WreckData {
   const rules: EncounterRuleInput = { state, content };
-  const site = state.navigation.currentSite;
-  const player = site?.objects[state.assets.activeShipId];
+  const player = playerObject(state);
   return {
     wreckId: entry.id,
+    owner: entry.owner,
     nameKey: entry.nameKey,
     hullId: entry.hullId,
     position: { ...entry.position },
@@ -166,9 +168,8 @@ export function wreckContentsProjection(
 
   const rules: EncounterRuleInput = { state, content };
   const refusal = wreckAccessRefusal(rules, wreckId);
-  const site = state.navigation.currentSite;
-  const player = site?.objects[state.assets.activeShipId];
-  const ship = state.assets.ships[state.assets.activeShipId];
+  const player = playerObject(state);
+  const ship = activeShip(state.assets) ?? undefined;
   const stacks = stacksIn(state.assets, entry.inventoryId);
 
   return deepFreeze({
@@ -186,6 +187,7 @@ export function wreckContentsProjection(
       state: deepClone(stack.state),
       provenance: deepClone(stack.provenance),
       item: itemDataOf(content.requireTradeable(stack.definitionId), content),
+      recoveryGrant: stack.recoveryGrant,
     })),
     maximumQuantities: stacks.map((stack) => ({
       stackId: stack.id,
@@ -206,4 +208,10 @@ function availability(command: string, refusal: EncounterCommandRefusal): Comman
     available: refusal === null,
     unavailableReason: refusal === null ? null : ruleViolationMessageKey(refusal),
   };
+}
+
+/** The player's ship as a site object, when it is in the loaded site. */
+function playerObject(state: CampaignState): SiteObjectState | undefined {
+  const shipId = state.assets.activeShipId;
+  return shipId === null ? undefined : state.navigation.currentSite?.objects[shipId];
 }

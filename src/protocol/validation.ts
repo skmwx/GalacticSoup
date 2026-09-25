@@ -161,6 +161,7 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
     case 'navigation.site':
     case 'combat.state':
     case 'encounter.state':
+    case 'loss.report':
     case 'ship.undock':
     case 'movement.stop':
     case 'navigation.retreat':
@@ -172,6 +173,20 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
       if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
       return isDefinitionIdIn(fields['encounterId'], 'encounter')
         ? null : payloadField(type, 'encounterId', 'format');
+    }
+
+    case 'navigation.selectBookmark': {
+      const unexpected = unexpectedField(fields, ['bookmarkId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      return isEntityId(fields['bookmarkId']) ? null : payloadField(type, 'bookmarkId', 'format');
+    }
+
+    case 'navigation.warpToBookmark': {
+      const unexpected = unexpectedField(fields, ['bookmarkId', 'arrivalDistanceKm']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (!isEntityId(fields['bookmarkId'])) return payloadField(type, 'bookmarkId', 'format');
+      return isFiniteNonNegative(fields['arrivalDistanceKm'])
+        ? null : payloadField(type, 'arrivalDistanceKm', 'format');
     }
 
     case 'movement.approach':

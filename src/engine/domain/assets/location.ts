@@ -1,4 +1,14 @@
-import type { AssetState, Inventory } from './types';
+import type { AssetState, Inventory, ShipIdentity } from './types';
+
+/**
+ * The ship the player controls, or `null` while they own none here
+ * (Functional Specification 9.12). Every caller that needs a ship asks this
+ * rather than indexing `ships` with an id that may be absent.
+ */
+export function activeShip(assets: AssetState): ShipIdentity | null {
+  const id = assets.activeShipId;
+  return id === null ? null : (assets.ships[id] ?? null);
+}
 
 /** Ownership is not permission to remotely move goods. @implements FUNC-6.1 */
 export function isLocalInventory(assets: AssetState, inventory: Inventory): boolean {

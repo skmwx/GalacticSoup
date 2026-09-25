@@ -14,7 +14,8 @@ export function walletProjection(state: CampaignState): WalletData {
 function stackProjection(stack: ItemStack, content: ContentRepository): StackData {
   return { id: stack.id, inventoryId: stack.inventoryId, quantity: stack.quantity,
     state: deepClone(stack.state), provenance: deepClone(stack.provenance),
-    item: itemDataOf(content.requireTradeable(stack.definitionId), content) };
+    item: itemDataOf(content.requireTradeable(stack.definitionId), content),
+    recoveryGrant: stack.recoveryGrant };
 }
 export function inventoryProjection(state: CampaignState, content: ContentRepository, id: string): InventoryData {
   const inventory = requireInventory(state.assets, id);
@@ -30,6 +31,7 @@ export function inventoryProjection(state: CampaignState, content: ContentReposi
 }
 export function assetsProjection(state: CampaignState, content: ContentRepository): AssetsData {
   return deepFreeze({ ...walletProjection(state), location: deepClone(state.assets.location), activeShipId: state.assets.activeShipId,
+    lastDockedStationId: state.assets.lastDockedStationId,
     // Only the player's own ships are assets; an opponent's ship is an
     // encounter entity that happens to use the same rules.
     ships: Object.keys(state.assets.ships).sort()
@@ -38,7 +40,8 @@ export function assetsProjection(state: CampaignState, content: ContentRepositor
       const ship = state.assets.ships[id]!;
       return { id: ship.id, owner: ship.owner, hullId: ship.hullId, cargoInventoryId: ship.cargoInventoryId,
         fittingInventoryId: ship.fittingInventoryId, location: deepClone(ship.location),
-        nameKey: content.requireHull(ship.hullId).nameKey, active: ship.id === state.assets.activeShipId };
+        nameKey: content.requireHull(ship.hullId).nameKey, active: ship.id === state.assets.activeShipId,
+        recoveryGrant: ship.recoveryGrant };
     }),
     inventories: Object.keys(state.assets.inventories).sort()
       .filter((id) => isPlayerInventory(state, id))

@@ -6,6 +6,9 @@ export interface TargetPayload { readonly targetId: string }
 export interface TargetRangePayload extends TargetPayload { readonly distanceKm: number }
 export interface MoveToPointPayload { readonly xKm: number; readonly yKm: number }
 export interface WarpPayload { readonly destinationSiteId: string; readonly arrivalDistanceKm: number }
+/** A bookmark - in the MVP, the player's own wreck - chosen at the station. */
+export interface SelectBookmarkPayload { readonly bookmarkId: string }
+export interface WarpToBookmarkPayload { readonly bookmarkId: string; readonly arrivalDistanceKm: number }
 export interface DockPayload { readonly stationId: string }
 
 export interface VectorData { readonly x: number; readonly y: number }
@@ -58,6 +61,8 @@ export type TravelStatusData =
       readonly phase: 'aligning' | 'preparing' | 'transit';
       readonly originSiteId: string;
       readonly destinationSiteId: string;
+      /** The bookmark the warp is aimed at, or `null` for the site itself. */
+      readonly bookmarkId: string | null;
       readonly arrivalDistanceKm: number;
       readonly distanceKm: number;
       readonly completionAtMs: number | null;
@@ -140,9 +145,41 @@ export interface DestinationData {
   readonly commands: readonly CommandAvailabilityData[];
 }
 
+/**
+ * A bookmark offered as a destination (Functional Specification 5.4, 7.3,
+ * 9.12). The MVP's only bookmark is the automatic one on the player's own
+ * wreck, reached through the same station choice and warp control as an
+ * encounter, without a system map.
+ */
+export interface BookmarkDestinationData {
+  readonly bookmarkId: string;
+  readonly kind: 'playerWreck';
+  readonly siteId: string;
+  readonly siteNameKey: string;
+  /** The hull the wreck was, for its name. */
+  readonly hullNameKey: string;
+  /** The authored encounter at that site, whose opponents a visit meets. */
+  readonly encounterId: string | null;
+  readonly encounterNameKey: string | null;
+  readonly tier: number | null;
+  readonly createdAtMs: number;
+  readonly expiresAtMs: number;
+  readonly remainingSeconds: number;
+  /** Stacks still in the wreck. */
+  readonly itemCount: number;
+  readonly selected: boolean;
+  /** The player is in the bookmark's site now. */
+  readonly current: boolean;
+  /** Choosing the bookmark at the station, and warping to it. */
+  readonly commands: readonly CommandAvailabilityData[];
+}
+
 export interface DestinationsData {
   readonly revision: number;
   readonly selectedEncounterId: string | null;
+  readonly selectedBookmarkId: string | null;
   readonly destinations: readonly DestinationData[];
+  /** The player's own wrecks, oldest first. */
+  readonly bookmarks: readonly BookmarkDestinationData[];
 }
 

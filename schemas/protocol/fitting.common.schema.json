@@ -458,7 +458,9 @@
         "defense",
         "violations",
         "warnings",
-        "undockable"
+        "undockable",
+        "recoveryGrant",
+        "insuranceCoverage"
       ],
       "properties": {
         "revision": {
@@ -582,6 +584,16 @@
         },
         "undockable": {
           "type": "boolean"
+        },
+        "recoveryGrant": {
+          "description": "Supplied by the recovery service: no sale or insurance value (Functional Specification 9.12).",
+          "type": "boolean"
+        },
+        "insuranceCoverage": {
+          "enum": [
+            "basic",
+            "enhanced"
+          ]
         }
       }
     }

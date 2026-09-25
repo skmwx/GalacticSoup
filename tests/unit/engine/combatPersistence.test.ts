@@ -75,7 +75,7 @@ describe('combat runtime in a snapshot', () => {
     if (!restored.ok) return;
     expect(campaignStateHash(restored.state)).toBe(campaignStateHash(state));
 
-    const combat = shipCombat(restored.state, restored.state.assets.activeShipId);
+    const combat = shipCombat(restored.state, restored.state.assets.activeShipId!);
     expect(combat.locks[0]?.status).toBe('locked');
     expect(weaponState(combat, FIRST_WEAPON).cycle?.reservedRounds).toBe(1);
   });
@@ -162,7 +162,7 @@ describe('combat runtime in a snapshot', () => {
 
     expect(restored.ok).toBe(true);
     if (!restored.ok) return;
-    const combat = shipCombat(restored.state, restored.state.assets.activeShipId);
+    const combat = shipCombat(restored.state, restored.state.assets.activeShipId!);
     expect(weaponState(combat, FIRST_WEAPON).reload?.ammunitionId).toBe(FUSION);
   });
 
@@ -179,7 +179,7 @@ describe('combat runtime in a snapshot', () => {
     expect(before.cycle).not.toBeNull();
     expect(restored.ok).toBe(true);
     if (!restored.ok) return;
-    const combat = shipCombat(restored.state, restored.state.assets.activeShipId);
+    const combat = shipCombat(restored.state, restored.state.assets.activeShipId!);
     expect(activeModuleState(combat, 'system:0')).toEqual(before);
     expect(combat.capacitorTrend).not.toBeNull();
     expect(validateCampaign(restored.state, fixture.content)).toEqual([]);

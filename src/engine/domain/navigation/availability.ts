@@ -1,5 +1,5 @@
 import type { ContentRepository } from '@engine/ports';
-import type { EncounterId, SiteId, StationId } from '@shared';
+import type { EncounterId, SiteId } from '@shared';
 
 import { deriveShipAttributes } from '../attributes/shipAttributes';
 import { assessFit } from '../fitting/validity';
@@ -7,6 +7,7 @@ import { shipFit } from '../fitting/fit';
 import type { CampaignState } from '../campaign/state';
 import { distance } from './geometry';
 import { siteDefinitionPosition } from './state';
+import type { Vector2 } from './types';
 
 /**
  * Whether each navigation command may be issued right now, and why not
@@ -36,6 +37,8 @@ export const NAVIGATION_COMMANDS = [
   'navigation.retreat',
   'navigation.dock',
   'navigation.selectDestination',
+  'navigation.selectBookmark',
+  'navigation.warpToBookmark',
 ] as const;
 
 export type NavigationCommand = (typeof NAVIGATION_COMMANDS)[number];
@@ -47,6 +50,7 @@ export type NavigationCommand = (typeof NAVIGATION_COMMANDS)[number];
  * it into an error or a message key. A test checks the two against each other.
  */
 export const NAVIGATION_REFUSALS = [
+  'bookmarkUnknown',
   'destinationCurrent',
   'destinationSelectionUnavailable',
   'destinationUnknown',
@@ -54,6 +58,7 @@ export const NAVIGATION_REFUSALS = [
   'fittingDraftOpen',
   'movementTargetUnavailable',
   'movementUnavailable',
+  'noActiveShip',
   'retreatUnavailable',
   'undockInvalidFit',
   'undockUnavailable',
@@ -91,6 +96,9 @@ export function targetOrderRefusal(input: NavigationRuleInput, targetId: string)
 /** Refuses undocking, including for a fit that may not leave (Functional Specification 8.4). */
 export function undockRefusal({ state, content }: NavigationRuleInput): CommandRefusal {
   if (state.assets.location.kind !== 'station') return 'undockUnavailable';
+  // A pilot who lost their only ship buys another before leaving
+  // (Functional Specification 9.12).
+  if (state.assets.activeShipId === null) return 'noActiveShip';
   if (state.fitting !== null) return 'fittingDraftOpen';
   const ship = state.assets.ships[state.assets.activeShipId];
   if (ship === undefined || ship.location.kind !== 'station') return 'undockUnavailable';
@@ -107,28 +115,108 @@ export function undockRefusal({ state, content }: NavigationRuleInput): CommandR
 
 /** Refuses warp to one destination site (Functional Specification 7.3). */
 export function warpRefusal(input: NavigationRuleInput, destinationSiteId: string): CommandRefusal {
-  const { state, content } = input;
+  const { state } = input;
   const location = state.assets.location;
   if (location.kind !== 'site' || state.navigation.currentSite === null) return 'warpUnavailable';
   if (!state.navigation.knownDestinationSiteIds.includes(destinationSiteId as SiteId)) {
     return 'destinationUnknown';
   }
   if (destinationSiteId === location.siteId) return 'destinationCurrent';
-  const origin = siteDefinitionPosition(content, location.systemId, location.siteId);
-  const destination = siteDefinitionPosition(content, location.systemId, destinationSiteId);
-  if (origin === null || destination === null) return 'destinationUnknown';
-  return distance(origin, destination) < content.rules.navigation.warpMinimumDistanceKm
-    ? 'warpTooClose'
-    : null;
+  return warpDistanceRefusal(input, destinationSiteId, ORIGIN);
 }
 
-/** Refuses the retreat that carries the ship back to its home station (Functional Specification 9.11). */
+/**
+ * Refuses a warp to one bookmark (Functional Specification 7.3).
+ *
+ * The MVP's only bookmark is the automatic one on the player's own wreck
+ * (Functional Specification 5.4, 9.12). A bookmark in the site the ship is
+ * already in is reached by flying, not by warping.
+ */
+export function warpToBookmarkRefusal(input: NavigationRuleInput, bookmarkId: string): CommandRefusal {
+  const { state } = input;
+  const location = state.assets.location;
+  if (location.kind !== 'site' || state.navigation.currentSite === null) return 'warpUnavailable';
+  const bookmark = bookmarkOf(state, bookmarkId);
+  if (bookmark === null || bookmark.systemId !== location.systemId) return 'bookmarkUnknown';
+  if (bookmark.siteId === location.siteId) return 'destinationCurrent';
+  return warpDistanceRefusal(input, bookmark.siteId, bookmark.anchor);
+}
+
+/**
+ * Refuses the retreat that carries the ship back to the station it last
+ * docked at (Functional Specification 9.11).
+ */
 export function retreatRefusal(input: NavigationRuleInput): CommandRefusal {
   const { state, content } = input;
   if (state.assets.location.kind !== 'site') return 'retreatUnavailable';
-  const station = content.requireStation(content.rules.economy.startingStationId as StationId);
+  const station = content.requireStation(state.assets.lastDockedStationId);
   if (state.assets.location.siteId === station.siteId) return 'retreatUnavailable';
   return warpRefusal(input, station.siteId);
+}
+
+/** Refuses choosing a bookmark as the destination at the station (Functional Specification 7.1). */
+export function selectBookmarkRefusal(input: NavigationRuleInput, bookmarkId: string): CommandRefusal {
+  const { state } = input;
+  const location = state.assets.location;
+  if (location.kind !== 'station') return 'destinationSelectionUnavailable';
+  const bookmark = bookmarkOf(state, bookmarkId);
+  return bookmark === null || bookmark.systemId !== location.systemId ? 'bookmarkUnknown' : null;
+}
+
+/** Where a bookmark is: its site and the site-local point a warp arrives at. */
+export interface BookmarkTarget {
+  readonly bookmarkId: string;
+  readonly systemId: string;
+  readonly siteId: SiteId;
+  readonly anchor: Vector2;
+}
+
+/**
+ * Resolves a bookmark. The player's own wreck is the MVP's only bookmark, so
+ * its id is the wreck's (Functional Specification 5.4).
+ */
+export function bookmarkOf(state: CampaignState, bookmarkId: string): BookmarkTarget | null {
+  const wreck = Object.hasOwn(state.encounter.wrecks, bookmarkId)
+    ? state.encounter.wrecks[bookmarkId]
+    : undefined;
+  if (wreck === undefined || wreck.owner !== 'player') return null;
+  return {
+    bookmarkId: wreck.id,
+    systemId: wreck.systemId,
+    siteId: wreck.siteId,
+    anchor: { x: wreck.position.x, y: wreck.position.y },
+  };
+}
+
+/**
+ * The straight-line distance a warp from the current site covers, to a
+ * site-local anchor in the destination (Functional Specification 7.3).
+ */
+export function warpDistanceKm(
+  content: ContentRepository,
+  systemId: string,
+  originSiteId: string,
+  destinationSiteId: string,
+  anchor: Vector2,
+): number | null {
+  const origin = siteDefinitionPosition(content, systemId, originSiteId);
+  const destination = siteDefinitionPosition(content, systemId, destinationSiteId);
+  if (origin === null || destination === null) return null;
+  return distance(origin, { x: destination.x + anchor.x, y: destination.y + anchor.y });
+}
+
+const ORIGIN: Vector2 = { x: 0, y: 0 };
+
+function warpDistanceRefusal(
+  { state, content }: NavigationRuleInput,
+  destinationSiteId: string,
+  anchor: Vector2,
+): CommandRefusal {
+  const location = state.assets.location;
+  if (location.kind !== 'site') return 'warpUnavailable';
+  const covered = warpDistanceKm(content, location.systemId, location.siteId, destinationSiteId, anchor);
+  if (covered === null) return 'destinationUnknown';
+  return covered < content.rules.navigation.warpMinimumDistanceKm ? 'warpTooClose' : null;
 }
 
 /** Refuses docking with one station object (Functional Specification 7.4). */

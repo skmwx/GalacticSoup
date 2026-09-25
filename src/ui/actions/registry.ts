@@ -276,6 +276,17 @@ export const ACTIONS: readonly ActionDefinition[] = [
     category: 'flight',
   },
   {
+    // The player's own wreck is chosen at the station the way an encounter
+    // is (Functional Specification 5.4, 9.12); from space the warp control
+    // reaches it, so it needs no action of its own there.
+    id: 'navigation.selectBookmark',
+    labelKey: 'action.navigation.selectBookmark',
+    descriptionKey: null,
+    icon: 'departure',
+    shortcut: null,
+    category: 'flight',
+  },
+  {
     id: 'ship.undock',
     labelKey: 'action.ship.undock',
     descriptionKey: 'action.ship.undock.detail',

@@ -391,7 +391,7 @@ describe('fitting', () => {
 
     await waitFor(async () => {
       const response = await harness.gateway.request('ship.get', {
-        shipId: (await assets(harness)).activeShipId,
+        shipId: (await assets(harness)).activeShipId!,
       });
       expect(response.ok).toBe(true);
       if (response.ok) {

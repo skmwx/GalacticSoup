@@ -94,7 +94,7 @@ describe('local market formulas', () => {
 describe('station service previews and confirmations', () => {
   it('repairs every layer atomically using the authored price formula [FUNC-10, TECH-7.4]', () => {
     const draft = draftOf(testCampaign());
-    const shipId = draft.assets.activeShipId;
+    const shipId = draft.assets.activeShipId!;
     const ship = draft.assets.ships[shipId]!;
     draft.assets.ships[shipId] = {
       ...ship,
@@ -118,7 +118,7 @@ describe('station service previews and confirmations', () => {
 
   it('tops up loaded magazines from owned local ammunition before buying [MVP-AC-02, FUNC-6.1, TECH-8.3]', () => {
     const draft = draftOf(testCampaign());
-    const shipId = draft.assets.activeShipId;
+    const shipId = draft.assets.activeShipId!;
     const ship = draft.assets.ships[shipId]!;
     const charge = Object.values(draft.assets.stacks).find(
       (stack) => stack.inventoryId === ship.fittingInventoryId && stack.state.kind === 'charge',
@@ -151,7 +151,7 @@ describe('station service previews and confirmations', () => {
 
   it('buys only the resupply shortfall and requests an autosave [MVP-AC-02, FUNC-11.3, TECH-10.4]', () => {
     const draft = draftOf(testCampaign());
-    const shipId = draft.assets.activeShipId;
+    const shipId = draft.assets.activeShipId!;
     const ship = draft.assets.ships[shipId]!;
     for (const stack of Object.values(draft.assets.stacks)) {
       if (stack.definitionId === 'ammo.projectile.small.fusion' && stack.state.kind === 'plain') {
@@ -177,7 +177,7 @@ describe('station service previews and confirmations', () => {
 
   it('persists enhanced insurance as a one-ship purchase [FUNC-9.12, TECH-7.4, TECH-8.2]', () => {
     const campaign = testCampaign();
-    const shipId = campaign.assets.activeShipId;
+    const shipId = campaign.assets.activeShipId!;
     const preview = insurancePreview(campaign, content, { shipId });
     const result = runCommand({ campaign, content, type: 'insurance.confirm', payload: { token: preview.token! } });
 
@@ -206,7 +206,7 @@ describe('station service previews and confirmations', () => {
     expect(result.kind).toBe('committed');
     if (result.kind !== 'committed') return;
     const purchased = Object.values(result.campaign!.assets.ships)
-      .find((ship) => ship.id !== campaign.assets.activeShipId)!;
+      .find((ship) => ship.id !== campaign.assets.activeShipId!)!;
     expect(purchased.hullId).toBe('hull.independent.starter');
     expect(purchased.insurance).toEqual({ coverage: 'basic', premiumPaidCredits: 0 });
     expect(result.campaign!.assets.inventories[purchased.cargoInventoryId]?.location)

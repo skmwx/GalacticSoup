@@ -16,7 +16,12 @@ import styles from './Station.module.css';
  * player sees the rewards the moment they dock rather than having to go
  * looking for them.
  *
- * @implements FUNC-9.11, MVP-AC-06, MVP-AC-09
+ * An attempt can also end with the ship destroyed (Functional Specification
+ * 9.12). The summary then says so, and points at the loss report rather than
+ * at a hold the pilot may no longer have: a pilot with no ship has no hold to
+ * describe.
+ *
+ * @implements FUNC-9.11, FUNC-9.12, MVP-AC-06, MVP-AC-08, MVP-AC-09
  */
 
 export interface SortieSummaryProps {
@@ -28,6 +33,7 @@ export function SortieSummary({ encounter, assets }: SortieSummaryProps): JSX.El
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const outcome = encounter?.lastOutcome ?? null;
+  const shipless = assets !== null && assets.activeShipId === null;
   const hold =
     assets?.inventories.find(
       (inventory) =>
@@ -54,7 +60,9 @@ export function SortieSummary({ encounter, assets }: SortieSummaryProps): JSX.El
           })}
         </p>
       )}
-      {cargo.length === 0 ? (
+      {shipless ? (
+        <p className={styles['muted']}>{translate('sortie.noShip')}</p>
+      ) : cargo.length === 0 ? (
         <p className={styles['muted']}>{translate('sortie.holdEmpty')}</p>
       ) : (
         <>
@@ -71,7 +79,9 @@ export function SortieSummary({ encounter, assets }: SortieSummaryProps): JSX.El
           </ul>
         </>
       )}
-      <p className={styles['muted']}>{translate('sortie.next')}</p>
+      <p className={styles['muted']}>
+        {outcome?.status === 'lost' ? translate('sortie.nextLost') : translate('sortie.next')}
+      </p>
     </section>
   );
 }

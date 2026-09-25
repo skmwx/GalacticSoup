@@ -4,7 +4,7 @@ import { isDefinitionIdIn } from '@shared';
 import { isEntityId } from '../campaign/identity';
 import type { CampaignState } from '../campaign/state';
 
-import { ENCOUNTER_STATUSES, type EncounterState } from './types';
+import { ENCOUNTER_OUTCOMES, ENCOUNTER_STATUSES, WRECK_OWNERS, type EncounterState } from './types';
 
 /**
  * Encounter shape and consistency (Technical Specification 15.3, checks 1, 3,
@@ -209,9 +209,10 @@ function objective(value: unknown): boolean {
 
 function wreckState(value: unknown): boolean {
   return shape(value, [
-    'id', 'systemId', 'siteId', 'inventoryId', 'hullId', 'nameKey', 'position',
+    'id', 'owner', 'systemId', 'siteId', 'inventoryId', 'hullId', 'nameKey', 'position',
     'radiusKm', 'createdAtMs', 'expiresAtMs', 'boundaryEntryId',
-  ]) && isEntityId(value['id']) && isDefinitionIdIn(value['systemId'], 'system') &&
+  ]) && isEntityId(value['id']) && (WRECK_OWNERS as readonly unknown[]).includes(value['owner']) &&
+    isDefinitionIdIn(value['systemId'], 'system') &&
     isDefinitionIdIn(value['siteId'], 'site') && isEntityId(value['inventoryId']) &&
     isDefinitionIdIn(value['hullId'], 'hull') && typeof value['nameKey'] === 'string' &&
     vector(value['position']) && nonNegative(value['radiusKm']) &&
@@ -223,7 +224,7 @@ function outcome(value: unknown): boolean {
   return value === null || (shape(value, [
     'encounterId', 'status', 'resolvedAtMs', 'bountyCreditsPaid', 'npcsDestroyed', 'npcsTotal',
   ]) && isDefinitionIdIn(value['encounterId'], 'encounter') &&
-    (value['status'] === 'completed' || value['status'] === 'abandoned') &&
+    (ENCOUNTER_OUTCOMES as readonly unknown[]).includes(value['status']) &&
     count(value['resolvedAtMs']) && count(value['bountyCreditsPaid']) &&
     count(value['npcsDestroyed']) && count(value['npcsTotal']));
 }

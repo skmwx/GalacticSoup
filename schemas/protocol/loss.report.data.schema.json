@@ -1,0 +1,553 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/loss.report.data.schema.json",
+  "title": "LossReportData",
+  "description": "The most recent player ship destruction and how the pilot was recovered from it: who hit the ship, which layers each attacker broke, the last burst, what had stopped working, what was lost and what survived into the wreck, the insurance settlement and the recovery outcome (Functional Specification 9.12, 19.6, 20).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "revision",
+    "simulationTimeMs",
+    "losses",
+    "report"
+  ],
+  "properties": {
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "simulationTimeMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "losses": {
+      "description": "Ships lost in this campaign.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "report": {
+      "description": "The most recent loss, or null before the first one.",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/loss"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "entityId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "damageProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "electromagnetic",
+        "thermal",
+        "kinetic",
+        "explosive"
+      ],
+      "properties": {
+        "electromagnetic": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thermal": {
+          "type": "number",
+          "minimum": 0
+        },
+        "kinetic": {
+          "type": "number",
+          "minimum": 0
+        },
+        "explosive": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "layerDamage": {
+      "description": "Applied damage by the defense layer it came off.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shield",
+        "armor",
+        "hull"
+      ],
+      "properties": {
+        "shield": {
+          "type": "number",
+          "minimum": 0
+        },
+        "armor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hull": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "loss": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lossId",
+        "shipId",
+        "hullId",
+        "hullNameKey",
+        "destroyedAtMs",
+        "systemId",
+        "siteId",
+        "siteNameKey",
+        "encounterId",
+        "encounterNameKey",
+        "recoveryStationId",
+        "recoveryStationNameKey",
+        "wreck",
+        "incoming",
+        "totalAppliedDamage",
+        "finalDamage",
+        "disablingEffects",
+        "items",
+        "insurance",
+        "recovery"
+      ],
+      "properties": {
+        "lossId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "shipId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "hullId": {
+          "type": "string",
+          "pattern": "^hull(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "hullNameKey": {
+          "type": "string"
+        },
+        "destroyedAtMs": {
+          "$ref": "#/$defs/count"
+        },
+        "systemId": {
+          "type": "string",
+          "pattern": "^system(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "siteId": {
+          "type": "string",
+          "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "siteNameKey": {
+          "type": "string"
+        },
+        "encounterId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            }
+          ]
+        },
+        "encounterNameKey": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "recoveryStationId": {
+          "type": "string",
+          "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "recoveryStationNameKey": {
+          "type": "string"
+        },
+        "wreck": {
+          "$ref": "#/$defs/wreck"
+        },
+        "incoming": {
+          "description": "Attackers in the order they first hit the ship.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/damageSource"
+          }
+        },
+        "totalAppliedDamage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "finalDamage": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/finalDamage"
+            }
+          ]
+        },
+        "disablingEffects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/disablingEffect"
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/item"
+          }
+        },
+        "insurance": {
+          "$ref": "#/$defs/insurance"
+        },
+        "recovery": {
+          "$ref": "#/$defs/recovery"
+        }
+      }
+    },
+    "wreck": {
+      "description": "The survivors' wreck as it is now. Once it has expired it is no longer present and holds nothing.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wreckId",
+        "present",
+        "expiresAtMs",
+        "remainingSeconds",
+        "itemCount",
+        "selected"
+      ],
+      "properties": {
+        "wreckId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "present": {
+          "type": "boolean"
+        },
+        "expiresAtMs": {
+          "$ref": "#/$defs/count"
+        },
+        "remainingSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "itemCount": {
+          "$ref": "#/$defs/count"
+        },
+        "selected": {
+          "type": "boolean"
+        }
+      }
+    },
+    "damageSource": {
+      "description": "One attacker's share of the damage the lost ship took.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId",
+        "nameKey",
+        "hits",
+        "firstAtMs",
+        "lastAtMs",
+        "rawDamage",
+        "appliedDamage",
+        "layerDamage",
+        "appliedTotal"
+      ],
+      "properties": {
+        "sourceId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "nameKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "hits": {
+          "$ref": "#/$defs/count"
+        },
+        "firstAtMs": {
+          "$ref": "#/$defs/count"
+        },
+        "lastAtMs": {
+          "$ref": "#/$defs/count"
+        },
+        "rawDamage": {
+          "$ref": "#/$defs/damageProfile"
+        },
+        "appliedDamage": {
+          "$ref": "#/$defs/damageProfile"
+        },
+        "layerDamage": {
+          "$ref": "#/$defs/layerDamage"
+        },
+        "appliedTotal": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "finalDamage": {
+      "description": "The last burst of fire the ship took before its hull gave out.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId",
+        "nameKey",
+        "slotKey",
+        "hits",
+        "atMs",
+        "rawDamage",
+        "appliedDamage",
+        "appliedTotal"
+      ],
+      "properties": {
+        "sourceId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "nameKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "slotKey": {
+          "type": "string",
+          "pattern": "^(weapon|system|engineering|utility):([0-9]|1[0-5])$"
+        },
+        "hits": {
+          "$ref": "#/$defs/count"
+        },
+        "atMs": {
+          "$ref": "#/$defs/count"
+        },
+        "rawDamage": {
+          "$ref": "#/$defs/damageProfile"
+        },
+        "appliedDamage": {
+          "$ref": "#/$defs/damageProfile"
+        },
+        "appliedTotal": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "disablingEffect": {
+      "description": "Something of the ship's own that had stopped working before the end.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "slot",
+        "moduleId",
+        "moduleNameKey"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "capacitorDepleted",
+            "ammunitionExhausted"
+          ]
+        },
+        "slot": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/slot"
+        },
+        "moduleId": {
+          "type": "string",
+          "pattern": "^module(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "moduleNameKey": {
+          "type": "string"
+        }
+      }
+    },
+    "item": {
+      "description": "Units the lost ship carried and whether they survived into the wreck. Loaded ammunition never survives.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definitionId",
+        "nameKey",
+        "quantity",
+        "origin",
+        "survived",
+        "recoveryGrant"
+      ],
+      "properties": {
+        "definitionId": {
+          "type": "string",
+          "pattern": "^(item|module|ammo)(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "origin": {
+          "enum": [
+            "fitted",
+            "cargo",
+            "loaded"
+          ]
+        },
+        "survived": {
+          "type": "boolean"
+        },
+        "recoveryGrant": {
+          "type": "boolean"
+        }
+      },
+      "if": {
+        "properties": {
+          "origin": {
+            "const": "loaded"
+          }
+        },
+        "required": [
+          "origin"
+        ]
+      },
+      "then": {
+        "properties": {
+          "survived": {
+            "const": false
+          }
+        }
+      }
+    },
+    "insurance": {
+      "description": "The settlement. Enhanced cover is consumed by the loss it pays for; a recovery-grant hull pays nothing.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coverage",
+        "hullReferenceValueCredits",
+        "payoutFraction",
+        "payoutCredits",
+        "enhancedConsumed",
+        "recoveryGrantHull",
+        "trace"
+      ],
+      "properties": {
+        "coverage": {
+          "enum": [
+            "basic",
+            "enhanced"
+          ]
+        },
+        "hullReferenceValueCredits": {
+          "$ref": "#/$defs/count"
+        },
+        "payoutFraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "payoutCredits": {
+          "$ref": "#/$defs/count"
+        },
+        "enhancedConsumed": {
+          "type": "boolean"
+        },
+        "recoveryGrantHull": {
+          "type": "boolean"
+        },
+        "trace": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/formulaTrace"
+        }
+      }
+    },
+    "recovery": {
+      "description": "How the pilot was left able to fly again. Only a pilot left without a ship has no active ship.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "activeShipId",
+        "creditsAfter",
+        "starterReferenceValueCredits"
+      ],
+      "properties": {
+        "outcome": {
+          "enum": [
+            "granted",
+            "otherShip",
+            "noShip"
+          ]
+        },
+        "activeShipId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/entityId"
+            }
+          ]
+        },
+        "creditsAfter": {
+          "$ref": "#/$defs/count"
+        },
+        "starterReferenceValueCredits": {
+          "$ref": "#/$defs/count"
+        }
+      },
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "noShip"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "activeShipId": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "activeShipId": {
+            "$ref": "#/$defs/entityId"
+          }
+        }
+      }
+    }
+  }
+}

@@ -116,6 +116,8 @@ describe('wrecks', () => {
     expect(validateCampaign(fixture.draft as CampaignState, content)).toEqual([]);
   });
 
+  // Thirty simulated minutes at 1x are 36,000 quanta, which a busy parallel
+  // run can take longer than the default five seconds to integrate.
   it('expires on its own boundary and takes its contents with it [FUNC-5.4]', () => {
     const fixture = encounterFixture();
     destroy(fixture, opponentIds(fixture)[0] ?? '');
@@ -129,7 +131,7 @@ describe('wrecks', () => {
     expect(fixture.draft.assets.inventories[inventoryId]).toBeUndefined();
     expect(stacksIn(fixture.draft.assets, inventoryId)).toEqual([]);
     expect(validateCampaign(fixture.draft as CampaignState, content)).toEqual([]);
-  });
+  }, 30_000);
 
   it('refuses to open a wreck beyond the authored range and explains why [FUNC-9.11, FUNC-22.10, TECH-17]', () => {
     const fixture = encounterFixture({ playerPositionKm: { x: 40, y: 0 } });

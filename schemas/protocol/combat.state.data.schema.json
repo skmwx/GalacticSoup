@@ -637,6 +637,17 @@
         "type": "number"
       }
     },
+    "layerDamage": {
+      "description": "Applied damage by the defense layer it came off.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shield", "armor", "hull"],
+      "properties": {
+        "shield": { "type": "number", "minimum": 0 },
+        "armor": { "type": "number", "minimum": 0 },
+        "hull": { "type": "number", "minimum": 0 }
+      }
+    },
     "defenseLayer": {
       "type": "object",
       "additionalProperties": false,
@@ -818,7 +829,7 @@
           "additionalProperties": false,
           "required": [
             "kind", "firstAtMs", "lastAtMs", "sourceId", "targetId", "slotKey",
-            "count", "rawDamage", "appliedDamage"
+            "count", "rawDamage", "appliedDamage", "layerDamage"
           ],
           "properties": {
             "kind": { "const": "damage" },
@@ -829,7 +840,8 @@
             "slotKey": { "type": "string" },
             "count": { "type": "integer", "minimum": 1 },
             "rawDamage": { "$ref": "#/$defs/numberMap" },
-            "appliedDamage": { "$ref": "#/$defs/numberMap" }
+            "appliedDamage": { "$ref": "#/$defs/numberMap" },
+            "layerDamage": { "$ref": "#/$defs/layerDamage" }
           }
         },
         {

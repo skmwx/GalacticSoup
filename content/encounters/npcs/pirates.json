@@ -1,6 +1,6 @@
 {
   "kind": "npc.profiles",
-  "$comment": "Roles differ by range behaviour and module use, not only by hit points.",
+  "$comment": "Roles differ by range behaviour and module use, not only by hit points. Reserve rounds let an opponent reload from its hold; the tier-1 scout carries none.",
   "definitions": [
     {
       "id": "npc.pirate.scout",
@@ -27,7 +27,8 @@
           "module.turret.railgun.small",
           "module.plating.armor.small"
         ],
-        "ammunitionId": "ammo.hybrid.small.iron"
+        "ammunitionId": "ammo.hybrid.small.iron",
+        "reserveRounds": 50
       },
       "bountyCredits": 4800,
       "lootTableId": "loot.pirate.patrol"
@@ -43,7 +44,8 @@
           "module.turret.autocannon.small",
           "module.plating.armor.small"
         ],
-        "ammunitionId": "ammo.projectile.small.fusion"
+        "ammunitionId": "ammo.projectile.small.fusion",
+        "reserveRounds": 80
       },
       "bountyCredits": 5200,
       "lootTableId": "loot.pirate.patrol"
@@ -61,7 +63,8 @@
           "module.plating.armor.small",
           "module.capacitor.battery.small"
         ],
-        "ammunitionId": "ammo.projectile.small.phased"
+        "ammunitionId": "ammo.projectile.small.phased",
+        "reserveRounds": 80
       },
       "bountyCredits": 9000,
       "lootTableId": "loot.pirate.base"

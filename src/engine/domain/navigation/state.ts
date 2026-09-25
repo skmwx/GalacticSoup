@@ -67,7 +67,8 @@ export function stationAtSite(content: ContentRepository, siteId: string): Stati
 }
 
 export function activeSiteObject(draft: CampaignDraft): SiteObjectState | null {
-  return draft.navigation.currentSite?.objects[draft.assets.activeShipId] ?? null;
+  const shipId = draft.assets.activeShipId;
+  return shipId === null ? null : (draft.navigation.currentSite?.objects[shipId] ?? null);
 }
 
 /** The standing order of one ship, or `null` when it holds none. */

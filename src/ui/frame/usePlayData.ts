@@ -16,6 +16,7 @@ import {
   type EngineError,
   type FittingDraftData,
   type LocationData,
+  type LossReportData,
   type MarketListingsData,
   type RequestPayload,
   type ShipData,
@@ -45,7 +46,17 @@ import type { MessageKey } from '@shared';
  * the store holds the id the player opened and reads what the engine says the
  * wreck holds - including, when it is out of reach, why it cannot be taken.
  *
- * @implements TECH-7.3, TECH-12.1
+ * A pilot whose ship was destroyed may own none (Functional Specification
+ * 9.12). The ship-specific projections then read as `null` rather than keep
+ * describing the ship that was lost, and the loss report is read wherever the
+ * pilot is, because it is what explains how they got there.
+ *
+ * Autosave triggers are answered here, whether a command or an elapsed
+ * quantum raised them, and a trigger that arrives while a save is still being
+ * written is folded into one follow-up save rather than queued behind it
+ * (Functional Specification 3.4, 9.12; Technical Specification 11.3).
+ *
+ * @implements TECH-7.3, TECH-12.1, TECH-11.3, FUNC-9.12
  */
 
 export interface PlayProjections {
@@ -61,6 +72,8 @@ export interface PlayProjections {
   readonly encounter: EncounterData | null;
   /** The contents of the wreck the player opened, or `null`. */
   readonly wreck: WreckContentsData | null;
+  /** The loss report: how many ships were lost and the last loss. */
+  readonly loss: LossReportData | null;
 }
 
 export interface PlayDataState extends PlayProjections {
@@ -83,6 +96,12 @@ export interface PlayData extends PlayDataState {
   applyInvalidations(topics: readonly string[]): void;
   /** Opens one wreck's contents, or closes them with `null`. */
   openWreck(wreckId: string | null): void;
+  /**
+   * Answers an autosave trigger. A trigger that arrives while a save is being
+   * written is coalesced into one follow-up save, so the snapshot catches up
+   * with the latest state without a queue of writes.
+   */
+  requestAutosave(): Promise<void>;
   /**
    * Sends a command, reports its refusal, re-reads what it invalidated and
    * answers any autosave trigger it carried.
@@ -132,7 +151,9 @@ export type PlayCommand =
   | 'movement.moveToPoint'
   | 'movement.stop'
   | 'navigation.selectDestination'
+  | 'navigation.selectBookmark'
   | 'navigation.warp'
+  | 'navigation.warpToBookmark'
   | 'navigation.retreat'
   | 'navigation.dock'
   | 'ship.undock'
@@ -142,7 +163,9 @@ type ProjectionName = keyof PlayProjections;
 
 /** Which projection each invalidation topic makes stale. */
 const TOPIC_TARGETS: Readonly<Record<string, readonly ProjectionName[]>> = {
-  assets: ['assets', 'ship', 'undock'],
+  // Whether the ship may undock is a site command, and it moves with the active
+  // ship - a pilot who buys a hull after a loss may leave at once.
+  assets: ['assets', 'ship', 'undock', 'site'],
   wallet: ['assets'],
   // What the hold carries decides which charges a weapon may change to and
   // how much of a wreck's contents would still fit.
@@ -160,9 +183,12 @@ const TOPIC_TARGETS: Readonly<Record<string, readonly ProjectionName[]>> = {
   // A wreck opens and closes with range, which moves whenever the ship does.
   navigation: ['site', 'wreck'],
   site: ['site', 'wreck'],
-  destinations: ['destinations'],
+  // The loss report carries the player's wreck as it is now: whether it is
+  // chosen as the destination, how much is left in it and whether it expired.
+  destinations: ['destinations', 'loss'],
   combat: ['combat'],
-  encounter: ['encounter', 'wreck'],
+  encounter: ['encounter', 'wreck', 'loss'],
+  loss: ['loss'],
 };
 
 /** Projections only a docked ship can answer for. */
@@ -183,6 +209,7 @@ const EVERYTHING: readonly ProjectionName[] = [
   'combat',
   'encounter',
   'wreck',
+  'loss',
 ];
 
 const INITIAL: PlayDataState = {
@@ -198,6 +225,7 @@ const INITIAL: PlayDataState = {
   combat: null,
   encounter: null,
   wreck: null,
+  loss: null,
   error: null,
   transportMessageKey: null,
   openWreckId: null,
@@ -219,8 +247,11 @@ export function usePlayData(options: PlayDataOptions): PlayData {
   const reading = useRef(false);
   const queued = useRef(new Set<ProjectionName>());
   /** Where the ship was at the last read, so a tactical refresh costs one request. */
-  const placement = useRef<{ location: LocationData; shipId: string } | null>(null);
+  const placement = useRef<{ location: LocationData; shipId: string | null } | null>(null);
   const openWreckId = useRef<string | null>(null);
+  /** The autosave being written, and whether another trigger arrived meanwhile. */
+  const saving = useRef<Promise<void> | null>(null);
+  const saveAgain = useRef(false);
 
   useEffect(() => {
     // React StrictMode intentionally runs an extra setup/cleanup cycle in
@@ -262,6 +293,8 @@ export function usePlayData(options: PlayDataOptions): PlayData {
 
       const stationId = placed.location.kind === 'station' ? placed.location.stationId : null;
       const docked = stationId !== null;
+      // A pilot who lost their only ship has none to describe (Functional
+      // Specification 9.12), so nothing ship-specific is asked for.
       const shipId = placed.shipId;
       const ask = (name: ProjectionName): boolean =>
         wanted.has(name) &&
@@ -279,17 +312,21 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         combat,
         encounter,
         wreck,
+        loss,
       ] = await Promise.all([
         ask('services') && stationId !== null ? gateway.request('station.services', { stationId }) : null,
         ask('market') && stationId !== null ? gateway.request('market.listings', { stationId }) : null,
-        ask('ship') ? gateway.request('ship.get', { shipId }) : null,
+        ask('ship') && shipId !== null ? gateway.request('ship.get', { shipId }) : null,
         ask('fitting') ? gateway.request('fitting.draft', EMPTY_PAYLOAD) : null,
-        ask('undock') ? gateway.request('ship.undockValidity', { shipId }) : null,
+        ask('undock') && shipId !== null
+          ? gateway.request('ship.undockValidity', { shipId })
+          : null,
         ask('site') ? gateway.request('navigation.site', EMPTY_PAYLOAD) : null,
         ask('destinations') ? gateway.request('navigation.destinations', EMPTY_PAYLOAD) : null,
         ask('combat') ? gateway.request('combat.state', EMPTY_PAYLOAD) : null,
         ask('encounter') ? gateway.request('encounter.state', EMPTY_PAYLOAD) : null,
         ask('wreck') && wreckId !== null ? gateway.request('loot.contents', { wreckId }) : null,
+        ask('loss') ? gateway.request('loss.report', EMPTY_PAYLOAD) : null,
       ]);
 
       // A later read has already published; this one is stale and dropped
@@ -310,6 +347,11 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         ...(destinations?.ok === true ? { destinations: destinations.data } : {}),
         ...(combat?.ok === true ? { combat: combat.data } : {}),
         ...(encounter?.ok === true ? { encounter: encounter.data } : {}),
+        ...(loss?.ok === true ? { loss: loss.data } : {}),
+        // Without a ship there is nothing to describe or to undock, and the
+        // ship that was lost must not go on being shown as the active one.
+        ...(shipId === null && wanted.has('ship') ? { ship: null } : {}),
+        ...(shipId === null && wanted.has('undock') ? { undock: null } : {}),
         // A wreck that expired or was left behind answers with an error, and
         // the open panel empties rather than showing what it used to hold.
         ...(wanted.has('wreck')
@@ -385,6 +427,28 @@ export function usePlayData(options: PlayDataOptions): PlayData {
     [readOnce, publish],
   );
 
+  const requestAutosave = useCallback((): Promise<void> => {
+    if (saving.current !== null) {
+      // A save is already being written. It captured an earlier revision, so
+      // one more follows it; further triggers meanwhile fold into that one.
+      saveAgain.current = true;
+      return saving.current;
+    }
+    const run = async (): Promise<void> => {
+      try {
+        do {
+          saveAgain.current = false;
+          await session.save('auto');
+        } while (saveAgain.current && mounted.current);
+      } finally {
+        saving.current = null;
+        saveAgain.current = false;
+      }
+    };
+    saving.current = run();
+    return saving.current;
+  }, [session]);
+
   const send = useCallback(
     async <TType extends PlayCommand>(
       type: TType,
@@ -403,7 +467,7 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         const result = response.data;
         applyInvalidations(result.invalidations);
         if (result.autosaveRequested) {
-          await session.save('auto');
+          await requestAutosave();
         }
         return { ok: true, result };
       } catch (error: unknown) {
@@ -411,7 +475,7 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         return { ok: false, error: null };
       }
     },
-    [gateway, session, publish, applyInvalidations, refresh],
+    [gateway, publish, applyInvalidations, refresh, requestAutosave],
   );
 
   const openWreck = useCallback(
@@ -451,10 +515,11 @@ export function usePlayData(options: PlayDataOptions): PlayData {
       refresh,
       applyInvalidations,
       openWreck,
+      requestAutosave,
       send,
       clearError,
     }),
-    [state, location, refresh, applyInvalidations, openWreck, send, clearError],
+    [state, location, refresh, applyInvalidations, openWreck, requestAutosave, send, clearError],
   );
 }
 

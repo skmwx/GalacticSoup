@@ -9,6 +9,7 @@ import { FormulaExplanation } from '../common/Explanation';
 import { ItemComparison, ItemSummary } from '../common/ItemDetail';
 import { formatCredits, formatQuantity } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
+import { RecoveryGrantLabel } from './HangarPanel';
 import styles from './Station.module.css';
 import { TransactionDialog } from './TransactionDialog';
 import type { PlayData } from '../frame/usePlayData';
@@ -25,7 +26,12 @@ import { useTransactionPreview } from './useTransactionPreview';
  * Deferred trade surfaces - remote quotes, price history, routes - are absent
  * rather than shown as empty panels.
  *
- * @implements FUNC-11.1, FUNC-11.3, FUNC-19.5, MVP-AC-02, MVP-AC-06
+ * Recovery-grant stacks are listed with their label. Whether one may be sold
+ * is the sale preview's answer, which refuses it and says why, rather than
+ * something this screen decides (Functional Specification 9.12). A pilot
+ * with no ship is told that the hull they buy here becomes their active ship.
+ *
+ * @implements FUNC-11.1, FUNC-11.3, FUNC-19.5, FUNC-9.12, MVP-AC-02, MVP-AC-06, MVP-AC-08
  */
 
 export interface MarketPanelProps {
@@ -107,6 +113,12 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
       {unavailable === null ? null : (
         <p className={styles['warning']}>{translate(unavailable)}</p>
       )}
+
+      {data.assets !== null && data.assets.activeShipId === null ? (
+        <p className={styles['warning']} data-no-ship>
+          {translate('market.noShip')}
+        </p>
+      ) : null}
 
       <div className={styles['toolbar']}>
         <label className={styles['field']} htmlFor={filterId}>
@@ -215,8 +227,11 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
                   (entry) => entry.item.definitionId === stack.item.definitionId,
                 );
                 return (
-                  <tr key={stack.id}>
-                    <th scope="row">{translate(stack.item.nameKey)}</th>
+                  <tr key={stack.id} data-recovery-grant={stack.recoveryGrant ? 'true' : undefined}>
+                    <th scope="row">
+                      {translate(stack.item.nameKey)}
+                      {stack.recoveryGrant ? <RecoveryGrantLabel /> : null}
+                    </th>
                     <td className={styles['numeric']}>
                       {formatQuantity(stack.quantity, locale)}
                     </td>

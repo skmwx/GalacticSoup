@@ -313,6 +313,8 @@ function describeShip(
     violations: assessment.violations.map(issueData(fitViolationMessageKey)),
     warnings: summary.warnings.map(issueData(fitWarningMessageKey)),
     undockable: assessment.violations.length === 0,
+    recoveryGrant: ship.recoveryGrant,
+    insuranceCoverage: ship.insurance.coverage,
   };
 }
 

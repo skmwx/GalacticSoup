@@ -25,7 +25,10 @@ import type { PlayData } from '../frame/usePlayData';
  * and what the resulting ship looks like all arrive from the engine, and the
  * preview is the commit run against a copy.
  *
- * @implements FUNC-8.4, FUNC-8.5, FUNC-19.5, MVP-AC-02
+ * A pilot who lost their only ship has nothing to fit (Functional
+ * Specification 9.12); the control to begin stays visible and says so.
+ *
+ * @implements FUNC-8.4, FUNC-8.5, FUNC-19.5, FUNC-9.12, MVP-AC-02
  */
 
 export interface FittingPanelProps {
@@ -38,6 +41,7 @@ export function FittingPanel({ data, runner }: FittingPanelProps): JSX.Element {
   const draft = data.fitting?.draft ?? null;
   const ship = data.ship;
   const fittingService = data.services?.services.find((entry) => entry.service === 'fitting');
+  const shipless = data.assets !== null && data.assets.activeShipId === null;
 
   return (
     <section className={styles['panel']} aria-labelledby="fitting-heading">
@@ -47,14 +51,18 @@ export function FittingPanel({ data, runner }: FittingPanelProps): JSX.Element {
 
       {draft === null ? (
         <>
-          <p className={styles['muted']}>{translate('fitting.closed')}</p>
+          <p className={styles['muted']}>
+            {shipless ? translate('fitting.noShip') : translate('fitting.closed')}
+          </p>
           {ship === null ? null : <FittedSlots ship={ship} />}
           <ActionButton
             actionId="fitting.begin"
             runner={runner}
             variant="primary"
-            available={fittingService?.available ?? false}
-            unavailableReason={fittingService?.unavailableReason ?? null}
+            available={!shipless && (fittingService?.available ?? false)}
+            unavailableReason={
+              shipless ? 'fitting.unavailable.noShip' : (fittingService?.unavailableReason ?? null)
+            }
             onRun={async () => {
               if (ship !== null) {
                 await data.send('fitting.begin', { shipId: ship.id });

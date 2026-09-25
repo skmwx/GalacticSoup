@@ -39,6 +39,7 @@ export {
   takeLoot,
   WRECK_EXPIRE_BOUNDARY,
 } from './encounter';
+export { advanceLoss } from './loss';
 export { orderMovement } from './orders';
 export {
   advanceNavigation,

@@ -7,7 +7,9 @@ import { useTranslate } from '../localization';
 import { DeparturePanel } from './DeparturePanel';
 import { FittingPanel } from './FittingPanel';
 import { HangarPanel } from './HangarPanel';
+import { LossReport } from './LossReport';
 import { MarketPanel } from './MarketPanel';
+import { NoShipNotice } from './NoShipNotice';
 import { ServicesPanel } from './ServicesPanel';
 import { ShipPanel } from './ShipPanel';
 import { SortieSummary } from './SortieSummary';
@@ -25,13 +27,21 @@ import type { PlayData } from '../frame/usePlayData';
  * Which surface is open is presentation state and lives here; everything the
  * surfaces show arrived from the engine.
  *
- * @implements FUNC-10, FUNC-19.5, MVP-AC-02, TECH-12.1
+ * After a loss the hub leads with what the player most needs: a notice when
+ * they have no ship and how to get one, then the loss report while the loss
+ * is the latest outcome. Once a later sortie has resolved, the report moves
+ * below the services, collapsed but still reachable (Functional Specification
+ * 9.12, 20).
+ *
+ * @implements FUNC-10, FUNC-19.5, FUNC-9.12, MVP-AC-02, MVP-AC-08, TECH-12.1
  */
 
 export interface StationScreenProps {
   readonly gateway: ClientGateway;
   readonly data: PlayData;
   readonly runner: ActionRunner;
+  /** The clock the engine last answered with, for countdowns such as a wreck's. */
+  readonly simulationTimeMs: number;
 }
 
 type PanelId =
@@ -68,9 +78,24 @@ const REQUIRED_SERVICE: Readonly<Record<PanelId, string | null>> = {
   'station.departure': null,
 };
 
-export function StationScreen({ gateway, data, runner }: StationScreenProps): JSX.Element {
+export function StationScreen({
+  gateway,
+  data,
+  runner,
+  simulationTimeMs,
+}: StationScreenProps): JSX.Element {
   const translate = useTranslate();
   const [open, setOpen] = useState<PanelId>('station.hub');
+
+  const shipless = data.assets !== null && data.assets.activeShipId === null;
+  const report = data.loss?.report ?? null;
+  const lastOutcome = data.encounter?.lastOutcome ?? null;
+  // The loss is the latest thing that happened until a later sortie resolves.
+  const lossIsRecent =
+    report !== null && (lastOutcome === null || report.destroyedAtMs >= lastOutcome.resolvedAtMs);
+  const openMarket = (): void => {
+    setOpen('station.market');
+  };
 
   useActionShortcuts(
     Object.fromEntries(
@@ -139,6 +164,20 @@ export function StationScreen({ gateway, data, runner }: StationScreenProps): JS
         </p>
       )}
 
+      {open === 'station.hub' && shipless ? (
+        <NoShipNotice data={data} runner={runner} onOpenMarket={openMarket} />
+      ) : null}
+
+      {open === 'station.hub' && report !== null && lossIsRecent ? (
+        <LossReport
+          report={report}
+          data={data}
+          runner={runner}
+          simulationTimeMs={simulationTimeMs}
+          recent
+        />
+      ) : null}
+
       {open === 'station.hub' ? <SortieSummary encounter={data.encounter} assets={data.assets} /> : null}
 
       {open === 'station.hub' ? (
@@ -173,6 +212,16 @@ export function StationScreen({ gateway, data, runner }: StationScreenProps): JS
         </div>
       ) : null}
 
+      {open === 'station.hub' && report !== null && !lossIsRecent ? (
+        <LossReport
+          report={report}
+          data={data}
+          runner={runner}
+          simulationTimeMs={simulationTimeMs}
+          recent={false}
+        />
+      ) : null}
+
       {open === 'station.market' ? (
         <MarketPanel gateway={gateway} data={data} runner={runner} />
       ) : null}
@@ -184,7 +233,9 @@ export function StationScreen({ gateway, data, runner }: StationScreenProps): JS
         <ServicesPanel gateway={gateway} data={data} runner={runner} />
       ) : null}
       {open === 'station.ship' ? <ShipPanel data={data} /> : null}
-      {open === 'station.departure' ? <DeparturePanel data={data} runner={runner} /> : null}
+      {open === 'station.departure' ? (
+        <DeparturePanel data={data} runner={runner} simulationTimeMs={simulationTimeMs} />
+      ) : null}
     </section>
   );
 }

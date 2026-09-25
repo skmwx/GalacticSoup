@@ -22,5 +22,7 @@ export type ObjectAttitude = (typeof OBJECT_ATTITUDES)[number];
 
 export function objectAttitude(state: CampaignState, objectId: string): ObjectAttitude {
   if (objectId === state.assets.activeShipId) return 'own';
+  // The player's own wreck is still theirs (Functional Specification 9.12).
+  if (state.encounter.wrecks[objectId]?.owner === 'player') return 'own';
   return isEncounterShip(state, objectId) ? 'hostile' : 'neutral';
 }

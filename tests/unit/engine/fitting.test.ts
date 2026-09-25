@@ -87,7 +87,7 @@ function grant(state: CampaignState, definitionId: string, quantity: number): Ca
 }
 
 function fitOf(state: CampaignState): FitDescription {
-  return shipFit(state.assets, state.assets.activeShipId);
+  return shipFit(state.assets, state.assets.activeShipId!);
 }
 
 function describeFit(state: CampaignState): readonly string[] {
@@ -130,13 +130,13 @@ describe('the authored starting fit', () => {
     // The magazine took its rounds from the grant; the rest stayed behind.
     expect(hangarOf(state)).toEqual([{ definitionId: FUSION, quantity: SPARE_ROUNDS }]);
 
-    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId]!.hullId);
+    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId!]!.hullId);
     const derived = deriveShipAttributes({ hull, fit: fitOf(state), content });
     expect(isUndockable(assessFit({ hull, fit: fitOf(state), content, derived }))).toBe(true);
   });
 
   it('leaves the ship undamaged with a full capacitor [FUNC-8.2]', () => {
-    const ship = open().assets.ships[open().assets.activeShipId]!;
+    const ship = open().assets.ships[open().assets.activeShipId!]!;
 
     expect(ship.condition.damage).toEqual({ shield: 0, armor: 0, hull: 0 });
     expect(ship.condition.capacitorCharge).toBe(
@@ -150,10 +150,10 @@ describe('the fitting draft', () => {
     const state = open();
     const opened = begun(state);
 
-    expect(opened.fitting?.shipId).toBe(state.assets.activeShipId);
+    expect(opened.fitting?.shipId).toBe(state.assets.activeShipId!);
     expect(opened.fitting?.baseRevision).toBe(state.revision);
     expect(opened.fitting?.slots).toEqual(
-      draftFromFit(state.assets.activeShipId, state.revision, fitOf(state)).slots,
+      draftFromFit(state.assets.activeShipId!, state.revision, fitOf(state)).slots,
     );
     expect(opened.assets).toEqual(state.assets);
   });
@@ -286,7 +286,7 @@ describe('fitting constraints', () => {
     opened = committed(opened, 'fitting.set', { slotKind: 'engineering', slotIndex: 0, moduleId: BATTERY, online: true });
 
     const applied = committed(opened, 'fitting.commit', {});
-    const hull = content.requireHull(applied.assets.ships[applied.assets.activeShipId]!.hullId);
+    const hull = content.requireHull(applied.assets.ships[applied.assets.activeShipId!]!.hullId);
     const fit = fitOf(applied);
     const derived = deriveShipAttributes({ hull, fit, content });
     const assessment = assessFit({ hull, fit, content, derived });
@@ -413,7 +413,7 @@ describe('committing a fit', () => {
 
   it('keeps stored damage and charge inside what the new fit allows [FUNC-4.2, FUNC-8.2]', () => {
     const state = grant(open(), BATTERY, 1);
-    const shipId = state.assets.activeShipId;
+    const shipId = state.assets.activeShipId!;
     const withBattery = committed(
       committed(begun(state), 'fitting.set', {
         slotKind: 'engineering',
@@ -458,7 +458,7 @@ describe('committing a fit', () => {
 describe('what a fit does', () => {
   it('reports weapon range, tracking and damage with the loaded charge [FUNC-8.5, MVP-AC-04]', () => {
     const state = open();
-    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId]!.hullId);
+    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId!]!.hullId);
     const fit = fitOf(state);
     const derived = deriveShipAttributes({ hull, fit, content });
     const summary = summariseFit({ hull, fit, content, derived });
@@ -497,7 +497,7 @@ describe('what a fit does', () => {
       { slotKind: 'system', slotIndex: 1, moduleId: AFTERBURNER, online: true },
     );
     const applied = committed(opened, 'fitting.commit', {});
-    const hull = content.requireHull(applied.assets.ships[applied.assets.activeShipId]!.hullId);
+    const hull = content.requireHull(applied.assets.ships[applied.assets.activeShipId!]!.hullId);
     const fit = fitOf(applied);
     const summary = summariseFit({
       hull,
@@ -518,7 +518,7 @@ describe('what a fit does', () => {
 
   it('estimates burst and sustained repair from the fitted defences [FUNC-8.5]', () => {
     const state = open();
-    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId]!.hullId);
+    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId!]!.hullId);
     const fit = fitOf(state);
     const summary = summariseFit({
       hull,

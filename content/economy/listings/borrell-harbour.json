@@ -1,12 +1,12 @@
 {
   "kind": "market.listings",
-  "$comment": "Functional Specification 11.2: a neutral station keeps the starter hull, a basic weapon and its ammunition at fixed, non-scarce prices.",
+  "$comment": "Functional Specification 11.2: a neutral station keeps the starter hull, a basic weapon and its ammunition at fixed, non-scarce prices. The starter hull sells for no more than its reference value, so a pilot the recovery service does not re-equip can always buy one (Functional Specification 9.12, 22.1).",
   "stationId": "station.borrell.harbour",
   "listings": [
     {
       "itemId": "hull.independent.starter",
       "supply": "fixed",
-      "basePriceCredits": 12000,
+      "basePriceCredits": 11100,
       "regionalPriceFactor": 1,
       "targetStock": 10,
       "initialStock": 10,

@@ -315,10 +315,10 @@ function combatEvent(value: unknown): value is CombatEventRecord {
     case 'damage':
       return shape(value, [
         'kind', 'firstAtMs', 'lastAtMs', 'sourceId', 'targetId', 'slotKey', 'count',
-        'rawDamage', 'appliedDamage',
+        'rawDamage', 'appliedDamage', 'layerDamage',
       ]) && isEntityId(value['sourceId']) && isEntityId(value['targetId']) &&
         typeof value['slotKey'] === 'string' && profile(value['rawDamage']) &&
-        profile(value['appliedDamage']);
+        profile(value['appliedDamage']) && layers(value['layerDamage']);
     case 'repair':
       return shape(value, [
         'kind', 'firstAtMs', 'lastAtMs', 'shipId', 'slotKey', 'layer', 'count',
@@ -336,6 +336,10 @@ function combatEvent(value: unknown): value is CombatEventRecord {
 
 function profile(value: unknown): boolean {
   return shape(value, [...DAMAGE_TYPES]) && Object.values(value).every(nonNegative);
+}
+
+function layers(value: unknown): boolean {
+  return shape(value, [...DEFENSE_LAYERS]) && Object.values(value).every(nonNegative);
 }
 
 function activeWeapon(value: WeaponState): boolean {

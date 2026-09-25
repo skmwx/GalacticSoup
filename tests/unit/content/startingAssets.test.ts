@@ -14,7 +14,7 @@ describe('starting asset content', () => {
     const campaign = { ...createCampaign({ displayName: 'Content Pilot', seed: '0123456789abcdef0123456789abcdef', createdAtRealMs: 1, initialRate: 1 }, content), revision: 1 };
     expect(campaign.assets.credits).toBe(1234);
     expect(Object.values(campaign.assets.stacks).map((s) => [s.definitionId, s.quantity])).toEqual([['ammo.test.charge', 123]]);
-    expect(campaign.assets.ships[campaign.assets.activeShipId]!.hullId).toBe('hull.test.starter');
+    expect(campaign.assets.ships[campaign.assets.activeShipId!]!.hullId).toBe('hull.test.starter');
     expect(validateCampaign(campaign, content)).toEqual([]);
   });
   it.each([

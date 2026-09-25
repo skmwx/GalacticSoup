@@ -79,8 +79,16 @@ export interface EncounterInstanceState {
  * Its contents are ordinary item stacks in an ordinary inventory, so taking
  * from it is the same physical move as any other and cannot duplicate goods.
  */
+export const WRECK_OWNERS = ['npc', 'player'] as const;
+export type WreckOwner = (typeof WRECK_OWNERS)[number];
+
 export interface WreckState {
   readonly id: EntityId;
+  /**
+   * Whose ship it was. The player's own wreck lasts longer and is an automatic
+   * bookmark the player may warp to (Functional Specification 5.4, 9.12).
+   */
+  readonly owner: WreckOwner;
   readonly systemId: SystemId;
   readonly siteId: SiteId;
   readonly inventoryId: InventoryId;
@@ -95,9 +103,13 @@ export interface WreckState {
 }
 
 /** What the station reports about the last attempt (MVP Scope 9.1). */
+export const ENCOUNTER_OUTCOMES = ['completed', 'abandoned', 'lost'] as const;
+export type EncounterOutcome = (typeof ENCOUNTER_OUTCOMES)[number];
+
 export interface EncounterOutcomeRecord {
   readonly encounterId: EncounterId;
-  readonly status: 'completed' | 'abandoned';
+  /** `lost` when the attempt ended with the player's ship destroyed. */
+  readonly status: EncounterOutcome;
   readonly resolvedAtMs: number;
   readonly bountyCreditsPaid: number;
   readonly npcsDestroyed: number;

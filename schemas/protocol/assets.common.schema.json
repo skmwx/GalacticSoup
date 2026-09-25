@@ -161,7 +161,8 @@
         "quantity",
         "state",
         "provenance",
-        "item"
+        "item",
+        "recoveryGrant"
       ],
       "properties": {
         "id": {
@@ -185,6 +186,10 @@
         },
         "item": {
           "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/item"
+        },
+        "recoveryGrant": {
+          "description": "Recovery-grant units: usable, never saleable or insurable (Functional Specification 9.12).",
+          "type": "boolean"
         }
       }
     },
@@ -368,7 +373,8 @@
         "fittingInventoryId",
         "location",
         "nameKey",
-        "active"
+        "active",
+        "recoveryGrant"
       ],
       "properties": {
         "id": {
@@ -402,6 +408,10 @@
             "player",
             "npc"
           ]
+        },
+        "recoveryGrant": {
+          "description": "A recovery-grant hull has no insurance value (Functional Specification 9.12).",
+          "type": "boolean"
         }
       }
     },

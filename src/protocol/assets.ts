@@ -33,6 +33,8 @@ export interface ItemData {
 export interface StackData {
   readonly id: string; readonly inventoryId: string; readonly quantity: number;
   readonly state: StackStateData; readonly provenance: ProvenanceData; readonly item: ItemData;
+  /** Recovery-grant units: usable, never saleable or insurable (Functional Specification 9.12). */
+  readonly recoveryGrant: boolean;
 }
 export interface InventoryData {
   readonly revision: number; readonly id: string; readonly location: InventoryLocationData;
@@ -44,10 +46,15 @@ export interface ShipAssetData {
   readonly id: string; readonly owner: string; readonly hullId: string; readonly nameKey: string;
   readonly active: boolean; readonly location: LocationData; readonly cargoInventoryId: string;
   readonly fittingInventoryId: string;
+  /** A recovery-grant hull has no insurance value (Functional Specification 9.12). */
+  readonly recoveryGrant: boolean;
 }
 export interface WalletData { readonly revision: number; readonly credits: number }
 export interface AssetsData extends WalletData {
-  readonly location: LocationData; readonly activeShipId: string;
+  /** `null` while the pilot owns no ship at the station they are docked at. */
+  readonly location: LocationData; readonly activeShipId: string | null;
+  /** Where a destroyed pilot is recovered and where a retreat heads. */
+  readonly lastDockedStationId: string;
   readonly ships: readonly ShipAssetData[]; readonly inventories: readonly InventoryData[];
 }
 export interface ItemInspectionData { readonly revision: number; readonly stack: StackData; readonly inventory: InventoryData }

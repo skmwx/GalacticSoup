@@ -257,6 +257,7 @@ export function SpaceScreen({
           travel={site.travelStatus}
           location={site.location}
           simulationTimeMs={simulationTimeMs}
+          bookmarks={data.destinations?.bookmarks ?? []}
         />
       </div>
 

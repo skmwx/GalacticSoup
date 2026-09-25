@@ -156,6 +156,11 @@ export interface AggregatedDamageEvent {
   readonly rawDamage: DamageProfile;
   /** Damage removed from hit-point layers, after resistance. */
   readonly appliedDamage: DamageProfile;
+  /**
+   * The same applied damage by the layer it came off, so a loss report can say
+   * which layers each attacker broke (Technical Specification 10.3).
+   */
+  readonly layerDamage: Readonly<Record<DefenseLayer, number>>;
 }
 
 export interface AggregatedRepairEvent {

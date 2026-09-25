@@ -1,5 +1,5 @@
 import { createMemorySaveStore } from '@adapters/persistence';
-import { createEngineHost, type EngineHost } from '@engine';
+import { createEngineHost, type EngineHost, type SaveStore } from '@engine';
 import {
   EMPTY_PAYLOAD,
   PROTOCOL_VERSION,
@@ -38,9 +38,17 @@ export interface Sortie {
   until(done: () => Promise<boolean>, budgetSeconds?: number): Promise<boolean>;
 }
 
-export async function startSortie(seed: string = SORTIE_SEED, displayName = 'Vela'): Promise<Sortie> {
+/**
+ * Creates the campaign. A test that needs to read back what the engine saved
+ * passes its own store.
+ */
+export async function startSortie(
+  seed: string = SORTIE_SEED,
+  displayName = 'Vela',
+  saves: SaveStore = createMemorySaveStore(),
+): Promise<Sortie> {
   const content = shippedContent();
-  const host = createEngineHost({ content, saves: createMemorySaveStore() });
+  const host = createEngineHost({ content, saves });
   let ordinal = 0;
 
   const ask = async <TData>(type: string, payload: unknown = EMPTY_PAYLOAD): Promise<EngineResponse<TData>> => {

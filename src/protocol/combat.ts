@@ -220,6 +220,8 @@ export type CombatEventData =
       readonly count: number;
       readonly rawDamage: Readonly<Record<string, number>>;
       readonly appliedDamage: Readonly<Record<string, number>>;
+      /** Applied damage by the layer it came off. */
+      readonly layerDamage: Readonly<Record<string, number>>;
     }
   | {
       readonly kind: 'repair';

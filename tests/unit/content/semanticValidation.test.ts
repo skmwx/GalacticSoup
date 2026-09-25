@@ -242,6 +242,59 @@ describe('catalog relationships', () => {
     },
   );
 
+  it.each([
+    [
+      'without a turret to load them',
+      (loadout: Record<string, unknown>) => {
+        loadout['modules'] = [];
+      },
+    ],
+    [
+      'without a named ammunition',
+      (loadout: Record<string, unknown>) => {
+        delete loadout['ammunitionId'];
+      },
+    ],
+  ])('rejects NPC reserve rounds %s [TECH-6.2, FUNC-9.4, FUNC-9.10]', (_label, mutate) => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'encounters/npcs.json', (document) => {
+        const loadout = definitionsOf(document)[0]?.['loadout'] as Record<string, unknown>;
+        loadout['reserveRounds'] = 10;
+        mutate(loadout);
+      }),
+    );
+
+    const issue = issues.find((entry) => entry.path === 'definitions[0].loadout.reserveRounds');
+    expect(issue?.reason).toBe('catalogRelationship');
+    expect(issue?.detail).toContain('reserve rounds need a turret and a named ammunition');
+  });
+
+  it('rejects NPC reserve rounds that do not fit the hull\'s hold [TECH-6.2, FUNC-9.4, FUNC-22.2]', () => {
+    // 100 m3 of hold at 2 dm3 a round holds 50000 rounds; one more does not fit.
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'encounters/npcs.json', (document) => {
+        const loadout = definitionsOf(document)[0]?.['loadout'] as Record<string, unknown>;
+        loadout['reserveRounds'] = 50_001;
+      }),
+    );
+
+    const issue = issues.find((entry) => entry.path === 'definitions[0].loadout.reserveRounds');
+    expect(issue?.reason).toBe('catalogRelationship');
+    expect(issue?.detail).toBe('50001 rounds need 100002 dm3 but "hull.test.pirate" holds 100000 dm3');
+  });
+
+  it('accepts NPC reserve rounds that exactly fill the hold [TECH-6.2, FUNC-9.4]', () => {
+    const result = compilePack(
+      editDocument(minimalPack(), 'encounters/npcs.json', (document) => {
+        const loadout = definitionsOf(document)[0]?.['loadout'] as Record<string, unknown>;
+        loadout['reserveRounds'] = 50_000;
+      }),
+    );
+
+    expect(result.issues).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
   it('rejects a starting fit that needs more power than the hull supplies [TECH-6.2, FUNC-8.4]', () => {
     const pack = editDocument(
       editDocument(minimalPack(), 'rules/economy.json', (document) => {
@@ -358,6 +411,35 @@ describe('market and recovery guarantees', () => {
     expect(
       issues.some((entry) => entry.reason === 'invalidValue' && entry.detail.includes('non-scarce')),
     ).toBe(true);
+  });
+
+  it('rejects a recovery station that sells the starter hull above its reference value [TECH-6.2, FUNC-9.12, FUNC-22.1]', () => {
+    // 10000 x (1 + 0.08 spread) = 10800 credits, above the 10000 reference value.
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'economy/listings.json', (document) => {
+        const listings = document['listings'] as Record<string, unknown>[];
+        (listings[0] as Record<string, unknown>)['basePriceCredits'] = 10_000;
+      }),
+    );
+
+    const issue = issues.find((entry) => entry.detail.includes('below which recovery grants one'));
+    expect(issue?.reason).toBe('catalogRelationship');
+    expect(issue?.path).toBe('listings[0].basePriceCredits');
+    expect(issue?.detail).toContain('10800');
+    expect(issue?.file).toContain('economy/listings.json');
+  });
+
+  it('accepts a starter hull quoted at exactly its reference value [TECH-6.2, FUNC-9.12]', () => {
+    // 9259 x 1.08 = 9999.72, which the quote rounds to the 10000 reference value.
+    const result = compilePack(
+      editDocument(minimalPack(), 'economy/listings.json', (document) => {
+        const listings = document['listings'] as Record<string, unknown>[];
+        (listings[0] as Record<string, unknown>)['basePriceCredits'] = 9_259;
+      }),
+    );
+
+    expect(result.issues).toEqual([]);
+    expect(result.ok).toBe(true);
   });
 
   it('rejects starting stock above twice the target [TECH-6.2, FUNC-11.2]', () => {

@@ -77,6 +77,19 @@ export interface ItemStack {
   readonly inventoryId: InventoryId;
   readonly state: StackState;
   readonly provenance: Provenance;
+  /**
+   * The units came from the recovery service's last-resort grant
+   * (Functional Specification 9.12; Technical Specification 8.3, 10.9).
+   *
+   * They may be fitted, flown, fired and moved like any other unit, but they
+   * never acquire sale or insurance value. The mark belongs to the units, so it
+   * travels through every split, move, fit and removal, and a marked stack only
+   * merges with another marked one. The one exception is a loaded magazine,
+   * which is a single physical charge: rounds loaded into a marked magazine, or
+   * marked rounds loaded into an unmarked one, leave the whole magazine marked.
+   * Restriction can therefore spread but never wash out.
+   */
+  readonly recoveryGrant: boolean;
 }
 
 /**
@@ -114,13 +127,31 @@ export interface ShipIdentity {
     readonly coverage: 'basic' | 'enhanced';
     readonly premiumPaidCredits: number;
   };
+  /**
+   * The hull was supplied by the recovery service (Functional Specification
+   * 9.12). It has zero insurance value, so it pays nothing on destruction and
+   * cannot be given enhanced cover.
+   */
+  readonly recoveryGrant: boolean;
 }
 export interface AssetState {
   /** Version of the asset aggregate used to bind economic previews. */
   readonly version: number;
   readonly credits: number;
   readonly location: ShipLocation;
-  readonly activeShipId: EntityId;
+  /**
+   * The ship the player controls, or `null` while they own none at the
+   * station they are docked at (Functional Specification 9.12). Losing the
+   * only ship with enough credits to buy another leaves the player docked and
+   * shipless; they are never shipless anywhere else.
+   */
+  readonly activeShipId: EntityId | null;
+  /**
+   * The most recently docked accessible station: where a destroyed pilot is
+   * recovered and where a retreat heads (Technical Specification 8.1;
+   * Functional Specification 9.12).
+   */
+  readonly lastDockedStationId: StationId;
   readonly ships: Readonly<Record<string, ShipIdentity>>;
   readonly inventories: Readonly<Record<string, Inventory>>;
   readonly stacks: Readonly<Record<string, ItemStack>>;

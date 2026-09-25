@@ -310,8 +310,9 @@ export function activeCombatant(
   state: CampaignState,
   content: ContentRepository,
 ): CombatantContext | null {
-  return state.assets.location.kind === 'site'
-    ? combatantOf(state, content, state.assets.activeShipId)
+  const shipId = state.assets.activeShipId;
+  return state.assets.location.kind === 'site' && shipId !== null
+    ? combatantOf(state, content, shipId)
     : null;
 }
 

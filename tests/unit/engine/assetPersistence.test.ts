@@ -12,7 +12,7 @@ import { shippedContent } from '../../support/content';
 const content = shippedContent();
 function prepared() {
   const draft = testDraft();
-  const ship = draft.assets.ships[draft.assets.activeShipId]!;
+  const ship = draft.assets.ships[draft.assets.activeShipId!]!;
   const service = inventoryService(draft, content);
   const ammo = Object.values(draft.assets.stacks).find((s) => s.definitionId.startsWith('ammo.'))!;
   service.add(ammo.inventoryId, ammo.definitionId, 7, { grantedQuantity: 0, purchasedQuantity: 7, purchaseCostCredits: 31 });
@@ -65,7 +65,7 @@ describe('asset persistence and ownership', () => {
     expect(!result.ok && result.error.messageKey).toBe('error.saveLoad.contentIncompatible');
     expect(!result.ok && result.error.params!['firstMissing']).toBe('item.missing');
   });
-  it.each(['format-1.json', 'format-2.json', 'format-3.json', 'format-7.json'])(
+  it.each(['format-1.json', 'format-2.json', 'format-3.json', 'format-7.json', 'format-8.json'])(
     'rejects the unreleased %s save shape with no migration obligation [TECH-11.4]',
     (fixture) => {
       const old = JSON.parse(readFileSync(`tests/fixtures/saves/${fixture}`, 'utf8')) as unknown;
@@ -94,7 +94,7 @@ describe('asset persistence and ownership', () => {
     const stack = Object.values(draft.assets.stacks).find((s) => s.inventoryId === reserved.id)!;
     const before = canonicalJson(draft);
     const result = runCommand({ campaign: draft, content, type: 'inventory.transfer', payload: {
-      stackId: stack.id, destinationInventoryId: draft.assets.ships[draft.assets.activeShipId]!.cargoInventoryId, quantity: 1,
+      stackId: stack.id, destinationInventoryId: draft.assets.ships[draft.assets.activeShipId!]!.cargoInventoryId, quantity: 1,
     } });
     expect(result.kind === 'failed' && result.error.messageKey).toBe('error.ruleViolation.inventoryUnavailable');
     expect(canonicalJson(draft)).toBe(before);

@@ -37,8 +37,8 @@ function opened(): CampaignState {
 describe('the ship projection', () => {
   it('describes every slot the hull offers, occupied or not [FUNC-8.2, FUNC-8.4]', () => {
     const state = testCampaign();
-    const ship = shipProjection(state, content, state.assets.activeShipId);
-    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId]!.hullId);
+    const ship = shipProjection(state, content, state.assets.activeShipId!);
+    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId!]!.hullId);
 
     const total = Object.values(hull.slots).reduce((sum, count) => sum + count, 0);
     expect(ship.slots).toHaveLength(total);
@@ -54,8 +54,8 @@ describe('the ship projection', () => {
 
   it('reports fitting resources, condition and undock validity [FUNC-8.2, FUNC-8.4]', () => {
     const state = testCampaign();
-    const ship = shipProjection(state, content, state.assets.activeShipId);
-    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId]!.hullId);
+    const ship = shipProjection(state, content, state.assets.activeShipId!);
+    const hull = content.requireHull(state.assets.ships[state.assets.activeShipId!]!.hullId);
 
     expect(ship.power).toEqual({ used: 10, available: hull.fitting.powerOutput });
     expect(ship.processing).toEqual({ used: 28, available: hull.fitting.processingOutput });
@@ -76,7 +76,7 @@ describe('the ship projection', () => {
 
   it('carries a labelled, explainable trace with every derived value [FUNC-4.4, FUNC-19.6]', () => {
     const state = testCampaign();
-    const ship = shipProjection(state, content, state.assets.activeShipId);
+    const ship = shipProjection(state, content, state.assets.activeShipId!);
 
     expect(ship.attributes.length).toBeGreaterThan(0);
     for (const stat of ship.attributes) {
@@ -93,7 +93,7 @@ describe('the ship projection', () => {
 
   it('says why undocking is unavailable and names a key for it [FUNC-8.4, FUNC-22.10]', () => {
     const state = testCampaign();
-    const shipId = state.assets.activeShipId;
+    const shipId = state.assets.activeShipId!;
     const ship = state.assets.ships[shipId]!;
     const stacks = { ...state.assets.stacks };
     // Move the fitted turret to a slot the hull does not have.
@@ -133,7 +133,7 @@ describe('the fitting-draft projection', () => {
   it('previews the derived result of a planned change before it is committed [FUNC-8.5, FUNC-22.4]', () => {
     const state = committed(opened(), 'fitting.clear', { slotKind: 'weapon', slotIndex: 0 });
     const draft = fittingDraftProjection(state, content).draft;
-    const current = shipProjection(state, content, state.assets.activeShipId);
+    const current = shipProjection(state, content, state.assets.activeShipId!);
 
     expect(draft?.changed).toBe(true);
     expect(draft?.preview?.power.used).toBe(5);
@@ -236,6 +236,7 @@ describe('the fitting-draft projection', () => {
             quantity: 2,
             state: { kind: 'plain' },
             provenance: { grantedQuantity: 0, purchasedQuantity: 2, purchaseCostCredits: 8000 },
+            recoveryGrant: false,
           },
         },
       },

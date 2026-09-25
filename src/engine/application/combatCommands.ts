@@ -94,7 +94,9 @@ function slotOf(payload: WeaponSlotPayload): SlotRef {
  * operations name their ship, because an opponent issues the same ones.
  */
 function shipOf(rules: CombatRuleInput): string {
-  return rules.state.assets.activeShipId;
+  // Every combat command is refused before this is asked unless the player's
+  // ship is in a loaded site, so a shipless pilot never reaches it.
+  return rules.state.assets.activeShipId ?? '';
 }
 
 function lock(

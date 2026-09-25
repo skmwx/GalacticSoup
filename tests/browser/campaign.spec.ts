@@ -81,14 +81,14 @@ test.describe('campaign persistence', () => {
 
   test('adds no simulation time while the game is closed [FUNC-22.12]', async ({ page }) => {
     await startCampaign(page);
-    await expect(page.getByText('0s')).toBeVisible();
+    await expect(page.getByText('0s', { exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
 
     await expect(page.getByText(PILOT, { exact: true })).toBeVisible();
-    await expect(page.getByText('0s')).toBeVisible();
+    await expect(page.getByText('0s', { exact: true })).toBeVisible();
   });
 
   test('deletes the campaign and its saves on reset [FUNC-3.4]', async ({ page }) => {

@@ -76,6 +76,21 @@ export function wrecksInSite(state: CampaignState, siteId: string): readonly Wre
     );
 }
 
+/**
+ * The player's own wrecks, oldest first. Each is an automatic bookmark the
+ * player may choose and warp to while it lasts (Functional Specification 5.4,
+ * 9.12).
+ */
+export function playerWrecks(state: CampaignState): readonly WreckState[] {
+  return Object.keys(state.encounter.wrecks)
+    .sort()
+    .map((id) => state.encounter.wrecks[id]!)
+    .filter((entry) => entry.owner === 'player')
+    .sort((a, b) =>
+      a.createdAtMs !== b.createdAtMs ? a.createdAtMs - b.createdAtMs : a.id.localeCompare(b.id),
+    );
+}
+
 export function completionCount(state: CampaignState, encounterId: string): number {
   return state.encounter.completions[encounterId] ?? 0;
 }

@@ -346,6 +346,7 @@
             "phase",
             "originSiteId",
             "destinationSiteId",
+            "bookmarkId",
             "arrivalDistanceKm",
             "distanceKm",
             "completionAtMs"
@@ -366,6 +367,17 @@
             },
             "destinationSiteId": {
               "$ref": "#/$defs/siteId"
+            },
+            "bookmarkId": {
+              "description": "The bookmark the warp is aimed at, or null for the site itself.",
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/entityId"
+                }
+              ]
             },
             "arrivalDistanceKm": {
               "type": "number",

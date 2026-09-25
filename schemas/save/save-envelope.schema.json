@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/save/save-envelope.schema.json",
   "title": "SaveEnvelope",
-  "description": "A stored Galactic Soup save, format version 7 (Technical Specification 11.2). The envelope is self-describing and self-verifying: it names the build and content it was written against, and carries a SHA-256 over the canonical form of every field except the checksum itself. The checksum detects accidental corruption and incomplete copies; it is not protection against deliberate save editing.",
+  "description": "A stored Galactic Soup save, format version 9 (Technical Specification 11.2). The envelope is self-describing and self-verifying: it names the build and content it was written against, and carries a SHA-256 over the canonical form of every field except the checksum itself. The checksum detects accidental corruption and incomplete copies; it is not protection against deliberate save editing.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -29,7 +29,7 @@
       "const": "galactic-soup/save"
     },
     "formatVersion": {
-      "const": 8
+      "const": 9
     },
     "protocolVersion": {
       "type": "integer",

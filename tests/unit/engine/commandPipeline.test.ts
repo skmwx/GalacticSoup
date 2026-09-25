@@ -121,8 +121,9 @@ describe('command pipeline', () => {
     expect(result.campaign?.revision).toBe(1);
     expect(result.data.committed).toBe(true);
     expect(result.data.invalidations).toEqual(
-      ['assets', 'combat', 'destinations', 'fitting', 'frame', 'insurance', 'inventory', 'market',
-        'navigation', 'repair', 'resupply', 'saves', 'session', 'ship', 'site', 'station', 'wallet'],
+      ['assets', 'combat', 'destinations', 'encounter', 'fitting', 'frame', 'insurance', 'inventory',
+        'loss', 'market', 'navigation', 'repair', 'resupply', 'saves', 'session', 'ship', 'site',
+        'station', 'wallet'],
     );
     expect(result.data.events.map((event) => event.kind)).toEqual(['campaign.created']);
     // A new campaign must become durable at once (Functional Specification 3.4).

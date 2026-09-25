@@ -133,7 +133,7 @@ describe('layered damage', () => {
 describe('significant combat event recorder', () => {
   it('aggregates repeated damage in its time window and remains bounded [TECH-10.3]', () => {
     const draft = testDraft();
-    const sourceId = draft.assets.activeShipId;
+    const sourceId = draft.assets.activeShipId!;
     const targetId = allocateEntityId(draft);
     const profile: DamageProfile = {
       electromagnetic: 2,
@@ -147,6 +147,7 @@ describe('significant combat event recorder', () => {
       slotKey: 'weapon:0',
       rawDamage: profile,
       appliedDamage: profile,
+      layerDamage: { shield: 17, armor: 0, hull: 0 },
     });
 
     damage();

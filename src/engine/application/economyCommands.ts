@@ -5,6 +5,7 @@ import {
   applyStockMovement,
   creditWallet,
   debitWallet,
+  ensureRecoveryRoute,
   inventoryService,
   requireInventory,
   isLocalInventory,
@@ -163,6 +164,13 @@ function applyBuy(
     side: 'buy', stationId: preview.stationId, itemId: preview.item.definitionId,
     quantity: preview.quantity, totalCredits: preview.totalCredits,
   });
+  // A shipless pilot whose purchase leaves them unable to afford the starter
+  // hull is owed the recovery grant now (Functional Specification 9.12, 22.1).
+  const granted = ensureRecoveryRoute(draft, transaction.content);
+  if (granted !== null) {
+    transaction.publish('recovery.shipGranted', { shipId: granted, stationId: preview.stationId });
+    invalidateActiveShip(transaction);
+  }
   invalidateMarketTransaction(transaction);
 }
 
@@ -245,6 +253,8 @@ function applyResupply(
         purchaseCostCredits: owned.purchaseCostCredits + line.totalCredits,
       },
       { kind: 'charge', slot: { kind: line.slot.kind as SlotKind, index: line.slot.index } },
+      // Recovery-grant rounds keep their mark in the magazine they fill.
+      { recoveryGrant: owned.recoveryGrant },
     );
     if (line.roundsPurchased > 0) {
       moveListingStock(draft, transaction, preview.stationId, line.ammunitionId, 'stationSells', line.roundsPurchased);
@@ -272,8 +282,8 @@ function consumeOwnedAmmunition(
   stationId: string,
   ammunitionId: string,
   quantity: number,
-): { grantedQuantity: number; purchasedQuantity: number; purchaseCostCredits: number } {
-  const provenance = { grantedQuantity: 0, purchasedQuantity: 0, purchaseCostCredits: 0 };
+): { grantedQuantity: number; purchasedQuantity: number; purchaseCostCredits: number; recoveryGrant: boolean } {
+  const provenance = { grantedQuantity: 0, purchasedQuantity: 0, purchaseCostCredits: 0, recoveryGrant: false };
   let remaining = quantity;
   for (const stackId of Object.keys(draft.assets.stacks).sort()) {
     if (remaining === 0) break;
@@ -289,6 +299,7 @@ function consumeOwnedAmmunition(
         shipLocation?.kind === 'station' && shipLocation.stationId === stationId;
     if (!atStation || !isLocalInventory(draft.assets, inventory)) continue;
     const removed = service.remove(stack.id, Math.min(remaining, stack.quantity));
+    provenance.recoveryGrant ||= removed.recoveryGrant;
     provenance.grantedQuantity += removed.provenance.grantedQuantity;
     provenance.purchasedQuantity += removed.provenance.purchasedQuantity;
     provenance.purchaseCostCredits += removed.provenance.purchaseCostCredits;
@@ -327,6 +338,7 @@ function addPurchasedHull(
   const hull = transaction.content.requireHull(hullId);
   const shipId = allocateEntityId(draft);
   const inventories = inventoryService(draft, transaction.content);
+  const shipless = draft.assets.activeShipId === null;
   const cargoInventoryId = inventories.create(
     { kind: 'cargo', shipId },
     { kind: 'limited', volumeCubicDecimetres: hull.cargoCapacityCubicDecimetres },
@@ -345,7 +357,14 @@ function addPurchasedHull(
       capacitorCharge: hull.capacitor.capacity,
     },
     insurance: { coverage: 'basic', premiumPaidCredits: 0 },
+    recoveryGrant: false,
   };
+  // A pilot who lost their only ship flies the next one they buy.
+  if (shipless) {
+    draft.assets.activeShipId = shipId;
+    transaction.publish('recovery.activeShipChanged', { shipId });
+    invalidateActiveShip(transaction);
+  }
   draft.assets.version += 1;
 }
 
@@ -354,4 +373,14 @@ function invalidateMarketTransaction(transaction: Transaction): void {
     transaction.invalidate(topic);
   }
   transaction.requestAutosave();
+}
+
+/**
+ * A pilot who had no ship has one now, so everything that depends on the
+ * active ship - undocking above all - must be read again.
+ */
+function invalidateActiveShip(transaction: Transaction): void {
+  for (const topic of ['site', 'station', 'repair', 'resupply', 'insurance'] as const) {
+    transaction.invalidate(topic);
+  }
 }

@@ -2,9 +2,23 @@ import { canonicalJson } from '@shared';
 import type { ItemStack, Provenance, StackState } from './types';
 import { InventoryError } from './types';
 
-/** @implements TECH-8.3, FUNC-6.2 */
+/**
+ * Whether two stacks may become one (Technical Specification 8.3).
+ *
+ * Recovery-grant units stay in stacks of their own, so they can never lend
+ * their mark to - or lose it among - ordinary units. A loaded magazine is the
+ * exception: one slot holds one charge, so rounds of either kind loaded into
+ * it share a stack, and `mergedRecoveryGrant` keeps the result marked.
+ *
+ * @implements TECH-8.3, TECH-10.9, FUNC-6.2, FUNC-9.12
+ */
 export function compatibleStacks(a: ItemStack, b: ItemStack): boolean {
-  return a.definitionId === b.definitionId && sameState(a.state, b.state);
+  return a.definitionId === b.definitionId && sameState(a.state, b.state) &&
+    (a.recoveryGrant === b.recoveryGrant || a.state.kind === 'charge');
+}
+/** A merge never removes the recovery-grant mark from any unit it covers. */
+export function mergedRecoveryGrant(a: ItemStack, b: ItemStack): boolean {
+  return a.recoveryGrant || b.recoveryGrant;
 }
 /** Two states are the same when their canonical forms are identical. */
 export function sameState(a: StackState, b: StackState): boolean {

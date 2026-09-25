@@ -49,9 +49,12 @@ export function wreckAccessRefusal(
 ): EncounterCommandRefusal {
   const location = state.assets.location;
   const site = state.navigation.currentSite;
-  const player = site?.objects[state.assets.activeShipId];
-  if (location.kind !== 'site' || site === null || player === undefined) return 'lootUnavailable';
-  if (isDestroyed(state, state.assets.activeShipId)) return 'lootUnavailable';
+  const playerId = state.assets.activeShipId;
+  const player = playerId === null ? undefined : site?.objects[playerId];
+  if (location.kind !== 'site' || site === null || playerId === null || player === undefined) {
+    return 'lootUnavailable';
+  }
+  if (isDestroyed(state, playerId)) return 'lootUnavailable';
 
   const target = wreck(state, wreckId);
   const object = site.objects[wreckId];

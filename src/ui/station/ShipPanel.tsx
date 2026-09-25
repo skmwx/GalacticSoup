@@ -18,7 +18,12 @@ import type { PlayData } from '../frame/usePlayData';
  * with the constraint they break, because "you cannot undock" is not an
  * explanation on its own.
  *
- * @implements FUNC-8.2, FUNC-8.5, FUNC-19.6, MVP-AC-04
+ * The ship's insurance cover is shown with it, and a hull the recovery
+ * service supplied says in words that it has no sale or insurance value
+ * (Functional Specification 9.12). A pilot with no ship is told how to get
+ * one rather than left waiting for a ship to load.
+ *
+ * @implements FUNC-8.2, FUNC-8.5, FUNC-19.6, FUNC-9.12, MVP-AC-04, MVP-AC-08
  */
 
 export interface ShipPanelProps {
@@ -28,6 +33,7 @@ export interface ShipPanelProps {
 export function ShipPanel({ data }: ShipPanelProps): JSX.Element {
   const translate = useTranslate();
   const ship = data.ship;
+  const shipless = data.assets !== null && data.assets.activeShipId === null;
 
   return (
     <section className={styles['panel']} aria-labelledby="ship-heading">
@@ -35,7 +41,11 @@ export function ShipPanel({ data }: ShipPanelProps): JSX.Element {
         {translate('ship.heading')}
       </h3>
 
-      {ship === null ? (
+      {shipless ? (
+        <p className={styles['warning']} data-no-ship>
+          {translate('ship.noShip')}
+        </p>
+      ) : ship === null ? (
         <p className={styles['muted']}>{translate('ship.loading')}</p>
       ) : (
         <>
@@ -61,11 +71,28 @@ export function ShipSummary({ ship }: { readonly ship: ShipData }): JSX.Element 
   return (
     <div className={styles['detail']}>
       <div>
-        <p className={styles['dialogSubject']}>{translate(ship.nameKey)}</p>
+        <p className={styles['dialogSubject']}>
+          {translate(ship.nameKey)}
+          {ship.recoveryGrant ? (
+            <span className={styles['grant']} data-recovery-grant-label>
+              {' '}
+              {translate('recovery.grant')}
+            </span>
+          ) : null}
+        </p>
         <p className={styles['muted']}>{translate(ship.descriptionKey)}</p>
+        {ship.recoveryGrant ? (
+          <p className={styles['muted']} data-recovery-grant-ship>
+            {translate('ship.recoveryGrant')}
+          </p>
+        ) : null}
       </div>
 
       <dl className={styles['figures']}>
+        <Figure
+          label={translate('ship.insurance')}
+          value={translate(`insurance.coverage.${ship.insuranceCoverage}`)}
+        />
         <Figure
           label={translate('ship.power')}
           value={translate('ship.resourceUse', {

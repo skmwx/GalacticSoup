@@ -302,3 +302,46 @@
   padding-inline-start: var(--gs-space-3);
   font-size: var(--gs-font-small);
 }
+
+/*
+ * The loss report and the no-ship notice (Functional Specification 9.12).
+ * Each is headed in words; the border is a second cue, never the only one.
+ */
+.loss,
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+  padding: var(--gs-space-3);
+  border: var(--gs-border);
+  border-inline-start: 3px double var(--gs-color-danger);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface-raised);
+}
+
+.notice {
+  border-inline-start-style: dashed;
+  border-inline-start-color: var(--gs-color-warn);
+}
+
+.loss p,
+.notice p {
+  margin: 0;
+}
+
+.lossPart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+}
+
+.loss summary {
+  cursor: pointer;
+}
+
+/* A recovery grant is named in words beside the item it marks. */
+.grant {
+  font-size: var(--gs-font-small);
+  font-style: italic;
+  color: var(--gs-color-text-muted);
+}

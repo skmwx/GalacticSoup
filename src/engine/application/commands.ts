@@ -2,6 +2,7 @@ import { createCampaign, type CampaignState } from '@engine/domain';
 import {
   advanceCombat,
   advanceEncounter,
+  advanceLoss,
   advanceNavigation,
   advanceTime,
   DOCK_COMPLETE_BOUNDARY,
@@ -71,12 +72,13 @@ export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {
 /**
  * Continuously integrated systems, in the order Technical Specification 9.2
  * requires: movement, then combat, then the encounter transitions the last
- * completion batch caused.
+ * completion batch caused, then the player's own destruction and recovery.
  */
 export const INSTALLED_CONTINUOUS_SYSTEMS: readonly ContinuousSystem[] = [
   advanceNavigation,
   advanceCombat,
   advanceEncounter,
+  advanceLoss,
 ];
 
 /**
@@ -123,6 +125,8 @@ export function handleCreateCampaign(
   transaction.invalidate('site');
   transaction.invalidate('destinations');
   transaction.invalidate('combat');
+  transaction.invalidate('encounter');
+  transaction.invalidate('loss');
   // A new campaign must be resumable before the player touches anything
   // (Functional Specification 3.4).
   transaction.requestAutosave();
@@ -164,6 +168,8 @@ export function handleResumeCampaign(
   transaction.invalidate('site');
   transaction.invalidate('destinations');
   transaction.invalidate('combat');
+  transaction.invalidate('encounter');
+  transaction.invalidate('loss');
   return APPLIED;
 }
 
@@ -197,6 +203,8 @@ export function handleCloseCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('site');
   transaction.invalidate('destinations');
   transaction.invalidate('combat');
+  transaction.invalidate('encounter');
+  transaction.invalidate('loss');
   return APPLIED;
 }
 
@@ -230,6 +238,8 @@ export function handleResetCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('site');
   transaction.invalidate('destinations');
   transaction.invalidate('combat');
+  transaction.invalidate('encounter');
+  transaction.invalidate('loss');
   return APPLIED;
 }
 

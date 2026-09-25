@@ -117,7 +117,7 @@ describe.each(['direct', 'channel'] as const)('station economy through %s transp
     const walletAfterSell = await ask(gateway, 'wallet.get', {});
     expect(walletAfterSell.credits).toBe(walletAfterBuy.credits + sell.totalCredits);
 
-    const shipId = (await ask(gateway, 'assets.list', {})).activeShipId;
+    const shipId = (await ask(gateway, 'assets.list', {})).activeShipId!;
     const insurance = await ask(gateway, 'insurance.preview', { shipId });
     await ask(gateway, 'insurance.confirm', { token: insurance.token! });
     const insuranceBeforeSave = await ask(gateway, 'insurance.preview', { shipId });

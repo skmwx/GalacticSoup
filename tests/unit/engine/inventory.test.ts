@@ -10,9 +10,9 @@ const ammo = 'ammo.projectile.small.fusion' as DefinitionId;
 function setup() {
   const draft = testDraft();
   const hangar = Object.values(draft.assets.inventories).find((i) => i.location.kind === 'hangar')!.id;
-  const cargo = draft.assets.ships[draft.assets.activeShipId]!.cargoInventoryId;
+  const cargo = draft.assets.ships[draft.assets.activeShipId!]!.cargoInventoryId;
   const service = inventoryService(draft, content);
-  const fitting = draft.assets.ships[draft.assets.activeShipId]!.fittingInventoryId;
+  const fitting = draft.assets.ships[draft.assets.activeShipId!]!.fittingInventoryId;
   const granted = stacksIn(draft.assets, hangar).find((s) => s.definitionId === ammo)!;
   // The granted quantity is a tuning value; tests read it rather than pin it.
   return { draft, hangar, cargo, fitting, service, stack: granted.id, granted: granted.quantity };
@@ -30,7 +30,7 @@ describe('physical inventories', () => {
   it('changes cargo capacity atomically without discarding reserved or stored units [FUNC-6.2, FUNC-22.2, TECH-8.3]', () => {
     const { draft, service, stack, cargo, granted } = setup();
     service.transfer(stack, cargo, granted);
-    service.reserve(stack, 5, draft.assets.activeShipId);
+    service.reserve(stack, 5, draft.assets.activeShipId!);
     const before = canonicalJson(draft);
     expect(() => service.setCapacity(cargo, granted * 2 - 1)).toThrow('insufficientCapacity');
     expect(canonicalJson(draft)).toBe(before);
@@ -84,16 +84,16 @@ describe('physical inventories', () => {
     const { draft, service, cargo, stack, granted } = setup();
     service.transfer(stack, cargo, granted);
     const before = totals(draft);
-    const reserve = service.reserve(stack, 7, draft.assets.activeShipId);
+    const reserve = service.reserve(stack, 7, draft.assets.activeShipId!);
     expect(stacksIn(draft.assets, cargo)[0]!.quantity).toBe(granted - 7);
     expect(stacksIn(draft.assets, reserve)[0]!.quantity).toBe(7);
     expect(usedVolume(draft.assets, content, cargo)).toBe(granted * 2);
     expect(maximumThatFits(draft.assets, content, cargo, ammo)).toBe(67500 - granted);
     const snapshot = canonicalJson(draft);
-    expect(() => service.reserve(stack, granted - 6, draft.assets.activeShipId)).toThrow('insufficientItems');
+    expect(() => service.reserve(stack, granted - 6, draft.assets.activeShipId!)).toThrow('insufficientItems');
     expect(() => service.release(reserve, entityIdOf(draft.campaignId, 999))).toThrow('invalidReservation');
     expect(canonicalJson(draft)).toBe(snapshot);
-    service.release(reserve, draft.assets.activeShipId);
+    service.release(reserve, draft.assets.activeShipId!);
     expect(totals(draft)).toEqual(before);
     expect(draft.assets.inventories[reserve]).toBeUndefined();
     expect(validateCampaign(draft, content)).toEqual([]);
@@ -143,8 +143,8 @@ describe('physical inventories', () => {
             case 1: service.transfer(stack.id, draw(2) ? cargo : hangar, draw(stack.quantity + 2)); break;
             case 2: service.merge(stack.id, all[draw(all.length)]!.id); break;
             case 3: {
-              const reserved = service.reserve(stack.id, draw(stack.quantity + 2), draft.assets.activeShipId);
-              service.release(reserved, draft.assets.activeShipId);
+              const reserved = service.reserve(stack.id, draw(stack.quantity + 2), draft.assets.activeShipId!);
+              service.release(reserved, draft.assets.activeShipId!);
               break;
             }
           }

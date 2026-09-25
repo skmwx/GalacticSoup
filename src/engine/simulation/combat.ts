@@ -1060,6 +1060,11 @@ function applyShotDamage(context: SimulationContext, outcome: ShotOutcome): void
     slotKey: outcome.slotKey,
     rawDamage: outcome.damage,
     appliedDamage: result.appliedDamage,
+    layerDamage: {
+      shield: result.layers.find((layer) => layer.layer === 'shield')?.appliedTotal ?? 0,
+      armor: result.layers.find((layer) => layer.layer === 'armor')?.appliedTotal ?? 0,
+      hull: result.layers.find((layer) => layer.layer === 'hull')?.appliedTotal ?? 0,
+    },
   });
   context.publish('combat.damageApplied', {
     attackerId: outcome.attackerId,

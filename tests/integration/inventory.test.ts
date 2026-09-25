@@ -56,7 +56,7 @@ describe.each(['direct', 'channel'] as const)('inventory through %s transport', 
     expect(assets.location.kind).toBe('station');
     if (assets.location.kind !== 'station') throw new Error('Campaign did not start docked.');
     expect(await ask(gateway, 'inventory.hangar', { stationId: assets.location.stationId })).toEqual(hangar);
-    expect(await ask(gateway, 'inventory.cargo', { shipId: assets.activeShipId })).toEqual(cargo);
+    expect(await ask(gateway, 'inventory.cargo', { shipId: assets.activeShipId! })).toEqual(cargo);
     expect((await ask(gateway, 'item.inspect', { stackId: ammo.id })).stack).toEqual(ammo);
     expect((await ask(gateway, 'inventory.maximum', { stackId: ammo.id, destinationInventoryId: cargo.id })).maximumQuantity).toBe(spareRounds);
     const result = await ask(gateway, 'inventory.transfer', { stackId: ammo.id, destinationInventoryId: cargo.id, quantity: 12 });

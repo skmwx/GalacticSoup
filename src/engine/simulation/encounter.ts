@@ -162,7 +162,10 @@ export function instantiateEncounter(context: SimulationContext, siteId: SiteId)
  * through warp. Wrecks are deliberately not removed - they are the site's, not
  * the instance's, and Functional Specification 5.4 gives them their own life.
  */
-export function abandonEncounter(context: SimulationContext): void {
+export function abandonEncounter(
+  context: SimulationContext,
+  ending: 'abandoned' | 'lost' = 'abandoned',
+): void {
   const draft = context.draft;
   const active = draft.encounter.active;
   if (active === null) return;
@@ -171,11 +174,13 @@ export function abandonEncounter(context: SimulationContext): void {
     if (npc.destroyedAtMs === null) despawnNpc(context, npc.shipId);
   }
 
+  // An instance already completed stays completed, even when the pilot died
+  // in the instant they won it; an unfinished one is left behind or lost.
   const resolved = active.status === 'active' ? 'abandoned' : active.status;
   const encounter = mutableEncounter(draft);
   encounter.lastOutcome = {
     encounterId: active.encounterId,
-    status: resolved === 'completed' ? 'completed' : 'abandoned',
+    status: resolved === 'completed' ? 'completed' : ending,
     resolvedAtMs: active.resolvedAtMs ?? draft.time.simulationTimeMs,
     bountyCreditsPaid: active.bountyCreditsPaid,
     npcsDestroyed: active.objective.destroyed,
@@ -184,10 +189,13 @@ export function abandonEncounter(context: SimulationContext): void {
   encounter.active = null;
   encounterChanged(draft);
   if (resolved === 'abandoned') {
+    // Whether the pilot left or was destroyed, so a notification can tell a
+    // retreat from a loss.
     context.publish('encounter.abandoned', {
       encounterId: active.encounterId,
       destroyed: active.objective.destroyed,
       required: active.objective.required,
+      outcome: ending,
     });
   }
   invalidate(context);
@@ -353,6 +361,7 @@ function createWreck(
 
   const wreck: WreckState = {
     id: wreckId,
+    owner: 'npc',
     systemId: site.systemId,
     siteId: site.siteId,
     inventoryId,
@@ -428,6 +437,16 @@ function removeWreck(context: SimulationContext, wreckId: string, cancelBoundary
   draft.assets.version += 1;
   delete (mutableEncounter(draft).wrecks as Record<string, unknown>)[wreckId];
   removeSiteObject(draft, wreckId);
+  // An expired wreck is no longer a bookmark. A warp already on its way keeps
+  // the position it was aimed at (Functional Specification 5.4, 7.3).
+  const navigation = draft.navigation;
+  if (navigation.selectedBookmarkId === wreckId) navigation.selectedBookmarkId = null;
+  if (navigation.travel?.kind === 'warp' && navigation.travel.bookmarkId === wreckId) {
+    navigation.travel = { ...navigation.travel, bookmarkId: null };
+  }
+  navigation.version += 1;
+  context.invalidate('destinations');
+  context.invalidate('navigation');
   encounterChanged(draft);
   invalidate(context);
   context.invalidate('inventory');
@@ -450,7 +469,8 @@ export function takeLoot(
 ): boolean {
   const draft = context.draft;
   const wreck = draft.encounter.wrecks[wreckId];
-  const ship = draft.assets.ships[draft.assets.activeShipId];
+  const playerId = draft.assets.activeShipId;
+  const ship = playerId === null ? undefined : draft.assets.ships[playerId];
   if (wreck === undefined || ship === undefined) return false;
   const stack = draft.assets.stacks[stackId];
   if (stack === undefined || stack.inventoryId !== wreck.inventoryId) return false;
@@ -501,6 +521,7 @@ function readSituation(context: SimulationContext, shipId: string): NpcSituation
   const draft = context.draft;
   const combatant = combatantOf(draft, context.content, shipId);
   const targetId = draft.assets.activeShipId;
+  if (targetId === null) return null;
   const target = draft.navigation.currentSite?.objects[targetId];
   if (combatant === null || target === undefined) return null;
   // A destroyed player is no longer a target (Functional Specification 22.5).
@@ -550,6 +571,7 @@ function apply(
   orderMovement(context, shipId, movement);
 
   const targetId = draft.assets.activeShipId;
+  if (targetId === null) return;
   if (intent.lock && lockOn(shipCombat(draft, shipId), targetId) === null) {
     beginLock(context, shipId, targetId);
   }
@@ -657,6 +679,7 @@ function createNpcShip(
     location,
     condition: { damage: { shield: 0, armor: 0, hull: 0 }, capacitorCharge: 0 },
     insurance: { coverage: 'basic', premiumPaidCredits: 0 },
+    recoveryGrant: false,
   };
 
   for (const entry of planNpcFit(context.content, hull, profile)) {
@@ -674,6 +697,13 @@ function createNpcShip(
         { kind: 'charge', slot: entry.slot },
       );
     }
+  }
+
+  // Reserve rounds sit in the hold, so the opponent reloads an empty magazine
+  // exactly as the player does (Functional Specification 9.4, 9.10).
+  const reserve = profile.loadout.reserveRounds ?? 0;
+  if (reserve > 0 && profile.loadout.ammunitionId !== undefined) {
+    service.add(cargo, profile.loadout.ammunitionId as DefinitionId, reserve, granted(reserve));
   }
 
   syncShipDerived(draft, context.content, shipId);

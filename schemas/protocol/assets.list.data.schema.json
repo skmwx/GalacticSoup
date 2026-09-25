@@ -8,6 +8,7 @@
     "credits",
     "location",
     "activeShipId",
+    "lastDockedStationId",
     "ships",
     "inventories"
   ],
@@ -26,8 +27,22 @@
       "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/shipLocation"
     },
     "activeShipId": {
+      "description": "Null while the pilot owns no ship at the station they are docked at (Functional Specification 9.12).",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        }
+      ]
+    },
+    "lastDockedStationId": {
+      "description": "Where a destroyed pilot is recovered and where a retreat heads.",
       "type": "string",
-      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+      "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+      "maxLength": 96
     },
     "ships": {
       "type": "array",

@@ -1,6 +1,7 @@
 import {
   activeSiteObject,
   activeAttributeConditions,
+  add,
   isDestroyed,
   movementOrderOf,
   setMovementOrder,
@@ -24,6 +25,7 @@ import {
   type CampaignDraft,
   type SiteObjectState,
   type WarpLocation,
+  type WarpTravelState,
 } from '@engine/domain';
 import type { SchedulerEntry } from '@engine/domain';
 import { clearCombat } from './combat';
@@ -50,16 +52,17 @@ export function advanceNavigation(
   const draft = context.draft;
   const site = draft.navigation.currentSite;
   const actor = activeSiteObject(draft);
-  if (site === null || actor === null || draft.assets.location.kind !== 'site') return;
+  const playerId = draft.assets.activeShipId;
+  if (site === null || actor === null || playerId === null || draft.assets.location.kind !== 'site') return;
 
-  const attributes = movementAttributes(context, draft, draft.assets.activeShipId);
+  const attributes = movementAttributes(context, draft, playerId);
   const elapsedSeconds = (toTimeMs - fromTimeMs) / 1000;
 
   // Every ship present is integrated, not only the player's: an opponent
   // commands its ship with the same orders and the same controllers
   // (Technical Specification 10.3).
   for (const shipId of siteShipIds(draft)) {
-    if (shipId === draft.assets.activeShipId) continue;
+    if (shipId === playerId) continue;
     integrateShip(context, shipId, elapsedSeconds);
   }
 
@@ -68,7 +71,7 @@ export function advanceNavigation(
 
   if (travel?.kind === 'warp' && travel.phase !== 'transit') {
     const origin = siteDefinitionPosition(context.content, site.systemId, travel.originSiteId);
-    const destination = siteDefinitionPosition(context.content, site.systemId, travel.destinationSiteId);
+    const destination = warpTarget(context, site.systemId, travel);
     if (origin !== null && destination !== null) {
       control = {
         direction: normalized(subtract(destination, origin)),
@@ -89,7 +92,7 @@ export function advanceNavigation(
       );
     }
   } else {
-    const order = movementOrderOf(draft, draft.assets.activeShipId);
+    const order = movementOrderOf(draft, playerId);
     if (order !== null) {
       const target =
         order.kind === 'approach' || order.kind === 'orbit' || order.kind === 'keepRange'
@@ -120,22 +123,22 @@ export function resolveWarpPrepared(context: SimulationContext, entry: Scheduler
   const draft = context.draft;
   const travel = draft.navigation.travel;
   const actor = activeSiteObject(draft);
+  const ship = draftShip(draft);
   if (
     travel?.kind !== 'warp' ||
     travel.phase !== 'preparing' ||
     travel.boundaryEntryId !== entry.entryId ||
     actor === null ||
+    ship === null ||
     draft.assets.location.kind !== 'site'
   ) return;
 
-  const maximumSpeed = movementAttributes(context, draft, draft.assets.activeShipId).maxSpeedKmPerSecond;
+  const maximumSpeed = movementAttributes(context, draft, ship.id).maxSpeedKmPerSecond;
   if (!warpReady(context, actor, travel, maximumSpeed)) {
     draft.navigation.travel = { ...travel, phase: 'aligning', boundaryEntryId: null };
     return;
   }
 
-  const ship = draft.assets.ships[draft.assets.activeShipId];
-  if (ship === undefined) return;
   const location: WarpLocation = {
     kind: 'warp',
     systemId: draft.assets.location.systemId,
@@ -178,18 +181,18 @@ export function resolveWarpPrepared(context: SimulationContext, entry: Scheduler
 export function resolveWarpArrival(context: SimulationContext, entry: SchedulerEntry): void {
   const draft = context.draft;
   const travel = draft.navigation.travel;
-  const ship = draft.assets.ships[draft.assets.activeShipId];
+  const ship = draftShip(draft);
   const location = draft.assets.location;
   if (
     travel?.kind !== 'warp' ||
     travel.phase !== 'transit' ||
     travel.boundaryEntryId !== entry.entryId ||
-    ship === undefined ||
+    ship === null ||
     location.kind !== 'warp'
   ) return;
 
   const origin = siteDefinitionPosition(context.content, location.systemId, travel.originSiteId);
-  const destination = siteDefinitionPosition(context.content, location.systemId, travel.destinationSiteId);
+  const destination = warpTarget(context, location.systemId, travel);
   const direction =
     origin === null || destination === null
       ? { x: 1, y: 0 }
@@ -204,7 +207,9 @@ export function resolveWarpArrival(context: SimulationContext, entry: SchedulerE
     context.content,
     travel.destinationSiteId,
     ship,
-    scale(direction, -travel.arrivalDistanceKm),
+    // A bookmark warp arrives at the chosen distance short of the bookmarked
+    // point; a site warp short of the site's origin (Functional Specification 7.3).
+    add(travel.anchor, scale(direction, -travel.arrivalDistanceKm)),
     Math.atan2(direction.y, direction.x),
   );
   draft.assets.location = siteLocation;
@@ -241,13 +246,15 @@ export function resolveDockComplete(context: SimulationContext, entry: Scheduler
     draft.navigation.travel = { ...travel, phase: 'approaching', boundaryEntryId: null };
     return;
   }
-  const ship = draft.assets.ships[draft.assets.activeShipId];
-  if (ship === undefined) return;
+  const ship = draftShip(draft);
+  if (ship === null) return;
   abandonEncounter(context);
   clearCombat(context, ship.id);
   const docked = { kind: 'station' as const, stationId: station.id, systemId: station.systemId };
   draft.assets.location = docked;
   ship.location = docked;
+  // This is now where a destroyed pilot is recovered (Functional Specification 9.12).
+  draft.assets.lastDockedStationId = station.id;
   draft.assets.version += 1;
   draft.navigation.currentSite = null;
   draft.navigation.travel = null;
@@ -300,17 +307,36 @@ function evaluateTravel(
 function warpReady(
   context: SimulationContext,
   actor: SiteObjectState,
-  travel: { readonly originSiteId: string; readonly destinationSiteId: string },
+  travel: WarpTravelState,
   maximumSpeed: number,
 ): boolean {
   const origin = siteDefinitionPosition(context.content, context.draft.assets.location.systemId, travel.originSiteId);
-  const destination = siteDefinitionPosition(context.content, context.draft.assets.location.systemId, travel.destinationSiteId);
+  const destination = warpTarget(context, context.draft.assets.location.systemId, travel);
   if (origin === null || destination === null) return false;
   const angle = Math.atan2(destination.y - origin.y, destination.x - origin.x);
   return (
     Math.abs(angularDifference(actor.facingRadians, angle)) <= context.content.rules.navigation.warpAlignmentRadians &&
     magnitude(actor.velocity) >= maximumSpeed * context.content.rules.navigation.warpMinimumSpeedFraction
   );
+}
+
+/**
+ * The point a warp heads for in system coordinates: the destination site's
+ * position, moved to the bookmarked point for a bookmark warp.
+ */
+function warpTarget(
+  context: SimulationContext,
+  systemId: string,
+  travel: WarpTravelState,
+): { readonly x: number; readonly y: number } | null {
+  const site = siteDefinitionPosition(context.content, systemId, travel.destinationSiteId);
+  return site === null ? null : add(site, travel.anchor);
+}
+
+/** The player's ship as a mutable part of the draft, or `null` without one. */
+function draftShip(draft: CampaignDraft) {
+  const shipId = draft.assets.activeShipId;
+  return shipId === null ? null : (draft.assets.ships[shipId] ?? null);
 }
 
 function movementAttributes(context: SimulationContext, draft: CampaignDraft, shipId: string) {
@@ -405,7 +431,7 @@ function cancelForMissingTarget(context: SimulationContext, orderKind: 'approach
   const boundary = draft.navigation.travel?.boundaryEntryId;
   if (boundary !== null && boundary !== undefined) cancelBoundary(draft, boundary);
   draft.navigation.travel = null;
-  setMovementOrder(draft, draft.assets.activeShipId, { kind: 'stop' });
+  if (draft.assets.activeShipId !== null) setMovementOrder(draft, draft.assets.activeShipId, { kind: 'stop' });
   draft.navigation.lastCancellation = {
     orderKind,
     reason: 'targetMissing',

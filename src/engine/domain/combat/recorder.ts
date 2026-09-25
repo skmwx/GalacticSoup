@@ -17,6 +17,7 @@ export function recordDamageEvent(
     readonly slotKey: string;
     readonly rawDamage: DamageProfile;
     readonly appliedDamage: DamageProfile;
+    readonly layerDamage: Readonly<Record<DefenseLayer, number>>;
   },
 ): void {
   const now = draft.time.simulationTimeMs;
@@ -35,6 +36,7 @@ export function recordDamageEvent(
       count: previous.count + 1,
       rawDamage: addProfiles(previous.rawDamage, event.rawDamage),
       appliedDamage: addProfiles(previous.appliedDamage, event.appliedDamage),
+      layerDamage: addLayers(previous.layerDamage, event.layerDamage),
     };
   } else {
     events.push({
@@ -47,6 +49,7 @@ export function recordDamageEvent(
       count: 1,
       rawDamage: addProfiles(emptyDamageProfile(), event.rawDamage),
       appliedDamage: addProfiles(emptyDamageProfile(), event.appliedDamage),
+      layerDamage: addLayers({ shield: 0, armor: 0, hull: 0 }, event.layerDamage),
     });
   }
   trim(events);
@@ -117,4 +120,15 @@ function trim(events: CombatEventRecord[]): void {
 
 function round(value: number): number {
   return Math.round(value * 1e9) / 1e9;
+}
+
+function addLayers(
+  a: Readonly<Record<DefenseLayer, number>>,
+  b: Readonly<Record<DefenseLayer, number>>,
+): Record<DefenseLayer, number> {
+  return {
+    shield: round(a.shield + b.shield),
+    armor: round(a.armor + b.armor),
+    hull: round(a.hull + b.hull),
+  };
 }

@@ -133,6 +133,8 @@ export const RULE_VIOLATION_REASONS = [
   'wreckNotFound',
   'wreckOutOfRange',
   'noResumableSave',
+  'bookmarkUnknown',
+  'noActiveShip',
 ] as const;
 
 export type RuleViolationReason = (typeof RULE_VIOLATION_REASONS)[number];

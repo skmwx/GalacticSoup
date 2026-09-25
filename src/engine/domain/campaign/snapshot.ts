@@ -5,6 +5,7 @@ import { isCombatState } from '../combat/validation';
 import { isEconomyState } from '../economy/validation';
 import { isEncounterState } from '../encounter/validation';
 import { isNavigationState } from '../navigation/validation';
+import { isRecoveryState } from '../recovery/validation';
 
 import { isCampaignId, isCampaignSeed, isEntityId, MAX_ORDINAL } from './identity';
 import { isRandomStreams } from '../random/streams';
@@ -110,6 +111,7 @@ export function readCampaignState(value: unknown): CampaignReadResult {
   if (!isNavigationState(value['navigation'])) add('navigationShape', 'state.navigation', 'Saved navigation is missing or malformed.');
   if (!isCombatState(value['combat'])) add('combatShape', 'state.combat', 'Saved combat runtime is missing or malformed.');
   if (!isEncounterState(value['encounter'])) add('encounterShape', 'state.encounter', 'Saved encounter state is missing or malformed.');
+  if (!isRecoveryState(value['recovery'])) add('recoveryShape', 'state.recovery', 'Saved loss and recovery state is missing or malformed.');
   readFittingDraft(value['fitting'], add);
 
   if (issues.length > 0) {
@@ -167,6 +169,14 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
     if (isDefinitionId(encounterId)) references.push(encounterId);
   }
   if (state.encounter.lastOutcome !== null) references.push(state.encounter.lastOutcome.encounterId);
+  references.push(state.assets.lastDockedStationId);
+  const loss = state.recovery.lastLoss;
+  if (loss !== null) {
+    references.push(loss.hullId, loss.systemId, loss.siteId, loss.recoveryStationId);
+    if (loss.encounterId !== null) references.push(loss.encounterId);
+    for (const lost of loss.items) references.push(lost.definitionId);
+    for (const effect of loss.disablingEffects) references.push(effect.moduleId);
+  }
   references.push(...state.navigation.knownDestinationSiteIds);
   if (state.navigation.selectedEncounterId !== null) references.push(state.navigation.selectedEncounterId);
   if (state.navigation.currentSite !== null) {
@@ -207,6 +217,7 @@ const STATE_FIELDS: readonly string[] = [
   'encounter',
   'fitting',
   'navigation',
+  'recovery',
   'stateVersion',
   'campaignId',
   'displayName',

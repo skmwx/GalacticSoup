@@ -124,6 +124,8 @@ function apply(transaction: Transaction, request: CommandRequest): CommandOutcom
     case 'navigation.warp':
     case 'navigation.retreat':
     case 'navigation.dock':
+    case 'navigation.selectBookmark':
+    case 'navigation.warpToBookmark':
       return handleNavigationCommand(transaction, request.type, request.payload);
     case 'targeting.lock':
     case 'targeting.unlock':

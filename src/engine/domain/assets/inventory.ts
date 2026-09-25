@@ -1,10 +1,17 @@
 import type { ContentRepository } from '@engine/ports';
 import { deepClone, type DefinitionId, type Mutable } from '@shared';
 import { entityIdOf, MAX_ORDINAL, type EntityId } from '../campaign/identity';
-import { compatibleStacks, mergeProvenance, positiveQuantity, safeCount, splitProvenance } from './stack';
+import { compatibleStacks, mergedRecoveryGrant, mergeProvenance, positiveQuantity, safeCount,
+  splitProvenance } from './stack';
 import { InventoryError, PLAIN_STATE, type AssetDraft, type AssetState, type CapacityPolicy,
   type Inventory, type InventoryId, type InventoryLocation, type ItemStack, type Provenance,
   type StackState } from './types';
+
+/** How a newly created stack is marked. Units are unrestricted unless stated. */
+export interface AddOptions {
+  /** The units are a recovery grant (Functional Specification 9.12). */
+  readonly recoveryGrant?: boolean;
+}
 
 /** The sole writer of physical stacks/locations. Every operation, including a failed
  * reservation/release, is atomic even when called without an application transaction.
@@ -44,7 +51,8 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
     const target = merge ? stacksIn(work.assets, inventoryId).find((s) => compatibleStacks(s, stack)) : undefined;
     if (target !== undefined) {
       work.assets.stacks[target.id] = { ...target, quantity: safeCount(target.quantity + stack.quantity),
-        provenance: mergeProvenance(target.provenance, stack.provenance) };
+        provenance: mergeProvenance(target.provenance, stack.provenance),
+        recoveryGrant: mergedRecoveryGrant(target, stack) };
       return target.id;
     }
     work.assets.stacks[stack.id] = deepClone({ ...stack, inventoryId });
@@ -80,28 +88,12 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
           capacity: { kind: 'limited', volumeCubicDecimetres } };
       });
     },
-    add(inventoryId: string, definitionId: DefinitionId, quantity: number, provenance: Provenance): EntityId {
-      return atomic((work) => {
-        const inventory = requireInventory(work.assets, inventoryId);
-        positiveQuantity(quantity);
-        for (const value of Object.values(provenance)) safeCount(value);
-        if (safeCount(provenance.grantedQuantity + provenance.purchasedQuantity) !== quantity ||
-            (provenance.purchasedQuantity === 0 && provenance.purchaseCostCredits !== 0)) {
-          throw new InventoryError('invalidQuantity');
-        }
-        if (quantity > maximumThatFits(work.assets, content, inventoryId, definitionId)) {
-          throw new InventoryError('insufficientCapacity');
-        }
-        return put(work, { id: allocate(work), inventoryId: inventory.id, definitionId,
-          quantity, state: PLAIN_STATE, provenance }, inventory.id, true);
-      });
-    },
-    addAs(
+    add(
       inventoryId: string,
       definitionId: DefinitionId,
       quantity: number,
       provenance: Provenance,
-      state: StackState,
+      options: AddOptions = {},
     ): EntityId {
       return atomic((work) => {
         const inventory = requireInventory(work.assets, inventoryId);
@@ -115,7 +107,32 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
           throw new InventoryError('insufficientCapacity');
         }
         return put(work, { id: allocate(work), inventoryId: inventory.id, definitionId,
-          quantity, state: deepClone(state), provenance }, inventory.id, true);
+          quantity, state: PLAIN_STATE, provenance, recoveryGrant: options.recoveryGrant ?? false },
+        inventory.id, true);
+      });
+    },
+    addAs(
+      inventoryId: string,
+      definitionId: DefinitionId,
+      quantity: number,
+      provenance: Provenance,
+      state: StackState,
+      options: AddOptions = {},
+    ): EntityId {
+      return atomic((work) => {
+        const inventory = requireInventory(work.assets, inventoryId);
+        positiveQuantity(quantity);
+        for (const value of Object.values(provenance)) safeCount(value);
+        if (safeCount(provenance.grantedQuantity + provenance.purchasedQuantity) !== quantity ||
+            (provenance.purchasedQuantity === 0 && provenance.purchaseCostCredits !== 0)) {
+          throw new InventoryError('invalidQuantity');
+        }
+        if (quantity > maximumThatFits(work.assets, content, inventoryId, definitionId)) {
+          throw new InventoryError('insufficientCapacity');
+        }
+        return put(work, { id: allocate(work), inventoryId: inventory.id, definitionId,
+          quantity, state: deepClone(state), provenance, recoveryGrant: options.recoveryGrant ?? false },
+        inventory.id, true);
       });
     },
     /** Removes physical units and returns the consumed portion with apportioned provenance. */
@@ -140,7 +157,8 @@ export function inventoryService(draft: AssetDraft, content: ContentRepository) 
           throw new InventoryError('incompatibleStacks');
         }
         work.assets.stacks[targetId] = { ...target, quantity: safeCount(source.quantity + target.quantity),
-          provenance: mergeProvenance(source.provenance, target.provenance) };
+          provenance: mergeProvenance(source.provenance, target.provenance),
+          recoveryGrant: mergedRecoveryGrant(source, target) };
         delete work.assets.stacks[sourceId];
         return target.id;
       });

@@ -78,7 +78,7 @@ describe.each(['direct', 'channel'] as const)('fitting through %s transport', (k
     await create(gateway);
 
     const assets = await ask(gateway, 'assets.list', {});
-    const shipId = assets.activeShipId;
+    const shipId = assets.activeShipId!;
     const before = await ask(gateway, 'ship.get', { shipId });
     expect(before.undockable).toBe(true);
     expect(before.weapons[0]?.loadedRounds).toBe(20);
@@ -155,7 +155,7 @@ describe.each(['direct', 'channel'] as const)('fitting through %s transport', (k
     const store = createMemorySaveStore();
     const gateway = session(kind, store);
     await create(gateway);
-    const { activeShipId: shipId } = await ask(gateway, 'assets.list', {});
+    const shipId = (await ask(gateway, 'assets.list', {})).activeShipId!;
 
     await ask(gateway, 'fitting.begin', { shipId });
     await ask(gateway, 'fitting.clear', { slotKind: 'weapon', slotIndex: 0 });
@@ -179,7 +179,7 @@ describe.each(['direct', 'channel'] as const)('fitting through %s transport', (k
     expect(!closed.ok && closed.error.messageKey).toBe('error.ruleViolation.noCampaignOpen');
 
     await create(gateway);
-    const { activeShipId: shipId } = await ask(gateway, 'assets.list', {});
+    const shipId = (await ask(gateway, 'assets.list', {})).activeShipId!;
 
     const noDraft = await gateway.request('fitting.commit', {});
     expect(!noDraft.ok && noDraft.error.messageKey).toBe('error.ruleViolation.fittingDraftClosed');
@@ -232,7 +232,7 @@ it('replays the same fitting commands to identical hashes across both transports
   for (const kind of ['direct', 'channel'] as const) {
     const gateway = session(kind, createMemorySaveStore());
     await create(gateway);
-    const { activeShipId: shipId } = await ask(gateway, 'assets.list', {});
+    const shipId = (await ask(gateway, 'assets.list', {})).activeShipId!;
 
     await ask(gateway, 'fitting.begin', { shipId });
     await ask(gateway, 'fitting.clear', { slotKind: 'weapon', slotIndex: 0 });

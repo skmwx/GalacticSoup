@@ -237,6 +237,7 @@ function createTargetShip(
       capacitorCharge: hull.capacitor.capacity,
     },
     insurance: { coverage: 'basic', premiumPaidCredits: 0 },
+    recoveryGrant: false,
   };
   return shipId;
 }

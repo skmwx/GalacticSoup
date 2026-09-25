@@ -6,29 +6,35 @@ import {
   type Transaction,
 } from './transaction';
 import {
-  distance,
+  bookmarkOf,
   dockRefusal,
   instantiateSite,
   movementOrderOf,
   movementRefusal,
   retreatRefusal,
+  selectBookmarkRefusal,
   selectDestinationRefusal,
-  siteDefinitionPosition,
   targetOrderRefusal,
   undockRefusal,
+  warpDistanceKm,
   warpRefusal,
+  warpToBookmarkRefusal,
   type CampaignDraft,
   type CommandRefusal,
   type MovementOrder,
+  type EntityId,
   type NavigationRuleInput,
   type SiteLocation,
+  type Vector2,
 } from '@engine/domain';
 import { cancelBoundary, materializeWrecks, orderMovement } from '@engine/simulation';
 import type {
   DockPayload,
   MoveToPointPayload,
+  SelectBookmarkPayload,
   TargetRangePayload,
   WarpPayload,
+  WarpToBookmarkPayload,
 } from '@protocol';
 import type { EncounterId, SiteId, StationId } from '@shared';
 
@@ -56,12 +62,18 @@ export function handleNavigationCommand(
     | 'movement.stop'
     | 'navigation.warp'
     | 'navigation.retreat'
-    | 'navigation.dock',
+    | 'navigation.dock'
+    | 'navigation.selectBookmark'
+    | 'navigation.warpToBookmark',
   payload: unknown,
 ): CommandOutcome {
   switch (type) {
     case 'navigation.selectDestination':
       return selectDestination(transaction, (payload as { encounterId: string }).encounterId);
+    case 'navigation.selectBookmark':
+      return selectBookmark(transaction, (payload as SelectBookmarkPayload).bookmarkId);
+    case 'navigation.warpToBookmark':
+      return warpToBookmark(transaction, payload as WarpToBookmarkPayload);
     case 'ship.undock':
       return undock(transaction);
     case 'movement.approach':
@@ -102,10 +114,33 @@ function selectDestination(transaction: Transaction, encounterId: string): Comma
   if (draft.navigation.selectedEncounterId === encounterId) return UNCHANGED;
   const encounter = transaction.content.requireEncounter(encounterId as EncounterId);
   draft.navigation.selectedEncounterId = encounter.id as EncounterId;
+  draft.navigation.selectedBookmarkId = null;
   changed(transaction, false);
   transaction.publish('navigation.destinationSelected', {
     encounterId: encounter.id,
     siteId: encounter.siteId,
+  });
+  return APPLIED;
+}
+
+/**
+ * Chooses the player's own wreck as the destination at the station
+ * (Functional Specification 5.4, 9.12). It replaces a chosen encounter, and
+ * like it, it marks a destination rather than moving the ship.
+ */
+function selectBookmark(transaction: Transaction, bookmarkId: string): CommandOutcome {
+  const draft = transaction.requireDraft();
+  const refused = refuse(selectBookmarkRefusal(rules(transaction), bookmarkId));
+  if (refused !== null) return refused;
+  if (draft.navigation.selectedBookmarkId === bookmarkId) return UNCHANGED;
+  const bookmark = bookmarkOf(draft, bookmarkId);
+  if (bookmark === null) return reject('bookmarkUnknown');
+  draft.navigation.selectedBookmarkId = bookmark.bookmarkId as EntityId;
+  draft.navigation.selectedEncounterId = null;
+  changed(transaction, false);
+  transaction.publish('navigation.bookmarkSelected', {
+    bookmarkId: bookmark.bookmarkId,
+    siteId: bookmark.siteId,
   });
   return APPLIED;
 }
@@ -115,7 +150,7 @@ function undock(transaction: Transaction): CommandOutcome {
   const refused = refuse(undockRefusal(rules(transaction)));
   if (refused !== null) return refused;
   const location = draft.assets.location;
-  const ship = draft.assets.ships[draft.assets.activeShipId];
+  const ship = draft.assets.activeShipId === null ? undefined : draft.assets.ships[draft.assets.activeShipId];
   if (location.kind !== 'station' || ship === undefined) return reject('undockUnavailable');
 
   const station = transaction.content.requireStation(location.stationId);
@@ -168,24 +203,63 @@ function setMovement(transaction: Transaction, order: MovementOrder): CommandOut
 }
 
 function beginWarp(transaction: Transaction, payload: WarpPayload, retreating: boolean): CommandOutcome {
-  const draft = transaction.requireDraft();
   const refused = refuse(warpRefusal(rules(transaction), payload.destinationSiteId));
   if (refused !== null) return refused;
-  if (!transaction.content.rules.navigation.arrivalDistancesKm.includes(payload.arrivalDistanceKm)) {
+  return startWarp(transaction, {
+    destinationSiteId: payload.destinationSiteId as SiteId,
+    bookmarkId: null,
+    anchor: { x: 0, y: 0 },
+    arrivalDistanceKm: payload.arrivalDistanceKm,
+  }, retreating);
+}
+
+/**
+ * Warps to the player's own wreck (Functional Specification 7.3, 9.12). The
+ * ship arrives the chosen distance short of the wreck rather than of the
+ * site's centre, so it can be looted and left.
+ */
+function warpToBookmark(transaction: Transaction, payload: WarpToBookmarkPayload): CommandOutcome {
+  const refused = refuse(warpToBookmarkRefusal(rules(transaction), payload.bookmarkId));
+  if (refused !== null) return refused;
+  const bookmark = bookmarkOf(transaction.requireDraft(), payload.bookmarkId);
+  if (bookmark === null) return reject('bookmarkUnknown');
+  return startWarp(transaction, {
+    destinationSiteId: bookmark.siteId,
+    bookmarkId: bookmark.bookmarkId as EntityId,
+    anchor: bookmark.anchor,
+    arrivalDistanceKm: payload.arrivalDistanceKm,
+  }, false);
+}
+
+interface WarpRequest {
+  readonly destinationSiteId: SiteId;
+  readonly bookmarkId: EntityId | null;
+  readonly anchor: Vector2;
+  readonly arrivalDistanceKm: number;
+}
+
+function startWarp(transaction: Transaction, request: WarpRequest, retreating: boolean): CommandOutcome {
+  const draft = transaction.requireDraft();
+  if (!transaction.content.rules.navigation.arrivalDistancesKm.includes(request.arrivalDistanceKm)) {
     return reject('invalidArrivalDistance');
   }
   const location = draft.assets.location;
-  if (location.kind !== 'site') return reject('warpUnavailable');
-  const destination = payload.destinationSiteId as SiteId;
-  // The refusal above already proved both sites resolve; this is the distance
-  // it measured, not a second decision about whether the warp is legal.
-  const origin = siteDefinitionPosition(transaction.content, location.systemId, location.siteId);
-  const target = siteDefinitionPosition(transaction.content, location.systemId, destination);
-  if (origin === null || target === null) return reject('destinationUnknown');
-  const distanceKm = distance(origin, target);
+  const playerId = draft.assets.activeShipId;
+  if (location.kind !== 'site' || playerId === null) return reject('warpUnavailable');
+  const destination = request.destinationSiteId;
+  // The refusal already proved both ends resolve; this is the distance it
+  // measured, not a second decision about whether the warp is legal.
+  const distanceKm = warpDistanceKm(
+    transaction.content,
+    location.systemId,
+    location.siteId,
+    destination,
+    request.anchor,
+  );
+  if (distanceKm === null) return reject('destinationUnknown');
 
   cancelTravel(draft);
-  const current = movementOrderOf(draft, draft.assets.activeShipId);
+  const current = movementOrderOf(draft, playerId);
   if (current !== null) {
     draft.navigation.lastCancellation = {
       orderKind: current.kind,
@@ -193,13 +267,15 @@ function beginWarp(transaction: Transaction, payload: WarpPayload, retreating: b
       simulationTimeMs: draft.time.simulationTimeMs,
     };
   }
-  orderMovement(transaction.simulation(), draft.assets.activeShipId, null);
+  orderMovement(transaction.simulation(), playerId, null);
   draft.navigation.travel = {
     kind: 'warp',
     phase: 'aligning',
     originSiteId: location.siteId,
     destinationSiteId: destination,
-    arrivalDistanceKm: payload.arrivalDistanceKm,
+    bookmarkId: request.bookmarkId,
+    anchor: { x: request.anchor.x, y: request.anchor.y },
+    arrivalDistanceKm: request.arrivalDistanceKm,
     distanceKm,
     boundaryEntryId: null,
   };
@@ -214,9 +290,7 @@ function beginWarp(transaction: Transaction, payload: WarpPayload, retreating: b
 function retreat(transaction: Transaction): CommandOutcome {
   const refused = refuse(retreatRefusal(rules(transaction)));
   if (refused !== null) return refused;
-  const station = transaction.content.requireStation(
-    transaction.content.rules.economy.startingStationId as StationId,
-  );
+  const station = transaction.content.requireStation(transaction.requireDraft().assets.lastDockedStationId);
   return beginWarp(transaction, { destinationSiteId: station.siteId, arrivalDistanceKm: 0 }, true);
 }
 
@@ -226,8 +300,10 @@ function dock(transaction: Transaction, payload: DockPayload): CommandOutcome {
   if (refused !== null) return refused;
   const station = transaction.content.requireStation(payload.stationId as StationId);
 
+  const playerId = draft.assets.activeShipId;
+  if (playerId === null) return reject('dockUnavailable');
   cancelTravel(draft);
-  const current = movementOrderOf(draft, draft.assets.activeShipId);
+  const current = movementOrderOf(draft, playerId);
   if (current !== null) {
     draft.navigation.lastCancellation = {
       orderKind: current.kind,
@@ -235,7 +311,7 @@ function dock(transaction: Transaction, payload: DockPayload): CommandOutcome {
       simulationTimeMs: draft.time.simulationTimeMs,
     };
   }
-  orderMovement(transaction.simulation(), draft.assets.activeShipId, null);
+  orderMovement(transaction.simulation(), playerId, null);
   draft.navigation.travel = {
     kind: 'dock',
     phase: 'approaching',
@@ -252,7 +328,9 @@ function replaceCurrentOrder(
   transaction: Transaction,
   order: MovementOrder,
 ): void {
-  const current = movementOrderOf(draft, draft.assets.activeShipId);
+  const playerId = draft.assets.activeShipId;
+  if (playerId === null) return;
+  const current = movementOrderOf(draft, playerId);
   if (draft.navigation.travel !== null) {
     const travel = draft.navigation.travel;
     cancelTravel(draft);
@@ -268,7 +346,7 @@ function replaceCurrentOrder(
       simulationTimeMs: draft.time.simulationTimeMs,
     };
   }
-  orderMovement(transaction.simulation(), draft.assets.activeShipId, order);
+  orderMovement(transaction.simulation(), playerId, order);
 }
 
 function cancelTravel(draft: CampaignDraft): void {

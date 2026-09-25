@@ -53,6 +53,8 @@ const REASON = {
   supplied: 'resupply.unavailable.fullySupplied',
   ammunition: 'resupply.unavailable.noAmmunitionLoaded',
   enhanced: 'insurance.unavailable.alreadyEnhanced',
+  recoverySale: 'market.unavailable.recoveryGrant',
+  recoveryInsurance: 'insurance.unavailable.recoveryGrant',
 } as const;
 
 export function stationServicesProjection(
@@ -193,6 +195,8 @@ export function marketSellPreview(
       !isLocalInventory(state.assets, inventory) || !inventoryAtStation(state, inventory.id, payload.stationId)) {
     unavailableReason ??= REASON.source;
   }
+  // Recovery-grant units have no sale value (Functional Specification 9.12).
+  if (stack.recoveryGrant) unavailableReason ??= REASON.recoverySale;
   const base: MarketTransactionPreviewData = {
     action: 'market.sell',
     available: unavailableReason === null,
@@ -275,6 +279,8 @@ export function insurancePreview(
   const rules = content.rules.economy;
   const premium = Math.ceil(hull.referenceValueCredits * rules.enhancedInsurancePremiumFraction);
   let unavailableReason = serviceReason(state, stationId, 'insurance');
+  // A recovery-grant hull has no insurance value (Functional Specification 9.12).
+  if (ship.recoveryGrant) unavailableReason ??= REASON.recoveryInsurance;
   if (ship.insurance.coverage === 'enhanced') unavailableReason ??= REASON.enhanced;
   if (premium > state.assets.credits) unavailableReason ??= REASON.credits;
   const trace: FormulaTraceData = {
@@ -290,8 +296,11 @@ export function insurancePreview(
     action: 'insurance.enhance', available: unavailableReason === null, unavailableReason, token: null,
     walletDeltaCredits: -premium, totalCredits: premium, traces: [trace], stationId, shipId: ship.id,
     currentCoverage: ship.insurance.coverage, resultingCoverage: 'enhanced',
-    basicPayoutCredits: Math.round(hull.referenceValueCredits * rules.basicInsurancePayoutFraction),
-    enhancedPayoutCredits: Math.round(hull.referenceValueCredits * rules.enhancedInsurancePayoutFraction),
+    // The same whole-credit settlement destruction pays (Functional Specification 4.1, 9.12).
+    basicPayoutCredits: ship.recoveryGrant ? 0
+      : Math.floor(hull.referenceValueCredits * rules.basicInsurancePayoutFraction),
+    enhancedPayoutCredits: ship.recoveryGrant ? 0
+      : Math.floor(hull.referenceValueCredits * rules.enhancedInsurancePayoutFraction),
     premiumCredits: premium,
   };
   return deepFreeze(bindIfAvailable(state, base, payload, versions(state, stationId, 'insurance')));

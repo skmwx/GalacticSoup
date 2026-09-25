@@ -15,13 +15,14 @@ type Report = (rule: string, path: string, detail: string) => void;
 
 export function isNavigationState(value: unknown): value is NavigationState {
   if (!shape(value, [
-    'version', 'knownDestinationSiteIds', 'selectedEncounterId', 'currentSite',
+    'version', 'knownDestinationSiteIds', 'selectedEncounterId', 'selectedBookmarkId', 'currentSite',
     'movementOrders', 'travel', 'lastCancellation',
   ])) return false;
   if (!count(value['version']) || value['version'] < 1) return false;
   if (!Array.isArray(value['knownDestinationSiteIds']) ||
     !value['knownDestinationSiteIds'].every((id) => isDefinitionIdIn(id, 'site'))) return false;
   if (value['selectedEncounterId'] !== null && !isDefinitionIdIn(value['selectedEncounterId'], 'encounter')) return false;
+  if (value['selectedBookmarkId'] !== null && !isEntityId(value['selectedBookmarkId'])) return false;
   const orders = value['movementOrders'];
   if (!record(orders)) return false;
   if (!Object.entries(orders).every(([key, order]) => isEntityId(key) && movement(order))) return false;
@@ -56,8 +57,17 @@ export function validateNavigation(
   } else if (site !== null) {
     fail('currentSite', 'A docked or warping ship cannot retain a loaded tactical site.');
   }
+  if (navigation.selectedBookmarkId !== null) {
+    if (navigation.selectedEncounterId !== null) {
+      fail('selectedBookmarkId', 'At most one destination may be chosen at a time.');
+    }
+    if (state.encounter.wrecks[navigation.selectedBookmarkId]?.owner !== 'player') {
+      fail('selectedBookmarkId', 'A chosen bookmark must be the player\'s own unexpired wreck.');
+    }
+  }
+  const activeShipId = state.assets.activeShipId;
   if (site !== null) {
-    const player = site.objects[state.assets.activeShipId];
+    const player = activeShipId === null ? undefined : site.objects[activeShipId];
     if (player?.kind !== 'ship' || !player.movable) fail('currentSite.objects', 'The active ship must be the movable player object.');
     const ordinal = Number(site.instanceId.split('-e')[1]);
     if (!Number.isSafeInteger(ordinal) || ordinal >= state.nextEntityOrdinal ||
@@ -86,6 +96,12 @@ export function validateNavigation(
   }
   const travelState = navigation.travel;
   if (travelState?.kind === 'warp') {
+    if (travelState.bookmarkId !== null) {
+      const bookmark = state.encounter.wrecks[travelState.bookmarkId];
+      if (bookmark?.owner !== 'player' || bookmark.siteId !== travelState.destinationSiteId) {
+        fail('travel.bookmarkId', 'A warp bookmark must be the player\'s own wreck in the destination site.');
+      }
+    }
     if (travelState.phase === 'transit') {
       if (location.kind !== 'warp' || travelState.boundaryEntryId === null) {
         fail('travel.phase', 'An in-transit warp requires its warp location and arrival boundary.');
@@ -115,7 +131,7 @@ export function validateNavigation(
         : 'navigation.warpArrival';
     if (
       scheduled === undefined ||
-      scheduled.ownerId !== state.assets.activeShipId ||
+      scheduled.ownerId !== activeShipId ||
       scheduled.kind !== expectedKind
     ) {
       fail('travel.boundaryEntryId', 'The travel completion boundary must exist and belong to the active ship.');
@@ -188,10 +204,11 @@ function travel(value: unknown): boolean {
   if (!record(value)) return false;
   if (value['kind'] === 'warp') {
     return shape(value, [
-      'kind', 'phase', 'originSiteId', 'destinationSiteId', 'arrivalDistanceKm',
+      'kind', 'phase', 'originSiteId', 'destinationSiteId', 'bookmarkId', 'anchor', 'arrivalDistanceKm',
       'distanceKm', 'boundaryEntryId',
     ]) && ['aligning', 'preparing', 'transit'].includes(value['phase'] as string) &&
       isDefinitionIdIn(value['originSiteId'], 'site') && isDefinitionIdIn(value['destinationSiteId'], 'site') &&
+      (value['bookmarkId'] === null || isEntityId(value['bookmarkId'])) && vector(value['anchor']) &&
       isNonNegativeNumber(value['arrivalDistanceKm']) && isNonNegativeNumber(value['distanceKm']) &&
       (value['boundaryEntryId'] === null || isEntityId(value['boundaryEntryId']));
   }

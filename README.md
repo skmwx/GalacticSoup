@@ -101,7 +101,7 @@ campaign are serialised and therefore finish in revision order.
 A save is a self-describing JSON envelope: the build and content it was written against, the
 campaign and revision it holds, the canonical `CampaignState` payload, and a SHA-256 over
 everything else in it. `schemas/save/save-envelope.schema.json` is its published contract and
-`tests/fixtures/saves/format-5.json` is the golden artefact that pins the format, its canonical
+`tests/fixtures/saves/format-9.json` is the golden artefact that pins the format, its canonical
 serialisation and its digest. Loading walks the steps the technical specification prescribes —
 bounds, checksum, shape, migrations, content compatibility, invariants — and nothing in that path
 writes, so a save that cannot be opened is left exactly as it was found and the loader falls back to
@@ -157,7 +157,8 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 11 exposes `encounter.state`, `loot.contents` and `loot.take` alongside
+Protocol version 12 exposes `loss.report`, `navigation.selectBookmark` and
+`navigation.warpToBookmark`, `encounter.state`, `loot.contents` and `loot.take` alongside
 `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`, `weapon.deactivate`,
 `weapon.reload`, `weapon.changeAmmunition`, `module.activate`, `module.deactivate`, `ship.get`,
 `ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market, repair,
@@ -169,7 +170,7 @@ capacitor recharge and endurance, active-module cycles and a bounded significant
 All combat actors use the same deterministic lifecycle for damage, repair, propulsion and support
 effects, so headless opponents and the player follow the same rules.
 
-Campaign state and save format are version 8. Previous development saves are rejected without
+Campaign state and save format are version 9. Previous development saves are rejected without
 modification; start a new campaign after upgrading. No pre-release migration is required by the
 MVP plan. The migration runner remains covered by fixture registries, and the older format fixtures
 are retained to verify rejection. See `docs/agent-comm/status/` for the per-phase handoffs.
@@ -262,7 +263,8 @@ failure - and the next arrival instantiates a fresh one, so no site can be exhau
 `npc.profiles` says what each one flies and carries and what its bounty is worth.
 
 An opponent is an ordinary ship. It is created through the inventory service with a real fit in a
-real fitting store, it derives its attributes through the same pipeline the player's ship uses, and
+real fitting store and the reserve rounds its profile authors in its hold, so it reloads the way the
+player does; it derives its attributes through the same pipeline the player's ship uses, and
 `src/engine/simulation/encounter.ts` turns its intent into the same movement, targeting and module
 commands the player issues. It cannot out-range, out-track or out-tank the rules, and it reads only
 its own condition and the range to its target, so it gains nothing from the player losing.
@@ -312,6 +314,36 @@ departure panel discloses each site's opponents, bounties, possible loot and com
 warns - without blocking - about an unloaded weapon or unrepaired armour and hull before undocking.
 Docking refreshes every station surface, so a campaign reopened in space finds the market current
 when it comes home.
+
+## Losing a ship
+
+When the player's hull gives out, one transaction settles everything
+(`src/engine/simulation/loss.ts`). It runs after combat has finalized destruction and after the
+encounter has paid for anything the same instant destroyed, so dying while killing the last opponent
+still earns its bounty. The hull becomes the player's own wreck, which lasts two simulation hours;
+each fitted module and each cargo stack survives into it on its own roll from the `loot` stream,
+and loaded ammunition never does. The opponents stay behind, the site unloads and the pilot is
+docked at the station they last docked at. Insurance pays at once - 30% of the hull's reference
+value, or 70% under enhanced cover, which the loss consumes - and the loss report is frozen:
+who hit the ship with what and which layers each attacker broke, the final burst, what had stopped
+working, what was lost and what survived, the payout and how the pilot was recovered. Then the
+campaign autosaves.
+
+Recovery follows the functional specification literally. A pilot who owns no flight-ready ship and
+has less than the starter hull's reference value is given a replacement starter ship with its
+original basic fit and a full magazine. Everything granted - hull, modules, rounds - carries a
+`recoveryGrant` mark that travels through every split, move, fit, reload and loss: it can be flown
+and refitted but never sold or insured, and a marked stack merges only with a marked one (a loaded
+magazine, being one physical charge, becomes marked if any of its rounds are). A pilot with more
+than that owns no ship at all until they buy one - the active ship may be absent, but only while
+docked - and a content check keeps the recovery station's starter hull within reach of exactly
+that pilot. A shipless pilot who spends below the threshold is granted the ship then.
+
+The wreck is an automatic bookmark. The station's departure panel offers it beside the encounters,
+and the space view's warp control offers it beside the sites, so it can be recovered without a
+system map: a warp to it arrives relative to the wreck rather than to the site's centre. The
+authored opponents at that site are there again, because every visit instantiates a fresh
+encounter.
 
 ## Content
 

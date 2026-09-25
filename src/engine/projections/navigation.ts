@@ -8,15 +8,20 @@ import {
   movementRefusal,
   npcOf,
   objectAttitude,
+  playerWrecks,
   retreatRefusal,
+  selectBookmarkRefusal,
   selectDestinationRefusal,
+  stacksIn,
   targetOrderRefusal,
   undockRefusal,
   warpRefusal,
+  warpToBookmarkRefusal,
   wreckAccessRefusal,
 } from '@engine/domain';
 import type { ContentRepository } from '@engine/ports';
 import type {
+  BookmarkDestinationData,
   CommandAvailabilityData,
   DestinationData,
   DestinationLootData,
@@ -45,9 +50,10 @@ export function siteProjection(state: CampaignState, content: ContentRepository)
   const rules: NavigationRuleInput = { state, content };
   // The site view carries the player's own standing order; an opponent's is
   // its own business (Technical Specification 10.3).
-  const playerOrder = movementOrderOf(state, state.assets.activeShipId);
+  const playerId = state.assets.activeShipId;
+  const playerOrder = playerId === null ? null : movementOrderOf(state, playerId);
   const runtime = state.navigation.currentSite;
-  const player = runtime?.objects[state.assets.activeShipId];
+  const player = playerId === null ? undefined : runtime?.objects[playerId];
   const siteDefinition = runtime === null
     ? undefined
     : content.requireSystem(runtime.systemId).sites.find((candidate) => candidate.id === runtime.siteId);
@@ -146,8 +152,50 @@ export function destinationsProjection(
   return deepFreeze({
     revision: state.revision,
     selectedEncounterId: state.navigation.selectedEncounterId,
+    selectedBookmarkId: state.navigation.selectedBookmarkId,
     destinations,
+    bookmarks: bookmarkDestinations(rules),
   });
+}
+
+/**
+ * The player's own wrecks as destinations (Functional Specification 5.4, 7.3,
+ * 9.12). Each is chosen at the station and warped to from space through the
+ * same flow as an encounter, so recovering a wreck needs no system map. What
+ * waits at its site is disclosed alongside, because the wreck lies where the
+ * ship was lost.
+ */
+function bookmarkDestinations(rules: NavigationRuleInput): readonly BookmarkDestinationData[] {
+  const { state, content } = rules;
+  const location = state.assets.location;
+  return playerWrecks(state)
+    .filter((entry) => entry.systemId === location.systemId)
+    .map((entry): BookmarkDestinationData => {
+      const siteDefinition = content.system(entry.systemId)?.sites.find((site) => site.id === entry.siteId);
+      const encounter = content.encounters().find(
+        (candidate) => candidate.siteId === entry.siteId && candidate.systemId === entry.systemId,
+      );
+      return {
+        bookmarkId: entry.id,
+        kind: 'playerWreck',
+        siteId: entry.siteId,
+        siteNameKey: siteDefinition?.nameKey ?? '',
+        hullNameKey: entry.nameKey,
+        encounterId: encounter?.id ?? null,
+        encounterNameKey: encounter?.nameKey ?? null,
+        tier: encounter?.tier ?? null,
+        createdAtMs: entry.createdAtMs,
+        expiresAtMs: entry.expiresAtMs,
+        remainingSeconds: Math.max(0, (entry.expiresAtMs - state.time.simulationTimeMs) / 1000),
+        itemCount: stacksIn(state.assets, entry.inventoryId).length,
+        selected: state.navigation.selectedBookmarkId === entry.id,
+        current: location.kind === 'site' && location.siteId === entry.siteId,
+        commands: [
+          availability('navigation.selectBookmark', selectBookmarkRefusal(rules, entry.id)),
+          availability('navigation.warpToBookmark', warpToBookmarkRefusal(rules, entry.id)),
+        ],
+      };
+    });
 }
 
 /**
@@ -246,6 +294,7 @@ function travelProjection(state: CampaignState): TravelStatusData | null {
       phase: travel.phase,
       originSiteId: travel.originSiteId,
       destinationSiteId: travel.destinationSiteId,
+      bookmarkId: travel.bookmarkId,
       arrivalDistanceKm: travel.arrivalDistanceKm,
       distanceKm: travel.distanceKm,
       completionAtMs,

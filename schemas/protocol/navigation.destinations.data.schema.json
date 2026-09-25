@@ -7,7 +7,9 @@
   "required": [
     "revision",
     "selectedEncounterId",
-    "destinations"
+    "selectedBookmarkId",
+    "destinations",
+    "bookmarks"
   ],
   "properties": {
     "revision": {
@@ -24,6 +26,17 @@
           "type": "string",
           "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$",
           "maxLength": 96
+        }
+      ]
+    },
+    "selectedBookmarkId": {
+      "description": "The bookmark chosen at the station instead of an encounter; at most one of the two is set.",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/entityId"
         }
       ]
     },
@@ -168,9 +181,126 @@
           }
         }
       }
+    },
+    "bookmarks": {
+      "description": "The player's own wrecks in the current system, oldest first (Functional Specification 5.4, 7.3, 9.12).",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/bookmarkDestination"
+      }
     }
   },
   "$defs": {
+    "entityId": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+    },
+    "bookmarkDestination": {
+      "description": "A bookmark offered as a destination: in the MVP, the automatic one on the player's own wreck, chosen at the station and warped to without a system map.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bookmarkId",
+        "kind",
+        "siteId",
+        "siteNameKey",
+        "hullNameKey",
+        "encounterId",
+        "encounterNameKey",
+        "tier",
+        "createdAtMs",
+        "expiresAtMs",
+        "remainingSeconds",
+        "itemCount",
+        "selected",
+        "current",
+        "commands"
+      ],
+      "properties": {
+        "bookmarkId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "kind": {
+          "const": "playerWreck"
+        },
+        "siteId": {
+          "type": "string",
+          "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "siteNameKey": {
+          "type": "string"
+        },
+        "hullNameKey": {
+          "type": "string"
+        },
+        "encounterId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^encounter(?:\\.[a-z0-9][a-z0-9-]*)+$",
+              "maxLength": 96
+            }
+          ]
+        },
+        "encounterNameKey": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "tier": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            }
+          ]
+        },
+        "createdAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "expiresAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "remainingSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "itemCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "selected": {
+          "type": "boolean"
+        },
+        "current": {
+          "type": "boolean"
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/commandAvailability"
+          }
+        }
+      }
+    },
     "commandAvailability": {
       "type": "object",
       "additionalProperties": false,

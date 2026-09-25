@@ -35,6 +35,7 @@ export function startingAssets(campaignId: CampaignId, content: ContentRepositor
       credits: rules.startingCredits,
       location,
       activeShipId: shipId,
+      lastDockedStationId: station.id,
       ships: {},
       inventories: {},
       stacks: {},
@@ -61,6 +62,7 @@ export function startingAssets(campaignId: CampaignId, content: ContentRepositor
       capacitorCharge: 0,
     },
     insurance: { coverage: 'basic', premiumPaidCredits: 0 },
+    recoveryGrant: false,
   };
 
   for (const item of [...rules.startingItems].sort(byDefinitionId)) {

@@ -51,3 +51,53 @@ If you would rather have the literal reading, say so and it becomes a small chan
 8.3 could be tightened to say that a dedicated magazine counts as the explicit location.
 
 **Answer:**
+
+---
+
+## Q3 — Phase 15 — A pilot can own no ship at all; Technical Specification 15.3 says otherwise
+
+**Asked:** 2026-09-25 (Phase 15, destruction, insurance and recovery). **Blocking:** no — Phase 15
+shipped with the reading below.
+
+Functional Specification 9.12 grants a replacement starter ship only when the pilot "owns no
+flight-ready ship and total credits are below the starter ship reference value". A pilot who loses
+their only ship while holding 12,000 credits or more therefore owns no ship at all until they buy
+one. Technical Specification 15.3 check 5 says "exactly one active player ship exists", which that
+state breaks.
+
+The functional specification outranks the technical one, so Phase 15 implements it: the active ship
+may be absent, but only while docked, only when no ship of the player's waits at that station, and
+only while the pilot owns a flight-ready ship elsewhere or can afford the starter hull. Buying a hull
+while shipless makes it the active ship. A content check keeps the recovery station's starter hull
+at or below its reference value (it was 12,960 against 12,000, which would have stranded a pilot
+with 12,000-12,959 credits; it is now 11,988).
+
+Proposed wording for Technical Specification 15.3 check 5: "at most one active player ship exists;
+when one does, its location agrees with the campaign location; a campaign without one is docked,
+and the pilot either owns a flight-ready ship or can afford the starter hull at that station."
+
+**Answer:**
+
+---
+
+## Q4 — Phase 15 — What counts as a "flight-ready" ship, and when is the recovery grant checked?
+
+**Asked:** 2026-09-25 (Phase 15). **Blocking:** no.
+
+Phase 15 reads "flight-ready" as "passes the undock rule", so a bare hull with nothing fitted is
+flight-ready. Two consequences are worth a decision:
+
+1. A pilot who buys the bare starter hull with their last credits owns a flight-ready but unarmed
+   ship, so they are not owed a grant. Their way out is to recover their wreck, or to be destroyed
+   again - after which they are owed one. That is a legal but unpleasant route. Reading
+   "flight-ready" as "able to undock with a working weapon and ammunition" would close it, but it
+   would add a rule the specification does not state.
+2. The grant is checked at destruction, as 9.12 says, and again after any market purchase that
+   leaves a shipless pilot below the starter's reference value, which is the only other way such a
+   pilot can fall below it. Without that second check, a shipless pilot who buys ammunition before a
+   hull could strand themselves. This reads "after destruction" as "at any time after a
+   destruction, while no ship has been flown since".
+
+If either reading is wrong, both are small, local changes in `src/engine/domain/recovery/`.
+
+**Answer:**

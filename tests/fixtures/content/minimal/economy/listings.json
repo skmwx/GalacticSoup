@@ -5,7 +5,7 @@
     {
       "itemId": "hull.test.starter",
       "supply": "fixed",
-      "basePriceCredits": 10000,
+      "basePriceCredits": 9250,
       "regionalPriceFactor": 1,
       "targetStock": 10,
       "initialStock": 10,

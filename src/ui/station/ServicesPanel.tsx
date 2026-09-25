@@ -17,7 +17,11 @@ import { useTransactionPreview } from './useTransactionPreview';
  * without confirming the total, which is what the functional specification
  * requires.
  *
- * @implements FUNC-10, FUNC-19.5, MVP-AC-02
+ * All three apply to the active ship, so a pilot who lost their only ship
+ * has nothing to repair, resupply or insure until they buy one (Functional
+ * Specification 9.12); the controls stay visible and say so.
+ *
+ * @implements FUNC-10, FUNC-19.5, FUNC-9.12, MVP-AC-02
  */
 
 export interface ServicesPanelProps {
@@ -56,7 +60,13 @@ export function ServicesPanel({ gateway, data, runner }: ServicesPanelProps): JS
     payload: open === 'insurance' && shipId !== null ? { shipId } : null,
   });
 
+  const shipless = data.assets !== null && shipId === null;
   const serviceState = (name: string): { available: boolean; reason: string | null } => {
+    // Each service needs a ship to preview; without one there is no subject
+    // to ask the engine about.
+    if (shipless) {
+      return { available: false, reason: 'services.unavailable.noShip' };
+    }
     const entry = services.find((service) => service.service === name);
     return {
       available: entry?.available ?? false,

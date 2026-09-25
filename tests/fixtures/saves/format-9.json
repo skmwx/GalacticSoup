@@ -1,0 +1,292 @@
+{
+  "campaignId": "cd4befff9414cec4ed0dace04",
+  "checksum": "96eeb159071902ac994bb7369d22636f2240e5fe0ef86c1d611384cb8205e32b",
+  "contentHash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "contentVersion": "1.0.0+000000000000",
+  "displayName": "Golden Pilot",
+  "engineVersion": "1.0.0",
+  "format": "galactic-soup/save",
+  "formatVersion": 9,
+  "kind": "auto",
+  "protocolVersion": 4,
+  "revision": 1,
+  "saveId": "slot-1:auto:1",
+  "savedAtRealMs": 1700000123456,
+  "sequence": 1,
+  "simulationTimeMs": 0,
+  "slotId": "slot-1",
+  "state": {
+    "assets": {
+      "activeShipId": "cd4befff9414cec4ed0dace04-e1",
+      "credits": 20000,
+      "inventories": {
+        "cd4befff9414cec4ed0dace04-e2": {
+          "capacity": {
+            "kind": "unlimited"
+          },
+          "id": "cd4befff9414cec4ed0dace04-e2",
+          "location": {
+            "kind": "hangar",
+            "stationId": "station.test.dock"
+          }
+        },
+        "cd4befff9414cec4ed0dace04-e3": {
+          "capacity": {
+            "kind": "limited",
+            "volumeCubicDecimetres": 100000
+          },
+          "id": "cd4befff9414cec4ed0dace04-e3",
+          "location": {
+            "kind": "cargo",
+            "shipId": "cd4befff9414cec4ed0dace04-e1"
+          }
+        },
+        "cd4befff9414cec4ed0dace04-e4": {
+          "capacity": {
+            "kind": "unlimited"
+          },
+          "id": "cd4befff9414cec4ed0dace04-e4",
+          "location": {
+            "kind": "fitting",
+            "shipId": "cd4befff9414cec4ed0dace04-e1"
+          }
+        }
+      },
+      "lastDockedStationId": "station.test.dock",
+      "location": {
+        "kind": "station",
+        "stationId": "station.test.dock",
+        "systemId": "system.test"
+      },
+      "ships": {
+        "cd4befff9414cec4ed0dace04-e1": {
+          "cargoInventoryId": "cd4befff9414cec4ed0dace04-e3",
+          "condition": {
+            "capacitorCharge": 200,
+            "damage": {
+              "armor": 0,
+              "hull": 0,
+              "shield": 0
+            }
+          },
+          "fittingInventoryId": "cd4befff9414cec4ed0dace04-e4",
+          "hullId": "hull.test.starter",
+          "id": "cd4befff9414cec4ed0dace04-e1",
+          "insurance": {
+            "coverage": "basic",
+            "premiumPaidCredits": 0
+          },
+          "location": {
+            "kind": "station",
+            "stationId": "station.test.dock",
+            "systemId": "system.test"
+          },
+          "owner": "player",
+          "recoveryGrant": false
+        }
+      },
+      "stacks": {
+        "cd4befff9414cec4ed0dace04-e5": {
+          "definitionId": "ammo.test.charge",
+          "id": "cd4befff9414cec4ed0dace04-e5",
+          "inventoryId": "cd4befff9414cec4ed0dace04-e2",
+          "provenance": {
+            "grantedQuantity": 10,
+            "purchaseCostCredits": 0,
+            "purchasedQuantity": 0
+          },
+          "quantity": 10,
+          "recoveryGrant": false,
+          "state": {
+            "kind": "plain"
+          }
+        },
+        "cd4befff9414cec4ed0dace04-e6": {
+          "definitionId": "module.test.turret",
+          "id": "cd4befff9414cec4ed0dace04-e6",
+          "inventoryId": "cd4befff9414cec4ed0dace04-e4",
+          "provenance": {
+            "grantedQuantity": 1,
+            "purchaseCostCredits": 0,
+            "purchasedQuantity": 0
+          },
+          "quantity": 1,
+          "recoveryGrant": false,
+          "state": {
+            "kind": "fitted",
+            "online": true,
+            "slot": {
+              "index": 0,
+              "kind": "weapon"
+            }
+          }
+        },
+        "cd4befff9414cec4ed0dace04-e7": {
+          "definitionId": "ammo.test.charge",
+          "id": "cd4befff9414cec4ed0dace04-e7",
+          "inventoryId": "cd4befff9414cec4ed0dace04-e4",
+          "provenance": {
+            "grantedQuantity": 20,
+            "purchaseCostCredits": 0,
+            "purchasedQuantity": 0
+          },
+          "quantity": 20,
+          "recoveryGrant": false,
+          "state": {
+            "kind": "charge",
+            "slot": {
+              "index": 0,
+              "kind": "weapon"
+            }
+          }
+        }
+      },
+      "version": 1
+    },
+    "campaignId": "cd4befff9414cec4ed0dace04",
+    "combat": {
+      "events": [],
+      "ships": {},
+      "version": 1
+    },
+    "createdAtRealMs": 1700000000000,
+    "displayName": "Golden Pilot",
+    "economy": {
+      "stations": {
+        "station.test.dock": {
+          "listings": {
+            "ammo.test.charge": {
+              "eventFactor": 1,
+              "itemId": "ammo.test.charge",
+              "lastProcessedHour": 0,
+              "stock": 1000,
+              "stockAccumulator": 0,
+              "version": 1
+            },
+            "hull.test.starter": {
+              "eventFactor": 1,
+              "itemId": "hull.test.starter",
+              "lastProcessedHour": 0,
+              "stock": 10,
+              "stockAccumulator": 0,
+              "version": 1
+            },
+            "item.test.salvage": {
+              "eventFactor": 1,
+              "itemId": "item.test.salvage",
+              "lastProcessedHour": 0,
+              "stock": 20,
+              "stockAccumulator": 0,
+              "version": 1
+            },
+            "module.test.turret": {
+              "eventFactor": 1,
+              "itemId": "module.test.turret",
+              "lastProcessedHour": 0,
+              "stock": 20,
+              "stockAccumulator": 0,
+              "version": 1
+            }
+          },
+          "services": {
+            "insurance": {
+              "available": true,
+              "version": 1
+            },
+            "market": {
+              "available": true,
+              "version": 1
+            },
+            "repair": {
+              "available": true,
+              "version": 1
+            },
+            "resupply": {
+              "available": true,
+              "version": 1
+            }
+          },
+          "stationId": "station.test.dock"
+        }
+      }
+    },
+    "encounter": {
+      "active": null,
+      "completions": {},
+      "lastOutcome": null,
+      "version": 1,
+      "wrecks": {}
+    },
+    "fitting": null,
+    "navigation": {
+      "currentSite": null,
+      "knownDestinationSiteIds": [
+        "site.test.field",
+        "site.test.station"
+      ],
+      "lastCancellation": null,
+      "movementOrders": {},
+      "selectedBookmarkId": null,
+      "selectedEncounterId": null,
+      "travel": null,
+      "version": 1
+    },
+    "nextEntityOrdinal": 8,
+    "nextEventOrdinal": 1,
+    "random": {
+      "combat": {
+        "drawIndex": 0,
+        "s0": 2919637781,
+        "s1": 3856240189,
+        "s2": 869517528,
+        "s3": 2013977808
+      },
+      "economy": {
+        "drawIndex": 0,
+        "s0": 3863712299,
+        "s1": 1489260572,
+        "s2": 12460306,
+        "s3": 2565530270
+      },
+      "encounter": {
+        "drawIndex": 0,
+        "s0": 544014222,
+        "s1": 1170746920,
+        "s2": 441093851,
+        "s3": 3125871578
+      },
+      "loot": {
+        "drawIndex": 0,
+        "s0": 3621832897,
+        "s1": 3035129070,
+        "s2": 2992763132,
+        "s3": 2229667982
+      },
+      "world": {
+        "drawIndex": 0,
+        "s0": 489763333,
+        "s1": 2557278903,
+        "s2": 2286875452,
+        "s3": 1476596905
+      }
+    },
+    "recovery": {
+      "lastLoss": null,
+      "losses": 0,
+      "version": 1
+    },
+    "revision": 1,
+    "scheduler": {
+      "entries": [],
+      "nextInsertionOrdinal": 1
+    },
+    "seed": "0123456789abcdef0123456789abcdef",
+    "stateVersion": 9,
+    "time": {
+      "accumulatorMs": 0,
+      "paused": true,
+      "rate": 1,
+      "simulationTimeMs": 0
+    }
+  }
+}

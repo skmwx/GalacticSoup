@@ -5,6 +5,7 @@ import { validateCombat } from '../combat/validation';
 import { validateEconomy } from '../economy/validation';
 import { validateEncounter } from '../encounter/validation';
 import { validateNavigation } from '../navigation/validation';
+import { validateRecovery } from '../recovery/validation';
 
 import { isCampaignId, isEntityId, MAX_ORDINAL } from './identity';
 import { RANDOM_STREAMS, isRandomStreams } from '../random/streams';
@@ -119,6 +120,7 @@ export function validateCampaign(state: CampaignState, content?: ContentReposito
   validateNavigation(state, add, content);
   validateCombat(state, add, content);
   validateEncounter(state, add, content);
+  validateRecovery(state, add, content);
 
   return issues;
 }

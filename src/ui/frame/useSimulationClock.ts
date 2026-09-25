@@ -15,7 +15,13 @@ import type { CommandResultData } from '@protocol';
  * the frame sixty times a second for a display that shows whole seconds. The
  * published value is therefore throttled; the engine's value is not.
  *
- * @implements FUNC-3.3, TECH-9.1, TECH-12.1
+ * An advance can also reach a point the campaign must be durable at - a dock,
+ * a warp arrival, a completed encounter, the loss of the ship - and says so
+ * with its autosave trigger. Only the client has the wall clock a snapshot is
+ * stamped with, so every such trigger is handed on to be answered
+ * (Functional Specification 3.4, 9.12; Technical Specification 11.3).
+ *
+ * @implements FUNC-3.3, FUNC-3.4, TECH-9.1, TECH-11.3, TECH-12.1
  */
 
 export interface SimulationClock {
@@ -31,6 +37,8 @@ export interface SimulationClockOptions {
   readonly initialSimulationTimeMs: number;
   /** Receives the projection topics an advance invalidated. */
   readonly onInvalidations: (topics: readonly string[]) => void;
+  /** Answers an autosave trigger an advance raised. */
+  readonly onAutosaveRequested: () => void;
   /** Receives unpaused real time, for the interval autosave. */
   readonly onPlayTime: (elapsedRealMs: number) => void;
   readonly paused: boolean;
@@ -46,6 +54,7 @@ export function useSimulationClock(options: SimulationClockOptions): SimulationC
     active,
     initialSimulationTimeMs,
     onInvalidations,
+    onAutosaveRequested,
     onPlayTime,
     paused,
     publishIntervalMs = DEFAULT_PUBLISH_INTERVAL_MS,
@@ -55,8 +64,8 @@ export function useSimulationClock(options: SimulationClockOptions): SimulationC
     simulationTimeMs: initialSimulationTimeMs,
     revision: 0,
   });
-  const callbacks = useRef({ onInvalidations, onPlayTime, paused });
-  callbacks.current = { onInvalidations, onPlayTime, paused };
+  const callbacks = useRef({ onInvalidations, onAutosaveRequested, onPlayTime, paused });
+  callbacks.current = { onInvalidations, onAutosaveRequested, onPlayTime, paused };
 
   useEffect(() => {
     setClock((previous) =>
@@ -84,6 +93,9 @@ export function useSimulationClock(options: SimulationClockOptions): SimulationC
       onResult: (result: CommandResultData) => {
         if (result.invalidations.length > 0) {
           callbacks.current.onInvalidations(result.invalidations);
+        }
+        if (result.autosaveRequested) {
+          callbacks.current.onAutosaveRequested();
         }
         const now = Date.now();
         if (

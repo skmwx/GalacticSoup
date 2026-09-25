@@ -3,7 +3,7 @@ import type { ContentIdentity, CreateCampaignInput, SaveKind } from '@engine';
 /**
  * Inputs of the golden save fixture (Technical Specification 11.2, 11.4).
  *
- * `tests/fixtures/saves/format-8.json` is the artefact these inputs produce.
+ * `tests/fixtures/saves/format-9.json` is the artefact these inputs produce.
  * It pins the envelope's shape, its canonical serialisation and its checksum,
  * so a change to any of the three is a deliberate format change rather than a
  * silent one - and so a second implementation of the format can be held to the

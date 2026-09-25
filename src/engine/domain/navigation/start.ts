@@ -10,6 +10,7 @@ export function startingNavigation(content: ContentRepository): NavigationState 
     version: 1,
     knownDestinationSiteIds: system.sites.map((site) => site.id).sort(),
     selectedEncounterId: null,
+    selectedBookmarkId: null,
     currentSite: null,
     movementOrders: {},
     travel: null,

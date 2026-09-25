@@ -67,6 +67,17 @@ export interface WarpTravelState {
   readonly phase: 'aligning' | 'preparing' | 'transit';
   readonly originSiteId: SiteId;
   readonly destinationSiteId: SiteId;
+  /**
+   * The bookmark the warp was aimed at, or `null` for a warp to the site
+   * itself (Functional Specification 7.3). It is cleared, and the anchor kept,
+   * if the bookmark expires while the ship is on its way.
+   */
+  readonly bookmarkId: EntityId | null;
+  /**
+   * The site-local point the warp arrives relative to: the site's origin for a
+   * site, the bookmarked position for a bookmark.
+   */
+  readonly anchor: Vector2;
   readonly arrivalDistanceKm: number;
   readonly distanceKm: number;
   readonly boundaryEntryId: EntityId | null;
@@ -85,6 +96,12 @@ export interface NavigationState {
   readonly version: number;
   readonly knownDestinationSiteIds: readonly SiteId[];
   readonly selectedEncounterId: EncounterId | null;
+  /**
+   * A bookmark chosen at the station instead of an encounter - the player's
+   * own wreck (Functional Specification 5.4, 9.12). At most one of the two
+   * selections is set.
+   */
+  readonly selectedBookmarkId: EntityId | null;
   readonly currentSite: SiteRuntime | null;
   /**
    * The standing order of every ship in the loaded site, keyed by its entity

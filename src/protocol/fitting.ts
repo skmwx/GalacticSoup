@@ -137,6 +137,9 @@ export interface ShipData {
   readonly violations: readonly FitIssueData[];
   readonly warnings: readonly FitIssueData[];
   readonly undockable: boolean;
+  /** Supplied by the recovery service: no sale or insurance value. */
+  readonly recoveryGrant: boolean;
+  readonly insuranceCoverage: 'basic' | 'enhanced';
 }
 
 export interface PlannedSlotData {

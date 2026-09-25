@@ -13,6 +13,7 @@ export * from './fitting';
 export * from './economy';
 export * from './encounter';
 export * from './navigation';
+export * from './recovery';
 export {
   authoritativeView,
   CAMPAIGN_STATE_VERSION,

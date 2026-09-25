@@ -6,6 +6,7 @@ import type { CampaignState } from '../campaign/state';
 import { shipFit } from '../fitting/fit';
 import { parseSlotKey, slotKey } from '../fitting/types';
 import { assessFit, structuralViolations } from '../fitting/validity';
+import { isFlightReady } from '../recovery/rules';
 import { usedVolume } from './inventory';
 import type { AssetState } from './types';
 
@@ -84,24 +85,26 @@ function insurance(value: unknown): boolean {
 }
 /** Strict runtime counterpart of the save schema; runs before dereferencing any stored entity. */
 export function isAssetState(value: unknown): value is AssetState {
-  if (!shape(value, ['version', 'credits', 'location', 'activeShipId', 'ships', 'inventories', 'stacks']) ||
+  if (!shape(value, ['version', 'credits', 'location', 'activeShipId', 'lastDockedStationId', 'ships', 'inventories', 'stacks']) ||
       !isCount(value['version']) || value['version'] === 0 || !isCount(value['credits']) ||
-      !shipLocation(value['location']) || !isEntityId(value['activeShipId'])) return false;
+      !shipLocation(value['location']) ||
+      (value['activeShipId'] !== null && !isEntityId(value['activeShipId'])) ||
+      !definition(value['lastDockedStationId'], 'station')) return false;
   const ships = value['ships'], inventories = value['inventories'], stacks = value['stacks'];
   if (!record(ships) || !record(inventories) || !record(stacks)) return false;
   if (![ships, inventories, stacks].every((map) => Object.keys(map).every(isEntityId))) return false;
-  if (!Object.values(ships).every((ship) => shape(ship, ['id', 'owner', 'hullId', 'cargoInventoryId', 'fittingInventoryId', 'location', 'condition', 'insurance']) &&
+  if (!Object.values(ships).every((ship) => shape(ship, ['id', 'owner', 'hullId', 'cargoInventoryId', 'fittingInventoryId', 'location', 'condition', 'insurance', 'recoveryGrant']) &&
     isEntityId(ship['id']) && (ship['owner'] === 'player' || ship['owner'] === 'npc') &&
     definition(ship['hullId'], 'hull') && isEntityId(ship['cargoInventoryId']) &&
     isEntityId(ship['fittingInventoryId']) && shipLocation(ship['location']) && condition(ship['condition']) &&
-    insurance(ship['insurance']))) return false;
+    insurance(ship['insurance']) && typeof ship['recoveryGrant'] === 'boolean')) return false;
   if (!Object.values(inventories).every((inv) => shape(inv, ['id', 'location', 'capacity']) &&
     isEntityId(inv['id']) && location(inv['location']) && capacity(inv['capacity']))) return false;
   return Object.values(stacks).every((s) => {
-    if (!shape(s, ['id', 'definitionId', 'quantity', 'inventoryId', 'state', 'provenance']) ||
+    if (!shape(s, ['id', 'definitionId', 'quantity', 'inventoryId', 'state', 'provenance', 'recoveryGrant']) ||
       !isEntityId(s['id']) || !isEntityId(s['inventoryId']) || !isDefinitionId(s['definitionId']) ||
       !/^(item|module|ammo)\./.test(s['definitionId']) || !isCount(s['quantity']) || s['quantity'] === 0 ||
-      !stackState(s['state'])) return false;
+      !stackState(s['state']) || typeof s['recoveryGrant'] !== 'boolean') return false;
     const p = s['provenance'];
     return shape(p, ['grantedQuantity', 'purchasedQuantity', 'purchaseCostCredits']) && Object.values(p).every(isCount);
   });
@@ -124,9 +127,7 @@ export function validateAssets(state: CampaignState, add: Report, content?: Cont
       seen.add(key);
     }
   }
-  const active = a.ships[a.activeShipId];
-  if (active === undefined || active.owner !== 'player' ||
-      canonicalJson(active.location) !== canonicalJson(a.location)) fail('activeShipId', 'One active player ship must share the campaign location.');
+  validateActiveShip(state, fail, content);
   const hangars = new Set<string>();
   for (const inv of Object.values(a.inventories)) {
     const loc = inv.location, cap = inv.capacity;
@@ -194,6 +195,50 @@ export function validateAssets(state: CampaignState, add: Report, content?: Cont
         const used = usedVolume(a, content, inv.id);
         if (inv.capacity.kind === 'limited' && used > inv.capacity.volumeCubicDecimetres) fail(`inventories.${inv.id}.capacity`, 'Inventory exceeds capacity.');
       } catch { fail(`inventories.${inv.id}.capacity`, 'Volume or capacity reference is invalid.'); }
+    }
+  }
+}
+
+/**
+ * The active ship and the recovery guarantee (Technical Specification 15.3,
+ * checks 5 and 10; Functional Specification 9.12, 22.1).
+ *
+ * There is at most one active ship and it shares the campaign's location. A
+ * campaign may be shipless only while docked, only when no ship of the
+ * player's waits at that station, and only while the player owns a
+ * flight-ready ship elsewhere or can afford the starter hull the recovery
+ * station always sells: anyone else is owed the recovery grant, so a
+ * committed transaction can never leave the campaign without a route back to
+ * a usable ship.
+ */
+function validateActiveShip(
+  state: CampaignState,
+  fail: (path: string, detail: string) => void,
+  content?: ContentRepository,
+): void {
+  const a = state.assets;
+  if (content !== undefined && content.station(a.lastDockedStationId) === undefined) {
+    fail('lastDockedStationId', 'The most recently docked station does not resolve.');
+  }
+  if (a.activeShipId !== null) {
+    const active = a.ships[a.activeShipId];
+    if (active === undefined || active.owner !== 'player' ||
+        canonicalJson(active.location) !== canonicalJson(a.location)) fail('activeShipId', 'One active player ship must share the campaign location.');
+    return;
+  }
+  const docked = a.location;
+  if (docked.kind !== 'station') {
+    fail('activeShipId', 'Only a docked pilot may be without an active ship.');
+    return;
+  }
+  const waiting = Object.values(a.ships).some((ship) => ship.owner === 'player' &&
+    ship.location.kind === 'station' && ship.location.stationId === docked.stationId);
+  if (waiting) fail('activeShipId', 'A ship at this station must be the active one.');
+  if (content !== undefined) {
+    const starter = content.hull(content.rules.economy.starterHullId);
+    const flightReady = Object.values(a.ships).some((ship) => isFlightReady(a, content, ship));
+    if (starter !== undefined && !flightReady && a.credits < starter.referenceValueCredits) {
+      fail('activeShipId', 'A shipless pilot below the starter value is owed the recovery grant.');
     }
   }
 }

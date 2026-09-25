@@ -30,6 +30,7 @@ export {
   mutableEncounter,
   npcOf,
   objectiveComplete,
+  playerWrecks,
   runningEncounter,
   survivingNpcs,
   wreck,
@@ -37,16 +38,20 @@ export {
 } from './state';
 export type { MutableEncounterState } from './state';
 export {
+  ENCOUNTER_OUTCOMES,
   ENCOUNTER_STATUSES,
+  WRECK_OWNERS,
 } from './types';
 export type {
   EncounterInstanceState,
   EncounterNpcState,
   EncounterObjectiveState,
+  EncounterOutcome,
   EncounterOutcomeRecord,
   EncounterState,
   EncounterStatus,
   RolledLootEntry,
+  WreckOwner,
   WreckState,
 } from './types';
 export {
