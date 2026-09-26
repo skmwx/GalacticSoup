@@ -136,3 +136,27 @@ export {
 } from './localization';
 export type { ContentTextProviderProps, LocalizationProviderProps } from './localization';
 export { GLOBAL_STYLES_HREF } from './styles/globalStyles';
+export { AudioCuesProvider, createCuePlayer, createRecordingCuePlayer, useAudioCues } from './audio';
+export type { AudioCuesProviderProps, AudioCuesValue, CuePlayer } from './audio';
+export { currentOf, GuidancePanel, guidedSurface } from './guidance';
+export type { GuidancePanelProps } from './guidance';
+export {
+  EventLog,
+  NotificationCenter,
+  NotificationSettings,
+  notificationParams,
+  notificationText,
+} from './notifications';
+export type { NotificationCenterProps } from './notifications';
+export {
+  AUDIO_CHANNEL_NAMES,
+  DEFAULT_PREFERENCES,
+  loadPreferences,
+  parsePreferences,
+  PREFERENCES_STORAGE_KEY,
+  PREFERENCES_VERSION,
+  PreferencesProvider,
+  savePreferences,
+  usePreferences,
+} from './preferences';
+export type { PreferenceStorage, Preferences, PreferencesProviderProps } from './preferences';

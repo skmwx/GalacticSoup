@@ -1,0 +1,194 @@
+{
+  "kind": "guidance",
+  "$comment": "Contextual guidance for the MVP loop (MVP Scope 3; Functional Specification 3.2 as selected: the full multi-activity introduction is deferred). Steps are shown in this order, but most can be completed whenever the player happens to do the thing, so doing it early is never punished. 'requires' names only true prerequisites: the ready-check makes sense only after a sortie. Every step may be skipped and the whole guidance hidden and resumed. The closing steps teach what the phase 17 balance simulations found decides the harder sites: kill the patrol's cutters before its marksman, fight the base's nearest brawler while holding range, and never undock on an empty capacitor. The carry-rounds step exists because a starter magazine holds 20 rounds and the scout takes about 60: the spare rounds start in the hangar, and a gun reloads only from the hold.",
+  "definitions": [
+    {
+      "id": "guide.loop",
+      "titleKey": "content.guide.loop.title",
+      "introKey": "content.guide.loop.intro",
+      "completedKey": "content.guide.loop.completed",
+      "steps": [
+        {
+          "id": "guide.loop.choose-site",
+          "titleKey": "content.guide.loop.choose-site.title",
+          "bodyKey": "content.guide.loop.choose-site.body",
+          "surface": "station.departure",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "destinationSelected"
+          }
+        },
+        {
+          "id": "guide.loop.carry-rounds",
+          "titleKey": "content.guide.loop.carry-rounds.title",
+          "bodyKey": "content.guide.loop.carry-rounds.body",
+          "surface": "station.hangar",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "ammunitionInHold",
+            "minimumRounds": 40
+          }
+        },
+        {
+          "id": "guide.loop.undock",
+          "titleKey": "content.guide.loop.undock.title",
+          "bodyKey": "content.guide.loop.undock.body",
+          "surface": "station.departure",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "undocked"
+          }
+        },
+        {
+          "id": "guide.loop.warp",
+          "titleKey": "content.guide.loop.warp.title",
+          "bodyKey": "content.guide.loop.warp.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "encounterEntered",
+            "minimumTier": 1
+          }
+        },
+        {
+          "id": "guide.loop.move",
+          "titleKey": "content.guide.loop.move.title",
+          "bodyKey": "content.guide.loop.move.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "movementOrdered",
+            "orders": [
+              "approach",
+              "orbit",
+              "keepRange"
+            ]
+          }
+        },
+        {
+          "id": "guide.loop.lock",
+          "titleKey": "content.guide.loop.lock.title",
+          "bodyKey": "content.guide.loop.lock.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "targetLocked"
+          }
+        },
+        {
+          "id": "guide.loop.fire",
+          "titleKey": "content.guide.loop.fire.title",
+          "bodyKey": "content.guide.loop.fire.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "weaponFired"
+          }
+        },
+        {
+          "id": "guide.loop.defend",
+          "titleKey": "content.guide.loop.defend.title",
+          "bodyKey": "content.guide.loop.defend.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "defenseActivated"
+          }
+        },
+        {
+          "id": "guide.loop.clear",
+          "titleKey": "content.guide.loop.clear.title",
+          "bodyKey": "content.guide.loop.clear.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "encounterCompleted"
+          }
+        },
+        {
+          "id": "guide.loop.loot",
+          "titleKey": "content.guide.loop.loot.title",
+          "bodyKey": "content.guide.loop.loot.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "lootTaken"
+          }
+        },
+        {
+          "id": "guide.loop.return",
+          "titleKey": "content.guide.loop.return.title",
+          "bodyKey": "content.guide.loop.return.body",
+          "surface": "space",
+          "requires": [
+            "guide.loop.undock"
+          ],
+          "skippable": true,
+          "predicate": {
+            "kind": "docked"
+          }
+        },
+        {
+          "id": "guide.loop.sell",
+          "titleKey": "content.guide.loop.sell.title",
+          "bodyKey": "content.guide.loop.sell.body",
+          "surface": "station.market",
+          "requires": [
+            "guide.loop.return"
+          ],
+          "skippable": true,
+          "predicate": {
+            "kind": "itemSold"
+          }
+        },
+        {
+          "id": "guide.loop.ready",
+          "titleKey": "content.guide.loop.ready.title",
+          "bodyKey": "content.guide.loop.ready.body",
+          "surface": "station.services",
+          "requires": [
+            "guide.loop.return"
+          ],
+          "skippable": true,
+          "predicate": {
+            "kind": "shipReady",
+            "capacitorFraction": 0.95
+          }
+        },
+        {
+          "id": "guide.loop.upgrade",
+          "titleKey": "content.guide.loop.upgrade.title",
+          "bodyKey": "content.guide.loop.upgrade.body",
+          "surface": "station.fitting",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "fitCommitted"
+          }
+        },
+        {
+          "id": "guide.loop.harder",
+          "titleKey": "content.guide.loop.harder.title",
+          "bodyKey": "content.guide.loop.harder.body",
+          "surface": "station.departure",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "encounterEntered",
+            "minimumTier": 2
+          }
+        }
+      ]
+    }
+  ]
+}

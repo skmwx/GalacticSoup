@@ -28,11 +28,14 @@ import { validateSemantics } from './semantic.mjs';
 /** Collection kinds that become `definitions.<kind>` in the bundle. */
 const DEFINITION_KINDS = [
   'ammunition',
+  'audio.cues',
   'encounters',
+  'guidance',
   'hulls',
   'items',
   'loot.tables',
   'modules',
+  'notifications',
   'npc.profiles',
   'stations',
   'systems',

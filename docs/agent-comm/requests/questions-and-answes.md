@@ -172,4 +172,47 @@ full, as a careful player would, and the ship panel does show the charge. Option
 
 Option 1 matches how the specification treats ammunition. Option 2 removes the trap altogether.
 
+**Phase 18 update (2026-09-26, agent):** Phase 18 changed no rule and did what option 3 allows,
+plus explanation that needs no specification change:
+
+- the guidance's "Get the ship ready" step completes only once the ship is repaired, supplied and
+  holds 95% of its capacitor, and its text says the capacitor recharges only while the clock runs;
+- the departure panel shows the charge and, when it is not full, how much running time fills it,
+  with the recharge formula written out (Functional Specification 9.8, 19.6). It is information,
+  not a warning in the Functional Specification 10 sense, and it never blocks undocking;
+- a warning notification is raised *after* undocking below 50% capacitor, and the existing danger
+  notification fires when the booster waits for capacitor.
+
+Options 1 and 2 are still open. If you choose option 1, the departure line becomes an undock
+warning by moving it into the warning list; option 2 would be a small change to the repair
+service.
+
+**Answer:**
+
+---
+
+## Q7 - Phase 18 - The spare rounds a new pilot needs start in the hangar
+
+**Asked:** 2026-09-26 (Phase 18, onboarding and notifications). **Blocking:** no. Phase 18 shipped
+a guidance step for it; no rule changed.
+
+The starting fit loads one 20-round magazine; the other 100 starting rounds are in the station
+hangar. A gun reloads only from the ship's hold (Functional Specification 9.4), and the Pirate
+Scout takes about 60 rounds. A first-time player who undocks without moving the rounds runs dry
+mid-fight. The undock warnings of Functional Specification 10 cover only an *unloaded* gun, so
+nothing warns them.
+
+Phase 18 added a guidance step, "Carry spare rounds", which completes once the hold carries 40
+rounds a fitted gun can load, and the existing "out of ammunition" warning explains the failure if
+it happens anyway. Two alternatives need a decision:
+
+1. Start the campaign with the spare rounds in the ship's hold rather than the hangar (a change to
+   the starting-state data in `content/rules/economy.json`; Functional Specification 3.1 says only
+   "one full ammunition load fitted to the ship").
+2. Add "no reserve rounds in the hold" to the undock warnings (a change to Functional Specification
+   10).
+
+Either would make the guidance step unnecessary for the starting campaign; it would still teach
+the habit after the first resupply.
+
 **Answer:**

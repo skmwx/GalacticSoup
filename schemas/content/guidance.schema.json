@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/guidance.schema.json",
+  "title": "Contextual guidance",
+  "description": "Declarative guidance chains: ordered steps, where each is carried out, what must precede it, whether it may be skipped, and the registered engine operation that completes it. Functional Specification 3.2 as MVP Scope 3 selects it; Technical Specification 10.6.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "definitions"
+  ],
+  "properties": {
+    "kind": {
+      "const": "guidance"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "definitions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "completedKey",
+          "id",
+          "introKey",
+          "steps",
+          "titleKey"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/guidanceId"
+          },
+          "titleKey": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+          },
+          "introKey": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+          },
+          "completedKey": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "bodyKey",
+                "id",
+                "predicate",
+                "requires",
+                "skippable",
+                "surface",
+                "titleKey"
+              ],
+              "properties": {
+                "id": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/guidanceId"
+                },
+                "titleKey": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+                },
+                "bodyKey": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+                },
+                "surface": {
+                  "enum": [
+                    "station.hub",
+                    "station.market",
+                    "station.hangar",
+                    "station.fitting",
+                    "station.services",
+                    "station.ship",
+                    "station.departure",
+                    "space"
+                  ]
+                },
+                "requires": {
+                  "type": "array",
+                  "maxItems": 16,
+                  "uniqueItems": true,
+                  "items": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/guidanceId"
+                  }
+                },
+                "skippable": {
+                  "type": "boolean"
+                },
+                "predicate": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "destinationSelected"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "undocked"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind",
+                        "minimumTier"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "encounterEntered"
+                        },
+                        "minimumTier": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 5
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind",
+                        "orders"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "movementOrdered"
+                        },
+                        "orders": {
+                          "type": "array",
+                          "minItems": 1,
+                          "uniqueItems": true,
+                          "items": {
+                            "enum": [
+                              "approach",
+                              "orbit",
+                              "keepRange",
+                              "moveToPoint"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "targetLocked"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "weaponFired"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "defenseActivated"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "encounterCompleted"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "lootTaken"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "docked"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "itemSold"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind",
+                        "capacitorFraction"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "shipReady"
+                        },
+                        "capacitorFraction": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 1
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "fitCommitted"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind",
+                        "minimumRounds"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "ammunitionInHold"
+                        },
+                        "minimumRounds": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 1000000
+                        }
+                      }
+                    }
+                  ]
+                },
+                "$comment": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$comment": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

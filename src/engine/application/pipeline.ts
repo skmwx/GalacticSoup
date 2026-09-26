@@ -36,6 +36,8 @@ import { handleCombatCommand } from './combatCommands';
 import { handleEncounterCommand } from './encounterCommands';
 import { handleEconomyCommand } from './economyCommands';
 import { handleNavigationCommand } from './navigationCommands';
+import { observeTransaction } from './observers';
+import { handleOnboardingCommand } from './onboardingCommands';
 
 /**
  * The command pipeline (Technical Specification 7.2).
@@ -91,6 +93,7 @@ export function runCommand(request: CommandRequest): CommandResult {
 
   let committed: CommitResult;
   try {
+    observeTransaction(transaction, request.type, request.campaign);
     committed = commit(transaction);
   } catch (error: unknown) {
     return { kind: 'failed', error: describeDefect(error) };
@@ -154,6 +157,10 @@ function apply(transaction: Transaction, request: CommandRequest): CommandOutcom
       return handleInventoryCommand(transaction, request.type, request.payload);
     case 'loot.take':
       return handleEncounterCommand(transaction, request.type, request.payload);
+    case 'onboarding.hide':
+    case 'onboarding.show':
+    case 'onboarding.skipStep':
+      return handleOnboardingCommand(transaction, request.type, request.payload);
     case 'campaign.create':
       return handleCreateCampaign(transaction, request.payload as CreateCampaignPayload);
     case 'campaign.reset':

@@ -1,13 +1,16 @@
 import type {
   AmmunitionId,
+  AudioCueId,
   CubicDecimetres,
   DefinitionId,
   EncounterId,
+  GuidanceId,
   HullId,
   ItemId,
   LootTableId,
   MessageKey,
   ModuleId,
+  NotificationId,
   NpcProfileId,
   SiteId,
   StationId,
@@ -299,4 +302,173 @@ export interface EncounterDefinition {
   readonly siteId: SiteId;
   readonly repeatable: boolean;
   readonly spawns: readonly EncounterSpawnDefinition[];
+}
+
+/**
+ * How urgent a notification is (Functional Specification 19.7). Structural:
+ * the four levels are the specification's, not tuning.
+ */
+export const NOTIFICATION_SEVERITIES = ['informational', 'opportunity', 'warning', 'danger'] as const;
+export type NotificationSeverity = (typeof NOTIFICATION_SEVERITIES)[number];
+
+/**
+ * What a notification is about. The player configures sound and visibility by
+ * category (Functional Specification 19.7).
+ */
+export const NOTIFICATION_CATEGORIES = [
+  'combat',
+  'navigation',
+  'encounter',
+  'station',
+  'recovery',
+  'guidance',
+] as const;
+export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
+
+/** How often one notification may be raised. */
+export const NOTIFICATION_REPEATS = ['always', 'oncePerSite'] as const;
+export type NotificationRepeat = (typeof NOTIFICATION_REPEATS)[number];
+
+/**
+ * The registered engine operations a notification can be raised by
+ * (Technical Specification 10.6, 12.4). Content chooses an operation and its
+ * parameters; it never supplies a condition of its own.
+ */
+export type NotificationTrigger =
+  | { readonly kind: 'hostileLock' }
+  | { readonly kind: 'playerLayerBelow'; readonly layer: DefenseLayer; readonly fraction: number }
+  | { readonly kind: 'playerLayerDamaged'; readonly layer: DefenseLayer }
+  | { readonly kind: 'playerModuleStarved'; readonly categories: readonly ModuleCategory[] }
+  | { readonly kind: 'playerWeaponStopped'; readonly reasons: readonly string[] }
+  | { readonly kind: 'playerWeaponIdle' }
+  | { readonly kind: 'playerLockLost'; readonly reasons: readonly string[] }
+  | { readonly kind: 'undockedLowCapacitor'; readonly fraction: number }
+  | { readonly kind: 'encounterCompleted' }
+  | { readonly kind: 'bountyPaid' }
+  | { readonly kind: 'wreckCreated' }
+  | { readonly kind: 'lootTaken' }
+  | { readonly kind: 'shipLost' }
+  | { readonly kind: 'insurancePaid' }
+  | { readonly kind: 'recoveryShipGranted' }
+  | { readonly kind: 'docked' }
+  | { readonly kind: 'undocked' }
+  | { readonly kind: 'warpArrived' }
+  | { readonly kind: 'marketTransaction'; readonly side: 'buy' | 'sell' }
+  | { readonly kind: 'repairCompleted' }
+  | { readonly kind: 'resupplyCompleted' }
+  | { readonly kind: 'insurancePurchased' }
+  | { readonly kind: 'fitCommitted' }
+  | { readonly kind: 'guidanceStepCompleted' };
+
+export type NotificationTriggerKind = NotificationTrigger['kind'];
+
+export interface NotificationDefinition {
+  readonly id: NotificationId;
+  readonly category: NotificationCategory;
+  readonly severity: NotificationSeverity;
+  readonly messageKey: MessageKey;
+  /** The audible cue, or `null` for a silent notification. */
+  readonly cueId: AudioCueId | null;
+  /**
+   * False for the messages Functional Specification 19.7 forbids hiding
+   * completely: ship destruction and save integrity.
+   */
+  readonly hideable: boolean;
+  readonly repeat: NotificationRepeat;
+  /** Repeats within this window are grouped into one entry. */
+  readonly groupWindowSeconds: number;
+  readonly trigger: NotificationTrigger;
+}
+
+/** Output channel an audible cue plays on (Technical Specification 12.3). */
+export const AUDIO_CHANNELS = ['alert', 'interface', 'effects'] as const;
+export type AudioChannel = (typeof AUDIO_CHANNELS)[number];
+
+export const AUDIO_WAVEFORMS = ['sine', 'square', 'triangle', 'sawtooth'] as const;
+export type AudioWaveform = (typeof AUDIO_WAVEFORMS)[number];
+
+export interface AudioNoteDefinition {
+  readonly frequencyHz: number;
+  readonly durationMs: number;
+  /** Peak gain from 0 through 1, before the player's volume. */
+  readonly gain: number;
+}
+
+/**
+ * An audible cue, authored as a short tone sequence so the build carries no
+ * binary audio (Technical Specification 3.1, 12.4).
+ */
+export interface AudioCueDefinition {
+  readonly id: AudioCueId;
+  readonly channel: AudioChannel;
+  readonly waveform: AudioWaveform;
+  /**
+   * The severity this cue speaks for when a message has no definition of its
+   * own - a save-integrity failure, which the interface raises.
+   */
+  readonly defaultFor?: NotificationSeverity;
+  readonly notes: readonly AudioNoteDefinition[];
+}
+
+/** Where the player carries out a guidance step (Functional Specification 19.5). */
+export const GUIDANCE_SURFACES = [
+  'station.hub',
+  'station.market',
+  'station.hangar',
+  'station.fitting',
+  'station.services',
+  'station.ship',
+  'station.departure',
+  'space',
+] as const;
+export type GuidanceSurface = (typeof GUIDANCE_SURFACES)[number];
+
+/** Movement orders a guidance step may ask for (Functional Specification 7.1). */
+export const GUIDANCE_MOVEMENT_ORDERS = ['approach', 'orbit', 'keepRange', 'moveToPoint'] as const;
+export type GuidanceMovementOrder = (typeof GUIDANCE_MOVEMENT_ORDERS)[number];
+
+/**
+ * The registered engine operations that complete a guidance step
+ * (Technical Specification 10.6). Each reads the campaign's own events or
+ * state; content chooses one and its parameters.
+ */
+export type GuidancePredicate =
+  | { readonly kind: 'destinationSelected' }
+  | { readonly kind: 'undocked' }
+  | { readonly kind: 'encounterEntered'; readonly minimumTier: number }
+  | { readonly kind: 'movementOrdered'; readonly orders: readonly GuidanceMovementOrder[] }
+  | { readonly kind: 'targetLocked' }
+  | { readonly kind: 'weaponFired' }
+  | { readonly kind: 'defenseActivated' }
+  | { readonly kind: 'encounterCompleted' }
+  | { readonly kind: 'lootTaken' }
+  | { readonly kind: 'docked' }
+  | { readonly kind: 'itemSold' }
+  | { readonly kind: 'shipReady'; readonly capacitorFraction: number }
+  | { readonly kind: 'ammunitionInHold'; readonly minimumRounds: number }
+  | { readonly kind: 'fitCommitted' };
+
+export type GuidancePredicateKind = GuidancePredicate['kind'];
+
+export interface GuidanceStepDefinition {
+  readonly id: GuidanceId;
+  readonly titleKey: MessageKey;
+  readonly bodyKey: MessageKey;
+  readonly surface: GuidanceSurface;
+  /** Steps that must be completed or skipped before this one opens. */
+  readonly requires: readonly GuidanceId[];
+  readonly skippable: boolean;
+  readonly predicate: GuidancePredicate;
+}
+
+/**
+ * A contextual guidance chain (Functional Specification 3.2, as MVP Scope 3
+ * selects it: guidance for the combat loop, not the full introduction).
+ */
+export interface GuidanceChainDefinition {
+  readonly id: GuidanceId;
+  readonly titleKey: MessageKey;
+  readonly introKey: MessageKey;
+  readonly completedKey: MessageKey;
+  readonly steps: readonly GuidanceStepDefinition[];
 }

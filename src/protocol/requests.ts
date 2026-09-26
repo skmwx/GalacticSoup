@@ -1,8 +1,10 @@
 /**
- * Protocol version 12 request catalogue (Technical Specification 7.1, 18).
+ * Protocol version 13 request catalogue (Technical Specification 7.1, 18).
  *
- * Version 12 adds the loss report and the two bookmark commands the player's
- * own wreck needs. Capabilities list the accepted request types. Older
+ * Version 13 adds the contextual guidance (its query and the hide, show and
+ * skip-step commands), the notification history and the authored audible
+ * cues. Version 12 added the loss report and the two bookmark commands the
+ * player's own wreck needs. Capabilities list the accepted request types. Older
  * clients are rejected at the envelope boundary, before any command can
  * mutate campaign state.
  */
@@ -51,6 +53,8 @@ import type {
   WarpToBookmarkPayload,
 } from './navigation';
 import type { LossReportData } from './loss';
+import type { OnboardingData, SkipGuidanceStepPayload } from './guidance';
+import type { AudioCuesData, NotificationsData } from './notifications';
 
 /** Payload for requests that take no arguments. */
 export type EmptyPayload = Record<string, never>;
@@ -321,6 +325,12 @@ export interface ProtocolContract {
   'loot.contents': { payload: WreckPayload; data: WreckContentsData };
   'loot.take': { payload: TakeLootPayload; data: CommandResultData };
   'loss.report': { payload: EmptyPayload; data: LossReportData };
+  'onboarding.state': { payload: EmptyPayload; data: OnboardingData };
+  'onboarding.hide': { payload: EmptyPayload; data: CommandResultData };
+  'onboarding.show': { payload: EmptyPayload; data: CommandResultData };
+  'onboarding.skipStep': { payload: SkipGuidanceStepPayload; data: CommandResultData };
+  'notifications.list': { payload: EmptyPayload; data: NotificationsData };
+  'audio.cues': { payload: EmptyPayload; data: AudioCuesData };
   'module.activate': { payload: WeaponSlotPayload; data: CommandResultData };
   'module.deactivate': { payload: WeaponSlotPayload; data: CommandResultData };
   'targeting.lock': { payload: TargetPayloadData; data: CommandResultData };
@@ -398,6 +408,7 @@ export type ResponseData<TType extends RequestType> = ProtocolContract[TType]['d
 /** Sorted so capability reports and fixtures are order-stable. */
 export const REQUEST_TYPES = [
   'assets.list',
+  'audio.cues',
   'campaign.close',
   'campaign.create',
   'campaign.frame',
@@ -450,6 +461,11 @@ export const REQUEST_TYPES = [
   'navigation.site',
   'navigation.warp',
   'navigation.warpToBookmark',
+  'notifications.list',
+  'onboarding.hide',
+  'onboarding.show',
+  'onboarding.skipStep',
+  'onboarding.state',
   'repair.confirm',
   'repair.preview',
   'resupply.confirm',
@@ -502,6 +518,9 @@ export const COMMAND_TYPES = [
   'navigation.selectDestination',
   'navigation.warp',
   'navigation.warpToBookmark',
+  'onboarding.hide',
+  'onboarding.show',
+  'onboarding.skipStep',
   'repair.confirm',
   'resupply.confirm',
   'ship.undock',

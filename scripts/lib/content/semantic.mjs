@@ -12,6 +12,7 @@
  */
 import { isConvertibleVolume } from '../../../src/shared/numeric/units.ts';
 
+import { checkGuidance, checkNotifications } from './guidance.mjs';
 import { issue } from './issues.mjs';
 
 /** Slot each module category must occupy (Functional Specification 8.3). */
@@ -148,6 +149,8 @@ export function validateSemantics(collected) {
   issues.push(...checkMarket(collected, { stations, sellable }));
   issues.push(...checkStarterReachability(collected, { stations, hulls, modules }));
   issues.push(...checkRules(collected));
+  issues.push(...checkGuidance(collected, ids));
+  issues.push(...checkNotifications(collected));
   issues.push(...checkLocalization(collected));
 
   return issues;

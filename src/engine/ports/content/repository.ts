@@ -15,12 +15,16 @@ import type {
 
 import type {
   AmmunitionDefinition,
+  AudioCueDefinition,
   EncounterDefinition,
+  GuidanceChainDefinition,
+  GuidanceStepDefinition,
   HullDefinition,
   ItemDefinition,
   LootTableDefinition,
   MarketListingDefinition,
   ModuleDefinition,
+  NotificationDefinition,
   NpcProfileDefinition,
   StationDefinition,
   SiteDefinition,
@@ -90,6 +94,17 @@ export interface ContentRepository extends ContentIdentity {
   npcProfiles(): readonly NpcProfileDefinition[];
   lootTables(): readonly LootTableDefinition[];
   encounters(): readonly EncounterDefinition[];
+
+  /** Guidance chains, ordered by id (Functional Specification 3.2). */
+  guidanceChains(): readonly GuidanceChainDefinition[];
+  /** One guidance step by its id, whichever chain holds it. */
+  guidanceStep(id: string): GuidanceStepDefinition | undefined;
+  /** Notification definitions, ordered by id (Functional Specification 19.7). */
+  notifications(): readonly NotificationDefinition[];
+  notification(id: string): NotificationDefinition | undefined;
+  /** Audible cues, ordered by id (Technical Specification 12.4). */
+  audioCues(): readonly AudioCueDefinition[];
+  audioCue(id: string): AudioCueDefinition | undefined;
 
   /** Listings of one station, ordered by item id. */
   listings(stationId: string): readonly MarketListingDefinition[];

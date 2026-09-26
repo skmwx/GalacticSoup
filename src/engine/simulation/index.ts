@@ -39,7 +39,9 @@ export {
   takeLoot,
   WRECK_EXPIRE_BOUNDARY,
 } from './encounter';
+export { advanceGuidance, shipReady, spareRounds } from './guidance';
 export { advanceLoss } from './loss';
+export { raiseNotifications } from './notifications';
 export { orderMovement } from './orders';
 export {
   advanceNavigation,

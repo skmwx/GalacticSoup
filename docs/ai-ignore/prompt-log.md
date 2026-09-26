@@ -65,10 +65,11 @@ please make the change
 # 012 Claude Opus EH
 Read the documents in docs\ root folder and docs\human-input .
 
-Phase 1 through 16 are implemented, implement phase 17 of the MVP.
+Phase 1 through 17 are implemented, implement phase 18 of the MVP.
 
 13: Opus EH
 14: Opus (up 5.5) EH
 15: Opus EH (subagents intro)
 16: Opus EH 
 17: Opus EH
+17: Opus H

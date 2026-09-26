@@ -162,6 +162,11 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
     case 'combat.state':
     case 'encounter.state':
     case 'loss.report':
+    case 'onboarding.state':
+    case 'onboarding.hide':
+    case 'onboarding.show':
+    case 'notifications.list':
+    case 'audio.cues':
     case 'ship.undock':
     case 'movement.stop':
     case 'navigation.retreat':
@@ -173,6 +178,12 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
       if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
       return isDefinitionIdIn(fields['encounterId'], 'encounter')
         ? null : payloadField(type, 'encounterId', 'format');
+    }
+
+    case 'onboarding.skipStep': {
+      const unexpected = unexpectedField(fields, ['stepId']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      return isDefinitionIdIn(fields['stepId'], 'guide') ? null : payloadField(type, 'stepId', 'format');
     }
 
     case 'navigation.selectBookmark': {

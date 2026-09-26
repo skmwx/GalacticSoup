@@ -1,0 +1,37 @@
+{
+  "kind": "guidance",
+  "definitions": [
+    {
+      "id": "guide.test",
+      "titleKey": "content.guide.test.title",
+      "introKey": "content.guide.test.intro",
+      "completedKey": "content.guide.test.completed",
+      "steps": [
+        {
+          "id": "guide.test.choose",
+          "titleKey": "content.guide.test.choose.title",
+          "bodyKey": "content.guide.test.choose.body",
+          "surface": "station.departure",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "destinationSelected"
+          }
+        },
+        {
+          "id": "guide.test.undock",
+          "titleKey": "content.guide.test.undock.title",
+          "bodyKey": "content.guide.test.undock.body",
+          "surface": "station.departure",
+          "requires": [
+            "guide.test.choose"
+          ],
+          "skippable": false,
+          "predicate": {
+            "kind": "undocked"
+          }
+        }
+      ]
+    }
+  ]
+}

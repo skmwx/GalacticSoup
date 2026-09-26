@@ -127,6 +127,8 @@ export function handleCreateCampaign(
   transaction.invalidate('combat');
   transaction.invalidate('encounter');
   transaction.invalidate('loss');
+  transaction.invalidate('onboarding');
+  transaction.invalidate('notifications');
   // A new campaign must be resumable before the player touches anything
   // (Functional Specification 3.4).
   transaction.requestAutosave();
@@ -170,6 +172,8 @@ export function handleResumeCampaign(
   transaction.invalidate('combat');
   transaction.invalidate('encounter');
   transaction.invalidate('loss');
+  transaction.invalidate('onboarding');
+  transaction.invalidate('notifications');
   return APPLIED;
 }
 
@@ -205,6 +209,8 @@ export function handleCloseCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('combat');
   transaction.invalidate('encounter');
   transaction.invalidate('loss');
+  transaction.invalidate('onboarding');
+  transaction.invalidate('notifications');
   return APPLIED;
 }
 
@@ -240,6 +246,8 @@ export function handleResetCampaign(transaction: Transaction): CommandOutcome {
   transaction.invalidate('combat');
   transaction.invalidate('encounter');
   transaction.invalidate('loss');
+  transaction.invalidate('onboarding');
+  transaction.invalidate('notifications');
   return APPLIED;
 }
 

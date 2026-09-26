@@ -350,7 +350,9 @@
         "rechargePerSecond",
         "drainPerSecond",
         "stable",
-        "enduranceSeconds"
+        "enduranceSeconds",
+        "secondsToFull",
+        "rechargeTrace"
       ],
       "properties": {
         "charge": {
@@ -380,6 +382,50 @@
               "type": "null"
             }
           ]
+        },
+        "secondsToFull": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rechargeTrace": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "formulaKey",
+            "operands",
+            "unroundedResult",
+            "displayResult"
+          ],
+          "properties": {
+            "formulaKey": {
+              "type": "string"
+            },
+            "operands": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "key",
+                  "value"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "unroundedResult": {
+              "type": "number"
+            },
+            "displayResult": {
+              "type": "number"
+            }
+          }
         }
       }
     },

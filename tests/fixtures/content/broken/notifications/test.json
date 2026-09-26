@@ -1,0 +1,31 @@
+{
+  "kind": "notifications",
+  "definitions": [
+    {
+      "id": "notify.test.lost",
+      "category": "recovery",
+      "severity": "danger",
+      "messageKey": "content.notify.test.lost",
+      "cueId": "cue.test.danger",
+      "hideable": false,
+      "repeat": "always",
+      "groupWindowSeconds": 0,
+      "trigger": {
+        "kind": "shipLost"
+      }
+    },
+    {
+      "id": "notify.test.docked",
+      "category": "navigation",
+      "severity": "informational",
+      "messageKey": "content.notify.test.docked",
+      "cueId": null,
+      "hideable": true,
+      "repeat": "always",
+      "groupWindowSeconds": 0,
+      "trigger": {
+        "kind": "docked"
+      }
+    }
+  ]
+}

@@ -1,6 +1,11 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
+ * Version 13 adds contextual guidance (`onboarding.state` and the hide, show
+ * and skip-step commands), the semantic notification history
+ * (`notifications.list`), the authored audible cues (`audio.cues`), the
+ * guidance rule violations, and the capacitor recharge explanation on the
+ * ship view.
  * Version 12 adds player destruction and recovery: the `loss.report` query,
  * choosing and warping to the player's own wreck as a bookmark, a nullable
  * active ship for a pilot who owns none, recovery-grant marks on ships and
@@ -14,7 +19,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 12;
+export const PROTOCOL_VERSION = 13;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

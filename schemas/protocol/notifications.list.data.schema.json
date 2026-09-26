@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/notifications.list.data.schema.json",
+  "title": "NotificationsData",
+  "description": "The bounded, grouped notification history, newest first; it is also the event log (Functional Specification 19.7, 20; Technical Specification 12.4).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sequence",
+    "entries"
+  ],
+  "properties": {
+    "sequence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sequence",
+        "definitionId",
+        "category",
+        "severity",
+        "messageKey",
+        "params",
+        "subjectIds",
+        "firstAtMs",
+        "lastAtMs",
+        "count",
+        "hideable",
+        "cueId"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "definitionId": {
+          "type": "string",
+          "pattern": "^notify(\\.[a-z0-9][a-z0-9-]*)+$"
+        },
+        "category": {
+          "enum": [
+            "combat",
+            "navigation",
+            "encounter",
+            "station",
+            "recovery",
+            "guidance"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "informational",
+            "opportunity",
+            "warning",
+            "danger"
+          ]
+        },
+        "messageKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "subjectIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "firstAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "lastAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "hideable": {
+          "type": "boolean"
+        },
+        "cueId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        }
+      }
+    }
+  }
+}

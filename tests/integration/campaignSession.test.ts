@@ -80,8 +80,8 @@ describe('campaign session over a transport', () => {
       expect(created.revision).toBe(1);
       expect(created.invalidations).toEqual(
         ['assets', 'combat', 'destinations', 'encounter', 'fitting', 'frame', 'insurance', 'inventory',
-          'loss', 'market', 'navigation', 'repair', 'resupply', 'saves', 'session', 'ship', 'site',
-          'station', 'wallet'],
+          'loss', 'market', 'navigation', 'notifications', 'onboarding', 'repair', 'resupply', 'saves',
+          'session', 'ship', 'site', 'station', 'wallet'],
       );
 
       const running = await gateway.request('time.set', { paused: false, rate: 1 });

@@ -13,6 +13,10 @@ import { startingEncounters } from '../encounter/start';
 import type { EncounterState } from '../encounter/types';
 import { startingRecovery } from '../recovery/start';
 import type { RecoveryState } from '../recovery/types';
+import { startingOnboarding } from '../guidance/start';
+import type { OnboardingState } from '../guidance/types';
+import { startingNotifications } from '../notifications/start';
+import type { NotificationState } from '../notifications/types';
 
 import { deriveCampaignId, type CampaignId } from './identity';
 import { emptyScheduler, type SchedulerState } from './scheduler';
@@ -34,7 +38,7 @@ import { seedStreams, type RandomStreams } from '../random/streams';
  */
 
 /** Shape version of the authoritative payload, carried by every snapshot. */
-export const CAMPAIGN_STATE_VERSION = 9;
+export const CAMPAIGN_STATE_VERSION = 10;
 
 /** Upper bound on simulation time, about 31 simulated years. */
 export const MAX_SIMULATION_TIME_MS = 1_000_000_000_000;
@@ -72,6 +76,16 @@ export interface CampaignState {
    */
   readonly fitting: FittingDraft | null;
   readonly navigation: NavigationState;
+  /**
+   * What the engine has told the player: a bounded, grouped history that is
+   * also the event log (Functional Specification 19.7, 20).
+   */
+  readonly notifications: NotificationState;
+  /**
+   * The player's progress through the contextual guidance
+   * (Functional Specification 3.2; MVP Scope 6).
+   */
+  readonly onboarding: OnboardingState;
   /**
    * The last loss and how the player was recovered from it
    * (Functional Specification 9.12).
@@ -125,6 +139,8 @@ export function createCampaign(input: CreateCampaignInput, content: ContentRepos
     encounter: startingEncounters(),
     fitting: null,
     navigation: startingNavigation(content),
+    notifications: startingNotifications(),
+    onboarding: startingOnboarding(),
     recovery: startingRecovery(),
     stateVersion: CAMPAIGN_STATE_VERSION,
     campaignId,

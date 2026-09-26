@@ -1,0 +1,464 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/notifications.schema.json",
+  "title": "Semantic notifications",
+  "description": "Which engine events raise a notification, how urgent it is, how repeats are grouped and which cue sounds. The trigger names a registered engine operation; content cannot supply a condition of its own. Functional Specification 19.7; Technical Specification 10.6, 12.4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "definitions"
+  ],
+  "properties": {
+    "kind": {
+      "const": "notifications"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "definitions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "category",
+          "cueId",
+          "groupWindowSeconds",
+          "hideable",
+          "id",
+          "messageKey",
+          "repeat",
+          "severity",
+          "trigger"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/notificationId"
+          },
+          "category": {
+            "enum": [
+              "combat",
+              "navigation",
+              "encounter",
+              "station",
+              "recovery",
+              "guidance"
+            ]
+          },
+          "severity": {
+            "enum": [
+              "informational",
+              "opportunity",
+              "warning",
+              "danger"
+            ]
+          },
+          "messageKey": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+          },
+          "cueId": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/audioCueId"
+              }
+            ]
+          },
+          "hideable": {
+            "type": "boolean"
+          },
+          "repeat": {
+            "enum": [
+              "always",
+              "oncePerSite"
+            ]
+          },
+          "groupWindowSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 600
+          },
+          "trigger": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "hostileLock"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "fraction",
+                  "layer"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "playerLayerBelow"
+                  },
+                  "layer": {
+                    "enum": [
+                      "shield",
+                      "armor",
+                      "hull"
+                    ]
+                  },
+                  "fraction": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "exclusiveMaximum": 1
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "layer"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "playerLayerDamaged"
+                  },
+                  "layer": {
+                    "enum": [
+                      "shield",
+                      "armor",
+                      "hull"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "categories"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "playerModuleStarved"
+                  },
+                  "categories": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "turret",
+                        "propulsion",
+                        "shieldBooster",
+                        "armorRepairer",
+                        "resistancePlating",
+                        "capacitorBattery"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "reasons"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "playerWeaponStopped"
+                  },
+                  "reasons": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "deactivated",
+                        "lockLost",
+                        "targetMissing",
+                        "ammunitionExhausted",
+                        "insufficientCapacitor",
+                        "siteLeft"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "playerWeaponIdle"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "reasons"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "playerLockLost"
+                  },
+                  "reasons": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "outOfRange",
+                        "targetMissing"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "fraction"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "undockedLowCapacitor"
+                  },
+                  "fraction": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "exclusiveMaximum": 1
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "encounterCompleted"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "bountyPaid"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "wreckCreated"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "lootTaken"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "shipLost"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "insurancePaid"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "recoveryShipGranted"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "docked"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "undocked"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "warpArrived"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "side"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "marketTransaction"
+                  },
+                  "side": {
+                    "enum": [
+                      "buy",
+                      "sell"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "repairCompleted"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "resupplyCompleted"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "insurancePurchased"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "fitCommitted"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "guidanceStepCompleted"
+                  }
+                }
+              }
+            ]
+          },
+          "$comment": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

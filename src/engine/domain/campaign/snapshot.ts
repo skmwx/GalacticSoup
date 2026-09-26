@@ -6,6 +6,8 @@ import { isEconomyState } from '../economy/validation';
 import { isEncounterState } from '../encounter/validation';
 import { isNavigationState } from '../navigation/validation';
 import { isRecoveryState } from '../recovery/validation';
+import { isOnboardingState } from '../guidance/validation';
+import { isNotificationState } from '../notifications/validation';
 
 import { isCampaignId, isCampaignSeed, isEntityId, MAX_ORDINAL } from './identity';
 import { isRandomStreams } from '../random/streams';
@@ -112,6 +114,8 @@ export function readCampaignState(value: unknown): CampaignReadResult {
   if (!isCombatState(value['combat'])) add('combatShape', 'state.combat', 'Saved combat runtime is missing or malformed.');
   if (!isEncounterState(value['encounter'])) add('encounterShape', 'state.encounter', 'Saved encounter state is missing or malformed.');
   if (!isRecoveryState(value['recovery'])) add('recoveryShape', 'state.recovery', 'Saved loss and recovery state is missing or malformed.');
+  if (!isOnboardingState(value['onboarding'])) add('onboardingShape', 'state.onboarding', 'Saved guidance progress is missing or malformed.');
+  if (!isNotificationState(value['notifications'])) add('notificationShape', 'state.notifications', 'Saved notification history is missing or malformed.');
   readFittingDraft(value['fitting'], add);
 
   if (issues.length > 0) {
@@ -197,6 +201,10 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
       }
     }
   }
+  for (const stepId of Object.keys(state.onboarding.steps)) {
+    if (isDefinitionId(stepId)) references.push(stepId);
+  }
+  for (const record of state.notifications.entries) references.push(record.definitionId);
   return [...new Set(references)].sort();
 }
 
@@ -217,6 +225,8 @@ const STATE_FIELDS: readonly string[] = [
   'encounter',
   'fitting',
   'navigation',
+  'notifications',
+  'onboarding',
   'recovery',
   'stateVersion',
   'campaignId',

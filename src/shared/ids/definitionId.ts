@@ -29,6 +29,12 @@ export type StationId = DefinitionId<'station'>;
 export type NpcProfileId = DefinitionId<'npc'>;
 export type LootTableId = DefinitionId<'loot'>;
 export type EncounterId = DefinitionId<'encounter'>;
+/** A guidance chain or one of its steps (Functional Specification 3.2). */
+export type GuidanceId = DefinitionId<'guide'>;
+/** A semantic notification definition (Functional Specification 19.7). */
+export type NotificationId = DefinitionId<'notify'>;
+/** An audible cue (Technical Specification 12.4). */
+export type AudioCueId = DefinitionId<'cue'>;
 
 /**
  * Lowercase segments separated by dots, at least two segments. Segments may

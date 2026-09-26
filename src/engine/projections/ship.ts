@@ -38,6 +38,7 @@ import type {
   FittedSlotData,
   FittingCandidateData,
   FittingDraftData,
+  FormulaTraceData,
   LayerConditionData,
   MissingItemData,
   ItemData,
@@ -304,6 +305,8 @@ function describeShip(
       drainPerSecond: summary.capacitor.drainPerSecond,
       stable: summary.capacitor.stable,
       enduranceSeconds: summary.capacitor.enduranceSeconds,
+      ...capacitorRecharge(ship.condition.capacitorCharge, summary.capacitor.capacity,
+        summary.capacitor.rechargeSeconds),
     },
     weapons: weaponData(summary),
     defense: {
@@ -459,4 +462,33 @@ function resourceData<TKey extends SlotKind | HardpointKind>(
     map[key] = useData(use[key]);
   }
   return map;
+}
+
+/**
+ * How long the capacitor takes to fill from its current charge
+ * (Functional Specification 9.8, 19.6): the missing charge over the recharge
+ * rate, capacity divided by recharge time. It is an explanation, not a rule -
+ * the recharge itself happens in the simulation.
+ */
+function capacitorRecharge(
+  charge: number,
+  capacity: number,
+  rechargeSeconds: number,
+): { readonly secondsToFull: number; readonly rechargeTrace: FormulaTraceData } {
+  const rate = rechargeSeconds > 0 ? capacity / rechargeSeconds : 0;
+  const missing = Math.max(0, capacity - charge);
+  const secondsToFull = missing === 0 || rate <= 0 ? 0 : missing / rate;
+  return {
+    secondsToFull,
+    rechargeTrace: {
+      formulaKey: 'combat.formula.capacitorRecharge',
+      operands: [
+        { key: 'capacity', value: capacity },
+        { key: 'charge', value: charge },
+        { key: 'rechargeSeconds', value: rechargeSeconds },
+      ],
+      unroundedResult: secondsToFull,
+      displayResult: Math.round(secondsToFull * 10) / 10,
+    },
+  };
 }

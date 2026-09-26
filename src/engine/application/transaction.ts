@@ -87,6 +87,8 @@ export interface Transaction {
   /** Ends the campaign. Publish anything about it before calling this. */
   closeCampaign(): void;
   publish(kind: DomainEventKind, params?: DomainEventParams): void;
+  /** Everything published so far in this transaction, in order. */
+  publishedEvents(): readonly DomainEvent[];
   invalidate(topic: ProjectionTopic): void;
   /**
    * Marks the point this command reached as one the campaign must be durable
@@ -160,6 +162,10 @@ export function beginTransaction(
         ...(params === undefined ? {} : { params }),
       };
       events.push(event);
+    },
+
+    publishedEvents(): readonly DomainEvent[] {
+      return [...events];
     },
 
     invalidate(topic: ProjectionTopic): void {

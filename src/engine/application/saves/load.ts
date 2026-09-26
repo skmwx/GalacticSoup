@@ -269,7 +269,9 @@ function resolves(id: string, content: ContentRepository): boolean {
     content.station(id) !== undefined ||
     content.npcProfile(id) !== undefined ||
     content.lootTable(id) !== undefined ||
-    content.encounter(id) !== undefined
+    content.encounter(id) !== undefined ||
+    content.guidanceStep(id) !== undefined ||
+    content.notification(id) !== undefined
   );
 }
 

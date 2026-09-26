@@ -57,6 +57,9 @@ const PATHS: Readonly<Record<ActionIconName, string>> = {
   save: 'M5 5h11l3 3v11H5zM8 5v5h7V5M8 19v-5h8v5',
   close: 'M6 6l12 12M18 6L6 18',
   reset: 'M7 7h10l-1 13H8zM10 7V4h4v3M4 7h16',
+  guide: 'M12 3v18M12 5h6l2 2-2 2h-6M12 11H6l-2 2 2 2h6M9 21h6',
+  log: 'M9 6h11M9 12h11M9 18h11M4 5h2v2H4zM4 11h2v2H4zM4 17h2v2H4z',
+  settings: 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
 };
 
 export interface ActionIconProps {

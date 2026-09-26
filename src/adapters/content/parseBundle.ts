@@ -1,12 +1,15 @@
 import type {
   AmmunitionDefinition,
+  AudioCueDefinition,
   ContentIdentity,
   EncounterDefinition,
+  GuidanceChainDefinition,
   HullDefinition,
   ItemDefinition,
   LootTableDefinition,
   MarketListingDefinition,
   ModuleDefinition,
+  NotificationDefinition,
   NpcProfileDefinition,
   RulesContent,
   StationDefinition,
@@ -57,6 +60,9 @@ export interface ParsedContent {
   readonly npcProfiles: readonly NpcProfileDefinition[];
   readonly lootTables: readonly LootTableDefinition[];
   readonly encounters: readonly EncounterDefinition[];
+  readonly guidance: readonly GuidanceChainDefinition[];
+  readonly notifications: readonly NotificationDefinition[];
+  readonly audioCues: readonly AudioCueDefinition[];
   readonly listings: readonly MarketListingDefinition[];
   readonly localization: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
@@ -64,11 +70,14 @@ export interface ParsedContent {
 /** Definition kinds a bundle must carry, in the order counts are reported. */
 export const BUNDLE_DEFINITION_KINDS = [
   'ammunition',
+  'audio.cues',
   'encounters',
+  'guidance',
   'hulls',
   'items',
   'loot.tables',
   'modules',
+  'notifications',
   'npc.profiles',
   'stations',
   'systems',
@@ -119,6 +128,9 @@ export function parseContentBundle(value: unknown): ParsedContent {
     npcProfiles: definitionList(definitions, 'npc.profiles', 'npc', identityOf),
     lootTables: definitionList(definitions, 'loot.tables', 'loot', identityOf),
     encounters: definitionList(definitions, 'encounters', 'encounter', identityOf),
+    guidance: definitionList(definitions, 'guidance', 'guide', identityOf),
+    notifications: definitionList(definitions, 'notifications', 'notify', identityOf),
+    audioCues: definitionList(definitions, 'audio.cues', 'cue', identityOf),
     listings: array(bundle['listings'], 'listings').map(
       (entry, index) => object(entry, `listings[${String(index)}]`) as unknown as
         MarketListingDefinition,

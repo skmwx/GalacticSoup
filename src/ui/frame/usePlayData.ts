@@ -18,6 +18,8 @@ import {
   type LocationData,
   type LossReportData,
   type MarketListingsData,
+  type NotificationsData,
+  type OnboardingData,
   type RequestPayload,
   type ShipData,
   type SiteData,
@@ -74,6 +76,10 @@ export interface PlayProjections {
   readonly wreck: WreckContentsData | null;
   /** The loss report: how many ships were lost and the last loss. */
   readonly loss: LossReportData | null;
+  /** The contextual guidance and where the player is in it. */
+  readonly onboarding: OnboardingData | null;
+  /** The notification history, which is also the event log. */
+  readonly notifications: NotificationsData | null;
 }
 
 export interface PlayDataState extends PlayProjections {
@@ -157,6 +163,9 @@ export type PlayCommand =
   | 'navigation.retreat'
   | 'navigation.dock'
   | 'ship.undock'
+  | 'onboarding.hide'
+  | 'onboarding.show'
+  | 'onboarding.skipStep'
   | 'time.set';
 
 type ProjectionName = keyof PlayProjections;
@@ -189,6 +198,9 @@ const TOPIC_TARGETS: Readonly<Record<string, readonly ProjectionName[]>> = {
   combat: ['combat'],
   encounter: ['encounter', 'wreck', 'loss'],
   loss: ['loss'],
+  // Guidance and notifications are true wherever the ship is.
+  onboarding: ['onboarding'],
+  notifications: ['notifications'],
 };
 
 /** Projections only a docked ship can answer for. */
@@ -210,6 +222,8 @@ const EVERYTHING: readonly ProjectionName[] = [
   'encounter',
   'wreck',
   'loss',
+  'onboarding',
+  'notifications',
 ];
 
 const INITIAL: PlayDataState = {
@@ -226,6 +240,8 @@ const INITIAL: PlayDataState = {
   encounter: null,
   wreck: null,
   loss: null,
+  onboarding: null,
+  notifications: null,
   error: null,
   transportMessageKey: null,
   openWreckId: null,
@@ -313,6 +329,8 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         encounter,
         wreck,
         loss,
+        onboarding,
+        notifications,
       ] = await Promise.all([
         ask('services') && stationId !== null ? gateway.request('station.services', { stationId }) : null,
         ask('market') && stationId !== null ? gateway.request('market.listings', { stationId }) : null,
@@ -327,6 +345,8 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         ask('encounter') ? gateway.request('encounter.state', EMPTY_PAYLOAD) : null,
         ask('wreck') && wreckId !== null ? gateway.request('loot.contents', { wreckId }) : null,
         ask('loss') ? gateway.request('loss.report', EMPTY_PAYLOAD) : null,
+        ask('onboarding') ? gateway.request('onboarding.state', EMPTY_PAYLOAD) : null,
+        ask('notifications') ? gateway.request('notifications.list', EMPTY_PAYLOAD) : null,
       ]);
 
       // A later read has already published; this one is stale and dropped
@@ -348,6 +368,8 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         ...(combat?.ok === true ? { combat: combat.data } : {}),
         ...(encounter?.ok === true ? { encounter: encounter.data } : {}),
         ...(loss?.ok === true ? { loss: loss.data } : {}),
+        ...(onboarding?.ok === true ? { onboarding: onboarding.data } : {}),
+        ...(notifications?.ok === true ? { notifications: notifications.data } : {}),
         // Without a ship there is nothing to describe or to undock, and the
         // ship that was lost must not go on being shown as the active one.
         ...(shipId === null && wanted.has('ship') ? { ship: null } : {}),

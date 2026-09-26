@@ -1,0 +1,48 @@
+{
+  "kind": "audio.cues",
+  "$comment": "Short synthesised tone sequences, one per kind of message. Functional Specification 19.7 requires immediate danger to be audible; the interface plays these on the main thread and the player sets their volume. Pitch rises for good news and falls for bad, so the cues are distinguishable without looking.",
+  "definitions": [
+    {
+      "id": "cue.alert.danger",
+      "channel": "alert",
+      "waveform": "square",
+      "defaultFor": "danger",
+      "notes": [
+        { "frequencyHz": 880, "durationMs": 110, "gain": 0.35 },
+        { "frequencyHz": 587, "durationMs": 110, "gain": 0.35 },
+        { "frequencyHz": 880, "durationMs": 110, "gain": 0.35 },
+        { "frequencyHz": 587, "durationMs": 160, "gain": 0.35 }
+      ]
+    },
+    {
+      "id": "cue.alert.warning",
+      "channel": "alert",
+      "waveform": "triangle",
+      "defaultFor": "warning",
+      "notes": [
+        { "frequencyHz": 660, "durationMs": 140, "gain": 0.4 },
+        { "frequencyHz": 494, "durationMs": 200, "gain": 0.4 }
+      ]
+    },
+    {
+      "id": "cue.interface.opportunity",
+      "channel": "interface",
+      "waveform": "sine",
+      "defaultFor": "opportunity",
+      "notes": [
+        { "frequencyHz": 523, "durationMs": 90, "gain": 0.3 },
+        { "frequencyHz": 659, "durationMs": 90, "gain": 0.3 },
+        { "frequencyHz": 784, "durationMs": 160, "gain": 0.3 }
+      ]
+    },
+    {
+      "id": "cue.interface.informational",
+      "channel": "interface",
+      "waveform": "sine",
+      "defaultFor": "informational",
+      "notes": [
+        { "frequencyHz": 740, "durationMs": 70, "gain": 0.2 }
+      ]
+    }
+  ]
+}

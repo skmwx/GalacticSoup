@@ -25,9 +25,11 @@ import type { PlayData } from './usePlayData';
  * do, and - from the tactical view - shield, armour, hull and capacitor, the
  * locks the ship holds, the modules it is running and how many ships have
  * locked it, which are the hostile effects the included systems can produce.
- * Notifications arrive with the notification phase.
+ * The notifications themselves sit just below the frame, and the frame holds
+ * the control that hides or shows the contextual guidance (J), which is
+ * campaign state and therefore a command.
  *
- * @implements FUNC-19.1, FUNC-3.3, TECH-12.1, MVP-AC-03
+ * @implements FUNC-19.1, FUNC-3.3, FUNC-3.2, TECH-12.1, MVP-AC-03, MVP-AC-10
  */
 
 export interface CampaignFrameProps {
@@ -61,9 +63,20 @@ export function CampaignFrame({
     await session.refresh();
   };
 
+  const guidanceHidden = data.onboarding?.hidden ?? false;
+  const toggleGuidance = async (): Promise<void> => {
+    if (data.onboarding === null) {
+      return;
+    }
+    await data.send(guidanceHidden ? 'onboarding.show' : 'onboarding.hide', {});
+  };
+
   useActionShortcuts({
     'time.toggle': () => {
       runner.run('time.toggle', toggleTime);
+    },
+    'guidance.toggle': () => {
+      runner.run('guidance.toggle', toggleGuidance);
     },
   });
 
@@ -177,6 +190,14 @@ export function CampaignFrame({
           pressed={!paused}
           label={paused ? translate('frame.resume') : translate('frame.pause')}
           onRun={toggleTime}
+        />
+        <ActionButton
+          actionId="guidance.toggle"
+          runner={runner}
+          pressed={!guidanceHidden}
+          available={data.onboarding !== null}
+          label={guidanceHidden ? translate('guidance.show') : translate('guidance.hide')}
+          onRun={toggleGuidance}
         />
         <ActionButton
           actionId="campaign.save"

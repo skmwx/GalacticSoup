@@ -6,6 +6,8 @@ import { validateEconomy } from '../economy/validation';
 import { validateEncounter } from '../encounter/validation';
 import { validateNavigation } from '../navigation/validation';
 import { validateRecovery } from '../recovery/validation';
+import { validateOnboarding } from '../guidance/validation';
+import { validateNotifications } from '../notifications/validation';
 
 import { isCampaignId, isEntityId, MAX_ORDINAL } from './identity';
 import { RANDOM_STREAMS, isRandomStreams } from '../random/streams';
@@ -35,7 +37,9 @@ import {
  * consistency; no MVP item has a skill requirement), 7 and 12 (scheduler
  * entries, and the absence of a real timestamp as a completion condition),
  * 8 (locks, movement targets and the scheduler entries that resolve them),
- * 11 (streams, simulation time, revisions and ordinals). Content-dependent
+ * 9 (guidance steps and one-time rewards recorded once), 11 (streams,
+ * simulation time, revisions, ordinals and notification sequence numbers).
+ * Content-dependent
  * asset checks run at commit, before persistence and on load with the
  * installed repository.
  *
@@ -121,6 +125,8 @@ export function validateCampaign(state: CampaignState, content?: ContentReposito
   validateCombat(state, add, content);
   validateEncounter(state, add, content);
   validateRecovery(state, add, content);
+  validateOnboarding(state, add, content);
+  validateNotifications(state, add, content);
 
   return issues;
 }

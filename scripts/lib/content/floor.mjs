@@ -38,6 +38,8 @@ export function validateContentFloor(collected) {
     ...checkHullCount(hulls),
     ...checkCatalog({ modules, ammunition, sold, where, stationId }),
     ...checkEncounters(collected, profiles),
+    ...checkDangerCoverage(collected),
+    ...checkGuidanceCoverage(collected),
   ];
 }
 
@@ -120,5 +122,65 @@ function checkEncounters(collected, profiles) {
     return role === undefined ? undefined : roles[role]?.movement;
   })).filter((movement) => movement !== undefined));
   if (behaviours.size < 2) fail('', `the opponents use only ${String(behaviours.size)} range or movement behaviour`);
+  return issues;
+}
+
+/**
+ * Functional Specification 19.7 as the MVP includes it: every immediate-danger
+ * event the included systems can produce raises an audible danger
+ * notification, and ship destruction is reported and cannot be hidden. Warp
+ * disruption is deferred with electronic warfare (MVP Scope 8).
+ */
+function checkDangerCoverage(collected) {
+  const entries = collected.definitions.notifications;
+  const file = entries[0]?.file ?? '';
+  const danger = entries.map((entry) => entry.value).filter((value) => value.severity === 'danger');
+  const has = (predicate) => danger.some((value) => predicate(value.trigger));
+  const required = [
+    ['the first hostile lock', (trigger) => trigger.kind === 'hostileLock'],
+    ['shield falling to its danger threshold',
+      (trigger) => trigger.kind === 'playerLayerBelow' && trigger.layer === 'shield'],
+    ['armour first taking damage', (trigger) => trigger.kind === 'playerLayerDamaged' && trigger.layer === 'armor'],
+    ['hull first taking damage', (trigger) => trigger.kind === 'playerLayerDamaged' && trigger.layer === 'hull'],
+    ['capacitor too low to run an active defence', (trigger) => trigger.kind === 'playerModuleStarved' &&
+      (trigger.categories.includes('shieldBooster') || trigger.categories.includes('armorRepairer'))],
+  ];
+  const issues = [];
+  for (const [event, predicate] of required) {
+    if (!has(predicate)) {
+      issues.push(issue('catalogRelationship', file, 'definitions',
+        `no danger notification reports ${event} (Functional Specification 19.7)`));
+    }
+  }
+  if (!entries.some((entry) => entry.value.trigger.kind === 'shipLost' && !entry.value.hideable)) {
+    issues.push(issue('catalogRelationship', file, 'definitions',
+      'no unhideable notification reports the loss of the ship (Functional Specification 19.7)'));
+  }
+  return issues;
+}
+
+/**
+ * MVP Scope 3 and MVP-AC-10: the guidance leads through the whole loop -
+ * choose a site, undock, command the ship, fight, loot, return, sell, refit
+ * and try a harder site - so a first-time player needs no external guide.
+ */
+function checkGuidanceCoverage(collected) {
+  const chains = collected.definitions.guidance;
+  const file = chains[0]?.file ?? '';
+  const kinds = new Set(chains.flatMap((entry) => entry.value.steps.map((step) => step.predicate.kind)));
+  const harder = chains.some((entry) => entry.value.steps.some((step) =>
+    step.predicate.kind === 'encounterEntered' && step.predicate.minimumTier >= 2));
+  const loop = [
+    'destinationSelected', 'ammunitionInHold', 'undocked', 'movementOrdered', 'targetLocked', 'weaponFired',
+    'defenseActivated', 'encounterCompleted', 'lootTaken', 'docked', 'itemSold', 'shipReady',
+    'fitCommitted',
+  ];
+  const issues = loop.filter((kind) => !kinds.has(kind)).map((kind) =>
+    issue('catalogRelationship', file, 'definitions',
+      `the guidance never asks for "${kind}", so part of the loop is untaught (MVP Scope 3, MVP-AC-10)`));
+  if (!harder) {
+    issues.push(issue('catalogRelationship', file, 'definitions',
+      'the guidance never leads to a harder site (MVP Scope 2, MVP-AC-10)'));
+  }
   return issues;
 }

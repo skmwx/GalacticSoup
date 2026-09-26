@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
 import { GATEWAY_MESSAGE_KEYS } from '@gateway';
-import { PROTOCOL_MESSAGE_KEYS } from '@protocol';
+import {
+  GUIDANCE_STEP_STATUS_NAMES,
+  NOTIFICATION_CATEGORY_NAMES,
+  NOTIFICATION_SEVERITY_NAMES,
+  PROTOCOL_MESSAGE_KEYS,
+} from '@protocol';
 import { createLocalizer, formatMessage } from '@shared';
-import { ACTION_MESSAGE_KEYS, catalogFor, CATALOGS, COMBAT_LOG_FILTERS, DEFAULT_LOCALE } from '@ui';
+import {
+  ACTION_MESSAGE_KEYS,
+  AUDIO_CHANNEL_NAMES,
+  catalogFor,
+  CATALOGS,
+  COMBAT_LOG_FILTERS,
+  DEFAULT_LOCALE,
+} from '@ui';
 import {
   ACTIVE_MODULE_STOP_REASONS,
   ENCOUNTER_STATUSES,
@@ -140,6 +152,30 @@ describe('message catalogue', () => {
       'combat.formula.capacitorEndurance',
       'combat.formula.repairRate',
       ...combatOperandKeys().map((key) => `operand.${key}`),
+    ];
+
+    const missing = required.filter((key) => !createLocalizer({ locale: 'en', catalog }).has(key));
+    expect(missing).toEqual([]);
+  });
+
+  /**
+   * The guidance and notification surfaces compose keys from projected
+   * vocabularies: levels, categories, step states, audio channels and the
+   * capacitor recharge explanation (Technical Specification 12.5).
+   */
+  it('covers every key the guidance and notification surfaces compose at runtime [TECH-12.5, FUNC-3.2, FUNC-19.7]', () => {
+    const required = [
+      ...NOTIFICATION_SEVERITY_NAMES.map((level) => `notifications.level.${level}`),
+      ...NOTIFICATION_CATEGORY_NAMES.map((category) => `notifications.category.${category}`),
+      ...GUIDANCE_STEP_STATUS_NAMES.map((status) => `guidance.status.${status}`),
+      ...AUDIO_CHANNEL_NAMES.map((channel) => `notifications.settings.channel.${channel}`),
+      'guidance.surface.space',
+      'guidance.alreadyHidden',
+      'guidance.alreadyShown',
+      'combat.formula.capacitorRecharge',
+      'operand.capacity',
+      'operand.charge',
+      'operand.rechargeSeconds',
     ];
 
     const missing = required.filter((key) => !createLocalizer({ locale: 'en', catalog }).has(key));

@@ -102,11 +102,14 @@ describe('compiled bundle contract', () => {
 
     expect(Object.keys(definitions).sort()).toEqual([
       'ammunition',
+      'audio.cues',
       'encounters',
+      'guidance',
       'hulls',
       'items',
       'loot.tables',
       'modules',
+      'notifications',
       'npc.profiles',
       'stations',
       'systems',

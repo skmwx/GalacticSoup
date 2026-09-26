@@ -1,0 +1,18 @@
+{
+  "kind": "audio.cues",
+  "definitions": [
+    {
+      "id": "cue.test.danger",
+      "channel": "alert",
+      "waveform": "square",
+      "defaultFor": "danger",
+      "notes": [
+        {
+          "frequencyHz": 880,
+          "durationMs": 100,
+          "gain": 0.3
+        }
+      ]
+    }
+  ]
+}

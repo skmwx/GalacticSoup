@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galactic-soup.local/schemas/content/audio.cues.schema.json",
+  "title": "Audible cues",
+  "description": "Short authored tone sequences the interface plays for semantic notifications, so the build carries no binary audio. Functional Specification 19.7; Technical Specification 12.3-12.4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "definitions"
+  ],
+  "properties": {
+    "kind": {
+      "const": "audio.cues"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "definitions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "channel",
+          "id",
+          "notes",
+          "waveform"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/audioCueId"
+          },
+          "channel": {
+            "enum": [
+              "alert",
+              "interface",
+              "effects"
+            ],
+            "description": "The volume channel the cue plays on."
+          },
+          "waveform": {
+            "enum": [
+              "sine",
+              "square",
+              "triangle",
+              "sawtooth"
+            ]
+          },
+          "defaultFor": {
+            "enum": [
+              "informational",
+              "opportunity",
+              "warning",
+              "danger"
+            ],
+            "description": "The severity this cue speaks for when a message has no definition of its own, such as a save-integrity failure the interface raises."
+          },
+          "notes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "durationMs",
+                "frequencyHz",
+                "gain"
+              ],
+              "properties": {
+                "frequencyHz": {
+                  "type": "number",
+                  "minimum": 40,
+                  "maximum": 8000
+                },
+                "durationMs": {
+                  "type": "integer",
+                  "minimum": 20,
+                  "maximum": 2000
+                },
+                "gain": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 1
+                }
+              }
+            }
+          },
+          "$comment": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

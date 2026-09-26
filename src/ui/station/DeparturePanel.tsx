@@ -3,8 +3,9 @@ import type { JSX } from 'react';
 import type { BookmarkDestinationData, DestinationData, ShipData } from '@protocol';
 
 import { ActionButton, commandAvailability, type ActionRunner } from '../actions';
+import { SubstitutedExplanation } from '../common/Explanation';
 import { formatSimulationDuration } from '../format/duration';
-import { formatCredits } from '../format/numbers';
+import { formatCredits, formatPercent, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
 import { wreckRemainingMs } from './LossReport';
@@ -31,6 +32,13 @@ import styles from './Station.module.css';
  * shoot, and armour or hull that has not been repaired (Functional
  * Specification 10). The warnings are the fit's own and the layers are the
  * ship's; a warning never blocks undocking.
+ *
+ * Beside them it reports the capacitor: how full it is and, when it is not,
+ * how much running time will fill it, with the recharge formula written out.
+ * The capacitor recharges only while simulation time runs - docked or not -
+ * and a ship that leaves on an empty one cannot run its booster, which the
+ * balance simulations found to be the likeliest unexplained loss. This is an
+ * explanation, not an undock rule (Functional Specification 9.8, 19.6).
  *
  * The player's own wreck carries an automatic bookmark (Functional
  * Specification 5.4, 9.12), and it is chosen here exactly as an encounter is:
@@ -143,6 +151,7 @@ export function DeparturePanel({
       </p>
 
       <UndockWarnings ship={data.ship} />
+      <CapacitorReadiness ship={data.ship} />
 
       <div className={styles['toolbar']}>
         <ActionButton
@@ -290,6 +299,42 @@ function UndockWarnings({ ship }: { readonly ship: ShipData | null }): JSX.Eleme
         </li>
       )}
     </ul>
+  );
+}
+
+/**
+ * How charged the capacitor is and how long it takes to fill
+ * (Functional Specification 9.8, 19.6).
+ */
+function CapacitorReadiness({ ship }: { readonly ship: ShipData | null }): JSX.Element | null {
+  const translate = useTranslate();
+  const { locale } = useLocalizer();
+  if (ship === null || ship.capacitor.capacity <= 0) {
+    return null;
+  }
+  const capacitor = ship.capacitor;
+  const fraction = capacitor.charge / capacitor.capacity;
+  const full = capacitor.secondsToFull <= 0;
+  return (
+    <div className={styles['muted']} data-capacitor-readiness={full ? 'full' : 'charging'}>
+      <p className={styles['muted']}>
+        {full
+          ? translate('departure.capacitor.full', { percent: formatPercent(fraction, locale) })
+          : translate('departure.capacitor.charging', {
+              percent: formatPercent(fraction, locale),
+              duration: formatSimulationDuration(capacitor.secondsToFull * 1000),
+            })}
+      </p>
+      {full ? null : (
+        <SubstitutedExplanation
+          trace={capacitor.rechargeTrace}
+          label={translate('departure.capacitor.explain')}
+          result={translate('departure.capacitor.seconds', {
+            seconds: formatStat(capacitor.rechargeTrace.displayResult, locale),
+          })}
+        />
+      )}
+    </div>
   );
 }
 

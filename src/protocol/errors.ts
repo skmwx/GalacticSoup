@@ -135,6 +135,9 @@ export const RULE_VIOLATION_REASONS = [
   'noResumableSave',
   'bookmarkUnknown',
   'noActiveShip',
+  'guidanceStepUnknown',
+  'guidanceStepRecorded',
+  'guidanceStepNotSkippable',
 ] as const;
 
 export type RuleViolationReason = (typeof RULE_VIOLATION_REASONS)[number];

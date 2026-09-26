@@ -10,6 +10,8 @@ export { combatProjection, objectLockCommands } from './combat';
 export { destinationsProjection, siteProjection } from './navigation';
 export { encounterProjection, wreckContentsProjection } from './encounter';
 export { lossReportProjection } from './loss';
+export { onboardingProjection } from './guidance';
+export { audioCuesProjection, notificationsProjection } from './notifications';
 export { itemDataOf } from './items';
 export { comparisonProjection } from './comparison';
 export {

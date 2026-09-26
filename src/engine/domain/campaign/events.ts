@@ -73,6 +73,11 @@ export const DOMAIN_EVENT_KINDS = [
   'recovery.insurancePaid',
   'recovery.shipGranted',
   'recovery.activeShipChanged',
+  'onboarding.stepCompleted',
+  'onboarding.stepSkipped',
+  'onboarding.hidden',
+  'onboarding.shown',
+  'notification.raised',
 ] as const;
 
 export type DomainEventKind = (typeof DOMAIN_EVENT_KINDS)[number];
@@ -95,6 +100,7 @@ export const PROJECTION_TOPICS = [
   'session', 'frame', 'saves', 'assets', 'inventory', 'wallet', 'ship', 'fitting',
   'station', 'market', 'repair', 'resupply', 'insurance',
   'navigation', 'site', 'destinations', 'combat', 'encounter', 'loss',
+  'onboarding', 'notifications',
 ] as const;
 
 export type ProjectionTopic = (typeof PROJECTION_TOPICS)[number];

@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://galacticsoup.invalid/schemas/protocol/onboarding.state.data.schema.json",
+  "title": "OnboardingData",
+  "description": "The contextual guidance: every authored step with its status, where it is carried out and whether it can be skipped (Functional Specification 3.2; Technical Specification 7.3, 10.6).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "hidden",
+    "currentStepId",
+    "chains",
+    "commands"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "hidden": {
+      "type": "boolean"
+    },
+    "currentStepId": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "chains": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/chain"
+      }
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/availability"
+      }
+    }
+  },
+  "$defs": {
+    "availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "available",
+        "unavailableReason"
+      ],
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        }
+      }
+    },
+    "chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "titleKey",
+        "introKey",
+        "completedKey",
+        "steps",
+        "completedCount",
+        "skippedCount",
+        "finished"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "titleKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "introKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "completedKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        },
+        "completedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "skippedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "finished": {
+          "type": "boolean"
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "titleKey",
+        "bodyKey",
+        "surface",
+        "skippable",
+        "status",
+        "recordedAtMs",
+        "commands"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "titleKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bodyKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "surface": {
+          "enum": [
+            "station.hub",
+            "station.market",
+            "station.hangar",
+            "station.fitting",
+            "station.services",
+            "station.ship",
+            "station.departure",
+            "space"
+          ]
+        },
+        "skippable": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "skipped",
+            "current",
+            "open",
+            "waiting"
+          ]
+        },
+        "recordedAtMs": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          ]
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/availability"
+          }
+        }
+      }
+    }
+  }
+}

@@ -11,6 +11,8 @@ export * from './navigation';
 export * from './combat';
 export * from './encounter';
 export * from './loss';
+export * from './guidance';
+export * from './notifications';
 export {
   contentError,
   contentErrorMessageKey,

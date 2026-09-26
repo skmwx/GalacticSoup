@@ -1,0 +1,127 @@
+.guidance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+  padding: var(--gs-space-2) var(--gs-space-3);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-left: calc(4px * var(--gs-ui-scale)) solid var(--gs-color-accent);
+  border-radius: var(--gs-radius);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gs-space-2);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--gs-space-2);
+  margin: 0;
+  font-size: var(--gs-font-body);
+}
+
+.icon {
+  flex: none;
+}
+
+.progress,
+.where {
+  margin: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.current {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: var(--gs-font-body);
+}
+
+.body {
+  margin: 0;
+  max-width: 60rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-2);
+}
+
+.details {
+  font-size: var(--gs-font-small);
+}
+
+.details summary {
+  cursor: pointer;
+}
+
+.steps {
+  margin: var(--gs-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+
+.steps li {
+  display: flex;
+  gap: var(--gs-space-2);
+  align-items: baseline;
+}
+
+.mark {
+  width: 1.2em;
+  text-align: center;
+  font-family: var(--gs-font-mono);
+}
+
+.status {
+  color: var(--gs-color-text-muted);
+}
+
+.current .stepName,
+li.current {
+  font-weight: 600;
+}
+
+li.completed .stepName,
+li.skipped .stepName {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The badge a station tile wears while it is the guidance's next surface. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gs-space-1);
+  font-size: var(--gs-font-small);
+  font-weight: 600;
+  border: 1px dashed currentColor;
+  border-radius: var(--gs-radius);
+  padding: 0 var(--gs-space-1);
+}

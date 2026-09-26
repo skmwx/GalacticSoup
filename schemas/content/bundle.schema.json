@@ -74,7 +74,10 @@
         "stations",
         "npc.profiles",
         "loot.tables",
-        "encounters"
+        "encounters",
+        "guidance",
+        "notifications",
+        "audio.cues"
       ],
       "properties": {
         "hulls": {
@@ -129,6 +132,24 @@
           "type": "array",
           "items": {
             "$ref": "https://galactic-soup.local/schemas/content/encounters.schema.json#/properties/definitions/items"
+          }
+        },
+        "guidance": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/guidance.schema.json#/properties/definitions/items"
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/notifications.schema.json#/properties/definitions/items"
+          }
+        },
+        "audio.cues": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galactic-soup.local/schemas/content/audio.cues.schema.json#/properties/definitions/items"
           }
         }
       }

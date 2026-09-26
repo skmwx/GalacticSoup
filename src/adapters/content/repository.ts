@@ -1,12 +1,16 @@
 import type {
   AmmunitionDefinition,
+  AudioCueDefinition,
   ContentRepository,
   EncounterDefinition,
+  GuidanceChainDefinition,
+  GuidanceStepDefinition,
   HullDefinition,
   ItemDefinition,
   LootTableDefinition,
   MarketListingDefinition,
   ModuleDefinition,
+  NotificationDefinition,
   NpcProfileDefinition,
   StationDefinition,
   SiteDefinition,
@@ -53,6 +57,13 @@ export function createContentRepository(
   const npcProfiles = index('npcProfile', content.npcProfiles);
   const lootTables = index('lootTable', content.lootTables);
   const encounters = index('encounter', content.encounters);
+  const guidanceChains = sortedBy(content.guidance, (entry) => entry.id);
+  const guidanceSteps = index('guidanceStep', guidanceChains.flatMap((chain) => chain.steps));
+  index('guidanceChain', guidanceChains);
+  const notifications = index('notification', content.notifications);
+  const notificationList = sortedBy(content.notifications, (entry) => entry.id);
+  const audioCues = index('audioCue', content.audioCues);
+  const audioCueList = sortedBy(content.audioCues, (entry) => entry.id);
 
   const tradeables = new Map<string, TradeableDefinition>();
   for (const definition of [...content.items, ...content.modules, ...content.ammunition]) {
@@ -87,12 +98,15 @@ export function createContentRepository(
 
   const counts: Record<string, number> = {
     ammunition: content.ammunition.length,
+    'audio.cues': content.audioCues.length,
     encounters: content.encounters.length,
+    guidance: content.guidance.length,
     hulls: content.hulls.length,
     items: content.items.length,
     'loot.tables': content.lootTables.length,
     'market.listings': content.listings.length,
     modules: content.modules.length,
+    notifications: content.notifications.length,
     'npc.profiles': content.npcProfiles.length,
     sites: sites.size,
     stations: content.stations.length,
@@ -147,6 +161,13 @@ export function createContentRepository(
     lootTables: () => content.lootTables,
     encounters: () => content.encounters,
 
+    guidanceChains: () => guidanceChains,
+    guidanceStep: (id) => guidanceSteps.get(id),
+    notifications: () => notificationList,
+    notification: (id) => notifications.get(id),
+    audioCues: () => audioCueList,
+    audioCue: (id) => audioCues.get(id),
+
     listings: (stationId) => listingsByStation.get(stationId) ?? EMPTY_LISTINGS,
     ammunitionInGroup: (group) => ammunitionByGroup.get(group) ?? EMPTY_AMMUNITION,
 
@@ -171,7 +192,11 @@ type Identified =
   | StationDefinition
   | NpcProfileDefinition
   | LootTableDefinition
-  | EncounterDefinition;
+  | EncounterDefinition
+  | GuidanceChainDefinition
+  | GuidanceStepDefinition
+  | NotificationDefinition
+  | AudioCueDefinition;
 
 function index<T extends Identified>(kind: string, definitions: readonly T[]): Map<string, T> {
   const result = indexBy(definitions, (definition) => definition.id);

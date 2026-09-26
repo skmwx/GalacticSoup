@@ -1,8 +1,9 @@
-import { useState, type JSX } from 'react';
+import { useId, useState, type JSX } from 'react';
 
 import type { ClientGateway } from '@gateway';
 
 import { ActionIcon, actionById, useActionShortcuts, type ActionRunner } from '../actions';
+import { GuidedBadge, GuidedHint } from '../guidance';
 import { useTranslate } from '../localization';
 import { DeparturePanel } from './DeparturePanel';
 import { FittingPanel } from './FittingPanel';
@@ -42,7 +43,14 @@ export interface StationScreenProps {
   readonly runner: ActionRunner;
   /** The clock the engine last answered with, for countdowns such as a wreck's. */
   readonly simulationTimeMs: number;
+  /** The open surface, when the caller holds it; otherwise the station keeps its own. */
+  readonly panel?: StationPanelId;
+  readonly onPanelChange?: (panel: StationPanelId) => void;
+  /** The surface the guidance's current step is carried out on, marked on its tile. */
+  readonly guidedSurface?: string | null;
 }
+
+export type StationPanelId = PanelId;
 
 type PanelId =
   | 'station.hub'
@@ -83,9 +91,15 @@ export function StationScreen({
   data,
   runner,
   simulationTimeMs,
+  panel: controlledPanel,
+  onPanelChange,
+  guidedSurface = null,
 }: StationScreenProps): JSX.Element {
   const translate = useTranslate();
-  const [open, setOpen] = useState<PanelId>('station.hub');
+  const [ownPanel, setOwnPanel] = useState<PanelId>('station.hub');
+  const open = controlledPanel ?? ownPanel;
+  const setOpen = onPanelChange ?? setOwnPanel;
+  const guidedHintId = useId();
 
   const shipless = data.assets !== null && data.assets.activeShipId === null;
   const report = data.loss?.report ?? null;
@@ -128,6 +142,7 @@ export function StationScreen({
         <p className={styles['subheading']}>{translate('station.docked')}</p>
       </div>
 
+      {guidedSurface === null ? null : <GuidedHint id={guidedHintId} />}
       <nav className={styles['tabs']} aria-label={translate('station.navigation')}>
         {PANELS.map((panel) => {
           const action = actionById(panel);
@@ -138,6 +153,8 @@ export function StationScreen({
               type="button"
               className={styles['tile']}
               data-action={panel}
+              data-guided={guidedSurface === panel ? 'true' : undefined}
+              aria-describedby={guidedSurface === panel ? guidedHintId : undefined}
               aria-current={open === panel ? 'page' : undefined}
               disabled={!state.available}
               onClick={() => {
@@ -148,6 +165,7 @@ export function StationScreen({
                 <ActionIcon icon={action.icon} />
                 {translate(action.labelKey)}
               </span>
+              {guidedSurface === panel && open !== panel ? <GuidedBadge /> : null}
             </button>
           );
         })}
@@ -191,6 +209,8 @@ export function StationScreen({
                 type="button"
                 className={styles['tile']}
                 disabled={!state.available}
+                data-guided={guidedSurface === panel ? 'true' : undefined}
+                aria-describedby={guidedSurface === panel ? guidedHintId : undefined}
                 onClick={() => {
                   setOpen(panel);
                 }}
@@ -199,6 +219,7 @@ export function StationScreen({
                   <ActionIcon icon={action.icon} />
                   {translate(action.labelKey)}
                 </span>
+                {guidedSurface === panel ? <GuidedBadge /> : null}
                 <span className={styles['tileDetail']}>
                   {state.available
                     ? action.descriptionKey === null

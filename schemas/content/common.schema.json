@@ -55,6 +55,21 @@
       "pattern": "^encounter\\.",
       "type": "string"
     },
+    "guidanceId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^guide\\.",
+      "type": "string"
+    },
+    "notificationId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^notify\\.",
+      "type": "string"
+    },
+    "audioCueId": {
+      "$ref": "#/$defs/definitionId",
+      "pattern": "^cue\\.",
+      "type": "string"
+    },
     "messageKey": {
       "type": "string",
       "maxLength": 128,

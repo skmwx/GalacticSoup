@@ -1,3 +1,4 @@
+import type { FormulaTraceData } from './economy';
 import type { ItemData, LocationData, SlotRefData } from './assets';
 
 /**
@@ -98,6 +99,14 @@ export interface CapacitorStatData {
   readonly drainPerSecond: number;
   readonly stable: boolean;
   readonly enduranceSeconds: number | null;
+  /**
+   * Seconds of running time until the capacitor is full at its recharge rate
+   * (Functional Specification 9.8). Recharge needs the clock to run - docked
+   * or not - which is what an empty capacitor at undock usually means.
+   */
+  readonly secondsToFull: number;
+  /** The same figure with the formula's operands substituted (Functional Specification 19.6). */
+  readonly rechargeTrace: FormulaTraceData;
 }
 
 export interface LayerConditionData {

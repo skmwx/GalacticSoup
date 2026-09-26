@@ -123,8 +123,14 @@ describe.each(['direct', 'channel'] as const)('fitting through %s transport', (k
     expect(!rejected.ok && rejected.error.messageKey).toBe('fitting.violation.slotKindMismatch');
 
     const committed = await ask(gateway, 'fitting.commit', {});
-    expect(committed.invalidations).toEqual(['assets', 'fitting', 'inventory', 'ship']);
-    expect(committed.events.map((event) => event.kind)).toEqual(['fitting.committed']);
+    // Applying a fit is also the guidance's upgrade step, and both are told to
+    // the player (Functional Specification 3.2, 19.7).
+    expect(committed.invalidations).toEqual(
+      ['assets', 'fitting', 'inventory', 'notifications', 'onboarding', 'ship'],
+    );
+    expect(committed.events.map((event) => event.kind)).toEqual([
+      'fitting.committed', 'onboarding.stepCompleted', 'notification.raised', 'notification.raised',
+    ]);
 
     const after = await ask(gateway, 'ship.get', { shipId });
     expect(after.weapons[0]?.ammunitionId).toBeNull();
