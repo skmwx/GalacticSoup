@@ -780,9 +780,26 @@ function starterQuote(state: CampaignState): number {
   return marketBuyPreview(state, content, { stationId: HARBOUR, itemId: STARTER_HULL, quantity: 1 }).totalCredits;
 }
 
+/** What buying the starter ship back costs here: the hull, its original fit and a full magazine. */
+function starterShipQuote(state: CampaignState): number {
+  let total = starterQuote(state);
+  for (const entry of content.rules.economy.startingFit) {
+    total += marketBuyPreview(state, content, { stationId: HARBOUR, itemId: entry.moduleId, quantity: 1 }).totalCredits;
+    const module = content.requireModule(entry.moduleId as never);
+    if (entry.ammunitionId !== undefined && module.category === 'turret') {
+      total += marketBuyPreview(state, content, {
+        stationId: HARBOUR, itemId: entry.ammunitionId, quantity: module.turret.magazineSize,
+      }).totalCredits;
+    }
+  }
+  return total;
+}
+
 describe('inaccessible-state prevention', () => {
-  it('sells the starter hull at the recovery station for no more than its reference value [FUNC-9.12, FUNC-11.2, FUNC-22.1]', () => {
-    expect(starterQuote(newCampaign())).toBeLessThanOrEqual(REFERENCE);
+  it('sells the whole starter ship at the recovery station for no more than its reference value [FUNC-9.12, FUNC-11.2, FUNC-22.1]', () => {
+    const state = newCampaign();
+    expect(starterQuote(state)).toBeLessThanOrEqual(content.requireHull(STARTER_HULL as never).referenceValueCredits);
+    expect(starterShipQuote(state)).toBeLessThanOrEqual(REFERENCE);
   });
 
   it('always leaves an active ship or the credits for one, after any loss or purchase [FUNC-9.12, FUNC-22.1, TECH-15.3]', () => {
@@ -790,7 +807,7 @@ describe('inaccessible-state prevention', () => {
     const seen = { granted: 0, otherShip: 0, noShip: 0, grantedByPurchase: 0, hullActivated: 0 };
     for (let round = 0; round < 40; round += 1) {
       const label = `round ${String(round)}`;
-      let state = withCredits(newCampaign(hexSeed(random)), integer(random, 0, 32_000));
+      let state = withCredits(newCampaign(hexSeed(random)), integer(random, 0, 2 * REFERENCE));
       if (random() < 0.3 && state.assets.credits >= 1_800) state = insureEnhanced(state).state;
       if (random() < 0.3 && state.assets.credits >= starterQuote(state)) state = buy(state, STARTER_HULL, 1).state;
       const fixture = inSite(state, { spawn: false });
@@ -802,10 +819,11 @@ describe('inaccessible-state prevention', () => {
       const assertReachable = (current: CampaignState, what: string) => {
         expect(current.assets.activeShipId !== null || current.assets.credits >= REFERENCE, `${label} ${what}`).toBe(true);
         expect(validateCampaign(current, content), `${label} ${what}`).toEqual([]);
-        expect(starterQuote(current)).toBeLessThanOrEqual(REFERENCE);
         if (current.assets.activeShipId === null) {
           const preview = marketBuyPreview(current, content, { stationId: HARBOUR, itemId: STARTER_HULL, quantity: 1 });
           expect(preview.available, `${label} ${what}`).toBe(true);
+          // Not just a hull: the whole starter ship, armed and loaded.
+          expect(starterShipQuote(current), `${label} ${what}`).toBeLessThanOrEqual(current.assets.credits);
         }
       };
       assertReachable(state, 'loss');
@@ -852,11 +870,14 @@ describe('inaccessible-state prevention', () => {
   });
 
   it('grants the starter ship when a shipless pilot spends below the reference value [FUNC-9.12, FUNC-22.1]', () => {
-    const fixture = inSite(withCredits(newCampaign(), 9_000), { spawn: false });
+    // The payout leaves the pilot 500 above the reference value; 100 rounds take them below it.
+    const payout = Math.floor(content.requireHull(STARTER_HULL as never).referenceValueCredits *
+      content.rules.economy.basicInsurancePayoutFraction);
+    const fixture = inSite(withCredits(newCampaign(), REFERENCE - payout + 500), { spawn: false });
     resolveLossOnly(fixture);
     let state = stateOf(fixture);
     expect(state.assets.activeShipId).toBeNull();
-    expect(state.assets.credits).toBe(12_600);
+    expect(state.assets.credits).toBe(REFERENCE + 500);
     const result = buy(state, FUSION, 100);
     state = result.state;
     expect(state.assets.credits).toBeLessThan(REFERENCE);
@@ -871,7 +892,7 @@ describe('inaccessible-state prevention', () => {
   });
 
   it('refuses an invariant state a shipless pilot below the reference value would be [TECH-15.3]', () => {
-    const fixture = inSite(newCampaign(), { spawn: false });
+    const fixture = inSite(withCredits(newCampaign(), REFERENCE), { spawn: false });
     resolveLossOnly(fixture);
     const draft: CampaignDraft = draftOf(stateOf(fixture));
     draft.assets.credits = REFERENCE - 1;

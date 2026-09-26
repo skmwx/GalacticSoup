@@ -1,5 +1,5 @@
 {
-  "$comment": "Representative fits and the encounters each one is meant for (MVP Implementation Plan phase 16; MVP Scope 4.1-4.3). Fits name only definitions and quantities: tests/support/progression/assemble.ts buys and fits them through the ordinary station commands, so every item here must be sold at the starting station. Tactics are what a competent pilot does with the ordinary controls, using only the range and arrival distances the interface offers. Seeds fix each campaign's random streams; a scenario with several sorties per seed proves the site stays repeatable.",
+  "$comment": "Representative fits, the encounters each one is set against, and the bands their outcomes must measure inside (MVP Implementation Plan phases 16-17; MVP Scope 4.1-4.3). Fits name only definitions and quantities: tests/support/progression/assemble.ts buys and fits them through the ordinary station commands, so every item here must be sold at the starting station. Tactics are what a competent pilot does with the ordinary controls, using only the range and arrival distances the interface offers. Seeds fix each campaign's random streams, so every band is deterministic; a scenario with several sorties per seed proves the site stays repeatable. The dominance witnesses reason from the bands alone: each representative fit is strictly outperformed somewhere, so none is the best choice everywhere.",
   "fits": [
     {
       "id": "starter",
@@ -135,6 +135,44 @@
           "quantity": 300
         }
       ]
+    },
+    {
+      "id": "folly",
+      "description": "A poor first purchase: most of the starting credits spent on an armour repairer and two armour platings for a ship that tanks on its shield, leaving the single autocannon and little in the wallet.",
+      "modules": [
+        {
+          "slot": "weapon",
+          "index": 0,
+          "moduleId": "module.turret.autocannon.small",
+          "ammunitionId": "ammo.projectile.small.fusion"
+        },
+        {
+          "slot": "system",
+          "index": 0,
+          "moduleId": "module.shield.booster.small"
+        },
+        {
+          "slot": "system",
+          "index": 1,
+          "moduleId": "module.repair.armor.small"
+        },
+        {
+          "slot": "engineering",
+          "index": 0,
+          "moduleId": "module.plating.armor.small"
+        },
+        {
+          "slot": "engineering",
+          "index": 1,
+          "moduleId": "module.plating.armor.small"
+        }
+      ],
+      "cargo": [
+        {
+          "definitionId": "ammo.projectile.small.fusion",
+          "quantity": 100
+        }
+      ]
     }
   ],
   "scenarios": [
@@ -154,6 +192,11 @@
         "repairBelowFraction": 0.8
       },
       "expect": "completed",
+      "band": {
+        "completedShare": [1, 1],
+        "medianFightSeconds": [80, 150],
+        "hitPointsLost": [0, 0.1]
+      },
       "seeds": [
         "bb22cc33dd44ee55ff6677889900aa11",
         "0123456789abcdef0123456789abcdef",
@@ -162,15 +205,13 @@
       "sorties": 2
     },
     {
-      "id": "patrol.intermediate",
-      "description": "Killing the cutters first with thermal rounds, then the marksman, clears the multi-opponent site repeatedly.",
-      "encounterId": "encounter.borrell.pirate-patrol",
-      "fitId": "intermediate",
+      "id": "scout.folly",
+      "description": "The poor purchase still clears the easiest site: the single autocannon was never the thing it replaced.",
+      "encounterId": "encounter.borrell.pirate-scout",
+      "fitId": "folly",
       "tactics": {
         "arrivalDistanceKm": 10,
-        "targetPriority": [
-          "npc.pirate.cutter"
-        ],
+        "targetPriority": [],
         "movement": {
           "kind": "orbit",
           "distanceKm": 1
@@ -179,67 +220,102 @@
         "repairBelowFraction": 0.8
       },
       "expect": "completed",
+      "band": {
+        "completedShare": [1, 1],
+        "medianFightSeconds": [80, 150],
+        "hitPointsLost": [0, 0.1]
+      },
       "seeds": [
         "bb22cc33dd44ee55ff6677889900aa11",
         "0123456789abcdef0123456789abcdef",
         "fedcba9876543210fedcba9876543210"
       ],
-      "sorties": 2
+      "sorties": 1
     },
     {
-      "id": "base.mastery",
-      "description": "Kiting the gunners at 10 km behind an afterburner, where their fusion rounds and the warden's phased ones fall off, then the warden and the marksman, clears the mastery site repeatedly.",
-      "encounterId": "encounter.borrell.pirate-base",
+      "id": "scout.intermediate",
+      "description": "The intermediate fit clears the easiest site as well, faster than the starter fit.",
+      "encounterId": "encounter.borrell.pirate-scout",
+      "fitId": "intermediate",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [1, 1],
+        "medianFightSeconds": [30, 70],
+        "hitPointsLost": [0, 0.1]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "scout.mastery",
+      "description": "The mastery fit clears the easiest site in well under a minute.",
+      "encounterId": "encounter.borrell.pirate-scout",
       "fitId": "mastery",
       "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [1, 1],
+        "medianFightSeconds": [30, 70],
+        "hitPointsLost": [0, 0.1]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "scout.lancer",
+      "description": "The long-range fit clears the easiest site too: the scout carries no reserve rounds and cannot outlast it.",
+      "encounterId": "encounter.borrell.pirate-scout",
+      "fitId": "lancer",
+      "tactics": {
         "arrivalDistanceKm": 30,
-        "targetPriority": [
-          "npc.pirate.gunner",
-          "npc.pirate.warden"
-        ],
+        "targetPriority": [],
         "movement": {
           "kind": "keepRange",
           "distanceKm": 10
-        },
-        "propulsion": "always",
-        "repairBelowFraction": 0.8,
-        "repairCapacitorFloor": 0.3
-      },
-      "expect": "completed",
-      "seeds": [
-        "bb22cc33dd44ee55ff6677889900aa11",
-        "0123456789abcdef0123456789abcdef",
-        "fedcba9876543210fedcba9876543210"
-      ],
-      "sorties": 2
-    },
-    {
-      "id": "base.lancer",
-      "description": "The long-range approach also clears the mastery site in most fights: back away toward 20 km, kill the marksman that can answer at range first, then the warden and the gunners.",
-      "encounterId": "encounter.borrell.pirate-base",
-      "fitId": "lancer",
-      "tactics": {
-        "arrivalDistanceKm": 50,
-        "targetPriority": [
-          "npc.pirate.marksman",
-          "npc.pirate.warden"
-        ],
-        "movement": {
-          "kind": "keepRange",
-          "distanceKm": 20
         },
         "propulsion": "never",
         "repairBelowFraction": 0.8,
         "repairCapacitorFloor": 0.4
       },
       "expect": "completed",
-      "minimumCompletedShare": 0.6,
+      "band": {
+        "completedShare": [1, 1],
+        "medianFightSeconds": [50, 110],
+        "hitPointsLost": [0, 0.1]
+      },
       "seeds": [
         "bb22cc33dd44ee55ff6677889900aa11",
         "0123456789abcdef0123456789abcdef",
         "fedcba9876543210fedcba9876543210"
       ],
-      "sorties": 2
+      "sorties": 1
     },
     {
       "id": "patrol.starter",
@@ -259,6 +335,129 @@
         "repairBelowFraction": 0.8
       },
       "expect": "notCompleted",
+      "band": {
+        "completedShare": [0, 0],
+        "hitPointsLost": [1, 1]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "patrol.intermediate",
+      "description": "Killing the cutters first with thermal rounds, then the marksman, clears the multi-opponent site repeatedly.",
+      "encounterId": "encounter.borrell.pirate-patrol",
+      "fitId": "intermediate",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.cutter"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [1, 1],
+        "medianFightSeconds": [140, 240],
+        "hitPointsLost": [0, 0.25]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "patrol.intermediate-marksman-first",
+      "description": "Target priority decides the multi-opponent site: chasing the marksman while both cutters fire loses the fight the right order wins (MVP Scope 4.2).",
+      "encounterId": "encounter.borrell.pirate-patrol",
+      "fitId": "intermediate",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.marksman"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [0, 0.34],
+        "hitPointsLost": [0.6, 1]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "patrol.mastery",
+      "description": "The mastery fit clears the multi-opponent site with the same plan as the intermediate fit.",
+      "encounterId": "encounter.borrell.pirate-patrol",
+      "fitId": "mastery",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.cutter"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [1, 1],
+        "medianFightSeconds": [140, 240],
+        "hitPointsLost": [0, 0.1]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "patrol.lancer",
+      "description": "The long-range fit cannot hold off the cutters: they orbit inside its tracking, and without a booster it cannot tank them. The patrol is the railguns' counter.",
+      "encounterId": "encounter.borrell.pirate-patrol",
+      "fitId": "lancer",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.cutter"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 5
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8,
+        "repairCapacitorFloor": 0.2
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [0, 0],
+        "hitPointsLost": [1, 1]
+      },
       "seeds": [
         "bb22cc33dd44ee55ff6677889900aa11",
         "0123456789abcdef0123456789abcdef",
@@ -285,12 +484,172 @@
         "repairBelowFraction": 0.8
       },
       "expect": "notCompleted",
+      "band": {
+        "completedShare": [0, 0],
+        "hitPointsLost": [1, 1]
+      },
       "seeds": [
         "bb22cc33dd44ee55ff6677889900aa11",
         "0123456789abcdef0123456789abcdef",
         "fedcba9876543210fedcba9876543210"
       ],
       "sorties": 1
+    },
+    {
+      "id": "base.intermediate",
+      "description": "The intermediate fit, flown as well as it can be - holding 10 km from the nearest brawler - comes home from the mastery site barely alive when it comes home at all: without an afterburner the brawlers close, and without a capacitor battery the booster runs dry. The mastery upgrade is what changes the result (MVP Scope 4.3).",
+      "encounterId": "encounter.borrell.pirate-base",
+      "fitId": "intermediate",
+      "tactics": {
+        "arrivalDistanceKm": 30,
+        "targetPriority": [],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 10
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [0.3, 0.84],
+        "hitPointsLost": [0.3, 0.9]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210",
+        "c0ffee00c0ffee00c0ffee00c0ffee00",
+        "1234abcd1234abcd1234abcd1234abcd",
+        "0badf00d0badf00d0badf00d0badf00d"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "base.intermediate-brawl",
+      "description": "A reckless first visit: the intermediate fit orbits the gunners at 1 km and trades hits with every brawler at once. It does not come back; the loss-recovery career starts here.",
+      "encounterId": "encounter.borrell.pirate-base",
+      "fitId": "intermediate",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.gunner"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [0, 0],
+        "hitPointsLost": [1, 1]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "base.mastery",
+      "description": "Burning to hold 10 km from whichever brawler is nearest - where the autocannons still hit and the brawlers' phased rounds start to fall off - clears the mastery site repeatedly. Chasing a fixed target order instead lets the others close.",
+      "encounterId": "encounter.borrell.pirate-base",
+      "fitId": "mastery",
+      "tactics": {
+        "arrivalDistanceKm": 30,
+        "targetPriority": [],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 10
+        },
+        "propulsion": "always",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [1, 1],
+        "medianFightSeconds": [300, 460],
+        "hitPointsLost": [0, 0.2],
+        "damageTaken": [1300, 2600]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "base.lancer",
+      "description": "The long-range approach clears the mastery site too: backing away to 20 km from the nearest opponent keeps the brawlers' rounds from landing while the railguns' do. Slower than the close-range fit, but it takes far less fire.",
+      "encounterId": "encounter.borrell.pirate-base",
+      "fitId": "lancer",
+      "tactics": {
+        "arrivalDistanceKm": 50,
+        "targetPriority": [],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 20
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8,
+        "repairCapacitorFloor": 0.4
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [1, 1],
+        "medianFightSeconds": [400, 600],
+        "hitPointsLost": [0, 0.1],
+        "damageTaken": [400, 1200]
+      },
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
     }
-  ]
+  ],
+  "dominance": {
+    "fits": [
+      "starter",
+      "intermediate",
+      "mastery",
+      "lancer"
+    ],
+    "witnesses": [
+      {
+        "fitId": "starter",
+        "outperformedBy": "intermediate",
+        "encounterId": "encounter.borrell.pirate-patrol",
+        "measure": "completedShare",
+        "reason": "One gun cannot kill the cutters before they break the shield; two can."
+      },
+      {
+        "fitId": "intermediate",
+        "outperformedBy": "mastery",
+        "encounterId": "encounter.borrell.pirate-base",
+        "measure": "hitPointsLost",
+        "reason": "Without an afterburner the brawlers close and without a capacitor battery the booster runs dry: the intermediate fit comes home from the mastery site nearly destroyed, when it comes home."
+      },
+      {
+        "fitId": "mastery",
+        "outperformedBy": "lancer",
+        "encounterId": "encounter.borrell.pirate-base",
+        "measure": "damageTaken",
+        "reason": "Railguns fight from 20 km, where the brawlers' phased rounds seldom land, so the long-range fit takes a fraction of the fire the close-range fit must tank at 10 km."
+      },
+      {
+        "fitId": "lancer",
+        "outperformedBy": "mastery",
+        "encounterId": "encounter.borrell.pirate-patrol",
+        "measure": "completedShare",
+        "reason": "The cutters orbit inside the railguns' tracking, and the long-range fit carries no afterburner to leave them behind."
+      }
+    ]
+  }
 }

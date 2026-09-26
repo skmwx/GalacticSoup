@@ -110,7 +110,7 @@ describe('destruction, recovery and a return to the easiest encounter', () => {
     ]);
     expect(loss.insurance).toMatchObject({ coverage: 'basic', payoutCredits: 3_600, recoveryGrantHull: false });
     expect(loss.recovery).toMatchObject({ outcome: 'granted', creditsAfter: creditsBefore + 3_600 });
-    expect(loss.recovery.creditsAfter).toBe(10_640);
+    expect(loss.recovery.creditsAfter).toBe(11_600);
     expect(loss.wreck).toMatchObject({ present: true, itemCount: 1 });
 
     // The granted ship is docked, active and wholly restricted.

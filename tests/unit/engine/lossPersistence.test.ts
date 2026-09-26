@@ -9,6 +9,7 @@ import {
   campaignStateHash,
   draftOf,
   playerWrecks,
+  starterReferenceValue,
   validateCampaign,
   type CampaignState,
 } from '@engine/domain';
@@ -78,7 +79,8 @@ function advance(state: CampaignState, milliseconds: number): CampaignState {
 
 describe('a campaign after a loss, saved and loaded', () => {
   it('round-trips a shipless pilot, the loss record and the wreck with its expiry [TECH-11.2, TECH-11.4, FUNC-9.12]', () => {
-    const fixture = inSite(newCampaign());
+    // A pilot rich enough to buy the starter ship back is not given one.
+    const fixture = inSite(withCredits(newCampaign(), starterReferenceValue(shippedContent())));
     destroyPlayer(fixture);
     const state = stateOf(fixture);
     expect(state.assets.activeShipId).toBeNull();

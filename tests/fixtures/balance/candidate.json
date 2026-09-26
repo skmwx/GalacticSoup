@@ -1,0 +1,352 @@
+{
+  "$comment": "The candidate tuning bundle for release-candidate comparison (MVP Implementation Plan phase 17). Written by npm run balance:record; do not edit by hand. tuningDigest covers rules, definitions and listings; a tuning change makes this record stale until it is recorded again.",
+  "contentVersion": "0.1.0+d690946f23bd",
+  "contentHash": "d690946f23bd51a0afa615dabae493068b196f216404ef29fae2e0b1a0e63b2f",
+  "tuningDigest": "44c9cc1fda24b27ed4c46825e8562e86002fffc8789af22ad8f9413da623944d",
+  "seeds": [
+    "0123456789abcdef0123456789abcdef",
+    "0badf00d0badf00d0badf00d0badf00d",
+    "1234abcd1234abcd1234abcd1234abcd",
+    "bb22cc33dd44ee55ff6677889900aa11",
+    "c0ffee00c0ffee00c0ffee00c0ffee00",
+    "fedcba9876543210fedcba9876543210"
+  ],
+  "headline": {
+    "scenarios": {
+      "scout.starter": {
+        "completed": 6,
+        "planned": 6,
+        "medianFightSeconds": 115,
+        "hitPointsLost": 0.006,
+        "damageTaken": 111,
+        "outcomes": [
+          "bb22cc33#1 completed 100s",
+          "bb22cc33#2 completed 105s",
+          "01234567#1 completed 95s",
+          "01234567#2 completed 115s",
+          "fedcba98#1 completed 120s",
+          "fedcba98#2 completed 117s"
+        ]
+      },
+      "scout.folly": {
+        "completed": 3,
+        "planned": 3,
+        "medianFightSeconds": 100,
+        "hitPointsLost": 0.011,
+        "damageTaken": 109,
+        "outcomes": [
+          "bb22cc33#1 completed 100s",
+          "01234567#1 completed 95s",
+          "fedcba98#1 completed 120s"
+        ]
+      },
+      "scout.intermediate": {
+        "completed": 3,
+        "planned": 3,
+        "medianFightSeconds": 45,
+        "hitPointsLost": 0.039,
+        "damageTaken": 95,
+        "outcomes": [
+          "bb22cc33#1 completed 42s",
+          "01234567#1 completed 45s",
+          "fedcba98#1 completed 52s"
+        ]
+      },
+      "scout.mastery": {
+        "completed": 3,
+        "planned": 3,
+        "medianFightSeconds": 45,
+        "hitPointsLost": 0.039,
+        "damageTaken": 95,
+        "outcomes": [
+          "bb22cc33#1 completed 42s",
+          "01234567#1 completed 45s",
+          "fedcba98#1 completed 52s"
+        ]
+      },
+      "scout.lancer": {
+        "completed": 3,
+        "planned": 3,
+        "medianFightSeconds": 83,
+        "hitPointsLost": 0.015,
+        "damageTaken": 97,
+        "outcomes": [
+          "bb22cc33#1 completed 60s",
+          "01234567#1 completed 83s",
+          "fedcba98#1 completed 86s"
+        ]
+      },
+      "patrol.starter": {
+        "completed": 0,
+        "planned": 3,
+        "medianFightSeconds": null,
+        "hitPointsLost": 1,
+        "damageTaken": 1959,
+        "outcomes": [
+          "bb22cc33#1 lost 151s",
+          "01234567#1 lost 108s",
+          "fedcba98#1 lost 133s"
+        ]
+      },
+      "patrol.intermediate": {
+        "completed": 6,
+        "planned": 6,
+        "medianFightSeconds": 185,
+        "hitPointsLost": 0.06,
+        "damageTaken": 1332,
+        "outcomes": [
+          "bb22cc33#1 completed 198s",
+          "bb22cc33#2 completed 205s",
+          "01234567#1 completed 163s",
+          "01234567#2 completed 185s",
+          "fedcba98#1 completed 182s",
+          "fedcba98#2 completed 183s"
+        ]
+      },
+      "patrol.intermediate-marksman-first": {
+        "completed": 1,
+        "planned": 3,
+        "medianFightSeconds": 163,
+        "hitPointsLost": 0.971,
+        "damageTaken": 1792,
+        "outcomes": [
+          "bb22cc33#1 lost 91s",
+          "01234567#1 completed 163s",
+          "fedcba98#1 lost 95s"
+        ]
+      },
+      "patrol.mastery": {
+        "completed": 3,
+        "planned": 3,
+        "medianFightSeconds": 182,
+        "hitPointsLost": 0.01,
+        "damageTaken": 1332,
+        "outcomes": [
+          "bb22cc33#1 completed 198s",
+          "01234567#1 completed 163s",
+          "fedcba98#1 completed 182s"
+        ]
+      },
+      "patrol.lancer": {
+        "completed": 0,
+        "planned": 3,
+        "medianFightSeconds": null,
+        "hitPointsLost": 1,
+        "damageTaken": 1914,
+        "outcomes": [
+          "bb22cc33#1 lost 138s",
+          "01234567#1 lost 153s",
+          "fedcba98#1 lost 141s"
+        ]
+      },
+      "base.starter": {
+        "completed": 0,
+        "planned": 3,
+        "medianFightSeconds": null,
+        "hitPointsLost": 1,
+        "damageTaken": 1512,
+        "outcomes": [
+          "bb22cc33#1 lost 68s",
+          "01234567#1 lost 71s",
+          "fedcba98#1 lost 76s"
+        ]
+      },
+      "base.intermediate": {
+        "completed": 4,
+        "planned": 6,
+        "medianFightSeconds": 308,
+        "hitPointsLost": 0.576,
+        "damageTaken": 2026,
+        "outcomes": [
+          "bb22cc33#1 completed 308s",
+          "01234567#1 completed 297s",
+          "fedcba98#1 completed 318s",
+          "c0ffee00#1 completed 288s",
+          "1234abcd#1 lost 159s",
+          "0badf00d#1 lost 161s"
+        ]
+      },
+      "base.intermediate-brawl": {
+        "completed": 0,
+        "planned": 3,
+        "medianFightSeconds": null,
+        "hitPointsLost": 1,
+        "damageTaken": 1695,
+        "outcomes": [
+          "bb22cc33#1 lost 82s",
+          "01234567#1 lost 83s",
+          "fedcba98#1 lost 101s"
+        ]
+      },
+      "base.mastery": {
+        "completed": 6,
+        "planned": 6,
+        "medianFightSeconds": 383,
+        "hitPointsLost": 0.066,
+        "damageTaken": 1833,
+        "outcomes": [
+          "bb22cc33#1 completed 365s",
+          "bb22cc33#2 completed 383s",
+          "01234567#1 completed 364s",
+          "01234567#2 completed 400s",
+          "fedcba98#1 completed 395s",
+          "fedcba98#2 completed 351s"
+        ]
+      },
+      "base.lancer": {
+        "completed": 6,
+        "planned": 6,
+        "medianFightSeconds": 504,
+        "hitPointsLost": 0.032,
+        "damageTaken": 807,
+        "outcomes": [
+          "bb22cc33#1 completed 479s",
+          "bb22cc33#2 completed 504s",
+          "01234567#1 completed 504s",
+          "01234567#2 completed 478s",
+          "fedcba98#1 completed 479s",
+          "fedcba98#2 completed 514s"
+        ]
+      }
+    },
+    "careers": {
+      "scout-first": {
+        "bb22cc33dd44ee55ff6677889900aa11": {
+          "finished": true,
+          "sorties": 5,
+          "simulationMinutes": 35,
+          "finalCredits": 83582,
+          "upgrades": [
+            "starter@0",
+            "intermediate@2",
+            "mastery@3"
+          ]
+        },
+        "0123456789abcdef0123456789abcdef": {
+          "finished": true,
+          "sorties": 5,
+          "simulationMinutes": 34.8,
+          "finalCredits": 106045,
+          "upgrades": [
+            "starter@0",
+            "intermediate@2",
+            "mastery@3"
+          ]
+        },
+        "fedcba9876543210fedcba9876543210": {
+          "finished": true,
+          "sorties": 5,
+          "simulationMinutes": 40.5,
+          "finalCredits": 112373,
+          "upgrades": [
+            "starter@0",
+            "intermediate@2",
+            "mastery@3"
+          ]
+        }
+      },
+      "long-range": {
+        "bb22cc33dd44ee55ff6677889900aa11": {
+          "finished": true,
+          "sorties": 5,
+          "simulationMinutes": 72.2,
+          "finalCredits": 103314,
+          "upgrades": [
+            "intermediate@0",
+            "mastery@1",
+            "lancer@3"
+          ]
+        },
+        "0123456789abcdef0123456789abcdef": {
+          "finished": true,
+          "sorties": 5,
+          "simulationMinutes": 71.1,
+          "finalCredits": 105579,
+          "upgrades": [
+            "intermediate@0",
+            "mastery@1",
+            "lancer@3"
+          ]
+        },
+        "fedcba9876543210fedcba9876543210": {
+          "finished": true,
+          "sorties": 5,
+          "simulationMinutes": 70.8,
+          "finalCredits": 106013,
+          "upgrades": [
+            "intermediate@0",
+            "mastery@2",
+            "lancer@3"
+          ]
+        }
+      },
+      "poor-purchase": {
+        "bb22cc33dd44ee55ff6677889900aa11": {
+          "finished": true,
+          "sorties": 4,
+          "simulationMinutes": 13.7,
+          "finalCredits": 20200,
+          "upgrades": [
+            "folly@0",
+            "intermediate@3"
+          ]
+        },
+        "0123456789abcdef0123456789abcdef": {
+          "finished": true,
+          "sorties": 4,
+          "simulationMinutes": 11.3,
+          "finalCredits": 24982,
+          "upgrades": [
+            "folly@0",
+            "intermediate@3"
+          ]
+        },
+        "fedcba9876543210fedcba9876543210": {
+          "finished": true,
+          "sorties": 5,
+          "simulationMinutes": 16.7,
+          "finalCredits": 19676,
+          "upgrades": [
+            "folly@0",
+            "intermediate@4"
+          ]
+        }
+      },
+      "loss-recovery": {
+        "bb22cc33dd44ee55ff6677889900aa11": {
+          "finished": true,
+          "sorties": 3,
+          "simulationMinutes": 11.5,
+          "finalCredits": 13818,
+          "upgrades": [
+            "intermediate@0",
+            "starter@1",
+            "intermediate@2"
+          ]
+        },
+        "0123456789abcdef0123456789abcdef": {
+          "finished": true,
+          "sorties": 3,
+          "simulationMinutes": 8.4,
+          "finalCredits": 26512,
+          "upgrades": [
+            "intermediate@0",
+            "starter@1",
+            "intermediate@2"
+          ]
+        },
+        "fedcba9876543210fedcba9876543210": {
+          "finished": true,
+          "sorties": 3,
+          "simulationMinutes": 10.7,
+          "finalCredits": 24100,
+          "upgrades": [
+            "intermediate@0",
+            "starter@1",
+            "intermediate@2"
+          ]
+        }
+      }
+    }
+  }
+}

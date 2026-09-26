@@ -1,6 +1,6 @@
 {
   "kind": "market.listings",
-  "$comment": "Functional Specification 11.2: a neutral station keeps the starter hull, a basic weapon and its ammunition at fixed, non-scarce prices. The starter hull sells for no more than its reference value, so a pilot the recovery service does not re-equip can always buy one (Functional Specification 9.12, 22.1).",
+  "$comment": "Functional Specification 11.2: a neutral recovery station keeps the starter ship - its hull, its basic modules and their ammunition - at fixed, non-scarce prices. Each is quoted at or below its reference value, so a pilot the recovery service does not re-equip, who holds at least the starter ship's reference value, can always buy that ship back (Functional Specification 9.12, 22.1).",
   "stationId": "station.borrell.harbour",
   "listings": [
     {
@@ -18,7 +18,7 @@
     {
       "itemId": "module.turret.autocannon.small",
       "supply": "fixed",
-      "basePriceCredits": 12000,
+      "basePriceCredits": 11111,
       "regionalPriceFactor": 1,
       "targetStock": 20,
       "initialStock": 20,
@@ -30,10 +30,22 @@
     {
       "itemId": "ammo.projectile.small.fusion",
       "supply": "fixed",
-      "basePriceCredits": 9,
+      "basePriceCredits": 8,
       "regionalPriceFactor": 1,
       "targetStock": 2000,
       "initialStock": 2000,
+      "elasticity": 0.3,
+      "baseSpread": 0.08,
+      "productionPerHour": 0,
+      "consumptionPerHour": 0
+    },
+    {
+      "itemId": "module.shield.booster.small",
+      "supply": "fixed",
+      "basePriceCredits": 7870,
+      "regionalPriceFactor": 1,
+      "targetStock": 20,
+      "initialStock": 20,
       "elasticity": 0.3,
       "baseSpread": 0.08,
       "productionPerHour": 0,
@@ -70,18 +82,6 @@
       "regionalPriceFactor": 1,
       "targetStock": 16,
       "initialStock": 14,
-      "elasticity": 0.3,
-      "baseSpread": 0.08,
-      "productionPerHour": 0.25,
-      "consumptionPerHour": 0
-    },
-    {
-      "itemId": "module.shield.booster.small",
-      "supply": "dynamic",
-      "basePriceCredits": 8500,
-      "regionalPriceFactor": 1,
-      "targetStock": 16,
-      "initialStock": 13,
       "elasticity": 0.3,
       "baseSpread": 0.08,
       "productionPerHour": 0.25,
@@ -150,10 +150,10 @@
     {
       "itemId": "item.salvage.alloy",
       "supply": "dynamic",
-      "basePriceCredits": 2500,
+      "basePriceCredits": 1400,
       "regionalPriceFactor": 1,
       "targetStock": 60,
-      "initialStock": 20,
+      "initialStock": 45,
       "elasticity": 0.45,
       "baseSpread": 0.08,
       "productionPerHour": 0,
@@ -162,10 +162,10 @@
     {
       "itemId": "item.salvage.circuitry",
       "supply": "dynamic",
-      "basePriceCredits": 4200,
+      "basePriceCredits": 2400,
       "regionalPriceFactor": 1,
       "targetStock": 40,
-      "initialStock": 12,
+      "initialStock": 30,
       "elasticity": 0.5,
       "baseSpread": 0.08,
       "productionPerHour": 0,

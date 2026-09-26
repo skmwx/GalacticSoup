@@ -16,6 +16,8 @@
     "validate:content": "node scripts/validate-content.mjs",
     "traceability": "node scripts/traceability.mjs",
     "diagnose:content": "vitest run --project integration tests/integration/contentDiagnostics.test.ts",
+    "balance": "vitest run --project integration tests/integration/progression tests/integration/balance && node scripts/balance-report.mjs",
+    "balance:record": "vitest run --project integration tests/integration/progression tests/integration/balance && node scripts/balance-report.mjs --record",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",

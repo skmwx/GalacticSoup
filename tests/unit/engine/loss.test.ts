@@ -59,10 +59,13 @@ import {
  */
 
 const content = shippedContent();
+/** The starter ship's reference value: below it, a shipless pilot is granted one. */
 const REFERENCE = starterReferenceValue(content);
+/** Insurance pays on the hull alone (Functional Specification 9.12). */
+const HULL_REFERENCE = content.requireHull(STARTER_HULL as HullId).referenceValueCredits;
 const STARTING_CREDITS = content.rules.economy.startingCredits;
-const BASIC_PAYOUT = Math.floor(REFERENCE * content.rules.economy.basicInsurancePayoutFraction);
-const ENHANCED_PAYOUT = Math.floor(REFERENCE * content.rules.economy.enhancedInsurancePayoutFraction);
+const BASIC_PAYOUT = Math.floor(HULL_REFERENCE * content.rules.economy.basicInsurancePayoutFraction);
+const ENHANCED_PAYOUT = Math.floor(HULL_REFERENCE * content.rules.economy.enhancedInsurancePayoutFraction);
 
 function valid(fixture: LossFixture | CampaignState): void {
   const state = 'draft' in fixture ? stateOf(fixture) : fixture;
@@ -283,7 +286,7 @@ describe('insurance settlement', () => {
 
     expect(lastLoss(fixture).insurance).toEqual({
       coverage: 'basic',
-      hullReferenceValueCredits: REFERENCE,
+      hullReferenceValueCredits: HULL_REFERENCE,
       payoutFraction: 0.3,
       payoutCredits: 3_600,
       enhancedConsumed: false,
@@ -299,7 +302,7 @@ describe('insurance settlement', () => {
 
   it('pays enhanced cover at 70% and spends it on that loss [FUNC-9.12]', () => {
     const insured = insureEnhanced(newCampaign()).state;
-    const premium = Math.ceil(REFERENCE * content.rules.economy.enhancedInsurancePremiumFraction);
+    const premium = Math.ceil(HULL_REFERENCE * content.rules.economy.enhancedInsurancePremiumFraction);
     expect(insured.assets.credits).toBe(STARTING_CREDITS - premium);
     const fixture = inSite(insured);
 
@@ -323,14 +326,35 @@ describe('insurance settlement', () => {
 });
 
 describe('recovery outcomes', () => {
-  it('leaves a pilot who can afford the starter hull docked and shipless [FUNC-9.12, FUNC-22.1]', () => {
+  it('values the starter ship as its hull, original fit and a full magazine [FUNC-9.12, FUNC-2]', () => {
+    // 12,000 hull + 12,000 autocannon + 8,500 shield booster + 20 x 9 fusion rounds.
+    expect(REFERENCE).toBe(32_680);
+    expect(REFERENCE).toBeGreaterThan(HULL_REFERENCE);
+  });
+
+  it('grants a ship to a pilot who loses the starter ship with the starting credits [FUNC-9.12, FUNC-22.1]', () => {
     const fixture = inSite(newCampaign());
+    destroyPlayer(fixture);
+
+    // The payout leaves 23,600: enough for the hull alone, not for the ship.
+    expect(lastLoss(fixture).recovery).toMatchObject({
+      outcome: 'granted',
+      creditsAfter: STARTING_CREDITS + BASIC_PAYOUT,
+      starterReferenceValueCredits: REFERENCE,
+    });
+    expect(STARTING_CREDITS + BASIC_PAYOUT).toBeGreaterThan(HULL_REFERENCE);
+    expect(undockRefusal({ state: stateOf(fixture), content })).toBeNull();
+    valid(fixture);
+  });
+
+  it('leaves a pilot who can buy the starter ship back docked and shipless [FUNC-9.12, FUNC-22.1]', () => {
+    const fixture = inSite(withCredits(newCampaign(), REFERENCE));
     destroyPlayer(fixture);
 
     expect(lastLoss(fixture).recovery).toEqual({
       outcome: 'noShip',
       activeShipId: null,
-      creditsAfter: 23_600,
+      creditsAfter: REFERENCE + BASIC_PAYOUT,
       starterReferenceValueCredits: REFERENCE,
     });
     expect(fixture.draft.assets.activeShipId).toBeNull();
@@ -339,6 +363,21 @@ describe('recovery outcomes', () => {
     // Nothing can be flown until another hull is bought.
     expect(undockRefusal({ state: stateOf(fixture), content })).toBe('noActiveShip');
     valid(fixture);
+
+    // And the whole starter ship can be bought back, armed and loaded, at the
+    // recovery station's fixed prices, with no more than its reference value.
+    let state = withCredits(stateOf(fixture), REFERENCE);
+    state = buy(state, STARTER_HULL, 1).state;
+    for (const entry of content.rules.economy.startingFit) {
+      state = buy(state, entry.moduleId, 1).state;
+      const module = content.requireModule(entry.moduleId as never);
+      if (entry.ammunitionId !== undefined && module.category === 'turret') {
+        state = buy(state, entry.ammunitionId, module.turret.magazineSize).state;
+      }
+    }
+    expect(state.assets.credits).toBeGreaterThanOrEqual(0);
+    expect(state.assets.activeShipId).not.toBeNull();
+    valid(state);
   });
 
   it('flies a ship already waiting at the station rather than granting one [FUNC-9.12]', () => {

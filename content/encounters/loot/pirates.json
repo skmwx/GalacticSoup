@@ -1,6 +1,6 @@
 {
   "kind": "loot.tables",
-  "$comment": "Wreck contents. Every entry is something the player can sell at the starting station or fit and load. Drop rates are provisional tuning values.",
+  "$comment": "Wreck contents. Every entry is something the player can sell at the starting station or fit and load. Drop rates and quantities are tuning values the phase 17 balance pass measured (reports/balance.md).",
   "definitions": [
     {
       "id": "loot.pirate.scout",

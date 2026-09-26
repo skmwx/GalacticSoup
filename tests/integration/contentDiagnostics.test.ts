@@ -63,7 +63,7 @@ describe('content diagnostics', () => {
         // A scenario that must win every fight may carry no cause for losing
         // one. A band - an approach that wins most fights - may carry a
         // warning, but never a cause that makes the site impossible.
-        const disqualifying = (scenario?.minimumCompletedShare ?? 1) < 1
+        const disqualifying = (scenario?.band.completedShare[0] ?? 1) < 1
           ? causes.filter((finding) => finding.severity === 'blocking')
           : causes;
         expect(disqualifying, `${scenarioId}: ${describeDiagnosis(diagnosis)}`).toEqual([]);

@@ -144,9 +144,9 @@ describe('market', () => {
     const quotes = await screen.findByRole('table', { name: /items quoted here/ });
     const row = within(quotes).getByRole('rowheader', { name: 'Fusion S' }).closest('tr');
     expect(row).not.toBeNull();
-    // Base price 9, spread 8%: the station sells at 10 and buys at 8.
-    expect(within(row as HTMLElement).getByText('10 ISK')).toBeInTheDocument();
-    expect(within(row as HTMLElement).getByText('8 ISK')).toBeInTheDocument();
+    // Base price 8, spread 8%: the station sells at 9 and buys at 7.
+    expect(within(row as HTMLElement).getByText('9 ISK')).toBeInTheDocument();
+    expect(within(row as HTMLElement).getByText('7 ISK')).toBeInTheDocument();
     expect(within(row as HTMLElement).getByText('Always stocked')).toBeInTheDocument();
 
     harness.gateway.dispose();
@@ -164,9 +164,9 @@ describe('market', () => {
     await harness.user.type(within(dialog).getByLabelText('Quantity'), '10');
 
     await within(dialog).findByText('10 × Fusion S');
-    // 10 rounds at 10 ISK each leaves 19,900 of the starting 20,000.
+    // 10 rounds at 9 ISK each leaves 19,910 of the starting 20,000.
     await waitFor(() => {
-      expect(within(dialog).getByText('19,900 ISK')).toBeInTheDocument();
+      expect(within(dialog).getByText('19,910 ISK')).toBeInTheDocument();
     });
 
     const fusionBefore = (await assets(harness)).inventories
@@ -181,7 +181,7 @@ describe('market', () => {
     });
 
     const after = await assets(harness);
-    expect(after.credits).toBe(19_900);
+    expect(after.credits).toBe(19_910);
     const fusionAfter = after.inventories
       .flatMap((inventory) => inventory.stacks)
       .filter((stack) => stack.item.definitionId === FUSION)
@@ -240,7 +240,7 @@ describe('market', () => {
     ).toBeInTheDocument();
     // The purchase did not go through on the stale token: only the five bought
     // elsewhere left the wallet.
-    expect((await assets(harness)).credits).toBe(20_000 - 50);
+    expect((await assets(harness)).credits).toBe(20_000 - 45);
 
     harness.gateway.dispose();
   });

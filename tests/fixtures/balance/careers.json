@@ -1,0 +1,188 @@
+{
+  "$comment": "Whole campaigns flown from a new campaign's first day (MVP Implementation Plan phase 17; MVP Scope 4.3). Each career is a plan a player could follow: equip a representative fit from tests/fixtures/scenarios/progression.json, then fly a progression scenario until a goal is met - a number of completions, a number of losses, or enough credits for the next fit. maxSorties is the band: a career that needs more sorties than that stalls, and the stall is the finding. Nothing is set directly; every credit and item comes from the loop.",
+  "startingWallet": {
+    "description": "The starting credits buy one direction - the second autocannon the multi-opponent site asks for, or a poor purchase that does not help - but not the mastery or long-range fits (MVP Scope 4.3, objective 2).",
+    "affordable": [
+      "intermediate",
+      "folly"
+    ],
+    "unaffordable": [
+      "mastery",
+      "lancer"
+    ]
+  },
+  "careers": [
+    {
+      "id": "scout-first",
+      "description": "A new pilot learns on the easiest site with the ship they were given, spends the starting credits on the second autocannon, clears the multi-opponent site until the mastery fit is affordable and then clears the mastery site.",
+      "objectives": [
+        "4.3.1",
+        "4.3.3",
+        "4.3.4",
+        "4.3.6"
+      ],
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "steps": [
+        {
+          "equip": "starter"
+        },
+        {
+          "fly": "scout.starter",
+          "until": {
+            "completions": 2
+          },
+          "maxSorties": 2
+        },
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "patrol.intermediate",
+          "until": {
+            "affords": "mastery"
+          },
+          "maxSorties": 3
+        },
+        {
+          "equip": "mastery"
+        },
+        {
+          "fly": "base.mastery",
+          "until": {
+            "completions": 2
+          },
+          "maxSorties": 2
+        }
+      ]
+    },
+    {
+      "id": "long-range",
+      "description": "The second approach, bought from the mastery site's rewards: the same start and mastery step, then twin railguns to take the mastery site from range.",
+      "objectives": [
+        "4.3.3",
+        "4.3.4",
+        "4.3.6"
+      ],
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "steps": [
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "patrol.intermediate",
+          "until": {
+            "affords": "mastery"
+          },
+          "maxSorties": 3
+        },
+        {
+          "equip": "mastery"
+        },
+        {
+          "fly": "base.mastery",
+          "until": {
+            "affords": "lancer"
+          },
+          "maxSorties": 2
+        },
+        {
+          "equip": "lancer"
+        },
+        {
+          "fly": "base.lancer",
+          "until": {
+            "completions": 2
+          },
+          "maxSorties": 2
+        }
+      ]
+    },
+    {
+      "id": "poor-purchase",
+      "description": "Most of the starting credits go on an armour tank the ship does not use. Replaying the easiest site with the single autocannon buys the second one back, and the multi-opponent site follows.",
+      "objectives": [
+        "4.3.2",
+        "4.3.5"
+      ],
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "steps": [
+        {
+          "equip": "folly"
+        },
+        {
+          "fly": "scout.folly",
+          "until": {
+            "affords": "intermediate"
+          },
+          "maxSorties": 5
+        },
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "patrol.intermediate",
+          "until": {
+            "completions": 1
+          },
+          "maxSorties": 1
+        }
+      ]
+    },
+    {
+      "id": "loss-recovery",
+      "description": "A pilot with the intermediate fit takes on the mastery site too early and loses the ship. Insurance and the recovery service leave a restricted starter ship; replaying the easiest site buys the intermediate fit back, and the multi-opponent site is cleared again (Functional Specification 9.12).",
+      "objectives": [
+        "4.3.5"
+      ],
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "steps": [
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "base.intermediate-brawl",
+          "until": {
+            "losses": 1
+          },
+          "maxSorties": 1
+        },
+        {
+          "equip": "starter"
+        },
+        {
+          "fly": "scout.starter",
+          "until": {
+            "affords": "intermediate"
+          },
+          "maxSorties": 4
+        },
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "patrol.intermediate",
+          "until": {
+            "completions": 1
+          },
+          "maxSorties": 1
+        }
+      ]
+    }
+  ]
+}

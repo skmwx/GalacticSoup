@@ -442,6 +442,38 @@ describe('market and recovery guarantees', () => {
     expect(result.ok).toBe(true);
   });
 
+  it('rejects a recovery station whose starting-fit turret costs more than its reference value [TECH-6.2, FUNC-9.12, FUNC-22.1]', () => {
+    // 12000 x 1.08 = 12960 credits for a turret whose reference value is 12000:
+    // a pilot holding the starter ship's reference value could buy the hull
+    // but not arm it.
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'economy/listings.json', (document) => {
+        const listings = document['listings'] as Record<string, unknown>[];
+        (listings[1] as Record<string, unknown>)['basePriceCredits'] = 12_000;
+      }),
+    );
+
+    const issue = issues.find((entry) => entry.detail.includes('module.test.turret'));
+    expect(issue?.reason).toBe('catalogRelationship');
+    expect(issue?.path).toBe('listings[1].basePriceCredits');
+    expect(issue?.detail).toContain('12960');
+  });
+
+  it('rejects a starter ship part the recovery station does not stock at a fixed price [TECH-6.2, FUNC-9.12, FUNC-11.2]', () => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'economy/listings.json', (document) => {
+        const listings = document['listings'] as Record<string, unknown>[];
+        const charge = listings.find((listing) => listing['itemId'] === 'ammo.test.charge') as Record<string, unknown>;
+        charge['supply'] = 'dynamic';
+        charge['productionPerHour'] = 5;
+      }),
+    );
+
+    expect(issues.some((entry) =>
+      entry.reason === 'catalogRelationship' &&
+      entry.detail.includes('"ammo.test.charge" is part of the starter ship'))).toBe(true);
+  });
+
   it('rejects starting stock above twice the target [TECH-6.2, FUNC-11.2]', () => {
     const issues = issuesFor(
       editDocument(minimalPack(), 'economy/listings.json', (document) => {

@@ -901,9 +901,9 @@ describe('loss and recovery schema parity', () => {
   }
 
   /** Flies the active ship into the Pirate Base and waits for the pilot to be recovered docked. */
-  async function loseShip(sortie: Sortie, onArrival?: () => Promise<void>): Promise<void> {
+  async function loseShip(sortie: Sortie, onArrival?: () => Promise<void>, arrivalDistanceKm = 10): Promise<void> {
     await sortie.data('ship.undock');
-    await sortie.data('navigation.warp', { destinationSiteId: LOSS_SITE, arrivalDistanceKm: 10 });
+    await sortie.data('navigation.warp', { destinationSiteId: LOSS_SITE, arrivalDistanceKm });
     await sortie.data('time.set', { paused: false, rate: 1 });
     if (onArrival !== undefined) {
       const arrived = await sortie.until(async () => {
@@ -921,15 +921,38 @@ describe('loss and recovery schema parity', () => {
     await sortie.data('time.set', { paused: true, rate: 1 });
   }
 
-  /** Loses the only ship with enough credits left for a starter hull, then stamps the autosave. */
+  /**
+   * Loses the only ship with enough credits left to buy the starter ship back,
+   * then stamps the autosave. Selling the autocannon first is what lifts the
+   * pilot above the starter ship's reference value; its rounds ride in the hold
+   * so the report has a cargo stack to lose or keep.
+   */
   async function loseOnlyShip(): Promise<Lost> {
     const store = createMemorySaveStore();
     const sortie = await startSortie(SORTIE_SEED, 'Vela', store);
+    const stationId = content.rules.economy.startingStationId;
+    const shipId = (await sortie.data<AssetsData>('assets.list')).activeShipId;
+    await sortie.data('fitting.begin', { shipId });
+    await sortie.data('fitting.clear', { slotKind: 'weapon', slotIndex: 0 });
+    await sortie.data('fitting.commit');
+    const assets = await sortie.data<AssetsData>('assets.list');
+    const hangar = assets.inventories.find((inventory) =>
+      inventory.location.kind === 'hangar' && inventory.location.stationId === stationId);
+    const cargoId = assets.ships.find((ship) => ship.id === shipId)?.cargoInventoryId ?? '';
+    for (const stack of hangar?.stacks ?? []) {
+      if (stack.item.definitionId === 'module.turret.autocannon.small') {
+        const sale = await sortie.data<{ token: unknown }>('market.previewSell', { stationId, stackId: stack.id, quantity: 1 });
+        await sortie.data('market.confirmSell', { token: sale.token });
+      } else if (stack.item.kind === 'ammunition') {
+        await sortie.data('inventory.transfer', { stackId: stack.id, destinationInventoryId: cargoId, quantity: stack.quantity });
+      }
+    }
     // A shield booster left running until the capacitor gives out is what
-    // puts a disabling effect in the report.
+    // puts a disabling effect in the report; arriving 30 km out gives it the
+    // time to run dry before the brawlers close.
     await loseShip(sortie, async () => {
       await sortie.data('module.activate', { slotKind: 'system', slotIndex: 0 });
-    });
+    }, 30);
     const previous = store.saveIds();
     await sortie.data('campaign.save', { kind: 'auto', savedAtRealMs: SAVED_AT_REAL_MS });
     return { sortie, store, envelope: await nextSave(store, previous) };

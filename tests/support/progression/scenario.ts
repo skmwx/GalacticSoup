@@ -9,6 +9,7 @@ import type {
   MarketTransactionPreviewData,
   RepairPreviewData,
   ResupplyPreviewData,
+  ShipData,
   SiteData,
   WreckContentsData,
 } from '@protocol';
@@ -66,6 +67,10 @@ export interface SortieRecord {
   readonly repaired: Readonly<Record<string, number>>;
   /** Share of each layer left when the fight ended, or zero after a loss. */
   readonly finalLayers: Readonly<Record<'shield' | 'armor' | 'hull', number>>;
+  /** Share of the ship's total hit points left when the fight ended, or zero after a loss. */
+  readonly hitPointsShare: number;
+  /** The smallest share of its total hit points the ship was down to during the fight, or zero after a loss. */
+  readonly lowestHitPointsShare: number;
   /** Rounds the player fired. */
   readonly roundsFired: number;
   /** Units of each definition taken from wrecks. */
@@ -151,7 +156,8 @@ export async function flySortie(
 
   const result = await fightEncounter(session, scenario.tactics, FIGHT_BUDGET_SECONDS);
   const fightEvents = session.events.slice(eventsBefore);
-  const finalLayers = result.status === 'lost' ? zeroLayers() : layersOf(await session.data<CombatData>('combat.state'));
+  const finalCombat = result.status === 'lost' ? null : await session.data<CombatData>('combat.state');
+  const finalLayers = finalCombat === null ? zeroLayers() : layersOf(finalCombat);
   const ended = await session.data<EncounterData>('encounter.state');
   const bountyCredits = result.status === 'lost'
     ? sumParam(fightEvents, 'encounter.bountyPaid', 'credits')
@@ -174,6 +180,8 @@ export async function flySortie(
     bountyCredits,
     repaired: repairsOf(fightEvents, playerId),
     finalLayers,
+    hitPointsShare: finalCombat === null ? 0 : hitPointsShareOf(finalCombat),
+    lowestHitPointsShare: result.lowestHitPointsShare,
     roundsFired: fightEvents.filter((event) =>
       event.kind === 'combat.shotResolved' && event.params?.['attackerId'] === playerId).length,
     loot,
@@ -181,7 +189,28 @@ export async function flySortie(
   };
 }
 
-/** Repairs, refills the magazines and restores the fit's reserve rounds. */
+/**
+ * Waits docked, with the clock running, until the active ship's capacitor is
+ * full, and returns the share it holds. Repairs restore the layers but not the
+ * capacitor, which recharges only as simulation time passes (Functional
+ * Specification 9.8, 10): a pilot who undocks straight after a fight takes a
+ * nearly empty capacitor into the next one, so a competent one waits.
+ */
+export async function restUntilCharged(session: ScenarioSession, budgetSeconds = 600): Promise<number> {
+  const shipId = (await session.data<AssetsData>('assets.list')).activeShipId;
+  if (shipId === null) return 0;
+  const share = async (): Promise<number> => {
+    const capacitor = (await session.data<ShipData>('ship.get', { shipId })).capacitor;
+    return capacitor.capacity > 0 ? capacitor.charge / capacitor.capacity : 1;
+  };
+  if ((await share()) >= 0.999) return share();
+  await session.data('time.set', { paused: false, rate: 1 });
+  for (let waited = 0; waited < budgetSeconds && (await share()) < 0.999; waited += 5) await session.advance(5_000);
+  await session.data('time.set', { paused: true, rate: 1 });
+  return share();
+}
+
+/** Repairs, refills the magazines, restores the fit's reserve rounds and rests until charged. */
 export async function refit(session: ScenarioSession, fit: FixtureFit, content: ContentRepository): Promise<void> {
   const stationId = content.rules.economy.startingStationId;
   const assets = await session.data<AssetsData>('assets.list');
@@ -210,18 +239,30 @@ export async function refit(session: ScenarioSession, fit: FixtureFit, content: 
       await session.data('market.confirmBuy', { token: preview.token });
     }
   }
+  await restUntilCharged(session);
 }
 
+/**
+ * Empties every NPC wreck in the site that holds something. A wreck's contents
+ * are shown at any range, so empty wrecks - including those a previous sortie
+ * already emptied - are not flown to, and a wreck that expires on the way is
+ * simply gone (Functional Specification 5.4, 9.11).
+ */
 async function lootWrecks(session: ScenarioSession, loot: Record<string, number>): Promise<void> {
   const encounter = await session.data<EncounterData>('encounter.state');
   const site = await session.data<SiteData>('navigation.site');
   const closest = site.rangePresetsKm[0] ?? 0;
+  const contentsOf = async (wreckId: string): Promise<WreckContentsData | null> => {
+    const response = await session.ask<WreckContentsData>('loot.contents', { wreckId });
+    return response.ok ? response.data : null;
+  };
   for (const wreck of encounter.wrecks.filter((entry) => entry.owner === 'npc')) {
+    if (((await contentsOf(wreck.wreckId))?.stacks.length ?? 0) === 0) continue;
     await session.data('movement.approach', { targetId: wreck.wreckId, distanceKm: closest });
     const reached = await advanceUntil(session, async () =>
-      (await session.data<WreckContentsData>('loot.contents', { wreckId: wreck.wreckId })).accessible, 300);
-    if (!reached) continue;
-    const contents = await session.data<WreckContentsData>('loot.contents', { wreckId: wreck.wreckId });
+      (await contentsOf(wreck.wreckId))?.accessible !== false, 300);
+    const contents = await contentsOf(wreck.wreckId);
+    if (!reached || contents === null) continue;
     for (const stack of contents.stacks) {
       const quantity = contents.maximumQuantities.find((entry) => entry.stackId === stack.id)?.maximumQuantity ?? 0;
       if (quantity <= 0) continue;
@@ -307,6 +348,12 @@ function layersOf(combat: CombatData): Record<'shield' | 'armor' | 'hull', numbe
   const fraction = (layer: string): number =>
     combat.defenses?.layers.find((entry) => entry.layer === layer)?.fractionRemaining ?? 0;
   return { shield: fraction('shield'), armor: fraction('armor'), hull: fraction('hull') };
+}
+
+function hitPointsShareOf(combat: CombatData): number {
+  const layers = combat.defenses?.layers ?? [];
+  const maximum = layers.reduce((total, layer) => total + layer.maximumHitPoints, 0);
+  return maximum > 0 ? layers.reduce((total, layer) => total + layer.currentHitPoints, 0) / maximum : 0;
 }
 
 function zeroLayers(): Record<'shield' | 'armor' | 'hull', number> {

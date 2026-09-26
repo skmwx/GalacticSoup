@@ -109,12 +109,13 @@ describe('encounter instantiation', () => {
 
     expect(planned.map((entry) => `${entry.slot.kind}:${String(entry.slot.index)}`)).toEqual([
       'weapon:0',
+      'weapon:1',
       'system:0',
       'engineering:0',
       'engineering:1',
     ]);
     // Only turrets receive the authored charge.
-    expect(planned.filter((entry) => entry.ammunitionId !== null)).toHaveLength(1);
+    expect(planned.filter((entry) => entry.ammunitionId !== null)).toHaveLength(2);
   });
 });
 

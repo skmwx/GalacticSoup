@@ -11,7 +11,7 @@
     "content.ammo.projectile.small.fusion.name": "Fusion S",
     "content.ammo.projectile.small.phased.description": "Thermal damage and more reach, at the cost of raw punch.",
     "content.ammo.projectile.small.phased.name": "Phased Plasma S",
-    "content.encounter.borrell.pirate-base.description": "Two gunners and a warden around a cradle of scrap, with a marksman watching from range. The gunners outrun an unboosted light hull and hit hard up close; the warden repairs its armour while its capacitor lasts. A starter fit will not survive this one.",
+    "content.encounter.borrell.pirate-base.description": "Two gunners and a warden around a cradle of scrap, with a marksman watching from range. The gunners outrun an unboosted light hull and hit hard up close; the warden carries two guns of its own and repairs its armour while its capacitor lasts. Their phased rounds still bite at 10 km, so a ship that controls the range - or outranges them - chooses the fight. A starter fit will not survive this one.",
     "content.encounter.borrell.pirate-base.name": "Pirate Base",
     "content.encounter.borrell.pirate-base.reward": "The largest bounties in Borrell, and the best salvage: circuitry, armour plating, capacitor batteries and sometimes a railgun.",
     "content.encounter.borrell.pirate-patrol.description": "Two cutters and a marksman holding a lane. The cutters close fast with two guns each, and their shields shrug off explosive rounds. The marksman sits far off and will not come to you. Decide what you kill first.",

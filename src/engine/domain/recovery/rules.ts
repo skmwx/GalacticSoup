@@ -1,4 +1,5 @@
 import type { ContentRepository, HullDefinition } from '@engine/ports';
+import type { AmmunitionId, ModuleId } from '@shared';
 
 import { deriveShipAttributes } from '../attributes';
 import type { AssetState, ShipIdentity } from '../assets/types';
@@ -69,9 +70,30 @@ export function isFlightReady(
     .violations.length === 0;
 }
 
-/** The reference value below which a shipless pilot is granted a ship. */
+/**
+ * The starter ship's reference value, below which a shipless pilot is granted
+ * one (Functional Specification 9.12).
+ *
+ * A ship is a hull with its fitted modules and ammunition (Functional
+ * Specification 2), so the starter ship is valued as the grant supplies it:
+ * the starter hull, its original fit and one full magazine for each loaded
+ * weapon. A pilot at or above this value is not given a ship, so they must be
+ * able to buy that same ship back - content validation holds the recovery
+ * station's fixed prices for all of it at or below their reference values -
+ * and a pilot below it is never left with a hull they cannot arm
+ * (Functional Specification 22.1).
+ */
 export function starterReferenceValue(content: ContentRepository): number {
-  return content.requireHull(content.rules.economy.starterHullId as HullDefinition['id']).referenceValueCredits;
+  const economy = content.rules.economy;
+  let total = content.requireHull(economy.starterHullId as HullDefinition['id']).referenceValueCredits;
+  for (const entry of economy.startingFit) {
+    const module = content.requireModule(entry.moduleId as ModuleId);
+    total += module.referenceValueCredits;
+    if (entry.ammunitionId !== undefined && module.category === 'turret') {
+      total += content.requireAmmunition(entry.ammunitionId as AmmunitionId).referenceValueCredits * module.turret.magazineSize;
+    }
+  }
+  return total;
 }
 
 /**

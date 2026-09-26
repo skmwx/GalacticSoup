@@ -6,7 +6,7 @@ import type { CampaignState } from '../campaign/state';
 import { shipFit } from '../fitting/fit';
 import { parseSlotKey, slotKey } from '../fitting/types';
 import { assessFit, structuralViolations } from '../fitting/validity';
-import { isFlightReady } from '../recovery/rules';
+import { isFlightReady, starterReferenceValue } from '../recovery/rules';
 import { usedVolume } from './inventory';
 import type { AssetState } from './types';
 
@@ -237,7 +237,7 @@ function validateActiveShip(
   if (content !== undefined) {
     const starter = content.hull(content.rules.economy.starterHullId);
     const flightReady = Object.values(a.ships).some((ship) => isFlightReady(a, content, ship));
-    if (starter !== undefined && !flightReady && a.credits < starter.referenceValueCredits) {
+    if (starter !== undefined && !flightReady && a.credits < starterReferenceValue(content)) {
       fail('activeShipId', 'A shipless pilot below the starter value is owed the recovery grant.');
     }
   }

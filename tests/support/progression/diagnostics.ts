@@ -40,7 +40,9 @@ import type { FixtureFit, PilotTactics } from './fixtures.ts';
  *
  * - each opponent is fought at one range: the tactics' chosen distance when
  *   the player is faster than it, otherwise the range it prefers;
- * - there is no transverse motion, so tracking never costs a shot;
+ * - an opponent that orbits circles at its full speed, so tracking costs both
+ *   sides shots; every other opponent moves straight toward or away from the
+ *   player, and tracking costs nothing;
  * - opponents die one at a time in the tactics' priority order, and each one
  *   fires until it dies or runs out of rounds;
  * - every opponent is in range from the first second: the time a brawler
@@ -165,6 +167,7 @@ export function diagnoseEncounter(
   const roundsNeeded = reachable ? roundsFor(player.summary, opponents) : null;
   const findings = findingsFor({
     opponents, playerDiagnosis, playerSpeed, burning, tank, roundsNeeded, fightSeconds,
+    holdRangeKm: tactics.movement.kind === 'keepRange' ? tactics.movement.distanceKm : null,
   });
 
   return {
@@ -254,7 +257,9 @@ function diagnoseOpponent(
   // A faster player fights where the tactics say; a slower one where the opponent wants.
   const engagement = playerSpeed > npcSpeed ? tactics.movement.distanceKm : preferred;
 
-  const outgoing = landedDamage(content, player, npc, engagement);
+  // An orbiting opponent's speed is all transverse at the range it holds.
+  const angularVelocity = role.movement === 'orbit' && engagement > 0 ? npcSpeed / engagement : 0;
+  const outgoing = landedDamage(content, player, npc, engagement, angularVelocity);
   const repair = repairModel(npc);
   const rawToDestroy = rawHitPoints(npc.derived, outgoing.mix) +
     repair.burstHitPoints / Math.max(0.01, layerRatio(npc.derived, repair.layer, outgoing.mix));
@@ -263,7 +268,7 @@ function diagnoseOpponent(
     ? null
     : rawToDestroy / outgoing.perSecond / (1 - repair.perSecond / appliedPerSecond);
 
-  const incoming = landedDamage(content, npc, player, engagement);
+  const incoming = landedDamage(content, npc, player, engagement, angularVelocity);
   const shieldApplied = incoming.perSecond * layerRatio(player.derived, 'shield', incoming.mix);
   const rounds = weapons.reduce((total, weapon) => total + weapon.magazineSize, 0) +
     (profile.loadout.reserveRounds ?? 0);
@@ -313,8 +318,14 @@ interface Landed {
   readonly bestHitChance: number;
 }
 
-/** What one ship's online turrets land on another at a range, with no transverse motion. */
-function landedDamage(content: ContentRepository, shooter: ShipModel, target: ShipModel, rangeKm: number): Landed {
+/** What one ship's online turrets land on another at a range and angular velocity. */
+function landedDamage(
+  content: ContentRepository,
+  shooter: ShipModel,
+  target: ShipModel,
+  rangeKm: number,
+  angularVelocityRadiansPerSecond: number,
+): Landed {
   const byType = Object.fromEntries(DAMAGE_TYPES.map((type) => [type, 0])) as Record<DamageType, number>;
   let perSecond = 0;
   let bestHitChance = 0;
@@ -327,7 +338,7 @@ function landedDamage(content: ContentRepository, shooter: ShipModel, target: Sh
       signatureResolutionMetres: weapon.signatureResolutionMetres,
       targetSignatureMetres: attributeValue(target.derived, 'signatureRadiusMetres'),
       rangeKm,
-      angularVelocityRadiansPerSecond: 0,
+      angularVelocityRadiansPerSecond,
     }, content.rules.combat);
     bestHitChance = Math.max(bestHitChance, accuracy.hitChance);
     for (const type of DAMAGE_TYPES) {
@@ -470,6 +481,31 @@ interface FindingInput {
   readonly tank: TankResult;
   readonly roundsNeeded: number | null;
   readonly fightSeconds: number;
+  /** The range the tactics hold against their target, or `null` when they close or orbit. */
+  readonly holdRangeKm: number | null;
+}
+
+/**
+ * How the brawlers fare against a ship that holds its range, when none of them
+ * can reach it within the fight: either they never catch it, or the speed
+ * difference is too small to close the distance before the fight is over.
+ * `null` when the tactics hold no range or some brawler closes in time.
+ */
+function trailingBrawlers(input: FindingInput): string | null {
+  const hold = input.holdRangeKm;
+  const brawlers = input.opponents.filter((opponent) => opponent.movement === 'approach');
+  if (hold === null || brawlers.length === 0) return null;
+  let slowest = 0;
+  for (const brawler of brawlers) {
+    if (brawler.maxSpeedKmPerSecond < input.playerSpeed) continue;
+    const closing = brawler.maxSpeedKmPerSecond - input.playerSpeed;
+    const seconds = closing <= 0 ? Infinity : Math.max(0, hold - brawler.preferredRangeKm) / closing;
+    if (seconds < input.fightSeconds) return null;
+    slowest = Math.max(slowest, seconds);
+  }
+  return slowest === 0
+    ? 'never catch it'
+    : `need about ${slowest.toFixed(0)} s to close, longer than the ${input.fightSeconds.toFixed(0)} s fight`;
 }
 
 function findingsFor(input: FindingInput): Finding[] {
@@ -512,12 +548,18 @@ function findingsFor(input: FindingInput): Finding[] {
   if (input.tank.brokenAtSeconds !== null) {
     const firing = input.opponents.filter((opponent) =>
       (opponent.firingSeconds ?? 0) > (input.tank.brokenAtSeconds ?? 0)).length;
+    const trailing = trailingBrawlers(input);
     findings.push({
-      severity: 'warning',
+      // A ship that holds its range against brawlers that cannot close on it
+      // within the fight is this model's blind spot: it would meet them one at
+      // a time, not all at once from the first second.
+      severity: trailing === null ? 'warning' : 'note',
       code: 'overwhelmed',
       message: `the layers give out after about ${String(input.tank.brokenAtSeconds)} s: ` +
         `${input.tank.damageTaken.toFixed(0)} damage arrives over the fight from up to ${String(firing)} opponents, ` +
-        `faster than ${input.playerDiagnosis.bufferHitPoints.toFixed(0)} hp, repair and recharge can absorb.`,
+        `faster than ${input.playerDiagnosis.bufferHitPoints.toFixed(0)} hp, repair and recharge can absorb.` +
+        (trailing === null ? '' : ` But holding ${km(input.holdRangeKm ?? 0)}, the brawlers ${trailing}: ` +
+          'this model puts them all in range from the first second, so it overstates the fire a kiting fit takes; the scenarios decide.'),
     });
   }
   const endurance = input.playerDiagnosis.capacitorEnduranceSeconds;
@@ -558,8 +600,8 @@ export function renderDiagnosticsMarkdown(scenarios: readonly DiagnosedScenario[
     'Generated by `npm run diagnose:content` from `tests/fixtures/scenarios/progression.json`. Do not edit by hand.',
     '',
     'Each representative fit is set against its encounter with the engine\'s own formulas: one range per opponent,',
-    'no transverse motion, opponents destroyed one at a time in the tactics\' priority order. The figures explain;',
-    'the headless progression scenarios decide.',
+    'orbiting opponents circling at full speed and the rest moving radially, opponents destroyed one at a time in the',
+    'tactics\' priority order. The figures explain; the headless progression scenarios decide.',
     '',
   ];
   for (const scenario of scenarios) {

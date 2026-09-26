@@ -26,10 +26,12 @@ import { closeSortie, startSortie, type Sortie } from '../support/sortie.ts';
  * starter ship warped into the Pirate Base, which destroys it about eighty
  * simulated seconds after arrival - closes it, and opens the shipped interface
  * on the same engine. With the fixed seed and no purchases the autocannon is
- * lost, the shield booster survives into the wreck and the pilot can afford
- * the starter hull, so no ship is supplied. Buying a spare autocannon first
- * leaves the pilot below the starter hull's value, so the recovery service
- * grants a replacement. Every figure asserted is one the engine projected.
+ * lost, the shield booster survives into the wreck, and the pilot is left
+ * below the reference value of a starter ship with its original fit, so the
+ * recovery service grants a replacement. A pilot who sold the autocannon
+ * before flying holds more than that value after the payout, so no ship is
+ * supplied and they must buy one. Every figure asserted is one the engine
+ * projected.
  */
 
 const STATION = 'station.borrell.harbour';
@@ -56,9 +58,30 @@ async function destroyShip(sortie: Sortie): Promise<void> {
   await sortie.data('time.set', { paused: true, rate: 1 });
 }
 
-/** A loss that leaves the pilot able to afford the starter hull, so shipless. */
+/** The starter ship lost as a new campaign has it; the recovery service replaces it. */
+async function lostWithStarterFit(): Promise<Sortie> {
+  const sortie = await startSortie();
+  await destroyShip(sortie);
+  return sortie;
+}
+
+/**
+ * A loss that leaves the pilot able to buy the starter ship back, so shipless:
+ * the autocannon is sold before the ship flies, and the sale and the payout
+ * together reach the starter ship's reference value.
+ */
 async function lostWithoutShip(): Promise<Sortie> {
   const sortie = await startSortie();
+  const assets = await sortie.data<AssetsData>('assets.list');
+  await sortie.data('fitting.begin', { shipId: assets.activeShipId });
+  await sortie.data('fitting.clear', { slotKind: 'weapon', slotIndex: 0 });
+  await sortie.data('fitting.commit');
+  const hangar = (await sortie.data<AssetsData>('assets.list')).inventories.find((inventory) =>
+    inventory.location.kind === 'hangar' && inventory.location.stationId === STATION);
+  const gun = hangar?.stacks.find((stack) => stack.item.definitionId === AUTOCANNON);
+  if (gun === undefined) throw new Error('The autocannon did not reach the hangar.');
+  const sale = await sortie.data<{ token: string }>('market.previewSell', { stationId: STATION, stackId: gun.id, quantity: 1 });
+  await sortie.data('market.confirmSell', { token: sale.token });
   await destroyShip(sortie);
   return sortie;
 }
@@ -118,11 +141,11 @@ const count = (value: number): string => new Intl.NumberFormat('en', { maximumFr
 
 describe('the loss report', () => {
   it('explains where, who hit the ship, through which layers and the final damage [FUNC-9.12, FUNC-20, MVP-AC-08, MVP-AC-10]', async () => {
-    const harness = await resume(await lostWithoutShip(), 'Borrell Harbour');
+    const harness = await resume(await lostWithStarterFit(), 'Borrell Harbour');
     const report = await lossReport(harness);
     const loss = region('Ship lost');
 
-    expect(loss).toHaveAttribute('data-recovery', 'noShip');
+    expect(loss).toHaveAttribute('data-recovery', 'granted');
     expect(
       within(loss).getByText(
         `Your Wayfarer was destroyed at Outpost Cradle fighting Pirate Base, at simulation time ${formatSimulationDuration(report.destroyedAtMs)}. You were recovered at Borrell Harbour.`,
@@ -162,7 +185,7 @@ describe('the loss report', () => {
   }, 60_000);
 
   it('lists what was lost and what survived into the wreck, and when it expires [FUNC-9.12, FUNC-5.4, MVP-AC-08]', async () => {
-    const harness = await resume(await lostWithoutShip(), 'Borrell Harbour');
+    const harness = await resume(await lostWithStarterFit(), 'Borrell Harbour');
     const loss = region('Ship lost');
 
     const lost = within(loss).getByRole('list', { name: 'Lost items' });
@@ -197,7 +220,7 @@ describe('the loss report', () => {
 
     expect(
       within(loss).getByText(
-        "You have no ship. With 23,600 ISK you can afford the starter hull's 12,000 ISK reference value, so the recovery service does not supply one.",
+        'You have no ship. With 33,822 ISK you can buy back a starter ship with its original fit, worth 32,680 ISK, so the recovery service does not supply one.',
       ),
     ).toBeInTheDocument();
     expect(
@@ -209,7 +232,7 @@ describe('the loss report', () => {
   }, 60_000);
 
   it('chooses the wreck as the destination from the report [FUNC-5.4, FUNC-9.12, MVP-AC-08]', async () => {
-    const harness = await resume(await lostWithoutShip(), 'Borrell Harbour');
+    const harness = await resume(await lostWithStarterFit(), 'Borrell Harbour');
     const loss = region('Ship lost');
     const report = await lossReport(harness);
 
@@ -280,7 +303,7 @@ describe('a pilot with no ship', () => {
     ).toBeInTheDocument();
     const hulls = within(notice).getByRole('list', { name: 'Hulls for sale here' });
     expect(within(hulls).getByText(`Wayfarer: ${count(hull.stationSellPriceCredits)} ISK`)).toBeInTheDocument();
-    expect(within(notice).getByText('You have 23,600 ISK.')).toBeInTheDocument();
+    expect(within(notice).getByText('You have 33,822 ISK.')).toBeInTheDocument();
 
     // The sortie ended in a loss, and there is no hold to describe.
     const summary = panel('Last sortie');

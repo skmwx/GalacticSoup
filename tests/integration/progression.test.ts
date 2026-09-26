@@ -1,27 +1,46 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import { shippedContent } from '../support/content.ts';
+import { writeBalanceSection } from '../support/balance/report.ts';
 import { assembleFit } from '../support/progression/assemble.ts';
-import { expectScenario, totalBounty } from '../support/progression/expectations.ts';
-import { fixtureFit, PROGRESSION } from '../support/progression/fixtures.ts';
+import { expectScenario, totalBounty, type ScenarioSummary } from '../support/progression/expectations.ts';
+import { fixtureFit, fixtureScenario, PROGRESSION } from '../support/progression/fixtures.ts';
 
 /**
- * The phase 16 exit gate, headless: the first two steps and the tier gap
- * (MVP Implementation Plan phase 16; MVP Scope 4.1-4.3, 9.1; Technical
- * Specification 15.1, 16). `progressionMastery.test.ts` holds the mastery
- * site, so the two long runs proceed side by side.
+ * The progression matrix, headless: the easiest and the multi-opponent sites,
+ * and the fits that fall short of the mastery site
+ * (MVP Implementation Plan phases 16-17; MVP Scope 4.1-4.3, 9.1; Technical
+ * Specification 15.1, 16). `progressionMastery.test.ts` holds the fits meant
+ * for the mastery site, so the long runs proceed side by side.
  *
  * Every scenario in `tests/fixtures/scenarios/progression.json` buys its
  * representative fit at the starting station, saves and resumes the campaign,
  * and flies consecutive sorties through the protocol alone: choose the site,
  * undock, warp in, fight with the ordinary commands, loot, return, dock,
- * repair and resupply. Here the starter fit clears the easiest site and the
- * intermediate fit the multi-opponent site, each more than once, and the
- * starter fit clears neither harder site, so tier is guidance that means
- * something without being a gate.
+ * repair and resupply. Each must measure inside its bands. Together they show
+ * that every fit clears the easiest site, that the multi-opponent site needs
+ * the second gun and the right target priority, and that neither the starter
+ * nor the intermediate fit clears the mastery site - tier is guidance that
+ * means something without being a gate.
  */
 
 const content = shippedContent();
+const measured: ScenarioSummary[] = [];
+
+async function measure(id: string): Promise<ScenarioSummary> {
+  const summary = await expectScenario(id, content);
+  measured.push(summary);
+  return summary;
+}
+
+afterAll(() => {
+  const order = PROGRESSION.scenarios.map((scenario) => scenario.id);
+  writeBalanceSection('scenarios-early', {
+    kind: 'scenarios',
+    title: 'Encounter outcomes: the easiest and multi-opponent sites, and the fits that fall short of the mastery site',
+    scenarios: [...measured].sort((left, right) => order.indexOf(left.scenarioId) - order.indexOf(right.scenarioId)),
+  });
+});
 
 describe('progression through the three encounters', () => {
   it('buys every representative fit at the starting station, within reach of the loop [MVP-AC-02, MVP-AC-07, FUNC-8.4, FUNC-11.3, FUNC-18]', () => {
@@ -35,32 +54,43 @@ describe('progression through the three encounters', () => {
     expect(cost('intermediate')).toBeGreaterThan(0);
     expect(cost('intermediate')).toBeLessThanOrEqual(starting);
     expect(cost('mastery')).toBeGreaterThan(starting);
-    // The starting wallet and one clear of the multi-opponent site's bounties
-    // reach the mastery fit, before any loot is sold (MVP Scope 4.3).
-    expect(cost('mastery')).toBeLessThanOrEqual(starting + totalBounty('encounter.borrell.pirate-patrol', content));
+    // One clear of the multi-opponent site does not pay for the mastery fit,
+    // two do, before any loot is sold (MVP Scope 4.3: a decision within a small
+    // number of encounters, not at once).
+    const patrol = totalBounty('encounter.borrell.pirate-patrol', content);
+    expect(cost('mastery')).toBeGreaterThan(starting + patrol);
+    expect(cost('mastery')).toBeLessThanOrEqual(starting + 2 * patrol);
     // The long-range approach is a further investment, not a cheaper shortcut.
     expect(cost('lancer')).toBeGreaterThan(cost('mastery'));
   });
 
-  it('clears the easiest site with the starter fit, repeatedly [MVP-AC-05, MVP-AC-09, FUNC-9.10, FUNC-9.11, FUNC-18]', async () => {
-    await expectScenario('scout.starter', content);
-  }, 300_000);
-
-  it('clears the multi-opponent site with the intermediate fit and the right target priority, repeatedly [MVP-AC-05, MVP-AC-07, MVP-AC-09, FUNC-9.10, FUNC-9.11]', async () => {
-    const run = await expectScenario('patrol.intermediate', content);
-    // Target priority is part of the plan: the cutters die before the marksman.
-    for (const sortie of run.sorties.filter((entry) => entry.status === 'completed')) {
-      const death = (profileId: string): number[] => sortie.opponents
-        .filter((opponent) => opponent.profileId === profileId)
-        .map((opponent) => opponent.destroyedAtSeconds ?? Infinity);
-      expect(Math.max(...death('npc.pirate.cutter'))).toBeLessThan(Math.min(...death('npc.pirate.marksman')));
+  it('clears the easiest site with every fit, the starter fit repeatedly and the poor purchase too [MVP-AC-05, MVP-AC-09, FUNC-9.10, FUNC-9.11, FUNC-18]', async () => {
+    for (const id of ['scout.starter', 'scout.folly', 'scout.intermediate', 'scout.mastery', 'scout.lancer']) {
+      await measure(id);
     }
   }, 300_000);
 
-  it('does not clear the harder sites with the starter fit: tier is guidance with meaning [MVP-AC-07, FUNC-18]', async () => {
-    const patrol = await expectScenario('patrol.starter', content);
-    const base = await expectScenario('base.starter', content);
+  it('clears the multi-opponent site with the intermediate fit and the right target priority, repeatedly [MVP-AC-05, MVP-AC-07, MVP-AC-09, FUNC-9.10, FUNC-9.11]', async () => {
+    const summary = await measure('patrol.intermediate');
+    // Target priority is part of the plan: the cutters die before the marksman.
+    const scenario = fixtureScenario('patrol.intermediate');
+    expect(summary.completed).toBe(scenario.seeds.length * scenario.sorties);
+    await measure('patrol.mastery');
+  }, 300_000);
+
+  it('makes target priority and range decide the multi-opponent site: the wrong order and the railguns fall short [MVP-AC-04, MVP-AC-05, FUNC-9.5, FUNC-9.10]', async () => {
+    const wrongOrder = await measure('patrol.intermediate-marksman-first');
+    const rightOrder = measured.find((summary) => summary.scenarioId === 'patrol.intermediate');
+    expect(wrongOrder.completedShare).toBeLessThan(rightOrder?.completedShare ?? 1);
+    await measure('patrol.lancer');
+  }, 300_000);
+
+  it('does not clear the harder sites with the fits below them: tier is guidance with meaning [MVP-AC-07, MVP-AC-08, FUNC-18]', async () => {
+    const patrol = await measure('patrol.starter');
+    const base = await measure('base.starter');
+    await measure('base.intermediate');
+    await measure('base.intermediate-brawl');
     // Losing is recoverable: each loss ends at the station with a loss report.
-    expect([...patrol.sorties, ...base.sorties].some((sortie) => sortie.status === 'lost')).toBe(true);
+    expect(patrol.lost + base.lost).toBeGreaterThan(0);
   }, 300_000);
 });

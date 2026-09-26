@@ -17,7 +17,7 @@
     {
       "itemId": "module.test.turret",
       "supply": "fixed",
-      "basePriceCredits": 12000,
+      "basePriceCredits": 11111,
       "regionalPriceFactor": 1,
       "targetStock": 20,
       "initialStock": 20,
@@ -29,7 +29,7 @@
     {
       "itemId": "ammo.test.charge",
       "supply": "fixed",
-      "basePriceCredits": 10,
+      "basePriceCredits": 9,
       "regionalPriceFactor": 1,
       "targetStock": 1000,
       "initialStock": 1000,

@@ -1046,7 +1046,7 @@ function checkStarterReachability(collected, { stations, hulls, modules }) {
         );
       }
     }
-    issues.push(...checkRecoveryReach(collected, table, hulls));
+    issues.push(...checkRecoveryReach(collected, table, hulls, modules));
 
     const turrets = [...modules.values()].filter(
       (module) => module.category === 'turret' && fixed.has(module.id),
@@ -1089,38 +1089,66 @@ function checkStarterReachability(collected, { stations, hulls, modules }) {
 /**
  * A shipless pilot is never stranded (Functional Specification 9.12, 22.1).
  *
- * The recovery service grants a starter ship only below the starter hull's
- * reference value. A pilot at or above it must therefore be able to buy that
- * hull where they were recovered, so the recovery station's fixed quote for it
- * may not exceed the reference value.
+ * The recovery service grants a starter ship - the starter hull with its
+ * original fit and a full magazine for each loaded weapon - only below that
+ * ship's reference value. A pilot at or above it must therefore be able to buy
+ * the same ship back where they were recovered, so the recovery station stocks
+ * the hull, every module of the starting fit and every starting charge at a
+ * fixed price no higher than its own reference value. The whole ship then
+ * costs no more than the value the grant is measured against, and no pilot is
+ * left with a hull they cannot arm.
  */
-function checkRecoveryReach(collected, table, hulls) {
+function checkRecoveryReach(collected, table, hulls, modules) {
   const economy = collected.rules.economy?.values;
   if (economy === undefined) return [];
-  const starter = hulls.get(economy.starterHullId);
-  const index = table.listings.findIndex(
-    (listing) => listing.itemId === economy.starterHullId && listing.supply === 'fixed',
-  );
-  const listing = table.listings[index];
-  if (starter === undefined || listing === undefined) return [];
-  const spread = Math.min(
-    economy.effectiveSpreadMaximum,
-    Math.max(economy.effectiveSpreadMinimum, listing.baseSpread),
-  );
-  const price = Math.max(
-    economy.minimumUnitPriceCredits,
-    Math.round(listing.basePriceCredits * listing.regionalPriceFactor * (1 + spread)),
-  );
-  return price <= starter.referenceValueCredits
-    ? []
-    : [
+  const references = new Map();
+  for (const [id, hull] of hulls) references.set(id, hull.referenceValueCredits);
+  for (const [id, module] of modules) references.set(id, module.referenceValueCredits);
+  for (const charge of collected.definitions.ammunition) references.set(charge.value.id, charge.value.referenceValueCredits);
+
+  const starterShip = [economy.starterHullId];
+  for (const entry of economy.startingFit ?? []) {
+    starterShip.push(entry.moduleId);
+    if (entry.ammunitionId !== undefined) starterShip.push(entry.ammunitionId);
+  }
+
+  const issues = [];
+  for (const itemId of new Set(starterShip)) {
+    const reference = references.get(itemId);
+    if (reference === undefined) continue;
+    const index = table.listings.findIndex((listing) => listing.itemId === itemId && listing.supply === 'fixed');
+    const listing = table.listings[index];
+    if (listing === undefined) {
+      issues.push(
+        issue(
+          'catalogRelationship',
+          table.file,
+          'listings',
+          `"${itemId}" is part of the starter ship but is not stocked at a fixed price, so a pilot the recovery service does not re-equip could not buy it back`,
+        ),
+      );
+      continue;
+    }
+    const spread = Math.min(
+      economy.effectiveSpreadMaximum,
+      Math.max(economy.effectiveSpreadMinimum, listing.baseSpread),
+    );
+    const price = Math.max(
+      economy.minimumUnitPriceCredits,
+      Math.round(listing.basePriceCredits * listing.regionalPriceFactor * (1 + spread)),
+    );
+    if (price > reference) {
+      issues.push(
         issue(
           'catalogRelationship',
           table.file,
           `listings[${String(index)}].basePriceCredits`,
-          `the starter hull sells for ${String(price)} credits, above the ${String(starter.referenceValueCredits)} credits below which recovery grants one`,
+          `"${itemId}" sells for ${String(price)} credits, above its ${String(reference)} credit reference value, so the starter ship would cost more than the value below which recovery grants one`,
         ),
-      ];
+      );
+    }
+  }
+  return issues;
 }
 
 /** Bounds inside a rule group must be internally consistent. */

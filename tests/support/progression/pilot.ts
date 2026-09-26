@@ -34,6 +34,8 @@ export interface FightResult {
   readonly status: FightStatus;
   readonly startedAtMs: number;
   readonly endedAtMs: number;
+  /** The smallest share of the ship's total hit points seen at a decision, or zero after a loss. */
+  readonly lowestHitPointsShare: number;
 }
 
 /** Real time between decisions; the pilot reconsiders once a simulated second at 1x. */
@@ -45,23 +47,26 @@ export async function fightEncounter(
   budgetSeconds: number,
 ): Promise<FightResult> {
   const startedAtMs = session.simulationTimeMs;
+  let lowest = 1;
+  const result = (status: FightStatus): FightResult => ({
+    status, startedAtMs, endedAtMs: session.simulationTimeMs, lowestHitPointsShare: status === 'lost' ? 0 : lowest,
+  });
   for (let step = 0; step < budgetSeconds * (1_000 / DECISION_MS); step += 1) {
     const site = await session.data<SiteData>('navigation.site');
     if (site.location.kind !== 'site') {
       // The ship is no longer in the site: destroyed and recovered, since the
       // pilot never orders a warp before the fight is decided.
-      return { status: 'lost', startedAtMs, endedAtMs: session.simulationTimeMs };
+      return result('lost');
     }
     const encounter = await session.data<EncounterData>('encounter.state');
-    if (encounter.instance?.status === 'completed') {
-      return { status: 'completed', startedAtMs, endedAtMs: session.simulationTimeMs };
-    }
     const combat = await session.data<CombatData>('combat.state');
+    lowest = Math.min(lowest, hitPointsShare(combat));
+    if (encounter.instance?.status === 'completed') return result('completed');
 
     const hull = layerFraction(combat, 'hull');
     if (tactics.retreatBelowHullFraction !== undefined && hull < tactics.retreatBelowHullFraction) {
       await session.data('navigation.retreat');
-      return { status: 'retreated', startedAtMs, endedAtMs: session.simulationTimeMs };
+      return result('retreated');
     }
 
     const alive = (encounter.instance?.npcs ?? []).filter((npc) => !npc.destroyed);
@@ -77,7 +82,7 @@ export async function fightEncounter(
 
     await session.advance(DECISION_MS);
   }
-  return { status: 'timedOut', startedAtMs, endedAtMs: session.simulationTimeMs };
+  return result('timedOut');
 }
 
 /**
@@ -221,6 +226,13 @@ async function operate(session: ScenarioSession, module: ModuleRuntimeData, want
   const payload = { slotKind: module.slot.kind, slotIndex: module.slot.index };
   if (wanted && !module.repeating) await session.ask('module.activate', payload);
   if (!wanted && module.repeating) await session.ask('module.deactivate', payload);
+}
+
+/** Share of the ship's total hit points it has now. */
+function hitPointsShare(combat: CombatData): number {
+  const layers = combat.defenses?.layers ?? [];
+  const maximum = layers.reduce((total, entry) => total + entry.maximumHitPoints, 0);
+  return maximum > 0 ? layers.reduce((total, entry) => total + entry.currentHitPoints, 0) / maximum : 1;
 }
 
 function layerFraction(combat: CombatData, layer: string): number {

@@ -5,15 +5,35 @@ import { expect, test, type Page } from '@playwright/test';
  * The loss report and the shipless station under automated audit
  * (Technical Specification 12.3; Functional Specification 9.12, 19.6, 20).
  *
- * A pilot with the starting credits loses the starter ship at the hard site.
- * The payout leaves them above the starter hull's reference value, so the
- * recovery service supplies nothing and they are docked without a ship. The
- * report that explains the loss and the station that tells them how to fly
- * again must pass the same audit as every other surface, and the way back -
- * buying a hull - must work from there.
+ * A pilot sells the starter ship's autocannon and loses what is left at the
+ * hard site. The sale and the payout leave them above the reference value of a
+ * starter ship with its original fit, so the recovery service supplies nothing
+ * and they are docked without a ship. The report that explains the loss and
+ * the station that tells them how to fly again must pass the same audit as
+ * every other surface, and the way back - buying a hull - must work from there.
+ *
+ * The client supplies a campaign's seed, so the test fixes the sixteen random
+ * bytes that become it: the one survival roll then always loses the shield
+ * booster, and nothing else about the game is changed.
  */
 
 const PILOT = 'Audited Pilot';
+const SEED = 'bb22cc33dd44ee55ff6677889900aa11';
+
+async function fixSeed(page: Page): Promise<void> {
+  await page.addInitScript((seed: string) => {
+    const original = crypto.getRandomValues.bind(crypto);
+    crypto.getRandomValues = (<T extends ArrayBufferView | null>(array: T): T => {
+      if (array instanceof Uint8Array && array.length === 16) {
+        for (let index = 0; index < 16; index += 1) {
+          array[index] = Number.parseInt(seed.slice(index * 2, index * 2 + 2), 16);
+        }
+        return array;
+      }
+      return original(array as never) as T;
+    }) as typeof crypto.getRandomValues;
+  }, SEED);
+}
 
 async function freshCampaign(page: Page): Promise<void> {
   await page.goto('/');
@@ -45,7 +65,21 @@ test.describe('loss accessibility', () => {
     page,
   }) => {
     test.setTimeout(6 * 60_000);
+    await fixSeed(page);
     await freshCampaign(page);
+
+    // Take the autocannon off and sell it.
+    await page.getByRole('button', { name: 'Fitting', exact: true }).click();
+    await page.getByRole('button', { name: 'Change fit' }).click();
+    await page.getByLabel('Module in Weapon 1').selectOption({ value: '' });
+    await page.getByRole('button', { name: 'Apply fit' }).click();
+    await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
+    await page.getByRole('button', { name: 'Market', exact: true }).click();
+    await page.getByRole('button', { name: 'Sell 200mm Autocannon' }).click();
+    const sale = page.getByRole('dialog', { name: 'Confirm sale' });
+    await expect(sale.getByText('Calculating…')).toBeHidden();
+    await sale.getByRole('button', { name: 'Confirm' }).click();
+    await expect(sale).toBeHidden();
 
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await page.getByRole('button', { name: 'Choose Pirate Base' }).click();
@@ -63,7 +97,7 @@ test.describe('loss accessibility', () => {
     // why no ship was supplied.
     await expect(report.getByRole('table')).toBeVisible();
     await expect(report.getByRole('list', { name: 'Lost items' })).toBeVisible();
-    await expect(report.getByText(/^You have no ship\. With 23,600 ISK/)).toBeVisible();
+    await expect(report.getByText(/^You have no ship\. With 33,822 ISK/)).toBeVisible();
     await report.getByText('Show the payout calculation').click();
     await audit(page);
 

@@ -8,8 +8,8 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
  * simulation time at 1x. A pilot spends most of their credits on a spare gun,
  * flies the starter ship to the hard site and lets it be destroyed. The loss
  * report explains what happened, the insurance pays, and - with too little
- * left for a new hull - the recovery service supplies a restricted starter
- * ship. The page is then reloaded without closing the campaign, so only the
+ * left to buy the starter ship back - the recovery service supplies a
+ * restricted one. The page is then reloaded without closing the campaign, so only the
  * autosave taken at the destruction can bring the post-loss station back. The
  * pilot recovers what survived from the wreck, refits with the spare gun and
  * clears the easiest site again.
@@ -121,9 +121,10 @@ test.describe('losing a ship', () => {
     // Three sorties at 1x: the loss, the wreck and the easiest site.
     test.setTimeout(15 * 60_000);
 
-    // A spare gun leaves 7,040 ISK: too little, after the payout, to buy a hull.
+    // A spare gun leaves 8,000 ISK: after the payout, still far below the value
+    // of a starter ship with its original fit.
     await buy(page, '200mm Autocannon');
-    await expect(page.getByText('7,040 ISK', { exact: true })).toBeVisible();
+    await expect(page.getByText('8,000 ISK', { exact: true })).toBeVisible();
 
     // Fly the starter ship to the hard site and do nothing there.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
@@ -154,7 +155,7 @@ test.describe('losing a ship', () => {
       report.getByText("Basic insurance paid 3,600 ISK: 30% of the hull's 12,000 ISK reference value."),
     ).toBeVisible();
     await expect(report.getByText(/the recovery service supplied a replacement Wayfarer/)).toBeVisible();
-    await expect(page.getByText('10,640 ISK', { exact: true })).toBeVisible();
+    await expect(page.getByText('11,600 ISK', { exact: true })).toBeVisible();
 
     // Reload without closing: only the autosave taken at the destruction can
     // bring this station back.
@@ -162,7 +163,7 @@ test.describe('losing a ship', () => {
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
     await expect(region(page, 'Ship lost')).toBeVisible();
-    await expect(page.getByText('10,640 ISK', { exact: true })).toBeVisible();
+    await expect(page.getByText('11,600 ISK', { exact: true })).toBeVisible();
     await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible();
 
     // The replacement is a recovery grant: flown freely, never sold or insured.

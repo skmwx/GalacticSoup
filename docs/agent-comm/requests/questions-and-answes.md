@@ -101,3 +101,75 @@ flight-ready. Two consequences are worth a decision:
 If either reading is wrong, both are small, local changes in `src/engine/domain/recovery/`.
 
 **Answer:**
+
+---
+
+## Q5 - Phase 17 - The recovery grant now uses the starter *ship's* reference value
+
+**Asked:** 2026-09-26 (Phase 17, balance and progression pass). **Blocking:** no. Phase 17 shipped
+this change; it is a single function if you want it back.
+
+Functional Specification 9.12 grants a replacement ship when credits are "below the starter ship
+reference value". Section 2 separates a hull ("a ship type before fitted modules, cargo, and
+ammunition are considered") from a ship. Phase 15 used the hull's reference value alone, 12,000.
+
+The balance simulations showed what that does in play. A pilot who takes the intermediate fit to the
+Pirate Base too early usually kills a gunner or two before dying. The bounties and insurance then
+leave them with 14,000-31,000 credits:
+
+- that is too much for a grant;
+- it buys the bare hull (11,988);
+- it does not buy the autocannon to arm it.
+
+The only ways out were to salvage the wreck from the site that killed them, or to be destroyed
+again. This happened on all three seeds of the loss scenario, so it is the typical overreach, not
+an edge case. Functional Specification 22.1 requires a path to a *usable* ship.
+
+Phase 17 reads the sentence literally:
+
+- **The threshold** is the starter hull plus its original fit plus one full magazine, 32,680
+  (`starterReferenceValue` in `src/engine/domain/recovery/rules.ts`).
+- **Prices:** the recovery station now sells the basic autocannon, the shield booster and fusion
+  rounds at fixed prices no higher than their reference values. Functional Specification 11.2
+  already calls for fixed prices here; the booster had been a dynamic listing.
+- **Content check:** the check now requires this for the whole starter ship, not just the hull.
+
+A pilot at or above the threshold can always buy the whole ship back, and a pilot below it is
+always given one. Insurance still pays on the hull alone.
+
+If you prefer a different reading - for example Q4's "flight-ready means armed" - this can be
+reverted in one function and one content check. Q4 itself remains open: a pilot who deliberately
+buys a bare hull with their last credits is still not owed a grant.
+
+**Answer:**
+
+---
+
+## Q6 - Phase 17 - Docking does not recharge the capacitor, and nothing warns about it
+
+**Asked:** 2026-09-26 (Phase 17). **Blocking:** no. It needs a specification decision before any
+change.
+
+Repair restores shield, armour and hull (Functional Specification 10). The capacitor recharges only
+while simulation time passes. The station's services take no time, so a pilot who docks after a
+fight and undocks at once leaves with whatever charge they docked with. A booster left running while
+looting empties it, and fitting a capacitor battery adds capacity but no charge.
+
+The simulations found this the hard way. Every scripted career that went straight from the Pirate
+Patrol to the Pirate Base undocked with 6-8% capacitor and lost the mastery fit. The same fit with a
+full capacitor clears the site in every seed. The persistent frame shows capacitor only while
+undocked, and the undock warnings in Functional Specification 10 cover ammunition and damaged layers
+but not capacitor. A player can therefore walk into this without being told why they lost.
+
+Phase 17 changed no rule. The careers and the browser test now wait docked until the capacitor is
+full, as a careful player would, and the ship panel does show the charge. Options for Phase 18/19:
+
+1. Add low capacitor to the undock warnings in Functional Specification 10, and explain it in the
+   loss report's "what had stopped working".
+2. Recharge the capacitor as part of the free shield repair, or on docking. This is a rule change to
+   Functional Specification 10.
+3. Leave it, and teach it through the Phase 18 guidance.
+
+Option 1 matches how the specification treats ammunition. Option 2 removes the trap altogether.
+
+**Answer:**

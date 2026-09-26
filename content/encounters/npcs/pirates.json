@@ -1,6 +1,6 @@
 {
   "kind": "npc.profiles",
-  "$comment": "Roles differ by range behaviour, damage profile and module use, not only by hit points. Reserve rounds let an opponent reload from its hold; the tier-1 scout carries none, so the easiest site cannot outlast a starter ship. Values are provisional tuning; the balance pass owns them.",
+  "$comment": "Roles differ by range behaviour, damage profile and module use, not only by hit points. Reserve rounds let an opponent reload from its hold; the tier-1 scout carries none, so the easiest site cannot outlast a starter ship. The Pirate Base's brawlers fire phased rounds that still bite at 10 km, so the mastery site rewards controlling the range. Tuned by the phase 17 balance pass (reports/balance.md).",
   "definitions": [
     {
       "id": "npc.pirate.scout",
@@ -31,7 +31,7 @@
         "ammunitionId": "ammo.projectile.small.phased",
         "reserveRounds": 120
       },
-      "bountyCredits": 6000,
+      "bountyCredits": 4000,
       "lootTableId": "loot.pirate.cutter"
     },
     {
@@ -47,7 +47,7 @@
         "ammunitionId": "ammo.hybrid.small.iron",
         "reserveRounds": 80
       },
-      "bountyCredits": 9000,
+      "bountyCredits": 5000,
       "lootTableId": "loot.pirate.patrol"
     },
     {
@@ -61,10 +61,10 @@
           "module.turret.autocannon.small",
           "module.plating.armor.small"
         ],
-        "ammunitionId": "ammo.projectile.small.fusion",
-        "reserveRounds": 120
+        "ammunitionId": "ammo.projectile.small.phased",
+        "reserveRounds": 80
       },
-      "bountyCredits": 8000,
+      "bountyCredits": 6000,
       "lootTableId": "loot.pirate.gunner"
     },
     {
@@ -75,6 +75,7 @@
       "loadout": {
         "modules": [
           "module.turret.autocannon.small",
+          "module.turret.autocannon.small",
           "module.repair.armor.small",
           "module.plating.armor.small",
           "module.plating.armor.small"
@@ -82,7 +83,7 @@
         "ammunitionId": "ammo.projectile.small.phased",
         "reserveRounds": 120
       },
-      "bountyCredits": 12000,
+      "bountyCredits": 9000,
       "lootTableId": "loot.pirate.base"
     }
   ]

@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 /**
  * From the starting fit to the mastery site, in a real browser
- * (MVP Implementation Plan phase 16; MVP-AC-05, MVP-AC-06, MVP-AC-07,
+ * (MVP Implementation Plan phases 16-17; MVP-AC-05, MVP-AC-06, MVP-AC-07,
  * MVP-AC-09).
  *
  * The run is the shipped build: the engine in its worker, saves in IndexedDB,
@@ -10,13 +10,17 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
  * autocannon and phased rounds, clears the multi-opponent Pirate Patrol by
  * killing its cutters before its marksman, loots the wrecks and sells the
  * salvage. The patrol's bounties and salvage buy an afterburner and a
- * capacitor battery; the armour plating one wreck held is fitted as well. With
- * that fit the pilot kites the Pirate Base's gunners at 10 km, clears it and
- * comes home, and every site is still offered.
+ * capacitor battery; the armour plating one wreck held is fitted as well. The
+ * pilot waits docked until the capacitor is full - a repair restores the
+ * layers, not the capacitor - then holds 10 km from whichever of the Pirate
+ * Base's brawlers is nearest, clears it and comes home, and every site is
+ * still offered.
  *
- * The pilot here is the simplest competent one: modules are switched on once
- * and left running, and each opponent is selected, ordered against, locked and
- * fired on in a fixed priority until it is destroyed. The headless progression
+ * The pilot here is a simple competent one: each opponent is selected,
+ * ordered against, locked and fired on until it is destroyed, in a fixed
+ * priority at the patrol and nearest first at the base. Modules are switched
+ * on at the first lock and left running, except that at the base the shield
+ * booster runs only while the shield is below 80%. The headless progression
  * scenarios hold the same fits and tactics to more seeds.
  *
  * The client supplies a campaign's seed, so the test fixes the sixteen random
@@ -168,6 +172,10 @@ async function warp(page: Page, arriveAtKm: string, site: string): Promise<void>
 interface Engagement {
   /** Opponent names, engaged in this order. */
   readonly priority: readonly string[];
+  /** Engage whichever hostile ship is nearest instead of following the priority. */
+  readonly nearestFirst?: boolean;
+  /** Run the shield booster only while the shield is below this share, instead of leaving it on. */
+  readonly boosterBelowShield?: number;
   readonly rangeKm: string;
   readonly movement: RegExp;
   /** Modules switched on at the first lock and left running. */
@@ -177,6 +185,30 @@ interface Engagement {
 
 function opponent(page: Page, name: string): Locator {
   return region(page, 'In this site').locator('[data-kind="ship"][data-attitude="hostile"]').filter({ hasText: name });
+}
+
+/** The hostile ship the object list shows nearest, by the distance each entry states. */
+async function nearestHostile(page: Page): Promise<string | null> {
+  const entries = await region(page, 'In this site')
+    .locator('[data-kind="ship"][data-attitude="hostile"]')
+    .evaluateAll((buttons) => buttons.map((button) => ({
+      id: button.getAttribute('data-object-entry') ?? '',
+      text: button.textContent ?? '',
+    })));
+  let best: { id: string; km: number } | null = null;
+  for (const entry of entries) {
+    const match = /([\d.,]+)\s*km/.exec(entry.text);
+    const km = match === null ? Infinity : Number((match[1] ?? '').replace(/,/g, ''));
+    if (best === null || km < best.km) best = { id: entry.id, km };
+  }
+  return best?.id ?? null;
+}
+
+/** The shield's share of its maximum, as the frame's defence readout states it. */
+async function shieldShare(page: Page): Promise<number> {
+  const text = (await page.locator('[data-readout="defenses"]').textContent().catch(() => null)) ?? '';
+  const match = /Shield ([\d.]+)%/.exec(text);
+  return match === null ? 1 : Number(match[1]) / 100;
 }
 
 /** Clicks a control if it is there and enabled now; the fight moves on either way. */
@@ -211,11 +243,15 @@ async function fight(page: Page, engagement: Engagement): Promise<void> {
 
     if (current === null || (await page.locator(`[data-object-entry="${current}"]`).count()) === 0) {
       current = null;
-      for (const name of engagement.priority) {
-        const candidate = opponent(page, name).first();
-        if ((await candidate.count()) > 0) {
-          current = await candidate.getAttribute('data-object-entry');
-          break;
+      if (engagement.nearestFirst === true) {
+        current = await nearestHostile(page);
+      } else {
+        for (const name of engagement.priority) {
+          const candidate = opponent(page, name).first();
+          if ((await candidate.count()) > 0) {
+            current = await candidate.getAttribute('data-object-entry');
+            break;
+          }
         }
       }
       if (current === null) {
@@ -241,11 +277,35 @@ async function fight(page: Page, engagement: Engagement): Promise<void> {
         modulesRunning = true;
       }
     }
+    if (modulesRunning && engagement.boosterBelowShield !== undefined) {
+      const shield = await shieldShare(page);
+      const modules = region(page, 'Modules');
+      if (shield < engagement.boosterBelowShield) {
+        await press(modules.getByRole('button', { name: new RegExp(`^Activate ${BOOSTER}`) }));
+      } else if (shield >= 0.999) {
+        await press(modules.getByRole('button', { name: new RegExp(`^Deactivate ${BOOSTER}`) }));
+      }
+    }
     await page.waitForTimeout(1_000);
   }
   for (const module of engagement.modules) {
+    if (engagement.boosterBelowShield !== undefined && module === BOOSTER) continue;
     await expect(region(page, 'Modules').getByRole('button', { name: new RegExp(`^Deactivate ${module}`) })).toBeVisible();
   }
+}
+
+const BOOSTER = 'Small Shield Booster';
+
+/**
+ * Waits docked, with the clock running, until the ship panel shows a full
+ * capacitor. A repair restores the layers but not the capacitor, which
+ * recharges only as simulation time passes.
+ */
+async function restUntilCharged(page: Page, capacity: string): Promise<void> {
+  await page.getByRole('button', { name: 'Ship', exact: true }).click();
+  await ensureRunning(page);
+  await expect(page.getByText(new RegExp(`^${capacity} of ${capacity},`))).toBeVisible({ timeout: 240_000 });
+  await ensurePaused(page);
 }
 
 /** Opens every wreck in the site, flying into reach where needed, and empties it. */
@@ -322,14 +382,14 @@ test.describe('progression to the mastery site', () => {
       rangeKm: '1',
       movement: /^Orbit/,
       modules: ['Small Shield Booster'],
-      bounty: '21,000',
+      bounty: '13,000',
     });
     await lootWrecks(page);
     await returnAndDock(page);
 
     const sortie = region(page, 'Last sortie');
     await expect(
-      sortie.getByText('Pirate Patrol cleared: 3 of 3 opponents destroyed, 21,000 ISK in bounties.'),
+      sortie.getByText('Pirate Patrol cleared: 3 of 3 opponents destroyed, 13,000 ISK in bounties.'),
     ).toBeVisible();
     await expect(sortie.getByText('1 x Small Armour Plating')).toBeVisible();
 
@@ -337,6 +397,10 @@ test.describe('progression to the mastery site', () => {
     // lacks, and fit the plating the marksman carried.
     await sell(page, 'Burned Alloy Plate');
     await sell(page, 'Iron Charge S');
+    // Circuitry is the marksman's, when its wreck held some.
+    if ((await page.getByRole('button', { name: 'Sell Charred Circuitry' }).count()) > 0) {
+      await sell(page, 'Charred Circuitry');
+    }
     await buy(page, '1MN Afterburner');
     await buy(page, 'Small Capacitor Battery');
     await buy(page, 'Phased Plasma S', 220, true);
@@ -348,23 +412,28 @@ test.describe('progression to the mastery site', () => {
     await expect(page.getByRole('cell', { name: '1MN Afterburner' })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Small Armour Plating' })).toBeVisible();
     await resupply(page);
+    // The booster ran through the looting, and the battery added charge to
+    // fill: leave with a full capacitor.
+    await restUntilCharged(page, '370');
 
-    // The Pirate Base: arrive far off, burn and keep 10 km from the faster
-    // gunners, then the warden, then the marksman.
+    // The Pirate Base: arrive far off, burn and keep 10 km from whichever
+    // brawler is nearest, and boost the shield when it runs low.
     await depart(page, 'Pirate Base');
     await warp(page, '30', 'Outpost Cradle');
     await expect(opponent(page, 'Pirate Gunner')).toHaveCount(2);
     await fight(page, {
       priority: ['Pirate Gunner', 'Pirate Warden', 'Pirate Marksman'],
+      nearestFirst: true,
+      boosterBelowShield: 0.8,
       rangeKm: '10',
       movement: /^Keep range/,
-      modules: ['1MN Afterburner', 'Small Shield Booster'],
-      bounty: '37,000',
+      modules: ['1MN Afterburner', BOOSTER],
+      bounty: '26,000',
     });
     await returnAndDock(page);
 
     await expect(
-      region(page, 'Last sortie').getByText('Pirate Base cleared: 4 of 4 opponents destroyed, 37,000 ISK in bounties.'),
+      region(page, 'Last sortie').getByText('Pirate Base cleared: 4 of 4 opponents destroyed, 26,000 ISK in bounties.'),
     ).toBeVisible();
 
     // Nothing ends here: the mastery site counts its completion and is still
