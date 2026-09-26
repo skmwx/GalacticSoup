@@ -9,6 +9,7 @@ import type {
 } from '@protocol';
 
 import { ActionButton, type ActionRunner } from '../actions';
+import { StatusMark } from '../common/StatusMark';
 import { formatQuantity, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { ShipSummary } from './ShipPanel';
@@ -111,6 +112,7 @@ function OpenDraft({
         <ul className={styles['issues']}>
           {draft.missing.map((missing) => (
             <li key={missing.definitionId} className={styles['warning']}>
+              <StatusMark kind="warning" />
               {translate('fitting.missing', {
                 item: translate(missing.nameKey),
                 required: missing.required,
@@ -122,7 +124,10 @@ function OpenDraft({
       )}
 
       {draft.blockedReason === null ? null : (
-        <p className={styles['warning']}>{translate(draft.blockedReason)}</p>
+        <p className={styles['warning']}>
+          <StatusMark kind="error" />
+          {translate(draft.blockedReason)}
+        </p>
       )}
 
       <div className={styles['toolbar']}>

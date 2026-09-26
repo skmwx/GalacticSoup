@@ -1,9 +1,12 @@
-import type { JSX } from 'react';
+import { useRef, useState, type JSX } from 'react';
 
 import type { ClientGateway, TransportKind } from '@gateway';
 
+import { ActionButton, useActionRunner } from '../actions';
 import { GameRoot } from '../campaign/GameRoot';
 import { useTranslate } from '../localization';
+import { PreferencesProvider } from '../preferences';
+import { SettingsPanel } from '../settings';
 import styles from './AppShell.module.css';
 import { CompatibilityFailure } from './CompatibilityFailure';
 import { EngineMark } from './EngineMark';
@@ -17,7 +20,12 @@ import { useEngineStatus } from './useEngineStatus';
  * here arrived through the gateway, and the build diagnostics are a collapsed
  * panel rather than the main surface.
  *
- * @implements TECH-12.1
+ * It owns the player's presentation preferences, so interface size, text
+ * size, contrast and motion apply to every screen - including the one where a
+ * campaign is started - and the settings are one control away from anywhere
+ * (Functional Specification 19.1, 20).
+ *
+ * @implements TECH-12.1, FUNC-19.1, FUNC-20
  */
 
 export interface AppShellProps {
@@ -31,8 +39,25 @@ const TRANSPORT_KEYS: Readonly<Record<TransportKind, string>> = {
 };
 
 export function AppShell({ gateway }: AppShellProps): JSX.Element {
+  return (
+    <PreferencesProvider>
+      <Shell gateway={gateway} />
+    </PreferencesProvider>
+  );
+}
+
+const SETTINGS_PANEL_ID = 'gs-settings';
+
+function Shell({ gateway }: AppShellProps): JSX.Element {
   const translate = useTranslate();
   const status = useEngineStatus(gateway);
+  const runner = useActionRunner();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsToggle = useRef<HTMLDivElement | null>(null);
+  const closeSettings = (): void => {
+    setSettingsOpen(false);
+    settingsToggle.current?.querySelector<HTMLElement>('button')?.focus();
+  };
 
   if (status.kind === 'failed') {
     return (
@@ -63,9 +88,20 @@ export function AppShell({ gateway }: AppShellProps): JSX.Element {
                 transport: translate(TRANSPORT_KEYS[status.transport]),
               })}
         </p>
+        <div ref={settingsToggle} className={styles['settingsToggle']}>
+          <ActionButton
+            actionId="preferences.open"
+            runner={runner}
+            pressed={settingsOpen}
+            onRun={() => {
+              setSettingsOpen((open) => !open);
+            }}
+          />
+        </div>
       </header>
 
       <main className={styles['main']}>
+        {settingsOpen ? <SettingsPanel id={SETTINGS_PANEL_ID} onClose={closeSettings} /> : null}
         {status.kind === 'ready' ? <GameRoot gateway={gateway} /> : null}
 
         {status.kind === 'ready' ? (

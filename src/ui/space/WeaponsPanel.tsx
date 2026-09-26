@@ -82,15 +82,26 @@ export function WeaponsPanel({
     }
   };
 
+  const reloadRefusal =
+    weapons.map((weapon) => commandAvailability(weapon.commands, 'weapon.reload').unavailableReason)
+      .find((reason) => reason !== null) ?? null;
+
+  // A key that cannot act says why, as the button beside it does.
   useActionShortcuts({
     'weapons.fire': () => {
+      if (!fire.available) return fire.unavailableReason ?? 'shortcut.unavailable';
       runner.run('weapons.fire', onFire);
+      return undefined;
     },
     'weapons.cease': () => {
+      if (ceasing.length === 0) return 'tactical.weapons.noneFiring';
       runner.run('weapons.cease', ceaseAll);
+      return undefined;
     },
     'weapons.reload': () => {
+      if (reloading.length === 0) return reloadRefusal ?? 'shortcut.unavailable';
       runner.run('weapons.reload', reloadAll);
+      return undefined;
     },
   });
 
@@ -125,10 +136,7 @@ export function WeaponsPanel({
           actionId="weapons.reload"
           runner={runner}
           available={reloading.length > 0}
-          unavailableReason={
-            weapons.map((weapon) => commandAvailability(weapon.commands, 'weapon.reload').unavailableReason)
-              .find((reason) => reason !== null) ?? null
-          }
+          unavailableReason={reloadRefusal}
           onRun={reloadAll}
         />
       </div>

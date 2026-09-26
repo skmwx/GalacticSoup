@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { undock } from '../support/undock.ts';
+
 /**
  * The first end-to-end vertical slice in a real browser
  * (MVP Implementation Plan phase 14; MVP-AC-02, MVP-AC-03, MVP-AC-04,
@@ -101,7 +103,7 @@ async function prepareAndUndock(page: Page): Promise<void> {
     await choose.click();
   }
   await expect(page.getByText('Destination: Pirate Scout')).toBeVisible();
-  await page.getByRole('button', { name: /^Undock/ }).click();
+  await undock(page);
   await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
 }
 

@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { undock } from '../support/undock.ts';
+
 /**
  * Losing a ship and coming back from it, in a real browser
  * (MVP Implementation Plan phase 15; MVP-AC-08, FUNC-9.12).
@@ -130,7 +132,7 @@ test.describe('losing a ship', () => {
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await page.getByRole('button', { name: 'Choose Pirate Base' }).click();
     await expect(page.getByText('Destination: Pirate Base')).toBeVisible();
-    await page.getByRole('button', { name: /^Undock/ }).click();
+    await undock(page);
     await expect(page.getByLabel('Destination')).toHaveValue('site.borrell.outpost-cradle');
     await warp(page, '10', 'Outpost Cradle');
 
@@ -178,7 +180,7 @@ test.describe('losing a ship', () => {
     ).toBeVisible();
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await expect(page.getByText('Destination: your wreck at Outpost Cradle')).toBeVisible();
-    await page.getByRole('button', { name: /^Undock/ }).click();
+    await undock(page);
     await expect(page.getByLabel('Destination')).toHaveValue(/^bookmark:/);
     await warp(page, '0', 'Outpost Cradle');
     await ensurePaused(page);
@@ -216,7 +218,7 @@ test.describe('losing a ship', () => {
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
     await expect(page.getByText('Destination: Pirate Scout')).toBeVisible();
-    await page.getByRole('button', { name: /^Undock/ }).click();
+    await undock(page);
     await expect(page.getByLabel('Destination')).toHaveValue('site.borrell.verge');
     await warp(page, '10', 'Verge Belt');
 

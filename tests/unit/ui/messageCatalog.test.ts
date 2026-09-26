@@ -9,12 +9,18 @@ import {
 } from '@protocol';
 import { createLocalizer, formatMessage } from '@shared';
 import {
+  ACTION_CATEGORIES,
   ACTION_MESSAGE_KEYS,
   AUDIO_CHANNEL_NAMES,
   catalogFor,
   CATALOGS,
   COMBAT_LOG_FILTERS,
+  CONFIRMATION_NAMES,
+  CONTRAST_MODES,
   DEFAULT_LOCALE,
+  MOTION_MODES,
+  REMAPPABLE_ACTIONS,
+  shortcutParameterName,
 } from '@ui';
 import {
   ACTIVE_MODULE_STOP_REASONS,
@@ -180,6 +186,40 @@ describe('message catalogue', () => {
 
     const missing = required.filter((key) => !createLocalizer({ locale: 'en', catalog }).has(key));
     expect(missing).toEqual([]);
+  });
+
+  /**
+   * The settings compose keys from the contrast and motion modes, the
+   * optional confirmations and the shortcut categories; guidance text names
+   * keys only through the binding parameters (Technical Specification 12.5;
+   * Functional Specification 20).
+   */
+  it('covers every key the settings compose at runtime, and guidance names keys only through bindings [TECH-12.5, FUNC-20]', () => {
+    const required = [
+      ...CONTRAST_MODES.map((mode) => `settings.contrast.${mode}`),
+      ...MOTION_MODES.map((mode) => `settings.motion.${mode}`),
+      ...CONFIRMATION_NAMES.map((name) => `settings.confirmations.${name}`),
+      ...ACTION_CATEGORIES.map((category) => `settings.keys.category.${category}`),
+      'shortcut.refused',
+      'shortcut.notHere',
+      'shortcut.unavailable',
+      'shortcut.noSelection',
+      'shortcut.noWreck',
+      'shortcut.noKey',
+    ];
+    const missing = required.filter((key) => !createLocalizer({ locale: 'en', catalog }).has(key));
+    expect(missing).toEqual([]);
+
+    const names = new Set(REMAPPABLE_ACTIONS.map((action) => shortcutParameterName(action.id)));
+    const content = shippedContent().messages('en');
+    const guidance = Object.entries(content).filter(([key]) => key.startsWith('content.guide.'));
+    for (const [key, template] of guidance) {
+      for (const [, name] of template.matchAll(/\{([A-Za-z][A-Za-z0-9_]*)\}/g)) {
+        expect(names.has(name ?? ''), `${key} names {${name ?? ''}}`).toBe(true);
+      }
+      // A literal "(L)" would go stale the moment the player remapped L.
+      expect(template, key).not.toMatch(/\([A-Z\]\[=-]\)/);
+    }
   });
 
   it('has no empty or whitespace-only message [TECH-12.5]', () => {

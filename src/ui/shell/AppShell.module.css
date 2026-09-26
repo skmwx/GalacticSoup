@@ -32,6 +32,10 @@
   font-size: var(--gs-font-small);
 }
 
+.settingsToggle {
+  flex: none;
+}
+
 .main {
   display: flex;
   flex-direction: column;

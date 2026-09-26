@@ -1,0 +1,26 @@
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.3em;
+  height: 1.3em;
+  margin-right: 0.35em;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid currentColor;
+  vertical-align: middle;
+}
+
+/* A circle for fine, a rounded square for a warning, a thick square for an error. */
+.ok {
+  border-radius: 50%;
+}
+
+.warning {
+  border-radius: 2px;
+}
+
+.error {
+  border-radius: 0;
+  border-width: 2px;
+}

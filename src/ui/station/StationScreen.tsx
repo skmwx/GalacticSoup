@@ -2,7 +2,7 @@ import { useId, useState, type JSX } from 'react';
 
 import type { ClientGateway } from '@gateway';
 
-import { ActionIcon, actionById, useActionShortcuts, type ActionRunner } from '../actions';
+import { ActionIcon, actionById, keyLabel, useActionShortcuts, useBindings, type ActionRunner } from '../actions';
 import { GuidedBadge, GuidedHint } from '../guidance';
 import { useTranslate } from '../localization';
 import { DeparturePanel } from './DeparturePanel';
@@ -111,12 +111,18 @@ export function StationScreen({
     setOpen('station.market');
   };
 
+  const bindings = useBindings();
   useActionShortcuts(
     Object.fromEntries(
       PANELS.map((panel) => [
         panel,
         () => {
+          const state = availability(panel);
+          if (!state.available) {
+            return state.reason ?? 'station.unavailable.service';
+          }
           setOpen(panel);
+          return undefined;
         },
       ]),
     ),
@@ -147,6 +153,7 @@ export function StationScreen({
         {PANELS.map((panel) => {
           const action = actionById(panel);
           const state = availability(panel);
+          const key = bindings.byAction.get(panel) ?? null;
           return (
             <button
               key={panel}
@@ -156,6 +163,7 @@ export function StationScreen({
               data-guided={guidedSurface === panel ? 'true' : undefined}
               aria-describedby={guidedSurface === panel ? guidedHintId : undefined}
               aria-current={open === panel ? 'page' : undefined}
+              aria-keyshortcuts={key === null ? undefined : keyLabel(key)}
               disabled={!state.available}
               onClick={() => {
                 setOpen(panel);
@@ -164,6 +172,9 @@ export function StationScreen({
               <span className={styles['tileHeader']}>
                 <ActionIcon icon={action.icon} />
                 {translate(action.labelKey)}
+                {key === null ? null : (
+                  <kbd className={styles['tabKey']} aria-hidden="true">{keyLabel(key)}</kbd>
+                )}
               </span>
               {guidedSurface === panel && open !== panel ? <GuidedBadge /> : null}
             </button>

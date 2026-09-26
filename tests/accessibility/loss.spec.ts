@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+import { undock } from '../support/undock.ts';
+
 /**
  * The loss report and the shipless station under automated audit
  * (Technical Specification 12.3; Functional Specification 9.12, 19.6, 20).
@@ -83,7 +85,7 @@ test.describe('loss accessibility', () => {
 
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await page.getByRole('button', { name: 'Choose Pirate Base' }).click();
-    await page.getByRole('button', { name: /^Undock/ }).click();
+    await undock(page);
     await page.getByLabel('Arrive at').selectOption('10');
     await page.getByRole('button', { name: /^Warp/ }).click();
     await page.getByRole('button', { name: /^Resume/ }).click();

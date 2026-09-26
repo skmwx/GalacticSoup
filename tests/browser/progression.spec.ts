@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { undock } from '../support/undock.ts';
+
 /**
  * From the starting fit to the mastery site, in a real browser
  * (MVP Implementation Plan phases 16-17; MVP-AC-05, MVP-AC-06, MVP-AC-07,
@@ -154,7 +156,7 @@ async function depart(page: Page, encounter: string): Promise<void> {
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
   await page.getByRole('button', { name: `Choose ${encounter}` }).click();
   await expect(page.getByText(`Destination: ${encounter}`)).toBeVisible();
-  await page.getByRole('button', { name: /^Undock/ }).click();
+  await undock(page);
   await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
 }
 

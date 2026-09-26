@@ -4,8 +4,8 @@ import type { MessageKey } from '@shared';
  * The central action registry (Technical Specification 12.3).
  *
  * One entry describes an action once: its stable id, its label, the icon that
- * stands for it, its default shortcut and the category a later settings screen
- * will remap it in. Buttons, command bars, menus and keyboard handling all
+ * stands for it, its default shortcut and the category the settings list it
+ * under when the player remaps it (`bindings.ts`). Buttons, command bars, menus and keyboard handling all
  * read the same entry, so two surfaces cannot offer the same action under
  * different names or disagree about whether it exists.
  *
@@ -570,6 +570,14 @@ export const ACTIONS: readonly ActionDefinition[] = [
     category: 'view',
   },
   {
+    id: 'preferences.open',
+    labelKey: 'action.preferences.open',
+    descriptionKey: 'action.preferences.open.detail',
+    icon: 'settings',
+    shortcut: null,
+    category: 'view',
+  },
+  {
     id: 'preferences.restoreDefaults',
     labelKey: 'action.preferences.restoreDefaults',
     descriptionKey: null,
@@ -621,7 +629,7 @@ export function actionById(id: string): ActionDefinition {
   return action;
 }
 
-/** Default shortcut to action id, for the keyboard handler and a settings screen. */
+/** Default shortcut to action id, before the player's own bindings are applied. */
 export function defaultShortcuts(): ReadonlyMap<string, string> {
   const bindings = new Map<string, string>();
   for (const action of ACTIONS) {

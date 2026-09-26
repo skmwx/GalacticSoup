@@ -1,12 +1,15 @@
-import type { JSX } from 'react';
+import { useState, type JSX } from 'react';
 
 import type { BookmarkDestinationData, DestinationData, ShipData } from '@protocol';
 
 import { ActionButton, commandAvailability, type ActionRunner } from '../actions';
+import { Dialog } from '../common/Dialog';
+import { StatusMark } from '../common/StatusMark';
 import { SubstitutedExplanation } from '../common/Explanation';
 import { formatSimulationDuration } from '../format/duration';
 import { formatCredits, formatPercent, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
+import { usePreferences } from '../preferences';
 import type { PlayData } from '../frame/usePlayData';
 import { wreckRemainingMs } from './LossReport';
 import styles from './Station.module.css';
@@ -31,7 +34,9 @@ import styles from './Station.module.css';
  * fight: a weapon with no ammunition loaded, a ship with nothing that can
  * shoot, and armour or hull that has not been repaired (Functional
  * Specification 10). The warnings are the fit's own and the layers are the
- * ship's; a warning never blocks undocking.
+ * ship's; a warning never blocks undocking. Undocking while one stands asks
+ * first, in a confirmation that lists them again - one the player may switch
+ * off in the settings (Functional Specification 20).
  *
  * Beside them it reports the capacitor: how full it is and, when it is not,
  * how much running time will fill it, with the recharge formula written out.
@@ -68,6 +73,12 @@ export function DeparturePanel({
   const undock = commandAvailability(data.site?.commands, 'ship.undock');
   const selected = destinations.find((entry) => entry.selected) ?? null;
   const selectedBookmark = bookmarks.find((entry) => entry.selected) ?? null;
+  const { preferences } = usePreferences();
+  const [confirming, setConfirming] = useState(false);
+  const warnings = undockWarnings(data.ship, translate);
+  const undockNow = async (): Promise<void> => {
+    await data.send('ship.undock', {});
+  };
 
   return (
     <section className={styles['panel']} aria-labelledby="departure-heading">
@@ -150,7 +161,7 @@ export function DeparturePanel({
             : translate('departure.currentSelection', { site: translate(selected.nameKey) })}
       </p>
 
-      <UndockWarnings ship={data.ship} />
+      <UndockWarnings warnings={warnings} />
       <CapacitorReadiness ship={data.ship} />
 
       <div className={styles['toolbar']}>
@@ -161,10 +172,50 @@ export function DeparturePanel({
           available={undock.available}
           unavailableReason={undock.unavailableReason}
           onRun={async () => {
-            await data.send('ship.undock', {});
+            if (warnings.length > 0 && preferences.confirmations.undockWithWarnings) {
+              setConfirming(true);
+              return;
+            }
+            await undockNow();
           }}
         />
       </div>
+
+      <Dialog
+        open={confirming}
+        title={translate('departure.confirm.title')}
+        onClose={() => {
+          setConfirming(false);
+        }}
+        footer={
+          <>
+            <ActionButton
+              actionId="ship.undock"
+              runner={runner}
+              variant="danger"
+              label={translate('departure.confirm.undock')}
+              available={undock.available}
+              unavailableReason={undock.unavailableReason}
+              onRun={async () => {
+                setConfirming(false);
+                await undockNow();
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setConfirming(false);
+              }}
+            >
+              {translate('departure.confirm.stay')}
+            </button>
+          </>
+        }
+      >
+        <p>{translate('departure.confirm.detail')}</p>
+        <UndockWarnings warnings={warnings} />
+        <p className={styles['muted']}>{translate('departure.confirm.setting')}</p>
+      </Dialog>
     </section>
   );
 }
@@ -267,37 +318,50 @@ function BookmarkTable({
 /** The fit warnings that matter in a fight, and unrepaired damage. */
 const UNDOCK_WARNING_CODES: readonly string[] = ['noAmmunition', 'noWeapon'];
 
-function UndockWarnings({ ship }: { readonly ship: ShipData | null }): JSX.Element | null {
-  const translate = useTranslate();
+/**
+ * The undock warnings as sentences: an unloaded or missing weapon, and armour
+ * or hull that has not been repaired.
+ */
+function undockWarnings(ship: ShipData | null, translate: ReturnType<typeof useTranslate>): readonly string[] {
   if (ship === null) {
-    return null;
+    return [];
   }
-  const warnings = ship.warnings.filter((warning) => UNDOCK_WARNING_CODES.includes(warning.code));
+  const fit = ship.warnings
+    .filter((warning) => UNDOCK_WARNING_CODES.includes(warning.code))
+    .map((warning) =>
+      warning.slot === null
+        ? translate(warning.messageKey, warning.params)
+        : translate('departure.slotWarning', {
+            slot: `${translate(`slot.${warning.slot.kind}`)} ${String(warning.slot.index + 1)}`,
+            warning: translate(warning.messageKey, warning.params),
+          }),
+    );
   const damaged = ship.layers.filter(
     (layer) => layer.layer !== 'shield' && layer.hitPoints < layer.maximumHitPoints,
   );
-  if (warnings.length === 0 && damaged.length === 0) {
+  return damaged.length === 0
+    ? fit
+    : [
+        ...fit,
+        translate('departure.damaged', {
+          layers: damaged.map((layer) => translate(`layer.${layer.layer}`)).join(', '),
+        }),
+      ];
+}
+
+function UndockWarnings({ warnings }: { readonly warnings: readonly string[] }): JSX.Element | null {
+  const translate = useTranslate();
+  if (warnings.length === 0) {
     return null;
   }
   return (
     <ul className={styles['issues']} aria-label={translate('departure.warnings')} data-undock-warnings>
       {warnings.map((warning) => (
-        <li key={`${warning.code}:${warning.slot?.index ?? 'fit'}`} className={styles['warning']}>
-          {warning.slot === null
-            ? translate(warning.messageKey, warning.params)
-            : translate('departure.slotWarning', {
-                slot: `${translate(`slot.${warning.slot.kind}`)} ${String(warning.slot.index + 1)}`,
-                warning: translate(warning.messageKey, warning.params),
-              })}
+        <li key={warning} className={styles['warning']}>
+          <StatusMark kind="warning" />
+          {warning}
         </li>
       ))}
-      {damaged.length === 0 ? null : (
-        <li className={styles['warning']}>
-          {translate('departure.damaged', {
-            layers: damaged.map((layer) => translate(`layer.${layer.layer}`)).join(', '),
-          })}
-        </li>
-      )}
     </ul>
   );
 }

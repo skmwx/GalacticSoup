@@ -2,7 +2,15 @@ import type { JSX } from 'react';
 
 import type { GuidanceChainData, GuidanceStepData, OnboardingData } from '@protocol';
 
-import { ActionButton, ActionIcon, actionById, commandAvailability, type ActionRunner } from '../actions';
+import {
+  ActionButton,
+  ActionIcon,
+  actionById,
+  commandAvailability,
+  shortcutParameters,
+  useBindings,
+  type ActionRunner,
+} from '../actions';
 import type { PlayData } from '../frame/usePlayData';
 import { useTranslate } from '../localization';
 import styles from './Guidance.module.css';
@@ -18,7 +26,9 @@ import styles from './Guidance.module.css';
  * again are commands, because guidance progress is campaign state.
  *
  * A step's state is written as a word and drawn as a distinct mark, never
- * conveyed by colour alone.
+ * conveyed by colour alone. A step that names a key names the player's own
+ * binding for it, so remapping a shortcut never leaves the guidance pointing
+ * at the old key (Functional Specification 20).
  *
  * @implements FUNC-3.2, FUNC-19.6, FUNC-22.10, TECH-10.6, MVP-AC-10
  */
@@ -42,6 +52,7 @@ const STATUS_MARKS: Readonly<Record<GuidanceStepData['status'], string>> = {
 
 export function GuidancePanel({ data, runner, onGoTo, openSurface }: GuidancePanelProps): JSX.Element | null {
   const translate = useTranslate();
+  const bindings = useBindings();
   const onboarding = data.onboarding;
   if (onboarding === null || onboarding.hidden) return null;
   const found = currentOf(onboarding);
@@ -75,7 +86,9 @@ export function GuidancePanel({ data, runner, onGoTo, openSurface }: GuidancePan
       ) : (
         <div className={styles['current']}>
           <h3 className={styles['stepTitle']}>{translate(step.titleKey)}</h3>
-          <p className={styles['body']}>{translate(step.bodyKey)}</p>
+          <p className={styles['body']}>
+            {translate(step.bodyKey, shortcutParameters(bindings, translate('shortcut.noKey')))}
+          </p>
           <p className={styles['where']}>
             {translate('guidance.where', { surface: surfaceLabel ?? '' })}
           </p>

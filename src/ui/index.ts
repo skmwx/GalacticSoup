@@ -10,15 +10,32 @@ export {
   ACTION_ICONS,
   ACTION_MESSAGE_KEYS,
   actionById,
+  assignKey,
   defaultShortcuts,
+  isBindableKey,
+  keyLabel,
+  normaliseKey,
+  REMAPPABLE_ACTIONS,
+  resolveBindings,
+  SHORTCUT_NOTICE_MS,
+  ShortcutNotice,
+  ShortcutProvider,
+  shortcutParameterName,
+  shortcutParameters,
   useActionRunner,
   useActionShortcuts,
+  useBinding,
+  useBindings,
 } from './actions';
 export type {
   ActionCategory,
   ActionDefinition,
   ActionIconName,
   ActionRunner,
+  BindingOverrides,
+  ResolvedBindings,
+  ShortcutHandlers,
+  ShortcutOutcome,
 } from './actions';
 export { CampaignPanel } from './campaign/CampaignPanel';
 export type { CampaignPanelProps } from './campaign/CampaignPanel';
@@ -149,14 +166,29 @@ export {
 } from './notifications';
 export type { NotificationCenterProps } from './notifications';
 export {
+  applyDisplayPreferences,
   AUDIO_CHANNEL_NAMES,
+  CONFIRMATION_NAMES,
+  CONTRAST_MODES,
+  DEFAULT_CONFIRMATIONS,
+  DEFAULT_DISPLAY,
   DEFAULT_PREFERENCES,
   loadPreferences,
+  MOTION_MODES,
   parsePreferences,
   PREFERENCES_STORAGE_KEY,
   PREFERENCES_VERSION,
   PreferencesProvider,
   savePreferences,
+  SCALE_STEPS,
   usePreferences,
+  useReducedMotion,
 } from './preferences';
-export type { PreferenceStorage, Preferences, PreferencesProviderProps } from './preferences';
+export type {
+  DisplayPreferences,
+  PreferenceStorage,
+  Preferences,
+  PreferencesProviderProps,
+} from './preferences';
+export { bindingLabel, KeyBindings, SettingsPanel } from './settings';
+export type { SettingsPanelProps } from './settings';

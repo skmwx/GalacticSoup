@@ -44,6 +44,6 @@ export { TravelStatus } from './TravelStatus';
 export type { TravelStatusProps } from './TravelStatus';
 export { DEFAULT_PIXELS_PER_KM, useCamera } from './useCamera';
 export type { CameraControl } from './useCamera';
-export { REDUCED_MOTION_QUERY, usePrefersReducedMotion } from './usePrefersReducedMotion';
+export { REDUCED_MOTION_QUERY, usePrefersReducedMotion } from '../preferences/useReducedMotion';
 export { MAX_EXTRAPOLATION_MS, useSiteMotion } from './useSiteMotion';
 export type { SiteMotionOptions, SitePositions } from './useSiteMotion';

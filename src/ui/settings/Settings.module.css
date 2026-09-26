@@ -1,0 +1,144 @@
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-3);
+  background: var(--gs-color-surface);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-3);
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gs-space-2);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--gs-font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-3);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gs-space-2);
+  flex: 1 1 18rem;
+  min-width: 0;
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-3);
+}
+
+.groupHeading {
+  margin: 0;
+  font-size: var(--gs-font-body);
+}
+
+.muted {
+  margin: 0;
+  color: var(--gs-color-text-muted);
+  font-size: var(--gs-font-small);
+  max-width: 48rem;
+}
+
+.field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gs-space-2);
+}
+
+.field label {
+  min-width: 9rem;
+}
+
+.field select,
+.button {
+  background: var(--gs-color-surface-raised);
+  color: inherit;
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  font: inherit;
+  padding: var(--gs-space-1) var(--gs-space-2);
+  min-height: var(--gs-target-min);
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--gs-color-accent);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  color: var(--gs-color-text-muted);
+  border-style: dashed;
+}
+
+.button[aria-pressed="true"] {
+  border-color: var(--gs-color-accent);
+  border-width: 2px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--gs-space-2);
+}
+
+.table {
+  border-collapse: collapse;
+  font-size: var(--gs-font-small);
+  max-width: 100%;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--gs-space-1) var(--gs-space-2);
+  border-bottom: var(--gs-border);
+}
+
+.caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: var(--gs-space-1);
+}
+
+.category {
+  color: var(--gs-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-top: var(--gs-space-3);
+}
+
+.key {
+  font-family: var(--gs-font-mono);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: 0 var(--gs-space-1);
+}
+
+.keyControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-1);
+}
+
+.status {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: var(--gs-font-small);
+}

@@ -57,7 +57,13 @@ export function ModulesPanel({ data, runner, modules }: ModulesPanelProps): JSX.
         return [
           actionId,
           () => {
+            const activate = commandAvailability(module.commands, 'module.activate');
+            const deactivate = commandAvailability(module.commands, 'module.deactivate');
+            if (!activate.available && !deactivate.available) {
+              return activate.unavailableReason ?? deactivate.unavailableReason ?? 'shortcut.unavailable';
+            }
             runner.run(actionId, () => toggle(module));
+            return undefined;
           },
         ];
       }),

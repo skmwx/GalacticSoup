@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react';
 
 import type { CampaignSession, CampaignSessionState, ClientGateway } from '@gateway';
 
-import { useActionRunner } from '../actions';
+import { ShortcutNotice, ShortcutProvider, useActionRunner } from '../actions';
 import { AudioCuesProvider, type CuePlayer } from '../audio';
 import { GuidancePanel, guidedSurface } from '../guidance';
 import { ContentTextProvider, useTranslate } from '../localization';
@@ -36,6 +36,10 @@ import { useSimulationClock } from './useSimulationClock';
  * between the frame and the play surface. The guidance can open the station
  * surface its current step is carried out on, so which station surface is
  * open is held here rather than inside the station.
+ *
+ * Keyboard shortcuts are dispatched from here, through the player's own
+ * bindings, and a key that cannot act right now says why on the notice line
+ * beside the notifications (Functional Specification 20).
  *
  * @implements FUNC-19.1, FUNC-19.2, FUNC-19.5, FUNC-19.7, FUNC-3.2, FUNC-3.4, TECH-11.3, TECH-12.1, MVP-AC-10
  */
@@ -100,49 +104,52 @@ export function PlayScreen({
     <ContentTextProvider gateway={gateway}>
       <PreferencesProvider {...(preferenceStorage === undefined ? {} : { storage: preferenceStorage })}>
         <AudioCuesProvider gateway={gateway} {...(cuePlayer === undefined ? {} : { player: cuePlayer })}>
-          <div className={styles['play']}>
-            <CampaignFrame
-              session={session}
-              sessionState={sessionState}
-              data={data}
-              runner={runner}
-              simulationTimeMs={clock.simulationTimeMs}
-            />
-            <NotificationCenter
-              notifications={data.notifications}
-              slot={sessionState.slot}
-              runner={runner}
-            />
-            <GuidancePanel
-              data={data}
-              runner={runner}
-              onGoTo={data.docked ? (surface) => {
-                setStationPanel(surface as StationPanelId);
-              } : null}
-              openSurface={data.docked ? stationPanel : 'space'}
-            />
-            {data.location === null ? (
-              <p role="status">{translate('play.loading')}</p>
-            ) : data.docked ? (
-              <StationScreen
-                gateway={gateway}
+          <ShortcutProvider>
+            <div className={styles['play']}>
+              <CampaignFrame
+                session={session}
+                sessionState={sessionState}
                 data={data}
                 runner={runner}
                 simulationTimeMs={clock.simulationTimeMs}
-                panel={stationPanel}
-                onPanelChange={setStationPanel}
-                guidedSurface={guidedSurface(data.onboarding)}
               />
-            ) : (
-              <SpaceScreen
+              <NotificationCenter
+                notifications={data.notifications}
+                slot={sessionState.slot}
+                runner={runner}
+              />
+              <ShortcutNotice className={styles['shortcutNotice']} />
+              <GuidancePanel
                 data={data}
                 runner={runner}
-                gateway={gateway}
-                simulationTimeMs={clock.simulationTimeMs}
-                paused={paused}
+                onGoTo={data.docked ? (surface) => {
+                  setStationPanel(surface as StationPanelId);
+                } : null}
+                openSurface={data.docked ? stationPanel : 'space'}
               />
-            )}
-          </div>
+              {data.location === null ? (
+                <p role="status">{translate('play.loading')}</p>
+              ) : data.docked ? (
+                <StationScreen
+                  gateway={gateway}
+                  data={data}
+                  runner={runner}
+                  simulationTimeMs={clock.simulationTimeMs}
+                  panel={stationPanel}
+                  onPanelChange={setStationPanel}
+                  guidedSurface={guidedSurface(data.onboarding)}
+                />
+              ) : (
+                <SpaceScreen
+                  data={data}
+                  runner={runner}
+                  gateway={gateway}
+                  simulationTimeMs={clock.simulationTimeMs}
+                  paused={paused}
+                />
+              )}
+            </div>
+          </ShortcutProvider>
         </AudioCuesProvider>
       </PreferencesProvider>
     </ContentTextProvider>

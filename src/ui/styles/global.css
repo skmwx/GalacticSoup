@@ -19,19 +19,39 @@ body {
   font-family: var(--gs-font-stack);
   font-size: var(--gs-font-body);
   line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+/* Check boxes and radio buttons are large enough to hit (WCAG 2.5.8). */
+input[type="checkbox"],
+input[type="radio"] {
+  width: var(--gs-target-min);
+  height: var(--gs-target-min);
+  accent-color: var(--gs-color-accent);
 }
 
 :focus-visible {
-  outline: 2px solid var(--gs-color-focus);
+  outline: var(--gs-focus-width) solid var(--gs-color-focus);
   outline-offset: 2px;
 }
 
+/* Reduced motion, whether the player chose it or the system asks for it. */
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  :root:not([data-motion="full"]) *,
+  :root:not([data-motion="full"]) *::before,
+  :root:not([data-motion="full"]) *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

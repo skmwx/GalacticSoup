@@ -23,7 +23,7 @@ import { WeaponsPanel } from './WeaponsPanel';
 import type { Point, Viewport } from './camera';
 import { fireAvailability, weaponTargetId } from './tactical';
 import { useCamera } from './useCamera';
-import { usePrefersReducedMotion } from './usePrefersReducedMotion';
+import { useReducedMotion } from '../preferences/useReducedMotion';
 import { useSiteMotion } from './useSiteMotion';
 
 /**
@@ -75,7 +75,7 @@ export function SpaceScreen({
   const combat = data.combat;
   const encounter = data.encounter;
   const camera = useCamera();
-  const reducedMotion = usePrefersReducedMotion();
+  const reducedMotion = useReducedMotion();
   const positions = useSiteMotion({ site, paused, reducedMotion });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [choosingPoint, setChoosingPoint] = useState(false);
@@ -204,24 +204,31 @@ export function SpaceScreen({
     'space.selectPrevious': () => {
       cycleSelection(-1);
     },
+    // A key that cannot act says why, as the button beside it does.
     'targeting.lock': () => {
-      if (selected !== null && commandAvailability(selected.commands, 'targeting.lock').available) {
-        runner.run('targeting.lock', async () => {
-          await data.send('targeting.lock', { targetId: selected.id });
-        });
-      }
+      if (selected === null) return 'shortcut.noSelection';
+      const lock = commandAvailability(selected.commands, 'targeting.lock');
+      if (!lock.available) return lock.unavailableReason ?? 'shortcut.unavailable';
+      runner.run('targeting.lock', async () => {
+        await data.send('targeting.lock', { targetId: selected.id });
+      });
+      return undefined;
     },
     'targeting.unlock': () => {
-      if (selected !== null && commandAvailability(selected.commands, 'targeting.unlock').available) {
-        runner.run('targeting.unlock', async () => {
-          await data.send('targeting.unlock', { targetId: selected.id });
-        });
-      }
+      if (selected === null) return 'shortcut.noSelection';
+      const unlock = commandAvailability(selected.commands, 'targeting.unlock');
+      if (!unlock.available) return unlock.unavailableReason ?? 'shortcut.unavailable';
+      runner.run('targeting.unlock', async () => {
+        await data.send('targeting.unlock', { targetId: selected.id });
+      });
+      return undefined;
     },
     'loot.takeAll': () => {
-      if (selected?.kind === 'wreck' && commandAvailability(selected.commands, 'loot.take').available) {
-        runner.run('loot.takeAll', () => takeEverything(gateway, data, selected.id));
-      }
+      if (selected?.kind !== 'wreck') return 'shortcut.noWreck';
+      const take = commandAvailability(selected.commands, 'loot.take');
+      if (!take.available) return take.unavailableReason ?? 'shortcut.unavailable';
+      runner.run('loot.takeAll', () => takeEverything(gateway, data, selected.id));
+      return undefined;
     },
   });
 

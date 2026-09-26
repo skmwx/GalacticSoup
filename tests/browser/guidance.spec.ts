@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { undock } from '../support/undock.ts';
+
 /**
  * A first-time player follows the in-game guidance through the easiest
  * complete loop (MVP Implementation Plan phase 18; Functional Specification
@@ -117,7 +119,7 @@ test.describe('guided first loop', () => {
     // Undock from Departure.
     expect(await step(page, 'Undock')).toContain('Undock');
     await showMe(page);
-    await page.getByRole('button', { name: /^Undock/ }).click();
+    await undock(page);
     await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
 
     // Warp (W), with the clock running (P).
@@ -211,7 +213,7 @@ test.describe('guided first loop', () => {
     expect(await step(page, 'Try a harder site')).toContain('cutters first');
     await showMe(page);
     await page.getByRole('button', { name: 'Choose Pirate Patrol' }).click();
-    await page.getByRole('button', { name: /^Undock/ }).click();
+    await undock(page);
     await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
     await page.keyboard.press('w');
     await ensureRunning(page);

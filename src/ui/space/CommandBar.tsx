@@ -187,16 +187,23 @@ export function CommandBar({
     });
   };
 
+  // A movement order needs a selected object; without one the key says so.
+  // Stop and retreat are emergency controls and always go to the engine,
+  // whose answer is shown like any other refusal.
+  const orderShortcut = (
+    command: 'movement.approach' | 'movement.orbit' | 'movement.keepRange',
+  ): string | undefined => {
+    if (selected === null) return 'shortcut.noSelection';
+    const state = targetCommand(command);
+    if (!state.available) return state.unavailableReason ?? 'shortcut.unavailable';
+    runner.run(command, () => order(command));
+    return undefined;
+  };
+
   useActionShortcuts({
-    'movement.approach': () => {
-      runner.run('movement.approach', () => order('movement.approach'));
-    },
-    'movement.orbit': () => {
-      runner.run('movement.orbit', () => order('movement.orbit'));
-    },
-    'movement.keepRange': () => {
-      runner.run('movement.keepRange', () => order('movement.keepRange'));
-    },
+    'movement.approach': () => orderShortcut('movement.approach'),
+    'movement.orbit': () => orderShortcut('movement.orbit'),
+    'movement.keepRange': () => orderShortcut('movement.keepRange'),
     'movement.stop': () => {
       runner.run('movement.stop', async () => {
         await data.send('movement.stop', {});
@@ -208,18 +215,22 @@ export function CommandBar({
       });
     },
     'navigation.warp': () => {
-      if (chosenDestination !== null && warp.available) {
-        runner.run('navigation.warp', async () => {
-          await chosenDestination.warp(arrivalKm);
-        });
+      if (chosenDestination === null || !warp.available) {
+        return warp.unavailableReason ?? 'shortcut.unavailable';
       }
+      runner.run('navigation.warp', async () => {
+        await chosenDestination.warp(arrivalKm);
+      });
+      return undefined;
     },
     'navigation.dock': () => {
-      if (dockTarget !== null) {
-        runner.run('navigation.dock', async () => {
-          await data.send('navigation.dock', { stationId: dockTarget.id });
-        });
+      if (dockTarget === null || !dock.available) {
+        return dock.unavailableReason ?? 'shortcut.unavailable';
       }
+      runner.run('navigation.dock', async () => {
+        await data.send('navigation.dock', { stationId: dockTarget.id });
+      });
+      return undefined;
     },
   });
 

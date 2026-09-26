@@ -3,3 +3,17 @@
   flex-direction: column;
   gap: var(--gs-space-3);
 }
+
+/*
+ * A refused shortcut's reason. Empty, it cancels the gap it would add but
+ * stays rendered, so the live region is in place before its first message.
+ */
+.shortcutNotice {
+  margin: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-warn);
+}
+
+.shortcutNotice:empty {
+  margin-bottom: calc(-1 * var(--gs-space-3));
+}

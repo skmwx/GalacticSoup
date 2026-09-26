@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import type { ShipData, UndockValidityData } from '@protocol';
 
 import { AttributeExplanation } from '../common/Explanation';
+import { StatusMark } from '../common/StatusMark';
 import { formatPercent, formatQuantity, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { Figure } from './Figure';
@@ -214,9 +215,10 @@ export function ShipSummary({ ship }: { readonly ship: ShipData }): JSX.Element 
       )}
 
       {ship.violations.length === 0 ? null : (
-        <ul className={styles['issues']}>
+        <ul className={styles['issues']} aria-label={translate('ship.violations')} data-fit-violations>
           {ship.violations.map((issue) => (
             <li key={`${issue.code}:${issue.slot?.index ?? 'fit'}`} className={styles['error']}>
+              <StatusMark kind="error" />
               {translate(issue.messageKey, issue.params)}
             </li>
           ))}
@@ -224,9 +226,10 @@ export function ShipSummary({ ship }: { readonly ship: ShipData }): JSX.Element 
       )}
 
       {ship.warnings.length === 0 ? null : (
-        <ul className={styles['issues']}>
+        <ul className={styles['issues']} aria-label={translate('ship.warnings')} data-fit-warnings>
           {ship.warnings.map((issue) => (
             <li key={`${issue.code}:${issue.slot?.index ?? 'fit'}`} className={styles['warning']}>
+              <StatusMark kind="warning" />
               {translate(issue.messageKey, issue.params)}
             </li>
           ))}
@@ -245,6 +248,7 @@ function UndockStatus({ validity }: { readonly validity: UndockValidityData }): 
       role="status"
       aria-label={translate('ship.undockStatus')}
     >
+      <StatusMark kind={validity.undockable ? 'ok' : 'error'} />
       {validity.undockable
         ? translate('ship.undockable')
         : translate(validity.unavailableReason ?? 'fitting.undock.invalidFit')}

@@ -20,6 +20,7 @@
   transition: border-color var(--gs-transition);
   text-align: left;
   max-width: 100%;
+  min-height: var(--gs-target-min);
 }
 
 .button:hover:not(:disabled) {

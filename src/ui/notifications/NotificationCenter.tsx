@@ -30,6 +30,11 @@ import { notificationText, SEVERITY_RANK } from './text';
  * Every level has its own word and shape, and immediate danger is announced
  * assertively to assistive technology as well as heard.
  *
+ * A toast that holds the keyboard focus stays until the focus leaves it, so
+ * nobody loses a notification while reading it; the event log keeps every one
+ * in any case. Dismissing the focused toast hands the focus to the event log
+ * control rather than dropping it onto the page.
+ *
  * @implements FUNC-19.7, FUNC-20, TECH-12.4, TECH-12.3, MVP-AC-10
  */
 
@@ -66,6 +71,8 @@ export function NotificationCenter({ notifications, slot, runner }: Notification
   const lastCue = useRef<{ atMs: number; rank: number }>({ atMs: -Infinity, rank: -1 });
   const [toasts, setToasts] = useState<readonly Toast[]>([]);
   const [panel, setPanel] = useState<'log' | 'settings' | null>(null);
+  const [held, setHeld] = useState<number | null>(null);
+  const controls = useRef<HTMLDivElement | null>(null);
   const saveFailed = slot?.status.state === 'failed';
 
   const playCue = useCallback((cueId: string | null, severity: NotificationData['severity']) => {
@@ -118,21 +125,22 @@ export function NotificationCenter({ notifications, slot, runner }: Notification
     failedBefore.current = saveFailed;
   }, [saveFailed, playCue, audio]);
 
-  // Each toast leaves after its level's duration.
+  // Each toast leaves after its level's duration, unless it holds the focus.
   useEffect(() => {
-    if (toasts.length === 0) return undefined;
+    const expiring = toasts.filter((toast) => toast.entry.id !== held);
+    if (expiring.length === 0) return undefined;
     const now = Date.now();
-    const next = Math.min(...toasts.map((toast) =>
+    const next = Math.min(...expiring.map((toast) =>
       toast.shownAtMs + TOAST_DURATION_MS[toast.entry.severity] - now));
     const timer = setTimeout(() => {
       const at = Date.now();
       setToasts((current) => current.filter((toast) =>
-        toast.shownAtMs + TOAST_DURATION_MS[toast.entry.severity] > at));
+        toast.entry.id === held || toast.shownAtMs + TOAST_DURATION_MS[toast.entry.severity] > at));
     }, Math.max(0, next));
     return () => {
       clearTimeout(timer);
     };
-  }, [toasts]);
+  }, [toasts, held]);
 
   useActionShortcuts({
     'notifications.log': () => {
@@ -142,6 +150,10 @@ export function NotificationCenter({ notifications, slot, runner }: Notification
 
   const dismiss = (id: number): void => {
     setToasts((current) => current.filter((toast) => toast.entry.id !== id));
+    if (held === id) {
+      setHeld(null);
+      controls.current?.querySelector<HTMLElement>('button')?.focus();
+    }
   };
 
   const visible = [...toasts]
@@ -170,18 +182,18 @@ export function NotificationCenter({ notifications, slot, runner }: Notification
         {urgent.length === 0 ? null : (
           <div className={styles['stack']}>
             {urgent.map((toast) => (
-              <ToastItem key={toast.entry.id} toast={toast} runner={runner} onDismiss={dismiss} urgent />
+              <ToastItem key={toast.entry.id} toast={toast} runner={runner} onDismiss={dismiss} onHold={setHeld} urgent />
             ))}
           </div>
         )}
         <div role="status" aria-live="polite" className={styles['stack']}>
           {calm.map((toast) => (
-            <ToastItem key={toast.entry.id} toast={toast} runner={runner} onDismiss={dismiss} />
+            <ToastItem key={toast.entry.id} toast={toast} runner={runner} onDismiss={dismiss} onHold={setHeld} />
           ))}
         </div>
       </div>
 
-      <div className={styles['controls']}>
+      <div className={styles['controls']} ref={controls}>
         <ActionButton
           actionId="notifications.log"
           runner={runner}
@@ -213,11 +225,14 @@ function ToastItem({
   toast,
   runner,
   onDismiss,
+  onHold,
   urgent = false,
 }: {
   readonly toast: Toast;
   readonly runner: ActionRunner;
   readonly onDismiss: (id: number) => void;
+  /** Keeps the toast while the focus is inside it; `null` releases it. */
+  readonly onHold: (id: number | null) => void;
   /** Immediate danger is announced assertively as it appears. */
   readonly urgent?: boolean;
 }): JSX.Element {
@@ -230,6 +245,14 @@ function ToastItem({
       {...(urgent ? { role: 'alert' } : {})}
       data-notification={entry.definitionId}
       data-severity={entry.severity}
+      onFocus={() => {
+        onHold(entry.id);
+      }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          onHold(null);
+        }
+      }}
     >
       <SeverityIcon severity={entry.severity} className={styles['icon']} />
       <span className={styles['level']}>{translate(`notifications.level.${entry.severity}`)}</span>

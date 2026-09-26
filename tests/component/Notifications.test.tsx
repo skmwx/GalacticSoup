@@ -1,6 +1,6 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { JSX } from 'react';
 
 import type { ClientGateway } from '@gateway';
@@ -155,6 +155,32 @@ function failedSlot(): SaveSlotData {
 
 afterEach(() => {
   window.localStorage.clear();
+  vi.useRealTimers();
+});
+
+describe('notification focus (Phase 19)', () => {
+  it('keeps a toast while it holds the focus and hands the focus to the event log when it is dismissed [TECH-12.3, FUNC-20]', async () => {
+    vi.useFakeTimers();
+    const centre = renderCentre();
+    await centre.show(history(BOUNTY(1, 1)));
+    await centre.show(history(BOUNTY(1, 1), BOUNTY(2, 2), LOCK(3, 3)));
+
+    const bounty = document.querySelector('[data-notification="notify.encounter.bounty"]') as HTMLElement;
+    const dismiss = within(bounty).getByRole('button', { name: /^Dismiss/ });
+    act(() => {
+      dismiss.focus();
+    });
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    // The unfocused danger toast left on time; the focused one stayed.
+    expect(document.querySelector('[data-notification="notify.combat.hostile-lock"]')).toBeNull();
+    expect(bounty).toBeInTheDocument();
+
+    fireEvent.click(dismiss);
+    expect(document.querySelector('[data-notification="notify.encounter.bounty"]')).toBeNull();
+    expect(screen.getByRole('button', { name: /^Event log/ })).toHaveFocus();
+  });
 });
 
 describe('notifications', () => {
@@ -251,7 +277,7 @@ describe('notifications', () => {
 
     await centre.user.click(screen.getByRole('checkbox', { name: 'Show Combat alerts' }));
     expect(JSON.parse(storage.values.get(PREFERENCES_STORAGE_KEY) ?? '{}')).toMatchObject({
-      version: 1, notifications: { combat: { visible: false, sound: true } },
+      version: 2, notifications: { combat: { visible: false, sound: true } },
     });
 
     await centre.user.click(screen.getByRole('button', { name: /^Restore defaults/ }));

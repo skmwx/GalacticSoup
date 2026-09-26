@@ -5,15 +5,18 @@ import type { MessageKey } from '@shared';
 import { useTranslate } from '../localization';
 import { ActionIcon } from './ActionIcon';
 import styles from './ActionButton.module.css';
+import { keyLabel } from './bindings';
 import { actionById } from './registry';
+import { useBinding } from './shortcuts';
 import type { ActionRunner } from './useActionRunner';
 
 /**
  * One registered action as a control (Technical Specification 12.3).
  *
- * The button takes its label, icon and shortcut from the registry and its
- * availability from a projection, so what it offers and what the engine
- * permits cannot drift apart. When an action is unavailable the button stays
+ * The button takes its label and icon from the registry, its shortcut from
+ * the player's bindings and its availability from a projection, so what it
+ * offers and what the engine permits cannot drift apart. The key is drawn on
+ * the button and announced as its keyboard shortcut. When an action is unavailable the button stays
  * visible and says why, because a control that disappears teaches the player
  * nothing (Functional Specification 22.10).
  *
@@ -47,6 +50,7 @@ export function ActionButton({
 }: ActionButtonProps): JSX.Element {
   const translate = useTranslate();
   const action = actionById(actionId);
+  const key = useBinding(actionId);
   const reasonId = useId();
   const pending = runner.isPending(actionId);
   const disabled = !available || pending;
@@ -61,6 +65,7 @@ export function ActionButton({
         disabled={disabled}
         {...(pressed === undefined ? {} : { 'aria-pressed': pressed })}
         {...(reason === null ? {} : { 'aria-describedby': reasonId })}
+        {...(key === null ? {} : { 'aria-keyshortcuts': keyLabel(key) })}
         onClick={() => {
           runner.run(actionId, async () => {
             await onRun();
@@ -69,8 +74,8 @@ export function ActionButton({
       >
         <ActionIcon icon={action.icon} className={styles['icon']} />
         <span className={styles['label']}>{label ?? translate(action.labelKey)}</span>
-        {action.shortcut === null ? null : (
-          <kbd className={styles['shortcut']}>{action.shortcut.toUpperCase()}</kbd>
+        {key === null ? null : (
+          <kbd className={styles['shortcut']}>{keyLabel(key)}</kbd>
         )}
         {pending ? <span className={styles['pending']}>{translate('action.pending')}</span> : null}
       </button>

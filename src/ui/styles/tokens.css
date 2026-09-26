@@ -1,9 +1,17 @@
 /**
- * Presentation tokens (Technical Specification 12.2, 12.3).
+ * Presentation tokens (Technical Specification 12.2, 12.3; Functional
+ * Specification 20).
  *
- * Interface scale and text scale are independent variables so later phases can
- * expose them as settings without touching component code. Contrast and motion
- * preferences are honoured here rather than in individual views.
+ * Interface scale and text scale are independent variables; the player's
+ * display settings write them on the root element. Contrast and motion follow
+ * the browser's `prefers-contrast` and `prefers-reduced-motion` unless the
+ * player chose otherwise, which the root element's `data-contrast` and
+ * `data-motion` attributes record. They are honoured here rather than in
+ * individual views, so every surface changes together.
+ *
+ * The high-contrast palette is black and white with bright semantic colours;
+ * every text and control colour in it exceeds WCAG AA (4.5:1) against its
+ * background, and focus draws a thicker ring.
  */
 :root {
   --gs-ui-scale: 1;
@@ -32,14 +40,33 @@
   --gs-color-warn: #ffc470;
   --gs-color-danger: #ff8d8d;
   --gs-color-focus: #ffffff;
+  --gs-focus-width: 2px;
+
+  /* The smallest pointer target a control is drawn with (WCAG 2.5.8). */
+  --gs-target-min: calc(1.5rem * var(--gs-ui-scale));
 
   --gs-radius: calc(4px * var(--gs-ui-scale));
   --gs-border: 1px solid var(--gs-color-border);
   --gs-transition: 160ms ease;
 }
 
+:root[data-contrast="high"] {
+  --gs-color-background: #000000;
+  --gs-color-surface: #000000;
+  --gs-color-surface-raised: #0a0a0a;
+  --gs-color-border: #ffffff;
+  --gs-color-text: #ffffff;
+  --gs-color-text-muted: #f0f0f0;
+  --gs-color-accent: #8fe2ff;
+  --gs-color-ok: #8dff9a;
+  --gs-color-warn: #ffd479;
+  --gs-color-danger: #ffa3a3;
+  --gs-color-focus: #ffff00;
+  --gs-focus-width: 3px;
+}
+
 @media (prefers-contrast: more) {
-  :root {
+  :root:not([data-contrast="standard"]) {
     --gs-color-background: #000000;
     --gs-color-surface: #000000;
     --gs-color-surface-raised: #0a0a0a;
@@ -47,11 +74,20 @@
     --gs-color-text: #ffffff;
     --gs-color-text-muted: #f0f0f0;
     --gs-color-accent: #8fe2ff;
+    --gs-color-ok: #8dff9a;
+    --gs-color-warn: #ffd479;
+    --gs-color-danger: #ffa3a3;
+    --gs-color-focus: #ffff00;
+    --gs-focus-width: 3px;
   }
 }
 
+:root[data-motion="reduced"] {
+  --gs-transition: 0ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  :root {
+  :root:not([data-motion="full"]) {
     --gs-transition: 0ms;
   }
 }

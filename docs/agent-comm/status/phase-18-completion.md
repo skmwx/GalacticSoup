@@ -246,7 +246,24 @@ Existing tests changed by this phase:
 
 ### Results
 
-To be filled in below once the full gate has run.
+Each part of `npm run verify` was run on its own against the final code:
+
+- typecheck, the architecture check (270 files, no violations) and content validation, including
+  the floor;
+- **1205 unit tests** (was 1144);
+- **105 integration tests** (was 103), including every balance career, unchanged;
+- **103 component tests** (was 90);
+- traceability: **114 requirement ids** (was 112), all covered;
+- the production build, which the Playwright web server runs before every browser run.
+
+Playwright ran **51 tests**: the 46 existing ones, the new guided browser flow and the 4 new
+accessibility cases. In one parallel run, 50 passed. The progression flow ran out of its
+25-minute limit while still looting the patrol, because it shared the machine with the other
+browser tests, including the new 5.6-minute guided one.
+
+Run alone, the progression flow passes in **18.4 minutes** (Phase 17: 18.8), so the new UI costs it
+nothing. The guided flow passes in 5.6-5.7 minutes. Running the progression spec on its own, or with
+fewer workers, keeps the full suite inside its limits on this machine.
 
 ## Findings worth retaining
 

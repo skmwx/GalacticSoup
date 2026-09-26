@@ -67,6 +67,16 @@
   font-weight: 600;
 }
 
+.tabKey {
+  font-family: var(--gs-font-mono);
+  font-size: var(--gs-font-small);
+  font-weight: 400;
+  color: var(--gs-color-text-muted);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: 0 var(--gs-space-1);
+}
+
 .tileDetail {
   margin: 0;
   color: var(--gs-color-text-muted);

@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+import { undock } from '../support/undock.ts';
+
 /**
  * The combat surfaces under automated audit
  * (Technical Specification 12.2, 12.3; Functional Specification 19.3, 20).
@@ -44,7 +46,7 @@ async function inAFight(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Move to hold' }).first().click();
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
   await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
-  await page.getByRole('button', { name: /^Undock/ }).click();
+  await undock(page);
   await page.getByLabel('Arrive at').selectOption('10');
   await page.getByRole('button', { name: /^Warp/ }).click();
   await page.getByRole('button', { name: /^Resume/ }).click();

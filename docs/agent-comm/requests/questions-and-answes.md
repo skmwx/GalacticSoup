@@ -216,3 +216,31 @@ Either would make the guidance step unnecessary for the starting campaign; it wo
 the habit after the first resupply.
 
 **Answer:**
+
+---
+
+## Q8 - Phase 19 - Undocking with a warning now asks first; the question can be switched off
+
+**Asked:** 2026-09-26 (Phase 19, accessibility, input and presentation). **Blocking:** no. Phase 19
+shipped the reading below.
+
+Functional Specification 20 asks for "configurable confirmation prompts with a restore-defaults
+action", but the MVP had no prompt a player could reasonably switch off. The price confirmations
+are required: repair "never begins without confirmation of the total price" (Functional
+Specification 10), and every market transaction shows its figures before it is confirmed (11.2,
+19.5). Deleting the campaign cannot be undone.
+
+Functional Specification 10 also says "the game warns before undocking" without ammunition or with
+damaged layers. Until now Departure only listed those warnings. Phase 19 reads "warns before
+undocking" as a question:
+
+- undocking while a warning stands opens "Undock with warnings?", which lists the warnings and
+  offers "Undock anyway" or "Stay docked";
+- the question is on by default and is the one confirmation the settings can switch off;
+- the price confirmations and deleting the campaign are listed there as "always asked".
+
+A warning still never blocks undocking; the player answers once. If you would rather keep the
+warnings as a list only, the question is one setting default (`DEFAULT_CONFIRMATIONS` in
+`src/ui/preferences/preferences.ts`); the settings would then offer it as an opt-in.
+
+**Answer:**
