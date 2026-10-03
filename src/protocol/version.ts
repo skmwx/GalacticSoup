@@ -1,6 +1,9 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
+ * Version 14 adds the capacitor to the repair preview: the station recharges
+ * it as part of the free shield repair, so the preview states the charge it
+ * found and the capacity it restores.
  * Version 13 adds contextual guidance (`onboarding.state` and the hide, show
  * and skip-step commands), the semantic notification history
  * (`notifications.list`), the authored audible cues (`audio.cues`), the
@@ -19,7 +22,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 13;
+export const PROTOCOL_VERSION = 14;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

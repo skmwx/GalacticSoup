@@ -107,14 +107,17 @@ test.describe('station interface', () => {
   test('moves a stack between the hangar and the hold [FUNC-6.2]', async ({ page }) => {
     await page.getByRole('button', { name: 'Hangar', exact: true }).click();
 
-    await expect(page.getByRole('table', { name: 'Station hangar' })).toBeVisible();
-    await page.getByRole('button', { name: 'Move to hold' }).first().click();
+    // The spare rounds start in the hold: out to the hangar, and back.
+    const hangar = page.getByRole('table', { name: 'Station hangar' });
+    const hold = page.getByRole('table', { name: 'Ship cargo hold' });
+    await expect(hold.getByRole('rowheader', { name: 'Fusion S' })).toBeVisible();
+    await page.getByRole('button', { name: 'Move to hangar' }).first().click();
+    await expect(hangar.getByRole('rowheader', { name: 'Fusion S' })).toBeVisible();
+    await expect(hold.getByRole('rowheader', { name: 'Fusion S' })).toHaveCount(0);
 
-    await expect(
-      page.getByRole('table', { name: 'Ship cargo hold' }).getByRole('rowheader', {
-        name: 'Fusion S',
-      }),
-    ).toBeVisible();
+    await page.getByRole('button', { name: 'Move to hold' }).first().click();
+    await expect(hold.getByRole('rowheader', { name: 'Fusion S' })).toBeVisible();
+    await expect(hangar.getByRole('rowheader', { name: 'Fusion S' })).toHaveCount(0);
   });
 
   test('explains a price instead of asserting it [MVP-AC-04, FUNC-19.6]', async ({ page }) => {

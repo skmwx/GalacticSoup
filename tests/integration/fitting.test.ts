@@ -82,6 +82,7 @@ describe.each(['direct', 'channel'] as const)('fitting through %s transport', (k
     const before = await ask(gateway, 'ship.get', { shipId });
     expect(before.undockable).toBe(true);
     expect(before.weapons[0]?.loadedRounds).toBe(20);
+    const magazineRounds = before.weapons[0]?.loadedRounds ?? 0;
     expect((await ask(gateway, 'fitting.draft', {})).draft).toBeNull();
 
     const begun = await ask(gateway, 'fitting.begin', { shipId });
@@ -139,14 +140,20 @@ describe.each(['direct', 'channel'] as const)('fitting through %s transport', (k
     expect(after.undockable).toBe(true);
     expect((await ask(gateway, 'fitting.draft', {})).draft).toBeNull();
 
-    // The rounds went back where they came from, undiminished.
+    // The magazine went back to the hangar whole, and the spare rounds the
+    // campaign started with never left the hold.
     expect(assets.location.kind).toBe('station');
     if (assets.location.kind !== 'station') throw new Error('Campaign did not start docked.');
     const hangar = await ask(gateway, 'inventory.hangar', { stationId: assets.location.stationId });
     expect(
       hangar.stacks.find((stack) => stack.item.definitionId === 'ammo.projectile.small.fusion')
         ?.quantity,
-    ).toBe(grantedRounds);
+    ).toBe(magazineRounds);
+    const hold = await ask(gateway, 'inventory.cargo', { shipId });
+    expect(
+      hold.stacks.find((stack) => stack.item.definitionId === 'ammo.projectile.small.fusion')
+        ?.quantity,
+    ).toBe(grantedRounds - magazineRounds);
 
     const hash = await ask(gateway, 'diagnostics.stateHash', {});
     await ask(gateway, 'campaign.close', { savedAtRealMs: 999_999_999 });

@@ -2,11 +2,13 @@ import {
   allocateEventOrdinal,
   draftOf,
   validateCampaign,
+  validateCampaignBoundary,
   type CampaignDraft,
   type CampaignState,
   type DomainEvent,
   type DomainEventKind,
   type DomainEventParams,
+  type InvariantChecks,
   type InvariantIssue,
   type ProjectionTopic,
 } from '@engine/domain';
@@ -200,8 +202,15 @@ export function beginTransaction(
  * Validates and freezes the transaction's result. The revision moves exactly
  * once here; `createCampaign` therefore starts a campaign at revision 0 and
  * its creating transaction commits it as revision 1, like any other change.
+ *
+ * `checks` is how much of the result is validated (Technical Specification
+ * 14). The complete validation is the default, and what tests and development
+ * builds run. A production host asks for the lightweight boundary check
+ * instead; the state it lets through is still validated completely before it
+ * is saved, so a defect is refused at the next save rather than at the commit
+ * that made it.
  */
-export function commit(transaction: Transaction): CommitResult {
+export function commit(transaction: Transaction, checks: InvariantChecks = 'complete'): CommitResult {
   // `beginTransaction` is the only producer of a transaction, so this cast
   // always reaches the events and invalidations it collected.
   const internals = transaction as TransactionInternals;
@@ -211,7 +220,9 @@ export function commit(transaction: Transaction): CommitResult {
     if (!internals.result.restoring) {
       draft.revision += 1;
     }
-    const issues = validateCampaign(draft as CampaignState, transaction.content);
+    const issues = checks === 'complete'
+      ? validateCampaign(draft as CampaignState, transaction.content)
+      : validateCampaignBoundary(draft as CampaignState);
     if (issues.length > 0) {
       throw new InvariantFailure(issues);
     }

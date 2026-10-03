@@ -85,6 +85,11 @@ from that seed, which is what makes a replay reproducible. A command changes a d
 move the revision once. A rejected command, a failed invariant and a command that decided to do
 nothing all leave the campaign untouched, down to the draw index of each random stream.
 
+How much runs at a commit is the host's choice (Technical Specification 14). Tests and development
+builds run the complete validation at every commit. The production worker runs the lightweight
+boundary check there - header, clock, ordinals, random streams and wallet - and the complete
+validation before every save and after every load, so a defect is refused at the next save instead.
+
 Simulation time advances only because the main thread measures real elapsed time between frames and
 sends it as `time.advance`. The engine caps one delta, scales it by the selected rate and
 accumulates fixed quanta; a suspended tab produces no delta and therefore no progress, and nothing
@@ -123,8 +128,9 @@ and answers any autosave trigger a command reports back.
 ## Wallet and physical assets
 
 Starting credits, hull, station, item grants and the starting fit are authored in
-`content/rules/economy.json`. A campaign owns one starter ship wearing that fit, its empty cargo
-hold, a station hangar with what the fit did not take, and the ship's own fitting store.
+`content/rules/economy.json`. A campaign owns one starter ship wearing that fit, its cargo
+hold carrying the spare rounds the first magazine did not take, a station hangar, and the ship's own
+fitting store. A granted item starts in the hangar unless its `location` says `cargo`.
 
 `src/engine/domain/assets` owns inventory and wallet operations. Physical stacks move only through
 the inventory service, which provides atomic split, merge, transfer, reserve/release, state change
@@ -161,7 +167,7 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 13 exposes the guidance and notification contracts (`onboarding.state` and its
+Protocol version 14 exposes the guidance and notification contracts (`onboarding.state` and its
 three commands, `notifications.list`, `audio.cues`), `loss.report`, `navigation.selectBookmark` and
 `navigation.warpToBookmark`, `encounter.state`, `loot.contents` and `loot.take` alongside
 `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`, `weapon.deactivate`,
@@ -175,7 +181,7 @@ capacitor recharge and endurance, active-module cycles and a bounded significant
 All combat actors use the same deterministic lifecycle for damage, repair, propulsion and support
 effects, so headless opponents and the player follow the same rules.
 
-Campaign state and save format are version 10, and the protocol is version 13. These are the
+Campaign state and save format are version 10, and the protocol is version 14. These are the
 versions the MVP closes on; see Closed contracts below. Previous development saves are rejected
 without modification; start a new campaign after upgrading. No pre-release migration is required by
 the MVP plan. The migration runner remains covered by fixture registries, and the older format
@@ -317,7 +323,9 @@ active modules, `t` take all, `]` and `[` step the selection, `b` draw ranges.
 
 Back at the station the hub summarises the last sortie and what the hold carries, and the
 departure panel discloses each site's opponents, bounties, possible loot and completion count, and
-warns - without blocking - about an unloaded weapon or unrepaired armour and hull before undocking.
+warns - without blocking - about an unloaded weapon, a weapon with no spare rounds in the hold, or
+unrepaired armour and hull before undocking. The repair service restores every layer and recharges
+the capacitor; the shield and the capacitor are free.
 Docking refreshes every station surface, so a campaign reopened in space finds the market current
 when it comes home.
 
@@ -379,7 +387,7 @@ same code the engine runs, instead of a second implementation that could drift.
 
 ## Closed contracts
 
-The MVP protocol (version 13) and save format (version 10) are closed. Three things make that
+The MVP protocol (version 14) and save format (version 10) are closed. Three things make that
 checkable rather than a statement:
 
 - **The schemas are closed.** Every published protocol and save schema names every field, refuses

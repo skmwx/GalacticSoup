@@ -71,6 +71,7 @@ export {
   seedStreams,
   unitQuote,
   validateCampaign,
+  validateCampaignBoundary,
 } from '@engine/domain';
 export type {
   CampaignDraft,
@@ -85,6 +86,7 @@ export type {
   DomainEventKind,
   DomainEventParams,
   EntityId,
+  InvariantChecks,
   InvariantIssue,
   ProjectionTopic,
   RandomStreamName,

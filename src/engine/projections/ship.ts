@@ -17,6 +17,7 @@ import {
   fitFromDraft,
   InventoryError,
   previewDraft,
+  reserveRounds,
   resistanceAttribute,
   shipFit,
   slotKey,
@@ -26,6 +27,7 @@ import {
   type FitDescription,
   type FitIssue,
   type FitSummary,
+  type FitWarning,
   type FittingDraft,
   type ResourceUse,
   type ShipIdentity,
@@ -314,11 +316,39 @@ function describeShip(
       sustainedHitPointsPerSecond: { ...summary.defense.sustainedHitPointsPerSecond },
     },
     violations: assessment.violations.map(issueData(fitViolationMessageKey)),
-    warnings: summary.warnings.map(issueData(fitWarningMessageKey)),
+    warnings: [...summary.warnings, ...reserveWarnings(state, content, ship, fit)]
+      .map(issueData(fitWarningMessageKey)),
     undockable: assessment.violations.length === 0,
     recoveryGrant: ship.recoveryGrant,
     insuranceCoverage: ship.insurance.coverage,
   };
+}
+
+/**
+ * Online turrets whose hold carries nothing they could reload
+ * (Functional Specification 9.4, 10).
+ *
+ * A weapon reloads only from the ship's hold, so a turret that leaves without
+ * a reserve there fires one magazine and stops. This is a warning about the
+ * ship rather than the fit: the same fit is fine with rounds aboard.
+ */
+function reserveWarnings(
+  state: CampaignState,
+  content: ContentRepository,
+  ship: ShipIdentity,
+  fit: FitDescription,
+): readonly FitWarning[] {
+  const warnings: FitWarning[] = [];
+  for (const fitted of fit) {
+    const module = content.module(fitted.moduleId);
+    if (!fitted.online || module?.category !== 'turret') {
+      continue;
+    }
+    if (reserveRounds(state.assets, content, ship.id, module.turret.ammunitionGroup) === 0) {
+      warnings.push({ code: 'noReserveAmmunition', slot: fitted.slot, params: { moduleId: module.id } });
+    }
+  }
+  return warnings;
 }
 
 /** Every slot the hull offers, occupied or not, in stable order. */

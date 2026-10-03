@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { runCommand } from '@engine/application';
-import type { CampaignState } from '@engine/domain';
+import { inventoryService, type CampaignState } from '@engine/domain';
 import {
   comparisonProjection,
   fittingDraftProjection,
@@ -10,7 +10,7 @@ import {
 } from '@engine/projections';
 import { catalogFor, DEFAULT_LOCALE } from '@ui';
 
-import { testCampaign } from '../../support/campaign';
+import { emptyHold, testCampaign, testDraft } from '../../support/campaign';
 import { shippedContent } from '../../support/content';
 
 /**
@@ -72,6 +72,37 @@ describe('the ship projection', () => {
       'explosive',
     ]);
     expect(ship.capacitor.charge).toBe(hull.capacitor.capacity);
+  });
+
+  it('warns about a weapon whose hold carries nothing to reload from [FUNC-9.4, FUNC-10, MVP-AC-02]', () => {
+    // A new ship carries its spare rounds, so there is nothing to warn about.
+    const start = testCampaign();
+    const shipId = start.assets.activeShipId!;
+    expect(shipProjection(start, content, shipId).warnings.map((warning) => warning.code))
+      .not.toContain('noReserveAmmunition');
+
+    // With the hold emptied into the hangar the gun has one magazine and no more.
+    const stowed = emptyHold(testDraft()) as CampaignState;
+    const warning = shipProjection(stowed, content, shipId).warnings
+      .find((entry) => entry.code === 'noReserveAmmunition');
+    expect(warning).toEqual({
+      code: 'noReserveAmmunition',
+      messageKey: 'fitting.warning.noReserveAmmunition',
+      slot: { kind: 'weapon', index: 0 },
+      params: { moduleId: 'module.turret.autocannon.small' },
+    });
+    expect(Object.prototype.hasOwnProperty.call(catalog, warning!.messageKey)).toBe(true);
+    // It is advice, never a reason to refuse the undock.
+    expect(shipProjection(stowed, content, shipId).undockable).toBe(true);
+    expect(undockValidityProjection(stowed, content, shipId).undockable).toBe(true);
+
+    // Rounds a different weapon family loads are no reserve for this one.
+    const hybrid = emptyHold(testDraft());
+    const ship = hybrid.assets.ships[shipId]!;
+    inventoryService(hybrid, content).add(ship.cargoInventoryId, 'ammo.hybrid.small.iron' as never, 40,
+      { grantedQuantity: 40, purchasedQuantity: 0, purchaseCostCredits: 0 });
+    expect(shipProjection(hybrid as CampaignState, content, shipId).warnings.map((entry) => entry.code))
+      .toContain('noReserveAmmunition');
   });
 
   it('carries a labelled, explainable trace with every derived value [FUNC-4.4, FUNC-19.6]', () => {

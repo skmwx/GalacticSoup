@@ -196,9 +196,11 @@ function applyRepair(
 ): void {
   debitWallet(draft, preview.totalCredits);
   const ship = draft.assets.ships[preview.shipId]!;
+  // The capacitor is recharged with the free shield repair
+  // (Functional Specification 10).
   draft.assets.ships[preview.shipId] = {
     ...ship,
-    condition: { ...ship.condition, damage: { shield: 0, armor: 0, hull: 0 } },
+    condition: { damage: { shield: 0, armor: 0, hull: 0 }, capacitorCharge: preview.capacitorCapacity },
   };
   draft.assets.version += 1;
   transaction.publish('repair.completed', { shipId: preview.shipId, totalCredits: preview.totalCredits });

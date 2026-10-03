@@ -1,8 +1,8 @@
 {
   "$comment": "The candidate tuning bundle for release-candidate comparison (MVP Implementation Plan phase 17). Written by npm run balance:record; do not edit by hand. tuningDigest covers rules, definitions and listings; a tuning change makes this record stale until it is recorded again.",
-  "contentVersion": "0.1.0+d690946f23bd",
-  "contentHash": "d690946f23bd51a0afa615dabae493068b196f216404ef29fae2e0b1a0e63b2f",
-  "tuningDigest": "44c9cc1fda24b27ed4c46825e8562e86002fffc8789af22ad8f9413da623944d",
+  "contentVersion": "0.1.0+296facab3d13",
+  "contentHash": "296facab3d13fb5e260b6f3c3ccbe670c1674b0f453e885b96d6bb29ac8ad1d2",
+  "tuningDigest": "b17ca616a2922d4a31f7534ec7b90ccf5225487452ca2c390a45b675fc6e3524",
   "seeds": [
     "0123456789abcdef0123456789abcdef",
     "0badf00d0badf00d0badf00d0badf00d",
@@ -214,7 +214,7 @@
         "bb22cc33dd44ee55ff6677889900aa11": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 35,
+          "simulationMinutes": 31.9,
           "finalCredits": 83582,
           "upgrades": [
             "starter@0",
@@ -225,7 +225,7 @@
         "0123456789abcdef0123456789abcdef": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 34.8,
+          "simulationMinutes": 31.8,
           "finalCredits": 106045,
           "upgrades": [
             "starter@0",
@@ -236,7 +236,7 @@
         "fedcba9876543210fedcba9876543210": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 40.5,
+          "simulationMinutes": 34.3,
           "finalCredits": 112373,
           "upgrades": [
             "starter@0",
@@ -249,7 +249,7 @@
         "bb22cc33dd44ee55ff6677889900aa11": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 72.2,
+          "simulationMinutes": 68.1,
           "finalCredits": 103314,
           "upgrades": [
             "intermediate@0",
@@ -260,7 +260,7 @@
         "0123456789abcdef0123456789abcdef": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 71.1,
+          "simulationMinutes": 68,
           "finalCredits": 105579,
           "upgrades": [
             "intermediate@0",
@@ -271,7 +271,7 @@
         "fedcba9876543210fedcba9876543210": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 70.8,
+          "simulationMinutes": 61.6,
           "finalCredits": 106013,
           "upgrades": [
             "intermediate@0",

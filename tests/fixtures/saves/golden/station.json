@@ -1,10 +1,10 @@
 {
  "format": "galactic-soup/save",
  "formatVersion": 10,
- "protocolVersion": 13,
+ "protocolVersion": 14,
  "engineVersion": "0.1.0",
- "contentVersion": "0.1.0+6d2aa29cb3d4",
- "contentHash": "6d2aa29cb3d43c37839c78f48e0c754be5005f868dce715894a221314fd83e15",
+ "contentVersion": "0.1.0+296facab3d13",
+ "contentHash": "296facab3d13fb5e260b6f3c3ccbe670c1674b0f453e885b96d6bb29ac8ad1d2",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
@@ -88,7 +88,7 @@
    "stacks": {
     "ce0f36ba8e20edb4ebcba9757-e5": {
      "id": "ce0f36ba8e20edb4ebcba9757-e5",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e3",
      "definitionId": "ammo.projectile.small.fusion",
      "quantity": 100,
      "state": {
@@ -493,5 +493,5 @@
    "nextInsertionOrdinal": 2
   }
  },
- "checksum": "2d380bcedb333d7f10bedb2b11867729b66bc5e2650920663212ad2bae17dbeb"
+ "checksum": "0bf79166e0442048356938618f02ca045474a6bfb82c9c185ebc00e3eac0bc53"
 }

@@ -107,11 +107,13 @@ describe('destruction, recovery and a return to the easiest encounter', () => {
       [AUTOCANNON, 'fitted', false],
       [FUSION, 'loaded', false],
       [SHIELD_BOOSTER, 'fitted', true],
+      // The spare rounds the campaign started with were still in the hold.
+      [FUSION, 'cargo', true],
     ]);
     expect(loss.insurance).toMatchObject({ coverage: 'basic', payoutCredits: 3_600, recoveryGrantHull: false });
     expect(loss.recovery).toMatchObject({ outcome: 'granted', creditsAfter: creditsBefore + 3_600 });
     expect(loss.recovery.creditsAfter).toBe(11_600);
-    expect(loss.wreck).toMatchObject({ present: true, itemCount: 1 });
+    expect(loss.wreck).toMatchObject({ present: true, itemCount: 2 });
 
     // The granted ship is docked, active and wholly restricted.
     const { assets, ship } = await activeShip(sortie);
@@ -152,12 +154,13 @@ describe('destruction, recovery and a return to the easiest encounter', () => {
 
     const contents = await sortie.data<WreckContentsData>('loot.contents', { wreckId: bookmark.bookmarkId });
     expect(contents.accessible).toBe(true);
-    expect(contents.stacks.map((stack) => stack.item.definitionId)).toEqual([SHIELD_BOOSTER]);
+    expect(contents.stacks.map((stack) => stack.item.definitionId).sort()).toEqual([FUSION, SHIELD_BOOSTER]);
     for (const stack of contents.stacks) {
       await sortie.data('loot.take', { wreckId: bookmark.bookmarkId, stackId: stack.id, quantity: stack.quantity });
     }
     const hold = await sortie.data<InventoryData>('inventory.cargo', { shipId: ship?.id ?? '' });
-    expect(hold.stacks.map((stack) => [stack.item.definitionId, stack.recoveryGrant])).toEqual([[SHIELD_BOOSTER, false]]);
+    expect(hold.stacks.map((stack) => [stack.item.definitionId, stack.recoveryGrant]).sort())
+      .toEqual([[FUSION, false], [SHIELD_BOOSTER, false]]);
 
     // Leave before the base finishes this ship too.
     await returnHome(sortie);

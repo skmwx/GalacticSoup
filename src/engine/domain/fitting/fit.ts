@@ -66,6 +66,30 @@ export function shipFit(assets: AssetState, shipId: string): FitDescription {
   return fitted.sort((a, b) => compareSlots(a.slot, b.slot));
 }
 
+/**
+ * Rounds of one ammunition group in a ship's hold: the reserve a turret taking
+ * that group reloads from once its magazine is empty. A weapon reloads only
+ * from the hold, never from a station hangar (Functional Specification 9.4).
+ */
+export function reserveRounds(
+  assets: AssetState,
+  content: ContentRepository,
+  shipId: string,
+  group: string,
+): number {
+  const ship = assets.ships[shipId];
+  if (ship === undefined) {
+    return 0;
+  }
+  let rounds = 0;
+  for (const stack of stacksIn(assets, ship.cargoInventoryId)) {
+    if (stack.state.kind === 'plain' && content.ammunition(stack.definitionId)?.group === group) {
+      rounds += stack.quantity;
+    }
+  }
+  return rounds;
+}
+
 /** The fitting store of a ship, or `null` when the ship is unknown. */
 export function fittingInventoryOf(assets: AssetState, shipId: string): string | null {
   return assets.ships[shipId]?.fittingInventoryId ?? null;

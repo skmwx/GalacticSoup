@@ -1,4 +1,4 @@
-import { InventoryError, type CampaignState } from '@engine/domain';
+import { InventoryError, type CampaignState, type InvariantChecks } from '@engine/domain';
 import { handleFittingCommand } from './fittingCommands';
 import { handleInventoryCommand } from './inventoryCommands';
 import type { ContentRepository } from '@engine/ports';
@@ -52,7 +52,11 @@ import { handleOnboardingCommand } from './onboardingCommands';
  * invariant failure and an unexpected defect all leave state, revision,
  * ordinals and random streams untouched.
  *
- * @implements TECH-7.2
+ * How much "validate invariants" covers is the host's choice (Technical
+ * Specification 14): everything, in tests and development builds, or the
+ * lightweight boundary check in a production build.
+ *
+ * @implements TECH-7.2, TECH-14
  */
 
 export interface CommandRequest {
@@ -60,6 +64,11 @@ export interface CommandRequest {
   readonly content: ContentRepository;
   readonly type: CommandType;
   readonly payload: unknown;
+  /**
+   * How much the commit validates (Technical Specification 14). Absent means
+   * the complete validation.
+   */
+  readonly invariantChecks?: InvariantChecks;
 }
 
 export type CommandResult =
@@ -94,7 +103,7 @@ export function runCommand(request: CommandRequest): CommandResult {
   let committed: CommitResult;
   try {
     observeTransaction(transaction, request.type, request.campaign);
-    committed = commit(transaction);
+    committed = commit(transaction, request.invariantChecks);
   } catch (error: unknown) {
     return { kind: 'failed', error: describeDefect(error) };
   }

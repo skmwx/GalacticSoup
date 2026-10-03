@@ -12,6 +12,7 @@ import {
   type SimulationContext,
 } from '@engine';
 import type { ContentRepository } from '@engine';
+import { inventoryService, stacksIn } from '@engine/domain';
 
 /**
  * Campaign fixtures for headless engine tests.
@@ -36,6 +37,31 @@ export function testCampaign(overrides: Partial<CampaignState> = {}): CampaignSt
 
 export function testDraft(overrides: Partial<CampaignState> = {}): CampaignDraft {
   return draftOf(testCampaign(overrides));
+}
+
+/**
+ * Moves everything in the active ship's hold to its station hangar.
+ *
+ * A new campaign starts with its spare rounds in the hold (Functional
+ * Specification 3.1). A test of what a hold accepts, or of a gun that must run
+ * dry, wants to start from an empty one and say for itself what it carries.
+ */
+export function emptyHold<TDraft extends CampaignDraft>(
+  draft: TDraft,
+  content: ContentRepository = shippedContent(),
+): TDraft {
+  const ship = draft.assets.ships[draft.assets.activeShipId ?? ''];
+  const hangar = Object.values(draft.assets.inventories).find((inventory) =>
+    inventory.location.kind === 'hangar' &&
+    ship?.location.kind === 'station' && inventory.location.stationId === ship.location.stationId);
+  if (ship === undefined || hangar === undefined) {
+    throw new Error('The test campaign has no docked active ship to unload.');
+  }
+  const service = inventoryService(draft, content);
+  for (const stack of stacksIn(draft.assets, ship.cargoInventoryId)) {
+    service.transfer(stack.id, hangar.id, stack.quantity);
+  }
+  return draft;
 }
 
 export interface TestSimulation extends SimulationContext {

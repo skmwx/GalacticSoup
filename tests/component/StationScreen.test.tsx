@@ -24,7 +24,7 @@ import { shippedContent } from '../support/content.ts';
 const PILOT = 'Vela Trask';
 const FUSION = 'ammo.projectile.small.fusion';
 
-/** Rounds the grant leaves in the hangar once the starting fit is loaded. */
+/** Rounds the grant leaves in the hold once the starting fit is loaded. */
 const spareRounds = (() => {
   const content = shippedContent();
   const granted = content.rules.economy.startingItems.find(
@@ -342,18 +342,22 @@ describe('hangar', () => {
       (inventory) =>
         inventory.location.kind === 'cargo' && inventory.location.shipId === before.activeShipId,
     )?.id;
+    const stacksIn = async (kind: 'cargo' | 'hangar') => (await assets(harness)).inventories
+      .filter((inventory) => (kind === 'cargo' ? inventory.id === cargoId : inventory.location.kind === 'hangar'))
+      .flatMap((inventory) => inventory.stacks);
+
+    // The spare rounds start in the hold; the whole stack moves each way. How
+    // many rounds the grant left is a tuning value.
+    await harness.user.click((await screen.findAllByRole('button', { name: 'Move to hangar' }))[0] as HTMLElement);
+    await waitFor(async () => {
+      expect(await stacksIn('cargo')).toHaveLength(0);
+      expect((await stacksIn('hangar')).map((stack) => stack.quantity)).toEqual([spareRounds]);
+    });
 
     await harness.user.click((await screen.findAllByRole('button', { name: 'Move to hold' }))[0] as HTMLElement);
-
     await waitFor(async () => {
-      const after = await assets(harness);
-      const inCargo = after.inventories
-        .filter((inventory) => inventory.id === cargoId)
-        .flatMap((inventory) => inventory.stacks);
-      expect(inCargo).toHaveLength(1);
-      // The whole spare stack moves; how many rounds the grant left is a
-      // tuning value.
-      expect(inCargo[0]?.quantity).toBe(spareRounds);
+      expect(await stacksIn('hangar')).toHaveLength(0);
+      expect((await stacksIn('cargo')).map((stack) => stack.quantity)).toEqual([spareRounds]);
     });
 
     harness.gateway.dispose();
@@ -426,7 +430,7 @@ describe('services', () => {
     harness.gateway.dispose();
   });
 
-  it('refuses a repair there is no damage for, and says so [FUNC-22.10]', async () => {
+  it('refuses a repair with nothing to restore, and says so [FUNC-10, FUNC-22.10]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
     await openPanel(harness, 'Services');
@@ -437,7 +441,10 @@ describe('services', () => {
     await waitFor(() => {
       expect(within(dialog).getByRole('button', { name: /Confirm/ })).toBeDisabled();
     });
-    expect(within(dialog).getAllByText(/already fully repaired/)[0]).toBeInTheDocument();
+    expect(within(dialog).getAllByText(/already fully repaired and its capacitor is full/)[0]).toBeInTheDocument();
+    // The capacitor the free repair would recharge is one of its figures.
+    expect(within(dialog).getByText('Capacitor')).toBeInTheDocument();
+    expect(within(dialog).getByText('100% now, recharged to full for free')).toBeInTheDocument();
 
     harness.gateway.dispose();
   });

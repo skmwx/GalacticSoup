@@ -110,13 +110,8 @@ test.describe('guided first loop', () => {
     await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
     await expect(notices.getByText('Done: Choose a site.')).toBeVisible();
 
-    // Carry spare rounds: the hangar, and "Move to hold" on the Fusion S rounds.
-    expect(await step(page, 'Carry spare rounds')).toContain('Move to hold');
-    await showMe(page);
-    await page.getByRole('table', { name: 'Station hangar' }).getByRole('row', { name: /Fusion S/ })
-      .getByRole('button', { name: 'Move to hold' }).click();
-
-    // Undock from Departure.
+    // Undock from Departure. The ship already carries its spare rounds, so
+    // the station has nothing to warn about.
     expect(await step(page, 'Undock')).toContain('Undock');
     await showMe(page);
     await undock(page);
@@ -187,7 +182,7 @@ test.describe('guided first loop', () => {
     await ((await salvage.count()) > 0 ? salvage : page.getByRole('button', { name: /^Sell / })).first().click();
     await confirmDialog(page, 'Confirm sale');
 
-    // Get ready: repair, resupply and let the capacitor fill with the clock running.
+    // Get ready: repair, which also recharges the capacitor, and resupply.
     expect(await step(page, 'Get the ship ready')).toContain('capacitor');
     await showMe(page);
     for (const [control, dialog] of [['Repair the ship', 'Confirm repair'], ['Resupply ammunition', 'Confirm resupply']] as const) {
@@ -198,6 +193,21 @@ test.describe('guided first loop', () => {
       }
     }
     await ensureRunning(page);
+
+    // Carry spare rounds: done on docking when the hold came home with two
+    // magazines' worth. When the fight left fewer, the guidance asks for more,
+    // and the market delivers them straight to the hold.
+    const heading = guidance(page).getByRole('heading', { level: 3 });
+    await expect(heading).toHaveText(/^(Carry spare rounds|Improve the fit)$/, { timeout: 60_000 });
+    if ((await heading.innerText()) === 'Carry spare rounds') {
+      expect(await step(page, 'Carry spare rounds')).toContain("reloads only from the ship's hold");
+      await showMe(page);
+      await page.getByRole('button', { name: 'Buy Fusion S' }).click();
+      const rounds = page.getByRole('dialog', { name: 'Confirm purchase' });
+      await rounds.getByLabel('Quantity').fill('40');
+      await rounds.getByLabel('Deliver to').selectOption({ label: 'Ship cargo hold' });
+      await confirmDialog(page, 'Confirm purchase');
+    }
 
     // Improve the fit: a second autocannon, bought and fitted.
     expect(await step(page, 'Improve the fit', 5 * 60_000)).toContain('second autocannon');

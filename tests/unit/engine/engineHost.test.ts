@@ -281,6 +281,32 @@ describe('campaign session', () => {
     expect(hashes[0]).toBe(hashes[1]);
   });
 
+  it('reaches the same state whichever depth its commits validate at [TECH-14, TECH-9.5]', async () => {
+    // A production host validates less at each commit; that must change what
+    // a defect costs, never what a correct campaign becomes.
+    const hashes: string[] = [];
+
+    for (const invariantChecks of ['complete', 'lightweight'] as const) {
+      const host = createEngineHost({ content, saves: createMemorySaveStore(), invariantChecks });
+      await host.handle(create());
+      await host.handle(run('req-run'));
+      await host.handle(advance('req-advance', 5_000));
+      const saved = await host.handle(request('campaign.save', {
+        requestId: 'req-save',
+        payload: { kind: 'manual', savedAtRealMs: 1 },
+      }));
+      expect(saved.ok).toBe(true);
+      const response = await host.handle(request('diagnostics.stateHash', { requestId: 'req-hash' }));
+      expect(response.ok).toBe(true);
+      if (response.ok) {
+        hashes.push((response.data as StateHashData).stateHash ?? '');
+      }
+    }
+
+    expect(hashes[0]).toMatch(/^[0-9a-f]{64}$/);
+    expect(hashes[0]).toBe(hashes[1]);
+  });
+
   it('ends the campaign on reset [MVP-AC-01]', async () => {
     const host = createEngineHost({ content, saves: createMemorySaveStore() });
     await host.handle(create());

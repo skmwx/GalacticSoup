@@ -178,6 +178,7 @@ export type FitViolationCodeName = (typeof FIT_VIOLATION_CODES)[number];
 export const FIT_WARNING_CODES = [
   'noWeapon',
   'noAmmunition',
+  'noReserveAmmunition',
   'moduleOffline',
   'capacitorUnstable',
   'uncoveredDamageType',

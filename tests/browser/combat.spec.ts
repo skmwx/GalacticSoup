@@ -86,7 +86,10 @@ async function reopen(page: Page, heading: string): Promise<void> {
   await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
 }
 
-/** Carries the spare rounds, chooses the scout site and undocks. */
+/**
+ * Chooses the scout site and undocks, first moving to the hold any rounds a
+ * refit left in the hangar. A new ship already carries its spare rounds.
+ */
 async function prepareAndUndock(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Hangar', exact: true }).click();
   const hangar = page.getByRole('table', { name: 'Station hangar' });

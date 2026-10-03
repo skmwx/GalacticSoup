@@ -344,6 +344,8 @@ Every physical item has exactly one location. Moving an item is one atomic remov
 
 Industry inputs, processor inputs, weapon ammunition, and other committed items move into explicit reserve locations. Reservations are not flags on items left in a hangar, preventing the same item from being used twice.
 
+A weapon's magazine is such a location. Loading moves the rounds out of cargo into a charge stack in the ship's fitting store that is bound to one weapon slot. The single round a running cycle holds back until its shot is applied is recorded on that cycle and deducted from the magazine's available count; it needs no inventory of its own, because the cycle owns its magazine exclusively and the round cannot be committed twice.
+
 ### 8.4 Knowledge and remote information
 
 Facts known to the player are stored separately from current world truth. Market knowledge records the last observed quote and simulation timestamp. Surveyed services, resources, faction information, anomaly thresholds, and map discoveries likewise retain what was learned and when.
@@ -621,6 +623,8 @@ The production site uses a restrictive Content Security Policy allowing only its
 
 Engine invariants are checked in all tests and development builds. Production performs lightweight checks at transaction boundaries and complete checks before save, after load, after migration, and after import.
 
+The lightweight checks cover what can be read in constant time: the campaign's state version, identity, revision, entity and event ordinals, simulation clock, and random streams, and a whole, non-negative wallet. The engine host chooses the depth; the choice never changes what a valid campaign becomes, only when a defect is refused. A production state that would fail a complete check is refused at the next save rather than at the commit that produced it: nothing is written, the failure is reported to the player, and the last valid snapshot is kept.
+
 ## 15. Testing and verification
 
 ### 15.1 Test levels
@@ -653,7 +657,7 @@ At minimum, a full campaign validation verifies:
 2. every entity and definition reference resolves;
 3. every item exists in exactly one valid location;
 4. inventory capacity and job/colony reservations are consistent;
-5. exactly one active player ship exists and its location agrees with campaign location;
+5. at most one active player ship exists; when one does, its location agrees with campaign location; a campaign without one is docked, no ship of the player's waits at that station, and the player either owns a flight-ready ship elsewhere or holds at least the starter ship reference value (Functional Specification 9.12);
 6. fitting slot, hardpoint, online resource, and skill rules are internally consistent;
 7. scheduler entries refer to live owners or an allowed persistent world event;
 8. locks, movement targets, effects, and objectives refer to valid entities;

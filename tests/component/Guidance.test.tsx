@@ -74,10 +74,10 @@ describe('contextual guidance', () => {
     await harness.user.click(await screen.findByRole('button', { name: 'Choose Pirate Scout' }));
 
     await waitFor(() => {
-      expect(within(guidance).getByRole('heading', { level: 3 })).toHaveTextContent('Carry spare rounds');
+      expect(within(guidance).getByRole('heading', { level: 3 })).toHaveTextContent('Undock');
     });
     expect(guidance).toHaveTextContent('1 of 15 steps done');
-    expect(guidance).toHaveTextContent('Where: Hangar');
+    expect(guidance).toHaveTextContent('Where: Departure');
     const notices = screen.getByRole('region', { name: 'Notifications' });
     expect(await within(notices).findByText('Done: Choose a site.')).toBeInTheDocument();
   });
@@ -88,7 +88,7 @@ describe('contextual guidance', () => {
     await harness.user.click(within(guidance).getByRole('button', { name: 'Skip step' }));
 
     await waitFor(() => {
-      expect(within(guidance).getByRole('heading', { level: 3 })).toHaveTextContent('Carry spare rounds');
+      expect(within(guidance).getByRole('heading', { level: 3 })).toHaveTextContent('Undock');
     });
     await harness.user.click(within(guidance).getByText('All steps'));
     const skipped = guidance.querySelector('[data-step="guide.loop.choose-site"]');
@@ -147,7 +147,9 @@ describe('the capacitor before undocking', () => {
 
     const readiness = document.querySelector('[data-capacitor-readiness]');
     expect(readiness).toHaveAttribute('data-capacitor-readiness', 'charging');
-    expect(readiness).toHaveTextContent('Capacitor 25%. It fills in 3m 45s of running time');
+    expect(readiness).toHaveTextContent(
+      'Capacitor 25%. Repair under Services recharges it for free; left alone it fills in 3m 45s of running time',
+    );
     await user.click(screen.getByText('How long until it is full'));
     expect(readiness).toHaveTextContent(
       'Time to full = (capacity 60 - charge 15) / (capacity 60 / recharge time 300 s)',

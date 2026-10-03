@@ -15,7 +15,8 @@ import { useTransactionPreview } from './useTransactionPreview';
  * Each is an economic action with a price, so each goes through the same
  * preview and confirmation as a market transaction. Repair never begins
  * without confirming the total, which is what the functional specification
- * requires.
+ * requires - including when the total is nothing, as it is for a shield
+ * repair and the capacitor recharge that comes with it.
  *
  * All three apply to the active ship, so a pilot who lost their only ship
  * has nothing to repair, resupply or insure until they buy one (Functional

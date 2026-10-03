@@ -160,6 +160,8 @@
         "hullDamage",
         "missingArmorFraction",
         "missingHullFraction",
+        "capacitorCharge",
+        "capacitorCapacity",
         "serviceModifier",
         "standingServiceMultiplier"
       ],
@@ -229,6 +231,14 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "capacitorCharge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "capacitorCapacity": {
+          "type": "number",
+          "minimum": 0
         },
         "serviceModifier": {
           "type": "number",

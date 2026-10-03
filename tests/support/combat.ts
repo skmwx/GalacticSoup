@@ -16,7 +16,7 @@ import type { AmmunitionId, HullId, ModuleId, SiteId, StationId } from '@shared'
 import { INSTALLED_BOUNDARY_RESOLVERS } from '@engine/application';
 import { advanceCombat, advanceNavigation, advanceTime } from '@engine/simulation';
 
-import { testDraft, testSimulation, type TestSimulation } from './campaign.ts';
+import { emptyHold, testDraft, testSimulation, type TestSimulation } from './campaign.ts';
 import { shippedContent } from './content.ts';
 
 /**
@@ -73,7 +73,9 @@ export interface CombatFixtureOptions {
 
 export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture {
   const content = shippedContent();
-  const draft = testDraft();
+  // The hold carries exactly the rounds the options name, so a fight can run a
+  // gun dry; the spare rounds a campaign starts with wait in the hangar.
+  const draft = emptyHold(testDraft());
   const playerId = draft.assets.activeShipId as EntityId;
   const player = draft.assets.ships[playerId];
   if (player === undefined) throw new Error('The test campaign has no active ship.');

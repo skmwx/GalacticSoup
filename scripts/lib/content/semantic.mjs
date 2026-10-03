@@ -112,6 +112,7 @@ export function validateSemantics(collected) {
     }
     const granted = new Set();
     let startingVolume = 0;
+    let cargoVolume = 0;
     for (const [index, item] of (values.startingItems ?? []).entries()) {
       if (!tradeable.has(item.definitionId) || granted.has(item.definitionId)) {
         issues.push(issue('unresolvedReference', start.file, `values.startingItems[${index}].definitionId`,
@@ -125,7 +126,16 @@ export function validateSemantics(collected) {
           issues.push(issue('invalidValue', start.file, `values.startingItems[${index}].quantity`,
             'Starting item volume exceeds the supported canonical integer range.'));
         }
+        if (item.location === 'cargo') {
+          cargoVolume += item.quantity * Math.round(definition.volumeCubicMetres * 1000);
+        }
       }
+    }
+    // What starts in the hold has to fit it: a campaign that could not carry
+    // its own starting cargo would fail at creation rather than here.
+    if (hull !== undefined && cargoVolume > Math.round(hull.cargoCapacityCubicMetres * 1000)) {
+      issues.push(issue('invalidValue', start.file, 'values.startingItems',
+        'Starting items placed in the cargo hold exceed the starter hull\'s cargo capacity.'));
     }
     issues.push(...checkStartingFit(start, hull, { modules, ammunition }));
   }

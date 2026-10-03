@@ -31,19 +31,19 @@ import styles from './Station.module.css';
  * of site - and of fit - is made knowing what waits there.
  *
  * Before the undock control it warns about what the player would regret in a
- * fight: a weapon with no ammunition loaded, a ship with nothing that can
- * shoot, and armour or hull that has not been repaired (Functional
- * Specification 10). The warnings are the fit's own and the layers are the
+ * fight: a weapon with no ammunition loaded, a weapon with no spare rounds in
+ * the hold to reload from, a ship with nothing that can shoot, and armour or
+ * hull that has not been repaired (Functional Specification 10). The warnings are the fit's own and the layers are the
  * ship's; a warning never blocks undocking. Undocking while one stands asks
  * first, in a confirmation that lists them again - one the player may switch
  * off in the settings (Functional Specification 20).
  *
  * Beside them it reports the capacitor: how full it is and, when it is not,
- * how much running time will fill it, with the recharge formula written out.
- * The capacitor recharges only while simulation time runs - docked or not -
- * and a ship that leaves on an empty one cannot run its booster, which the
- * balance simulations found to be the likeliest unexplained loss. This is an
- * explanation, not an undock rule (Functional Specification 9.8, 19.6).
+ * that the repair service recharges it for free and how much running time
+ * would fill it otherwise, with the recharge formula written out. A ship that
+ * leaves on an empty capacitor cannot run its booster, which the balance
+ * simulations found to be the likeliest unexplained loss. This is an
+ * explanation, not an undock rule (Functional Specification 9.8, 10, 19.6).
  *
  * The player's own wreck carries an automatic bookmark (Functional
  * Specification 5.4, 9.12), and it is chosen here exactly as an encounter is:
@@ -315,12 +315,13 @@ function BookmarkTable({
   );
 }
 
-/** The fit warnings that matter in a fight, and unrepaired damage. */
-const UNDOCK_WARNING_CODES: readonly string[] = ['noAmmunition', 'noWeapon'];
+/** The ship warnings that matter in a fight; unrepaired damage is added to them. */
+const UNDOCK_WARNING_CODES: readonly string[] = ['noAmmunition', 'noReserveAmmunition', 'noWeapon'];
 
 /**
- * The undock warnings as sentences: an unloaded or missing weapon, and armour
- * or hull that has not been repaired.
+ * The undock warnings as sentences: an unloaded or missing weapon, a weapon
+ * with no spare rounds in the hold, and armour or hull that has not been
+ * repaired. A warning about one slot ends with where to put it right.
  */
 function undockWarnings(ship: ShipData | null, translate: ReturnType<typeof useTranslate>): readonly string[] {
   if (ship === null) {
@@ -331,7 +332,7 @@ function undockWarnings(ship: ShipData | null, translate: ReturnType<typeof useT
     .map((warning) =>
       warning.slot === null
         ? translate(warning.messageKey, warning.params)
-        : translate('departure.slotWarning', {
+        : translate(`departure.slotWarning.${warning.code}`, {
             slot: `${translate(`slot.${warning.slot.kind}`)} ${String(warning.slot.index + 1)}`,
             warning: translate(warning.messageKey, warning.params),
           }),

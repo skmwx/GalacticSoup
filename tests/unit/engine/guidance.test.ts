@@ -52,7 +52,7 @@ describe('guidance progress', () => {
       'notification.raised',
     ]);
     expect(chosen.data.invalidations).toEqual(expect.arrayContaining(['onboarding', 'notifications']));
-    expect(onboardingProjection(chosen.state, content).currentStepId).toBe('guide.loop.carry-rounds');
+    expect(onboardingProjection(chosen.state, content).currentStepId).toBe('guide.loop.undock');
   });
 
   it('grants a step once however often its event recurs [TECH-10.6, TECH-15.3]', () => {
@@ -73,22 +73,39 @@ describe('guidance progress', () => {
     expect(statusOf(undocked.state, 'guide.loop.choose-site')).toBe('current');
   });
 
-  it('asks for spare rounds in the hold, where a gun reloads from [FUNC-3.2, FUNC-9.4]', () => {
+  it('asks for spare rounds in the hold once a sortie is behind the player [FUNC-3.2, FUNC-9.4]', () => {
     const start = testCampaign();
     const ship = start.assets.ships[start.assets.activeShipId!]!;
+    const hangar = Object.values(start.assets.inventories).find((inventory) => inventory.location.kind === 'hangar')!;
     const spare = Object.values(start.assets.stacks).find((stack) =>
-      stack.definitionId === 'ammo.projectile.small.fusion' && stack.state.kind === 'plain')!;
-    expect(statusOf(start, 'guide.loop.carry-rounds')).toBe('open');
+      stack.definitionId === 'ammo.projectile.small.fusion' && stack.inventoryId === ship.cargoInventoryId)!;
+    // A new ship already carries its spare rounds (Functional Specification
+    // 3.1), so the step waits for the first return.
+    expect(statusOf(start, 'guide.loop.carry-rounds')).toBe('waiting');
+    const returns = (state: CampaignState): CampaignState =>
+      command(command(state, 'onboarding.skipStep', { stepId: 'guide.loop.undock' }).state,
+        'onboarding.skipStep', { stepId: 'guide.loop.return' }).state;
 
-    const few = command(start, 'inventory.transfer', {
-      stackId: spare.id, destinationInventoryId: ship.cargoInventoryId, quantity: 10,
+    // Home with the hold still stocked: nothing to teach.
+    expect(returns(start).onboarding.steps['guide.loop.carry-rounds']?.outcome).toBe('completed');
+
+    // Home with ten rounds left and the rest in the hangar: the step stays
+    // open until two magazines' worth is back aboard.
+    const spent = returns(command(start, 'inventory.transfer', {
+      stackId: spare.id, destinationInventoryId: hangar.id, quantity: spare.quantity - 10,
+    }).state);
+    expect(spent.onboarding.steps['guide.loop.carry-rounds']).toBeUndefined();
+    expect(['open', 'current']).toContain(statusOf(spent, 'guide.loop.carry-rounds'));
+
+    const stored = (state: CampaignState) => Object.values(state.assets.stacks).find((stack) =>
+      stack.inventoryId === hangar.id && stack.definitionId === spare.definitionId)!;
+    const few = command(spent, 'inventory.transfer', {
+      stackId: stored(spent).id, destinationInventoryId: ship.cargoInventoryId, quantity: 20,
     });
     expect(few.state.onboarding.steps['guide.loop.carry-rounds']).toBeUndefined();
 
-    const carried = Object.values(few.state.assets.stacks).find((stack) =>
-      stack.inventoryId === spare.inventoryId && stack.definitionId === spare.definitionId)!;
     const enough = command(few.state, 'inventory.transfer', {
-      stackId: carried.id, destinationInventoryId: ship.cargoInventoryId, quantity: carried.quantity,
+      stackId: stored(few.state).id, destinationInventoryId: ship.cargoInventoryId, quantity: 10,
     });
     expect(enough.state.onboarding.steps['guide.loop.carry-rounds']?.outcome).toBe('completed');
   });
@@ -151,7 +168,7 @@ describe('guidance progress', () => {
 
     const shown = command(chosen.state, 'onboarding.show', {});
     expect(shown.state.onboarding.hidden).toBe(false);
-    expect(onboardingProjection(shown.state, content).currentStepId).toBe('guide.loop.carry-rounds');
+    expect(onboardingProjection(shown.state, content).currentStepId).toBe('guide.loop.undock');
   });
 
   it('never completes a step while a campaign is only being restored [TECH-9.5, TECH-11.4]', () => {

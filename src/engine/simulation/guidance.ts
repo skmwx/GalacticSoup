@@ -3,6 +3,7 @@ import {
   deriveShipAttributes,
   isStepOpen,
   recordStep,
+  reserveRounds,
   shipFit,
   type CampaignState,
   type DomainEvent,
@@ -151,11 +152,7 @@ export function spareRounds(state: CampaignState, content: ContentRepository): n
     if (fitted.online && module?.category === 'turret') groups.add(module.turret.ammunitionGroup);
   }
   let rounds = 0;
-  for (const stack of Object.values(state.assets.stacks)) {
-    if (stack.inventoryId !== ship.cargoInventoryId || stack.state.kind !== 'plain') continue;
-    const charge = content.ammunition(stack.definitionId);
-    if (charge !== undefined && groups.has(charge.group)) rounds += stack.quantity;
-  }
+  for (const group of groups) rounds += reserveRounds(state.assets, content, shipId, group);
   return rounds;
 }
 

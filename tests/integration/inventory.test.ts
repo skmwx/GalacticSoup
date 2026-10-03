@@ -30,10 +30,11 @@ const create = (g: ClientGateway) => ask(g, 'campaign.create', {
 function ids(assets: AssetsData) {
   const hangar = assets.inventories.find((i) => i.location.kind === 'hangar')!;
   const cargo = assets.inventories.find((i) => i.location.kind === 'cargo')!;
-  return { hangar, cargo, ammo: hangar.stacks.find((s) => s.item.kind === 'ammunition')! };
+  // The spare rounds a campaign starts with ride in the hold.
+  return { hangar, cargo, ammo: cargo.stacks.find((s) => s.item.kind === 'ammunition')! };
 }
 /**
- * What the starting grant leaves in the hangar after the starting fit loads
+ * What the starting grant leaves in the hold after the starting fit loads
  * one magazine. Both are tuning values, so the test reads them.
  */
 const spareRounds = (() => {
@@ -58,13 +59,13 @@ describe.each(['direct', 'channel'] as const)('inventory through %s transport', 
     expect(await ask(gateway, 'inventory.hangar', { stationId: assets.location.stationId })).toEqual(hangar);
     expect(await ask(gateway, 'inventory.cargo', { shipId: assets.activeShipId! })).toEqual(cargo);
     expect((await ask(gateway, 'item.inspect', { stackId: ammo.id })).stack).toEqual(ammo);
-    expect((await ask(gateway, 'inventory.maximum', { stackId: ammo.id, destinationInventoryId: cargo.id })).maximumQuantity).toBe(spareRounds);
-    const result = await ask(gateway, 'inventory.transfer', { stackId: ammo.id, destinationInventoryId: cargo.id, quantity: 12 });
+    expect((await ask(gateway, 'inventory.maximum', { stackId: ammo.id, destinationInventoryId: hangar.id })).maximumQuantity).toBe(spareRounds);
+    const result = await ask(gateway, 'inventory.transfer', { stackId: ammo.id, destinationInventoryId: hangar.id, quantity: 12 });
     expect(result.invalidations).toEqual(['assets', 'inventory']);
     expect(result.events[0]!.kind).toBe('inventory.changed');
     const moved = await ask(gateway, 'assets.list', {});
-    expect(moved.inventories.find((i) => i.id === cargo.id)!.stacks[0]!.quantity).toBe(12);
-    expect(moved.inventories.find((i) => i.id === hangar.id)!.stacks.find((s) => s.id === ammo.id)!.quantity).toBe(spareRounds - 12);
+    expect(moved.inventories.find((i) => i.id === hangar.id)!.stacks[0]!.quantity).toBe(12);
+    expect(moved.inventories.find((i) => i.id === cargo.id)!.stacks.find((s) => s.id === ammo.id)!.quantity).toBe(spareRounds - 12);
     const hash = await ask(gateway, 'diagnostics.stateHash', {});
     await ask(gateway, 'campaign.close', { savedAtRealMs: 999999999 });
     const reopened = session(kind, store);
@@ -75,11 +76,11 @@ describe.each(['direct', 'channel'] as const)('inventory through %s transport', 
   it('keeps queries read-only, rejects stale/failed commands atomically and deduplicates transfers [TECH-7.2, TECH-7.3, FUNC-22.2, FUNC-22.3]', async () => {
     const gateway = session(kind, createMemorySaveStore());
     await create(gateway);
-    const { cargo, ammo } = ids(await ask(gateway, 'assets.list', {}));
+    const { hangar, ammo } = ids(await ask(gateway, 'assets.list', {}));
     const hash = await ask(gateway, 'diagnostics.stateHash', {});
     await ask(gateway, 'item.inspect', { stackId: ammo.id });
-    await ask(gateway, 'inventory.maximum', { stackId: ammo.id, destinationInventoryId: cargo.id });
-    const payload = { stackId: ammo.id, destinationInventoryId: cargo.id, quantity: 7 };
+    await ask(gateway, 'inventory.maximum', { stackId: ammo.id, destinationInventoryId: hangar.id });
+    const payload = { stackId: ammo.id, destinationInventoryId: hangar.id, quantity: 7 };
     const stale = await gateway.sendEnvelope({ protocolVersion: PROTOCOL_VERSION, requestId: 'stale-transfer',
       type: 'inventory.transfer', expectedRevision: 0, payload });
     expect(!stale.ok && stale.error.code).toBe('STALE_REVISION');
@@ -117,8 +118,8 @@ it('replays inventory and time commands to identical hashes across both transpor
     const { ammo, cargo, hangar } = ids(await ask(gateway, 'assets.list', {}));
     await ask(gateway, 'time.set', { paused: false, rate: 1 });
     await ask(gateway, 'time.advance', { elapsedRealMs: 120 });
-    const result = await ask(gateway, 'inventory.transfer', { stackId: ammo.id, destinationInventoryId: cargo.id, quantity: 7 });
-    await ask(gateway, 'inventory.transfer', { stackId: result.events[0]!.params!['stackId'] as string, destinationInventoryId: hangar.id, quantity: 3 });
+    const result = await ask(gateway, 'inventory.transfer', { stackId: ammo.id, destinationInventoryId: hangar.id, quantity: 7 });
+    await ask(gateway, 'inventory.transfer', { stackId: result.events[0]!.params!['stackId'] as string, destinationInventoryId: cargo.id, quantity: 3 });
     await ask(gateway, 'time.advance', { elapsedRealMs: 75 });
     hashes.push(await ask(gateway, 'diagnostics.stateHash', {}));
   }

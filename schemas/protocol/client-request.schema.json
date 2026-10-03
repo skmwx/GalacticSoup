@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/client-request.schema.json",
   "title": "ClientRequest",
-  "description": "Protocol version 13 request envelope and payloads.",
+  "description": "Protocol version 14 request envelope and payloads.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 13
+      "const": 14
     },
     "requestId": {
       "type": "string",

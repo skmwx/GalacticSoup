@@ -28,6 +28,13 @@ import {
  * invariant is a guard rather than a report: it must be cheap, total and free
  * of side effects.
  *
+ * There are two depths (Technical Specification 14). `validateCampaign` is the
+ * complete validation: tests and development builds run it at every commit,
+ * and every build runs it before a save and after a load or migration.
+ * `validateCampaignBoundary` is the lightweight check a production build runs
+ * at a transaction boundary instead: the campaign's own header and its wallet,
+ * whose cost does not grow with the campaign.
+ *
  * Only the checks whose subject exists yet are implemented. Each later phase
  * adds the numbered checks for the state it introduces; the list below names
  * the specification checks covered so the gap stays visible.
@@ -58,12 +65,58 @@ export interface InvariantIssue {
 
 type Report = (rule: string, path: string, detail: string) => void;
 
+/** How much a commit validates (Technical Specification 14). */
+export type InvariantChecks = 'complete' | 'lightweight';
+
 export function validateCampaign(state: CampaignState, content?: ContentRepository): readonly InvariantIssue[] {
   const issues: InvariantIssue[] = [];
   const add: Report = (rule, path, detail) => {
     issues.push({ rule, path, detail });
   };
 
+  validateHeader(state, add);
+  validateScheduler(state, add);
+  validateAssets(state, add, content);
+  validateEconomy(state, add, content);
+  validateNavigation(state, add, content);
+  validateCombat(state, add, content);
+  validateEncounter(state, add, content);
+  validateRecovery(state, add, content);
+  validateOnboarding(state, add, content);
+  validateNotifications(state, add, content);
+
+  // The ownership check reads the runtime the checks above have just proved
+  // well formed, so it is skipped when one of them found a malformed shape.
+  if (!issues.some((issue) => issue.rule.endsWith('Shape'))) {
+    validateSchedulerOwnership(state, add);
+  }
+
+  return issues;
+}
+
+/**
+ * The lightweight check of a transaction boundary (Technical Specification
+ * 14): version, identity, revision, ordinals, clock, random streams and the
+ * wallet (Functional Specification 22.2). It reads a fixed number of fields,
+ * so a production build can afford it at every commit. Everything else is
+ * left to the complete validation, which a production build still runs before
+ * every save and after every load.
+ */
+export function validateCampaignBoundary(state: CampaignState): readonly InvariantIssue[] {
+  const issues: InvariantIssue[] = [];
+  const add: Report = (rule, path, detail) => {
+    issues.push({ rule, path, detail });
+  };
+
+  validateHeader(state, add);
+  if (!isCount(state.assets.credits)) {
+    add('boundedValues', 'assets.credits', 'Credits must be a whole, non-negative number.');
+  }
+
+  return issues;
+}
+
+function validateHeader(state: CampaignState, add: Report): void {
   if (state.stateVersion !== CAMPAIGN_STATE_VERSION) {
     add(
       'stateVersion',
@@ -119,24 +172,6 @@ export function validateCampaign(state: CampaignState, content?: ContentReposito
       add('randomStreams', 'random', 'The campaign carries a different set of random streams.');
     }
   }
-
-  validateScheduler(state, add);
-  validateAssets(state, add, content);
-  validateEconomy(state, add, content);
-  validateNavigation(state, add, content);
-  validateCombat(state, add, content);
-  validateEncounter(state, add, content);
-  validateRecovery(state, add, content);
-  validateOnboarding(state, add, content);
-  validateNotifications(state, add, content);
-
-  // The ownership check reads the runtime the checks above have just proved
-  // well formed, so it is skipped when one of them found a malformed shape.
-  if (!issues.some((issue) => issue.rule.endsWith('Shape'))) {
-    validateSchedulerOwnership(state, add);
-  }
-
-  return issues;
 }
 
 function validateScheduler(state: CampaignState, add: Report): void {

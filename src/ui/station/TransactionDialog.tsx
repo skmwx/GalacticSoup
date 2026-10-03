@@ -235,6 +235,14 @@ function RepairDetails({ preview }: { readonly preview: RepairPreviewData }): JS
           fraction: formatPercent(preview.missingHullFraction, locale),
         })}
       />
+      {preview.capacitorCapacity <= 0 ? null : (
+        <Figure
+          label={translate('repair.capacitor')}
+          value={translate('repair.capacitorDetail', {
+            percent: formatPercent(preview.capacitorCharge / preview.capacitorCapacity, locale),
+          })}
+        />
+      )}
       <Figure
         label={translate('repair.serviceModifier')}
         value={formatPercent(preview.serviceModifier, locale)}

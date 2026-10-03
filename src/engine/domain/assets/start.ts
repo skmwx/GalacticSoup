@@ -65,8 +65,12 @@ export function startingAssets(campaignId: CampaignId, content: ContentRepositor
     recoveryGrant: false,
   };
 
+  // Granted items wait in the hangar unless content puts them in the hold,
+  // where spare ammunition has to be for a weapon to reload from it
+  // (Functional Specification 3.1, 9.4).
   for (const item of [...rules.startingItems].sort(byDefinitionId)) {
-    service.add(hangar, item.definitionId as DefinitionId, item.quantity, {
+    const destination = item.location === 'cargo' ? cargo : hangar;
+    service.add(destination, item.definitionId as DefinitionId, item.quantity, {
       grantedQuantity: item.quantity,
       purchasedQuantity: 0,
       purchaseCostCredits: 0,

@@ -78,6 +78,12 @@ export interface RepairPreviewData extends PreviewBaseData {
   readonly hullDamage: number;
   readonly missingArmorFraction: number;
   readonly missingHullFraction: number;
+  /**
+   * What the capacitor holds now and what the repair leaves it holding: the
+   * recharge is part of the free shield repair (Functional Specification 10).
+   */
+  readonly capacitorCharge: number;
+  readonly capacitorCapacity: number;
   readonly serviceModifier: number;
   readonly standingServiceMultiplier: number;
 }

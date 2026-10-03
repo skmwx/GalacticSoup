@@ -15,11 +15,19 @@ import { attachEngineHost, type MessageTargetLike } from './dispatcher';
  * The worker is also where the engine's adapters are composed: the compiled
  * content bundle and the IndexedDB save store. Both are reached only through
  * their ports, so the engine still knows neither.
+ *
+ * It also decides how much a commit validates (Technical Specification 14):
+ * everything in a development build, and the lightweight boundary check in a
+ * production one, where the complete validation runs before every save and
+ * after every load instead.
+ *
+ * @implements TECH-14
  */
 attachEngineHost(
   self as unknown as MessageTargetLike,
   createEngineHost({
     content: loadBundledContent(),
     saves: createIndexedDbSaveStore(),
+    invariantChecks: import.meta.env?.DEV === true ? 'complete' : 'lightweight',
   }),
 );

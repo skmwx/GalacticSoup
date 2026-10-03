@@ -13,8 +13,8 @@ import { undock } from '../support/undock.ts';
  * killing its cutters before its marksman, loots the wrecks and sells the
  * salvage. The patrol's bounties and salvage buy an afterburner and a
  * capacitor battery; the armour plating one wreck held is fitted as well. The
- * pilot waits docked until the capacitor is full - a repair restores the
- * layers, not the capacitor - then holds 10 km from whichever of the Pirate
+ * pilot takes the station's repair, which recharges the capacitor with the
+ * free shield repair, then holds 10 km from whichever of the Pirate
  * Base's brawlers is nearest, clears it and comes home, and every site is
  * still offered.
  *
@@ -299,15 +299,25 @@ async function fight(page: Page, engagement: Engagement): Promise<void> {
 const BOOSTER = 'Small Shield Booster';
 
 /**
- * Waits docked, with the clock running, until the ship panel shows a full
- * capacitor. A repair restores the layers but not the capacitor, which
- * recharges only as simulation time passes.
+ * Takes the station's repair, which recharges the capacitor with the free
+ * shield repair (Functional Specification 10), and checks that the ship panel
+ * shows it full. No simulation time passes.
  */
-async function restUntilCharged(page: Page, capacity: string): Promise<void> {
+async function repairAndRecharge(page: Page, capacity: string): Promise<void> {
+  await page.getByRole('button', { name: 'Services', exact: true }).click();
+  await page.getByRole('button', { name: 'Repair the ship' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Confirm repair' });
+  await expect(dialog.getByText('Calculating…')).toBeHidden();
+  await expect(dialog.getByText(/recharged to full for free$/)).toBeVisible();
+  const confirm = dialog.getByRole('button', { name: 'Confirm' });
+  if (await confirm.isEnabled()) {
+    await confirm.click();
+  } else {
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+  }
+  await expect(dialog).toBeHidden();
   await page.getByRole('button', { name: 'Ship', exact: true }).click();
-  await ensureRunning(page);
-  await expect(page.getByText(new RegExp(`^${capacity} of ${capacity},`))).toBeVisible({ timeout: 240_000 });
-  await ensurePaused(page);
+  await expect(page.getByText(new RegExp(`^${capacity} of ${capacity},`))).toBeVisible({ timeout: 10_000 });
 }
 
 /** Opens every wreck in the site, flying into reach where needed, and empties it. */
@@ -415,8 +425,8 @@ test.describe('progression to the mastery site', () => {
     await expect(page.getByRole('cell', { name: 'Small Armour Plating' })).toBeVisible();
     await resupply(page);
     // The booster ran through the looting, and the battery added charge to
-    // fill: leave with a full capacitor.
-    await restUntilCharged(page, '370');
+    // fill: the repair recharges it, so the ship leaves with a full capacitor.
+    await repairAndRecharge(page, '370');
 
     // The Pirate Base: arrive far off, burn and keep 10 km from whichever
     // brawler is nearest, and boost the shield when it runs low.

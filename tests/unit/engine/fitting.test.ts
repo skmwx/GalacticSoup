@@ -109,7 +109,15 @@ function hangarOf(state: CampaignState): readonly { definitionId: string; quanti
   }));
 }
 
-/** The granted rounds, and what stays behind once one magazine is loaded. */
+function holdOf(state: CampaignState): readonly { definitionId: string; quantity: number }[] {
+  const ship = state.assets.ships[state.assets.activeShipId!]!;
+  return stacksIn(state.assets, ship.cargoInventoryId).map((stack) => ({
+    definitionId: stack.definitionId,
+    quantity: stack.quantity,
+  }));
+}
+
+/** The granted rounds, and what stays in the hold once one magazine is loaded. */
 const GRANTED_ROUNDS = content.rules.economy.startingItems.find(
   (item) => item.definitionId === FUSION,
 )?.quantity ?? 0;
@@ -127,8 +135,10 @@ describe('the authored starting fit', () => {
       `weapon:0=${AUTOCANNON}+${FUSION}x${String(MAGAZINE_ROUNDS)}`,
       `system:0=${BOOSTER}`,
     ]);
-    // The magazine took its rounds from the grant; the rest stayed behind.
-    expect(hangarOf(state)).toEqual([{ definitionId: FUSION, quantity: SPARE_ROUNDS }]);
+    // The magazine took its rounds from the grant; the rest stayed in the
+    // hold, where the weapon reloads from, and nothing waits in the hangar.
+    expect(holdOf(state)).toEqual([{ definitionId: FUSION, quantity: SPARE_ROUNDS }]);
+    expect(hangarOf(state)).toEqual([]);
 
     const hull = content.requireHull(state.assets.ships[state.assets.activeShipId!]!.hullId);
     const derived = deriveShipAttributes({ hull, fit: fitOf(state), content });
@@ -322,11 +332,13 @@ describe('committing a fit', () => {
 
     expect(applied.fitting).toBeNull();
     expect(describeFit(applied)).toEqual([`weapon:0=${RAILGUN}`, `system:0=${BOOSTER}`]);
-    // The autocannon and its magazine came back to the hangar, whole.
+    // The autocannon and its magazine came back to the hangar, whole; the
+    // spare rounds in the hold were never part of the fit and stay there.
     expect(hangarOf(applied)).toEqual([
-      { definitionId: FUSION, quantity: GRANTED_ROUNDS },
       { definitionId: AUTOCANNON, quantity: 1 },
+      { definitionId: FUSION, quantity: MAGAZINE_ROUNDS },
     ]);
+    expect(holdOf(applied)).toEqual([{ definitionId: FUSION, quantity: SPARE_ROUNDS }]);
     expect(totalUnits(applied)).toEqual(totalUnits(state));
   });
 
@@ -334,8 +346,8 @@ describe('committing a fit', () => {
     const cleared = committed(begun(), 'fitting.clear', { slotKind: 'weapon', slotIndex: 0 });
     const emptied = committed(cleared, 'fitting.commit', {});
     expect(hangarOf(emptied)).toEqual([
-      { definitionId: FUSION, quantity: GRANTED_ROUNDS },
       { definitionId: AUTOCANNON, quantity: 1 },
+      { definitionId: FUSION, quantity: MAGAZINE_ROUNDS },
     ]);
 
     const reloaded = committed(
@@ -348,8 +360,11 @@ describe('committing a fit', () => {
       {},
     );
 
+    // The hangar is searched before the hold, so the magazine that came off
+    // goes back on and the spare rounds are left where they were.
     expect(describeFit(reloaded)).toContain(`weapon:0=${AUTOCANNON}+${FUSION}x${String(MAGAZINE_ROUNDS)}`);
-    expect(hangarOf(reloaded)).toEqual([{ definitionId: FUSION, quantity: SPARE_ROUNDS }]);
+    expect(hangarOf(reloaded)).toEqual([]);
+    expect(holdOf(reloaded)).toEqual([{ definitionId: FUSION, quantity: SPARE_ROUNDS }]);
   });
 
   it('refuses atomically when an item the plan needs is not here [FUNC-22.2, FUNC-22.4]', () => {

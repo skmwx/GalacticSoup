@@ -27,7 +27,7 @@ import type { SiteId, StationId } from '@shared';
 
 import { readContentFiles } from '../../scripts/lib/content/read.mjs';
 
-import { TEST_SEED, testSimulation, type TestSimulation } from './campaign.ts';
+import { emptyHold, TEST_SEED, testSimulation, type TestSimulation } from './campaign.ts';
 import { shippedContent } from './content.ts';
 import { compilePack, editDocument, type ContentFile } from './contentFixtures.ts';
 import { SCOUT_SITE_ID } from './encounter.ts';
@@ -85,7 +85,12 @@ export interface SiteOptions {
   readonly content?: ContentRepository;
 }
 
-/** A new campaign, docked at the starting station, as `campaign.create` makes it. */
+/**
+ * A new campaign, docked at the starting station, as `campaign.create` makes
+ * it - except that the spare rounds it starts with are moved from the hold to
+ * the hangar. What a lost ship carried decides what its wreck and its loss
+ * report hold, so each case loads the hold itself.
+ */
 export function newCampaign(seed: string = TEST_SEED, content: ContentRepository = shippedContent()): CampaignState {
   const base = createCampaign({
     displayName: 'Test Pilot',
@@ -93,7 +98,7 @@ export function newCampaign(seed: string = TEST_SEED, content: ContentRepository
     createdAtRealMs: 1_700_000_000_000,
     initialRate: 1,
   }, content);
-  return { ...base, revision: 1 };
+  return emptyHold(draftOf({ ...base, revision: 1 }), content) as CampaignState;
 }
 
 /**

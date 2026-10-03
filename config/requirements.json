@@ -1240,7 +1240,7 @@
       "id": "TECH-16",
       "title": "Diagnostics and development support",
       "scope": "included",
-      "extent": "The headless engine with in-memory persistence and a deterministic elapsed-time driver; the diagnostics panel is not an MVP surface (MVP Scope 5)."
+      "extent": "The headless engine with in-memory persistence and a deterministic elapsed-time driver; the diagnostics panel and the diagnostic export are deferred (MVP Scope 8)."
     },
     {
       "id": "TECH-17",

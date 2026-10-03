@@ -190,11 +190,12 @@ export async function flySortie(
 }
 
 /**
- * Waits docked, with the clock running, until the active ship's capacitor is
- * full, and returns the share it holds. Repairs restore the layers but not the
- * capacitor, which recharges only as simulation time passes (Functional
- * Specification 9.8, 10): a pilot who undocks straight after a fight takes a
- * nearly empty capacitor into the next one, so a competent one waits.
+ * Leaves the active ship's capacitor full before it undocks, and returns the
+ * share it holds. The station recharges it with the free shield repair
+ * (Functional Specification 10), so a competent pilot takes that whenever it
+ * costs nothing. Only a pilot who cannot afford the armour and hull repair it
+ * would come with waits instead, docked with the clock running (Functional
+ * Specification 9.8).
  */
 export async function restUntilCharged(session: ScenarioSession, budgetSeconds = 600): Promise<number> {
   const shipId = (await session.data<AssetsData>('assets.list')).activeShipId;
@@ -204,6 +205,11 @@ export async function restUntilCharged(session: ScenarioSession, budgetSeconds =
     return capacitor.capacity > 0 ? capacitor.charge / capacitor.capacity : 1;
   };
   if ((await share()) >= 0.999) return share();
+  const repair = await session.data<RepairPreviewData>('repair.preview', { shipId });
+  if (repair.available && repair.token !== null && repair.totalCredits === 0) {
+    await session.data('repair.confirm', { token: repair.token });
+    return share();
+  }
   await session.data('time.set', { paused: false, rate: 1 });
   for (let waited = 0; waited < budgetSeconds && (await share()) < 0.999; waited += 5) await session.advance(5_000);
   await session.data('time.set', { paused: true, rate: 1 });

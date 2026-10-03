@@ -1,4 +1,4 @@
-import { EconomyError, InventoryError, type CampaignState } from '@engine/domain';
+import { EconomyError, InventoryError, type CampaignState, type InvariantChecks } from '@engine/domain';
 import { assetsProjection, walletProjection, hangarProjection, cargoProjection,
   itemInspectionProjection, maximumInventoryProjection, comparisonProjection,
   fittingDraftProjection, shipProjection, undockValidityProjection } from '@engine/projections';
@@ -73,7 +73,7 @@ import { ENGINE_VERSION } from './version';
  * and two commands must never interleave over one campaign. The queue is the
  * host's, not the transport's, so the guarantee holds however messages arrive.
  *
- * @implements TECH-2, TECH-4.1, TECH-7.1, TECH-7.2
+ * @implements TECH-2, TECH-4.1, TECH-7.1, TECH-7.2, TECH-14
  */
 export interface EngineHost {
   readonly engineVersion: string;
@@ -99,10 +99,18 @@ export interface EngineHostOptions {
   readonly recentRequestLimit?: number;
   readonly slotId?: string;
   readonly retention?: SaveRetention;
+  /**
+   * How much every commit validates (Technical Specification 14). The default
+   * is the complete validation, which tests and development builds use. A
+   * production host passes `lightweight`; a save, a load and a migration
+   * validate completely whichever is chosen.
+   */
+  readonly invariantChecks?: InvariantChecks;
 }
 
 interface Session {
   campaign: CampaignState | null;
+  readonly invariantChecks: InvariantChecks;
   readonly content: ContentRepository;
   readonly engineVersion: string;
   readonly recent: RecentRequests;
@@ -113,6 +121,7 @@ export function createEngineHost(options: EngineHostOptions): EngineHost {
   const engineVersion = options.engineVersion ?? ENGINE_VERSION;
   const session: Session = {
     campaign: null,
+    invariantChecks: options.invariantChecks ?? 'complete',
     content: options.content,
     engineVersion,
     recent:
@@ -280,6 +289,7 @@ async function executeCommand(
     content: session.content,
     type,
     payload: commandPayload,
+    invariantChecks: session.invariantChecks,
   });
 
   if (result.kind === 'failed') {

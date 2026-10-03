@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { inventoryService, maximumThatFits, usedVolume, stacksIn, validateCampaign,
   creditWallet, debitWallet, InventoryError, entityIdOf, type CampaignDraft } from '@engine/domain';
 import { canonicalJson, type DefinitionId } from '@shared';
-import { testDraft } from '../../support/campaign';
+import { emptyHold, testDraft } from '../../support/campaign';
 import { shippedContent } from '../../support/content';
 
 const content = shippedContent();
 const ammo = 'ammo.projectile.small.fusion' as DefinitionId;
 function setup() {
-  const draft = testDraft();
+  const draft = emptyHold(testDraft());
   const hangar = Object.values(draft.assets.inventories).find((i) => i.location.kind === 'hangar')!.id;
   const cargo = draft.assets.ships[draft.assets.activeShipId!]!.cargoInventoryId;
   const service = inventoryService(draft, content);
@@ -38,17 +38,22 @@ describe('physical inventories', () => {
     expect(maximumThatFits(draft.assets, content, cargo, ammo)).toBe(0);
     expect(validateCampaign(draft, content)).toEqual([]);
   });
-  it('starts with a wallet, one fitted ship, unlimited hangar and empty cargo [FUNC-3.1, TECH-8.2, MVP-AC-02]', () => {
-    const { draft, hangar, cargo, fitting } = setup();
+  it('starts with a wallet, one fitted ship, an unlimited hangar and spare rounds in the hold [FUNC-3.1, TECH-8.2, MVP-AC-02]', () => {
+    // The campaign exactly as it is created, not the emptied hold of `setup`.
+    const draft = testDraft();
+    const ship = draft.assets.ships[draft.assets.activeShipId!]!;
+    const hangar = Object.values(draft.assets.inventories).find((i) => i.location.kind === 'hangar')!.id;
     expect(draft.assets.credits).toBe(20000);
     expect(Object.values(draft.assets.ships)).toHaveLength(1);
-    // The granted modules are fitted; what the magazine did not take stays behind.
-    // What the grant left behind after the starting fit loaded one magazine.
-    const granted = content.rules.economy.startingItems.find((item) => item.definitionId === 'ammo.projectile.small.fusion')?.quantity ?? 0;
+    // The granted modules are fitted, and the rounds the first magazine did not
+    // take ride in the hold, where a weapon reloads from.
+    const granted = content.rules.economy.startingItems.find((item) => item.definitionId === ammo);
     const magazine = 20;
-    expect(stacksIn(draft.assets, hangar).map((s) => s.quantity)).toEqual([granted - magazine]);
-    expect(stacksIn(draft.assets, fitting).map((s) => s.state.kind).sort()).toEqual(['charge', 'fitted', 'fitted']);
-    expect(stacksIn(draft.assets, cargo)).toEqual([]);
+    expect(granted?.location).toBe('cargo');
+    expect(stacksIn(draft.assets, ship.cargoInventoryId).map((s) => [s.definitionId, s.quantity]))
+      .toEqual([[ammo, (granted?.quantity ?? 0) - magazine]]);
+    expect(stacksIn(draft.assets, ship.fittingInventoryId).map((s) => s.state.kind).sort()).toEqual(['charge', 'fitted', 'fitted']);
+    expect(stacksIn(draft.assets, hangar)).toEqual([]);
     expect(draft.assets.inventories[hangar]!.capacity).toEqual({ kind: 'unlimited' });
     expect(validateCampaign(draft, content)).toEqual([]);
   });
@@ -157,7 +162,9 @@ describe('physical inventories', () => {
         expect(new Set(Object.values(draft.assets.stacks).map((s) => s.id)).size).toBe(Object.keys(draft.assets.stacks).length);
       }
     }
-  });
+  // 3,200 operations, each followed by the complete validation: seconds, and
+  // more beside the rest of the suite.
+  }, 20_000);
 });
 describe('wallet', () => {
   it('keeps credits whole and non-negative under generated debits and credits [FUNC-4.1, FUNC-6.1, FUNC-22.2, TECH-15.1]', () => {

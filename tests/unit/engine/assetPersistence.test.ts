@@ -6,15 +6,15 @@ import { createMemorySaveStore } from '@adapters/persistence';
 import { inventoryService, readCampaignState, validateCampaign, entityIdOf, type InventoryId } from '@engine/domain';
 import { runCommand } from '@engine/application';
 import { canonicalJson, type DefinitionId, type StationId } from '@shared';
-import { testDraft } from '../../support/campaign';
+import { emptyHold, testDraft } from '../../support/campaign';
 import { shippedContent } from '../../support/content';
 
 const content = shippedContent();
 function prepared() {
-  const draft = testDraft();
+  const draft = emptyHold(testDraft());
   const ship = draft.assets.ships[draft.assets.activeShipId!]!;
   const service = inventoryService(draft, content);
-  const ammo = Object.values(draft.assets.stacks).find((s) => s.definitionId.startsWith('ammo.'))!;
+  const ammo = Object.values(draft.assets.stacks).find((s) => s.definitionId.startsWith('ammo.') && s.state.kind === 'plain')!;
   service.add(ammo.inventoryId, ammo.definitionId, 7, { grantedQuantity: 0, purchasedQuantity: 7, purchaseCostCredits: 31 });
   const moved = service.transfer(ammo.id, ship.cargoInventoryId, 19);
   service.reserve(moved, 4, ship.id);
@@ -60,7 +60,8 @@ describe('asset persistence and ownership', () => {
     expect(canonicalJson(save)).toBe(before);
   });
   it('checks item references even when the content hash is unchanged [TECH-11.4]', () => {
-    const draft = prepared(); Object.values(draft.assets.stacks)[0]!.definitionId = 'item.missing' as DefinitionId;
+    const draft = prepared();
+    Object.values(draft.assets.stacks).find((s) => s.state.kind === 'plain')!.definitionId = 'item.missing' as DefinitionId;
     const result = loadSave(envelope(draft), { content });
     expect(!result.ok && result.error.messageKey).toBe('error.saveLoad.contentIncompatible');
     expect(!result.ok && result.error.params!['firstMissing']).toBe('item.missing');

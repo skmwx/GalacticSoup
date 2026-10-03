@@ -1,16 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
+import { createMemorySaveStore } from '@adapters/persistence';
 import {
   beginTransaction,
   campaignStateHash,
   commit,
   createRecentRequests,
+  createSaveService,
   drawUnitInterval,
   InvariantFailure,
   runCommand,
+  validateCampaign,
+  validateCampaignBoundary,
+  type CampaignDraft,
   type CampaignState,
   type MutableRandomStreams,
 } from '@engine';
+import { PROTOCOL_VERSION } from '@protocol';
 
 import { TEST_SEED, testCampaign } from '../../support/campaign.ts';
 import { shippedContent } from '../../support/content.ts';
@@ -102,6 +108,76 @@ describe('transaction isolation', () => {
     transaction.invalidate('session');
 
     expect(commit(transaction).invalidations).toEqual(['frame', 'session']);
+  });
+});
+
+describe('how much a commit validates', () => {
+  /** A defect only the complete validation sees: more armour damage than the hull has. */
+  function overDamaged(): ReturnType<typeof beginTransaction> {
+    const transaction = beginTransaction(testCampaign(), content);
+    const draft = transaction.requireDraft();
+    draft.assets.ships[draft.assets.activeShipId!]!.condition.damage.armor = 1_000_000;
+    return transaction;
+  }
+
+  it('validates completely unless told otherwise [TECH-14, TECH-15.3]', () => {
+    expect(() => commit(overDamaged())).toThrow(InvariantFailure);
+    expect(() => commit(overDamaged(), 'complete')).toThrow(InvariantFailure);
+  });
+
+  it('leaves the deep checks to the next save when asked for the lightweight ones [TECH-14]', async () => {
+    const committed = commit(overDamaged(), 'lightweight').campaign as CampaignState;
+    expect(committed.revision).toBe(2);
+    expect(validateCampaignBoundary(committed)).toEqual([]);
+    expect(validateCampaign(committed, content).map((issue) => issue.rule)).toContain('fittingConsistency');
+
+    // A production build runs the complete validation before it saves, so the
+    // state the commit let through is refused there and nothing is written.
+    const store = createMemorySaveStore();
+    const saves = createSaveService({ store, content, engineVersion: '1.0.0', protocolVersion: PROTOCOL_VERSION });
+    const status = await saves.save(committed, 'auto', 1_700_000_000_000);
+    await saves.drain();
+    expect(status.state).toBe('failed');
+    expect(status.error?.messageKey).toBe('error.internalError.invariant');
+    expect((await saves.slot()).saveCount).toBe(0);
+  });
+
+  it.each([
+    ['an ordinal', (draft: CampaignDraft) => { draft.nextEventOrdinal = 0; }, 'ordinalsMonotonic'],
+    ['the revision', (draft: CampaignDraft) => { draft.revision = -5; }, 'revisionMonotonic'],
+    ['the clock', (draft: CampaignDraft) => { draft.time.simulationTimeMs = -1; }, 'simulationTime'],
+    ['the wallet', (draft: CampaignDraft) => { draft.assets.credits = -1; }, 'boundedValues'],
+  ] as const)('still refuses a commit that breaks %s with the lightweight checks [TECH-14, FUNC-22.2]', (_, corrupt, rule) => {
+    const transaction = beginTransaction(testCampaign(), content);
+    corrupt(transaction.requireDraft());
+
+    let failure: unknown = null;
+    try {
+      commit(transaction, 'lightweight');
+    } catch (error: unknown) {
+      failure = error;
+    }
+    expect(failure).toBeInstanceOf(InvariantFailure);
+    expect((failure as InvariantFailure).issues.map((issue) => issue.rule)).toContain(rule);
+  });
+
+  it('passes the depth a command asks for to its commit [TECH-14, TECH-7.2]', () => {
+    const campaign = testCampaign();
+    const damaged: CampaignState = {
+      ...campaign,
+      assets: {
+        ...campaign.assets,
+        ships: Object.fromEntries(Object.entries(campaign.assets.ships).map(([id, ship]) => [
+          id,
+          { ...ship, condition: { ...ship.condition, damage: { ...ship.condition.damage, armor: 1_000_000 } } },
+        ])),
+      },
+    };
+    const request = { campaign: damaged, content, type: 'time.set', payload: { paused: false, rate: 1 } } as const;
+
+    expect(runCommand(request).kind).toBe('failed');
+    expect(runCommand({ ...request, invariantChecks: 'complete' }).kind).toBe('failed');
+    expect(runCommand({ ...request, invariantChecks: 'lightweight' }).kind).toBe('committed');
   });
 });
 

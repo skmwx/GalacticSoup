@@ -51,6 +51,11 @@ If you would rather have the literal reading, say so and it becomes a small chan
 8.3 could be tightened to say that a dedicated magazine counts as the explicit location.
 
 **Answer:**
+Let's leave it as it is implemented; update the specifications accordingly.
+
+**Applied (2026-10-03, agent):** no code change. Technical Specification 8.3 now says that a
+weapon's magazine is the explicit location and that the round a running cycle holds back is
+recorded on the cycle.
 
 ---
 
@@ -77,6 +82,12 @@ when one does, its location agrees with the campaign location; a campaign withou
 and the pilot either owns a flight-ready ship or can afford the starter hull at that station."
 
 **Answer:**
+Let's leave it as it is implemented; update the specifications accordingly.
+
+**Applied (2026-10-03, agent):** no code change. Technical Specification 15.3 check 5 now allows a
+docked campaign with no active ship, in the wording above except that "can afford the starter hull"
+reads "holds at least the starter ship reference value", which is what Q5 made the rule.
+Functional Specification 9.12 describes the shipless state.
 
 ---
 
@@ -101,6 +112,11 @@ flight-ready. Two consequences are worth a decision:
 If either reading is wrong, both are small, local changes in `src/engine/domain/recovery/`.
 
 **Answer:**
+Let's leave it as it is implemented; update the specifications accordingly.
+
+**Applied (2026-10-03, agent):** no code change. Functional Specification 9.12 now defines
+"flight-ready" as "may undock", so a bare hull counts, and says the grant is checked at destruction
+and again after a purchase that leaves a shipless pilot below the starter ship reference value.
 
 ---
 
@@ -142,6 +158,12 @@ reverted in one function and one content check. Q4 itself remains open: a pilot 
 buys a bare hull with their last credits is still not owed a grant.
 
 **Answer:**
+For now, let's leave it as it is; once mining is implemented we will give the player the ability to mine their way out of financial hole.
+
+**Applied (2026-10-03, agent):** no code change. Functional Specification 9.12 now defines the
+starter ship reference value as hull, original fit and one full ammunition load, and states that
+the recovery station sells all of it at fixed prices no higher than reference. Nothing was added
+about mining: the route out through mining belongs to the phase that implements it.
 
 ---
 
@@ -188,6 +210,21 @@ warning by moving it into the warning list; option 2 would be a small change to 
 service.
 
 **Answer:**
+Recharge capacitor as part of the free shield repair
+
+**Applied (2026-10-03, agent):** implemented.
+
+- The repair service now recharges the capacitor to full, free, and is offered whenever a layer is
+  damaged or the capacitor is not full (Functional Specification 10). The confirmation shows the
+  charge it found.
+- The repair preview gained two fields, so the protocol is version 14. The contract lock, the
+  golden campaign and the balance candidate were recorded again. The careers finish 3-9 simulated
+  minutes sooner, because nobody waits docked for a recharge; no outcome changed.
+- The guidance, the departure panel and the low-capacitor notification now point at the repair
+  instead of telling the player to wait.
+
+Low capacitor is still not an undock warning: the departure line and the notification after
+undocking stay as they were.
 
 ---
 
@@ -216,6 +253,22 @@ Either would make the guidance step unnecessary for the starting campaign; it wo
 the habit after the first resupply.
 
 **Answer:**
+Let's do both options, have more ammo and have a warning if somehow player ends up undocking without; update the spec accordingly.
+
+**Applied (2026-10-03, agent):** implemented.
+
+- A new campaign starts with its 100 spare rounds in the ship's hold (Functional Specification
+  3.1). A starting item may now say `"location": "cargo"` in `content/rules/economy.json`; content
+  validation checks that what starts in the hold fits it.
+- "No spare rounds in the hold for a fitted weapon" is an undock warning (Functional Specification
+  10). It is listed in Departure and in the "Undock with warnings?" question, per weapon slot.
+- The total is unchanged: 20 loaded and 100 in the hold. I read "have more ammo" as "carry it",
+  not as a larger grant; say so if you meant more rounds.
+- The "Carry spare rounds" guidance step would have completed by itself at campaign creation, so it
+  now waits for the first return to the station. It completes on docking when the hold still holds
+  40 rounds, and otherwise asks the player to buy or move more.
+- A recovery-grant ship still comes with its fit and one magazine only, as 9.12 says, so that is
+  where the new warning shows first.
 
 ---
 
@@ -244,6 +297,11 @@ warnings as a list only, the question is one setting default (`DEFAULT_CONFIRMAT
 `src/ui/preferences/preferences.ts`); the settings would then offer it as an opt-in.
 
 **Answer:**
+Let's keep it as it is implemented.
+
+**Applied (2026-10-03, agent):** no code change. Functional Specification 10 now says a warning
+never blocks undocking and is asked as a question the player may switch off; section 20 says a
+price confirmation and an irreversible action are always asked.
 
 ---
 
@@ -267,6 +325,10 @@ If you want the panel before the release candidate, it is a self-contained piece
 behind a development flag and would be its own small phase. Otherwise nothing changes.
 
 **Answer:**
+For MVP, let's skip the panel.
+
+**Applied (2026-10-03, agent):** no code change. MVP Scope 8 now lists the diagnostics panel and the
+diagnostic export as deferred, and the `TECH-16` entry of the traceability registry points there.
 
 ---
 
@@ -300,3 +362,27 @@ Stopping is the safer of the two and it is what found the defect, so Phase 20 le
    first thing to do if a later encounter outgrows the quantum budget.
 
 **Answer:**
+Let's do 2.
+
+**Applied (2026-10-03, agent):** implemented.
+
+- A commit now validates at one of two depths. Tests and development builds run the complete
+  validation at every commit, as before. The production worker runs the lightweight check: state
+  version, identity, revision, ordinals, clock, random streams and a whole, non-negative wallet.
+- Every build still runs the complete validation before a save and after a load. A defect in a
+  production build is therefore refused at the next save - nothing is written, the save failure is
+  shown, the last good snapshot stays - instead of stopping the clock. That is the trade described
+  above, now the shipped behaviour.
+- Technical Specification 14 spells out what "lightweight" covers.
+- Measured at the largest encounter on this machine, best of three passes, one 50 ms quantum:
+
+  | Checks at commit | Median | 95th percentile |
+  |---|---|---|
+  | Lightweight (production) | 1.0 ms | 2.9 ms |
+  | Complete (tests, development) | 2.0 ms | 3.8 ms |
+
+  The 4 ms target is now asserted on the production depth; the complete depth is recorded beside
+  it in `reports/performance.json`. The complete figures are higher than Phase 20 reported (1.3 ms
+  and 2.5 ms) and two of its three passes were at or above 4 ms today, so the split was worth
+  doing now. What is left in a quantum is mostly the copy and the freeze of the whole campaign,
+  which this change did not touch.

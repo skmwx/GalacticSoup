@@ -68,8 +68,8 @@ export type {
   CampaignReadResult,
   CampaignReadSuccess,
 } from './campaign/snapshot';
-export { validateCampaign } from './campaign/invariants';
-export type { InvariantIssue } from './campaign/invariants';
+export { validateCampaign, validateCampaignBoundary } from './campaign/invariants';
+export type { InvariantChecks, InvariantIssue } from './campaign/invariants';
 export {
   compareSchedulerEntries,
   DEFAULT_BOUNDARY_PRIORITY,

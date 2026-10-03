@@ -193,10 +193,12 @@ describe('the loss report', () => {
     expect(within(lost).getByText('20 x Fusion S (loaded ammunition)')).toBeInTheDocument();
     const survived = within(loss).getByRole('list', { name: 'Surviving items' });
     expect(within(survived).getByText('1 x Small Shield Booster (fitted)')).toBeInTheDocument();
+    // The spare rounds a campaign starts with were still in the hold.
+    expect(within(survived).getByText('100 x Fusion S (in the hold)')).toBeInTheDocument();
 
     expect(
       within(loss).getByText(
-        /^What survived lies in your wreck at Outpost Cradle\. Stacks left: 1\. It expires in 1h 59m\.$/,
+        /^What survived lies in your wreck at Outpost Cradle\. Stacks left: 2\. It expires in 1h 59m\.$/,
       ),
     ).toBeInTheDocument();
 
@@ -445,7 +447,7 @@ describe('going back for the wreck', () => {
     if (!(row instanceof HTMLElement)) throw new Error('The wreck is not offered as a destination.');
     expect(within(row).getByRole('rowheader')).toHaveTextContent('Your Wayfarer wreck at Outpost Cradle');
     expect(within(row).getByText('Pirate Base, tier 3')).toBeInTheDocument();
-    expect(within(row).getByText(/^Stacks left: 1\. Expires in 1h 59m\.$/)).toBeInTheDocument();
+    expect(within(row).getByText(/^Stacks left: 2\. Expires in 1h 59m\.$/)).toBeInTheDocument();
 
     await harness.user.click(within(row).getByRole('button', { name: 'Choose your wreck at Outpost Cradle' }));
     await waitFor(async () => {

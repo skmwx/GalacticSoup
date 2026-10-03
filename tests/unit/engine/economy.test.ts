@@ -116,6 +116,61 @@ describe('station service previews and confirmations', () => {
       .toEqual({ shield: 0, armor: 0, hull: 0 });
   });
 
+  it('recharges the capacitor with the free shield repair [FUNC-10, FUNC-9.8, TECH-7.4]', () => {
+    const draft = draftOf(testCampaign());
+    const shipId = draft.assets.activeShipId!;
+    const ship = draft.assets.ships[shipId]!;
+    const capacity = ship.condition.capacitorCharge;
+    draft.assets.ships[shipId] = {
+      ...ship,
+      condition: { damage: { shield: 40, armor: 0, hull: 0 }, capacitorCharge: 15 },
+    };
+    draft.assets.version += 1;
+    const preview = repairPreview(draft as CampaignState, content, { shipId });
+
+    // Shield and capacitor cost nothing; the confirmation still states it.
+    expect(preview.available).toBe(true);
+    expect(preview.totalCredits).toBe(0);
+    expect(preview.walletDeltaCredits).toBe(0);
+    expect(preview).toMatchObject({ capacitorCharge: 15, capacitorCapacity: capacity });
+    const result = runCommand({ campaign: draft as CampaignState, content, type: 'repair.confirm',
+      payload: { token: preview.token! } });
+
+    expect(result.kind).toBe('committed');
+    if (result.kind !== 'committed') return;
+    expect(result.campaign!.assets.credits).toBe(draft.assets.credits);
+    expect(result.campaign!.assets.ships[shipId]!.condition).toEqual({
+      damage: { shield: 0, armor: 0, hull: 0 },
+      capacitorCharge: capacity,
+    });
+  });
+
+  it('offers the repair for a drained capacitor alone, and for nothing at all refuses [FUNC-10, FUNC-22.10]', () => {
+    const start = testCampaign();
+    const shipId = start.assets.activeShipId!;
+    // A new ship is whole and charged: there is nothing to restore.
+    const whole = repairPreview(start, content, { shipId });
+    expect(whole.available).toBe(false);
+    expect(whole.unavailableReason).toBe('repair.unavailable.nothingToRestore');
+    expect(whole.token).toBeNull();
+
+    const draft = draftOf(start);
+    draft.assets.ships[shipId]!.condition.capacitorCharge = 0;
+    draft.assets.version += 1;
+    const drained = repairPreview(draft as CampaignState, content, { shipId });
+    expect(drained.available).toBe(true);
+    expect(drained.totalCredits).toBe(0);
+
+    const result = runCommand({ campaign: draft as CampaignState, content, type: 'repair.confirm',
+      payload: { token: drained.token! } });
+    expect(result.kind).toBe('committed');
+    if (result.kind !== 'committed') return;
+    expect(result.campaign!.assets.ships[shipId]!.condition.capacitorCharge).toBe(whole.capacitorCapacity);
+    expect(result.data.events.map((event) => event.kind)).toContain('repair.completed');
+    // Done once, it has nothing left to do.
+    expect(repairPreview(result.campaign!, content, { shipId }).available).toBe(false);
+  });
+
   it('tops up loaded magazines from owned local ammunition before buying [MVP-AC-02, FUNC-6.1, TECH-8.3]', () => {
     const draft = draftOf(testCampaign());
     const shipId = draft.assets.activeShipId!;

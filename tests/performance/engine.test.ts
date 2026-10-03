@@ -14,6 +14,7 @@ import {
   SAVE_LIMITS,
   type CampaignState,
   type EngineHost,
+  type InvariantChecks,
   type SaveEnvelope,
 } from '@engine';
 import { runCommand } from '@engine/application';
@@ -121,12 +122,14 @@ describe('simulation and command timing at the authored maximum', () => {
   it('processes one quantum inside the simulation budget [TECH-13, TECH-9.1]', () => {
     // A minute of the fight, one quantum per command: the whole transaction,
     // from draft to validated commit, is what a frame at 1x pays for.
-    const pass = (): number[] => {
+    const pass = (invariantChecks: InvariantChecks): number[] => {
       let state = loaded(readGoldenSave('combat'));
       const samples: number[] = [];
       for (let quantum = 0; quantum < 1_200 && state.assets.location.kind === 'site'; quantum += 1) {
         const started = performance.now();
-        const result = runCommand({ campaign: state, content, type: 'time.advance', payload: { elapsedRealMs: QUANTUM_MS } });
+        const result = runCommand({
+          campaign: state, content, type: 'time.advance', payload: { elapsedRealMs: QUANTUM_MS }, invariantChecks,
+        });
         samples.push(performance.now() - started);
         if (result.kind !== 'committed' || result.campaign === null) throw new Error('A quantum did not commit.');
         state = result.campaign;
@@ -137,12 +140,22 @@ describe('simulation and command timing at the authored maximum', () => {
     // One pass can still be slowed by whatever else the machine is doing. The
     // best of three is what the engine does when it has the processor to
     // itself, which is what the target describes.
-    const passes = [pass(), pass(), pass()].map(summarise);
-    const best = passes.reduce((least, entry) => (entry.p95Ms < least.p95Ms ? entry : least));
-    report['quantum'] = { best, passes };
-    expect(best.samples).toBeGreaterThan(600);
-    expect(best.p95Ms).toBeLessThan(TARGETS.quantumP95Ms);
-  }, 120_000);
+    const bestOfThree = (invariantChecks: InvariantChecks): { best: ReturnType<typeof summarise>; passes: ReturnType<typeof summarise>[] } => {
+      const passes = [pass(invariantChecks), pass(invariantChecks), pass(invariantChecks)].map(summarise);
+      return { best: passes.reduce((least, entry) => (entry.p95Ms < least.p95Ms ? entry : least)), passes };
+    };
+
+    // The target is the shipped game's, and a production build validates only
+    // the transaction boundary at each commit (Technical Specification 14).
+    // The complete validation a development build runs is measured beside it,
+    // so what the split buys stays visible.
+    const production = bestOfThree('lightweight');
+    const development = bestOfThree('complete');
+    report['quantum'] = production;
+    report['quantumWithCompleteChecks'] = development;
+    expect(production.best.samples).toBeGreaterThan(600);
+    expect(production.best.p95Ms).toBeLessThan(TARGETS.quantumP95Ms);
+  }, 240_000);
 
   it('answers a non-advancing command or query inside the request budget [TECH-13, TECH-7.3]', async () => {
     const samples: number[] = [];

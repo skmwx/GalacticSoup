@@ -49,7 +49,7 @@ const REASON = {
   credits: 'market.unavailable.insufficientCredits',
   capacity: 'market.unavailable.insufficientCapacity',
   source: 'market.unavailable.sourceNotLocal',
-  damaged: 'repair.unavailable.noDamage',
+  restored: 'repair.unavailable.nothingToRestore',
   supplied: 'resupply.unavailable.fullySupplied',
   ammunition: 'resupply.unavailable.noAmmunitionLoaded',
   enhanced: 'insurance.unavailable.alreadyEnhanced',
@@ -242,7 +242,12 @@ export function repairPreview(
   const total = Math.ceil(unrounded);
   let unavailableReason = serviceReason(state, station.id, 'repair');
   const damaged = Object.values(ship.condition.damage).some((amount) => amount > 0);
-  if (!damaged) unavailableReason ??= REASON.damaged;
+  // The capacitor is recharged with the free shield repair, so a ship with
+  // nothing broken but less than a full charge still has something to restore
+  // (Functional Specification 10).
+  const capacitorCapacity = attributeValue(derived, 'capacitorCapacity');
+  const discharged = ship.condition.capacitorCharge < capacitorCapacity;
+  if (!damaged && !discharged) unavailableReason ??= REASON.restored;
   if (total > state.assets.credits) unavailableReason ??= REASON.credits;
   const trace: FormulaTraceData = {
     formulaKey: 'repair.totalPrice',
@@ -263,6 +268,7 @@ export function repairPreview(
     walletDeltaCredits: spending(total), totalCredits: total, traces: [trace], stationId: station.id,
     shipId: ship.id, shieldDamage: ship.condition.damage.shield, armorDamage: ship.condition.damage.armor,
     hullDamage: ship.condition.damage.hull, missingArmorFraction, missingHullFraction,
+    capacitorCharge: ship.condition.capacitorCharge, capacitorCapacity,
     serviceModifier: station.serviceModifier, standingServiceMultiplier,
   };
   return deepFreeze(bindIfAvailable(state, base, payload, versions(state, station.id, 'repair')));

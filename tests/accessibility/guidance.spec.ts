@@ -71,7 +71,7 @@ test.describe('guidance and notification accessibility', () => {
 
     await guidance.getByRole('button', { name: 'Skip step' }).focus();
     await page.keyboard.press('Enter');
-    await expect(guidance.getByRole('heading', { level: 3 })).toHaveText('Carry spare rounds');
+    await expect(guidance.getByRole('heading', { level: 3 })).toHaveText('Undock');
 
     // J hides and shows the guidance; I opens the event log.
     await page.locator('body').click({ position: { x: 1, y: 1 } });
@@ -89,18 +89,18 @@ test.describe('guidance and notification accessibility', () => {
 
   test('names a step\'s state and a notification\'s level in words, not colour alone [TECH-12.2, TECH-12.3, FUNC-19.7]', async ({ page }) => {
     const guidance = page.getByRole('region', { name: 'Flight school', exact: true });
+    await guidance.getByRole('button', { name: 'Show me' }).click();
+    await expect(page.getByRole('button', { name: 'Departure', exact: true }))
+      .toHaveAccessibleDescription('The guidance says your next step is here.');
+
+    // Choosing the site completes the step the guidance pointed at.
+    await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
+    await expect(guidance.getByRole('heading', { level: 3 })).toHaveText('Undock');
+
     await guidance.getByRole('button', { name: 'Skip step' }).click();
     await guidance.getByText('All steps').click();
     await expect(guidance.locator('[data-status="skipped"]')).toContainText('skipped');
     await expect(guidance.locator('[data-status="current"]')).toContainText('next');
-
-    await guidance.getByRole('button', { name: 'Show me' }).click();
-    await expect(page.getByRole('button', { name: 'Hangar', exact: true }))
-      .toHaveAccessibleDescription('The guidance says your next step is here.');
-
-    // Carrying the spare rounds completes the step the guidance pointed at.
-    await page.getByRole('table', { name: 'Station hangar' }).getByRole('row', { name: /Fusion S/ })
-      .getByRole('button', { name: 'Move to hold' }).click();
     await page.getByRole('button', { name: /^Event log/ }).click();
     const entry = page.getByRole('region', { name: 'Event log', exact: true }).getByRole('listitem').first();
     await expect(entry).toContainText(/Info|Done|Warning|Danger/);

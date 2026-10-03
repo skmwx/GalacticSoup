@@ -1,10 +1,10 @@
 {
  "format": "galactic-soup/save",
  "formatVersion": 10,
- "protocolVersion": 13,
+ "protocolVersion": 14,
  "engineVersion": "0.1.0",
- "contentVersion": "0.1.0+6d2aa29cb3d4",
- "contentHash": "6d2aa29cb3d43c37839c78f48e0c754be5005f868dce715894a221314fd83e15",
+ "contentVersion": "0.1.0+296facab3d13",
+ "contentHash": "296facab3d13fb5e260b6f3c3ccbe670c1674b0f453e885b96d6bb29ac8ad1d2",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
@@ -90,14 +90,14 @@
    "stacks": {
     "ce0f36ba8e20edb4ebcba9757-e5": {
      "id": "ce0f36ba8e20edb4ebcba9757-e5",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e3",
      "definitionId": "ammo.projectile.small.fusion",
-     "quantity": 120,
+     "quantity": 100,
      "state": {
       "kind": "plain"
      },
      "provenance": {
-      "grantedQuantity": 120,
+      "grantedQuantity": 100,
       "purchasedQuantity": 0,
       "purchaseCostCredits": 0
      },
@@ -138,6 +138,21 @@
      },
      "provenance": {
       "grantedQuantity": 1,
+      "purchasedQuantity": 0,
+      "purchaseCostCredits": 0
+     },
+     "recoveryGrant": false
+    },
+    "ce0f36ba8e20edb4ebcba9757-e8": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e8",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2",
+     "definitionId": "ammo.projectile.small.fusion",
+     "quantity": 20,
+     "state": {
+      "kind": "plain"
+     },
+     "provenance": {
+      "grantedQuantity": 20,
       "purchasedQuantity": 0,
       "purchaseCostCredits": 0
      },
@@ -411,7 +426,7 @@
    }
   },
   "notifications": {
-   "sequence": 8,
+   "sequence": 7,
    "entries": [
     {
      "id": 1,
@@ -471,19 +486,6 @@
      "id": 5,
      "sequence": 5,
      "definitionId": "notify.guidance.step",
-     "groupKey": "notify.guidance.step|guide.loop.carry-rounds",
-     "subjectIds": [],
-     "params": {
-      "stepKey": "content.guide.loop.carry-rounds.title"
-     },
-     "firstAtMs": 0,
-     "lastAtMs": 0,
-     "count": 1
-    },
-    {
-     "id": 6,
-     "sequence": 6,
-     "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.choose-site",
      "subjectIds": [],
      "params": {
@@ -494,8 +496,8 @@
      "count": 1
     },
     {
-     "id": 7,
-     "sequence": 7,
+     "id": 6,
+     "sequence": 6,
      "definitionId": "notify.navigation.undocked",
      "groupKey": "notify.navigation.undocked",
      "subjectIds": [],
@@ -505,8 +507,8 @@
      "count": 1
     },
     {
-     "id": 8,
-     "sequence": 8,
+     "id": 7,
+     "sequence": 7,
      "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.undock",
      "subjectIds": [],
@@ -521,14 +523,10 @@
    "raisedThisSite": []
   },
   "onboarding": {
-   "version": 5,
+   "version": 4,
    "hidden": false,
    "steps": {
     "guide.loop.upgrade": {
-     "outcome": "completed",
-     "atMs": 0
-    },
-    "guide.loop.carry-rounds": {
      "outcome": "completed",
      "atMs": 0
     },
@@ -554,7 +552,7 @@
   "createdAtRealMs": 1700000000000,
   "revision": 47,
   "nextEntityOrdinal": 17,
-  "nextEventOrdinal": 28,
+  "nextEventOrdinal": 26,
   "time": {
    "simulationTimeMs": 8750,
    "paused": false,
@@ -620,5 +618,5 @@
    "nextInsertionOrdinal": 4
   }
  },
- "checksum": "ebcd770e696d1677416e5ae4a401899c701a2f87b7ad379e912ac36e0add1b87"
+ "checksum": "e49c084642baa33eb29abbfd231ebbbde6f39323e9ce8f0c9031e01146b519b1"
 }

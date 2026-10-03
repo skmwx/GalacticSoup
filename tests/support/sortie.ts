@@ -77,7 +77,11 @@ export async function startSortie(
   return { host, ask, data, until };
 }
 
-/** Moves the starting ammunition from the hangar into the hold. */
+/**
+ * Moves any ammunition in the hangar into the hold. A new campaign already
+ * carries its spare rounds there, so this matters after a refit or a purchase
+ * has left rounds in the hangar.
+ */
 export async function loadAmmunition(sortie: Sortie): Promise<void> {
   const content = shippedContent();
   const assets = await sortie.data<AssetsData>('assets.list');

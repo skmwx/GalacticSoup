@@ -172,11 +172,11 @@ test.describe('campaign persistence', () => {
     expect(quantities.slice(0, 2)).toEqual([1, 1]);
     expect(quantities[2]).toBeGreaterThan(1);
     // The fitted modules and the loaded magazine live in the ship's fitting
-    // store; only what the fit did not take stays in the hangar.
+    // store; the spare rounds the magazine did not take ride in the hold.
     const placed = Object.values(before.stacks).map(
       (s) => `${before.inventories[s.inventoryId]?.location.kind ?? '?'}:${s.state.kind}`,
     );
-    expect(placed.sort()).toEqual(['fitting:charge', 'fitting:fitted', 'fitting:fitted', 'hangar:plain']);
+    expect(placed.sort()).toEqual(['cargo:plain', 'fitting:charge', 'fitting:fitted', 'fitting:fitted']);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();

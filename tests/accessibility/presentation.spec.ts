@@ -91,11 +91,8 @@ function surface(page: Page, name: string): Locator {
   return page.getByRole('navigation', { name: 'Station services' }).getByRole('button', { name, exact: true });
 }
 
-/** Carries the spare rounds, chooses the scout, undocks and arrives at 10 km. */
+/** Chooses the scout, undocks and arrives at 10 km. The ship already carries its spare rounds. */
 async function flyToScout(page: Page): Promise<void> {
-  await surface(page, 'Hangar').click();
-  await page.getByRole('table', { name: 'Station hangar' }).getByRole('row', { name: /Fusion S/ })
-    .getByRole('button', { name: 'Move to hold' }).click();
   await surface(page, 'Departure').click();
   await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
   await page.getByRole('button', { name: /^Undock/ }).click();
@@ -344,7 +341,7 @@ test.describe('presentation settings and accessibility', () => {
     await surface(page, 'Hangar').click();
     await checkDialogFocus(
       page,
-      page.getByRole('table', { name: 'Station hangar' }).getByRole('button', { name: /^Inspect/ }).first(),
+      page.getByRole('table', { name: 'Ship cargo hold' }).getByRole('button', { name: /^Inspect/ }).first(),
       'Item details',
     );
 

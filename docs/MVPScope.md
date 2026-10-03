@@ -137,7 +137,8 @@ The following complete-game capabilities are outside this delivery slice:
 - faster time rates beyond 1x;
 - the full guided introduction;
 - multiple campaign slots, manual save controls, rolling save-history UI, save export, and save import;
-- galaxy-scale content coverage, long-duration simulation for deferred economy and production systems, production packaging, and screens belonging only to deferred systems; and
+- galaxy-scale content coverage, long-duration simulation for deferred economy and production systems, production packaging, and screens belonging only to deferred systems;
+- the development diagnostics panel and the player-initiated diagnostic export of Technical §16. The headless engine, its in-memory persistence adapter, and its deterministic elapsed-time driver from that section are included; and
 - multiplayer, PvP, alliances, diplomacy, sovereignty, sector control, three-dimensional graphics, and direct-action piloting, which remain outside the complete game as well.
 
 Deferral means the capability is not required for MVP completion. It does not remove the capability from the complete game or authorize an incompatible substitute.

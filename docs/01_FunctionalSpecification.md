@@ -49,6 +49,7 @@ A new campaign starts at a non-hostile independent station in a low-danger syste
 - 20,000 credits;
 - one fitted starter multi-role light ship;
 - one basic light turret and one full ammunition load fitted to the ship;
+- spare ammunition for that turret in the ship's cargo hold, where the turret reloads from;
 - one basic shield booster fitted to the ship;
 - one basic mining module and one basic scanner in the local station hangar;
 - the core navigation, targeting, fitting, trade, mining, and scanning skills at rank 1;
@@ -547,17 +548,28 @@ All hulls have free basic insurance paying 30% of hull reference value. While do
 
 If, after destruction, the player owns no flight-ready ship and total credits are below the starter ship reference value, an independent recovery service supplies a replacement starter ship with its original basic fit. Repeated recovery grants are allowed, but granted recovery assets have zero sale, refining, fabrication-input, loot, and insurance value. Removing or replacing their modules is allowed, but cannot create saleable or insurable value.
 
+For this rule:
+
+- a ship is flight-ready when it may undock under section 10; a hull with nothing fitted is therefore flight-ready;
+- the starter ship reference value is the sum of the reference values of the starter hull, its original basic fit, and one full ammunition load for that fit. Insurance still pays on the hull alone;
+- the recovery station sells that hull, those modules, and that ammunition at fixed prices no higher than their reference values, so a player who holds the starter ship reference value can always buy the whole ship back;
+- the check is made at destruction, and again after any purchase made while the player has no active ship, so that buying something other than a hull cannot leave the player below the starter ship reference value with no ship.
+
+A player who owns no ship and is not owed a grant remains docked at the recovery station with no active ship. The next hull bought there becomes the active ship.
+
 ## 10. Stations and services
 
 Stations may provide a market, fitting, repair, refining, fabrication, skill academy, ship dealer, and insured ship transport. Available services are visible from the system and station information views.
 
-While docked, the station view is the main hub. Undocking is allowed only with a valid active ship. The game warns before undocking without ammunition for fitted weapons, with severely damaged layers, or with a route through a system where the player is hostile.
+While docked, the station view is the main hub. Undocking is allowed only with a valid active ship. The game warns before undocking without ammunition for fitted weapons, without reserve ammunition in the cargo hold for a fitted weapon, with severely damaged layers, or with a route through a system where the player is hostile.
 
-Repair service restores shield, armor, and hull instantly. Shield repair is free. Armor and hull repair cost:
+A warning never blocks undocking. While one stands, undocking first lists the warnings and asks the player to undock anyway or stay docked. That question is a configurable confirmation prompt under section 20; when the player has switched it off, the warnings are still listed beside the undock control.
+
+Repair service restores shield, armor, and hull instantly, and recharges the capacitor to full. Shield repair and the capacitor recharge are free, and the service is available whenever a layer is damaged or the capacitor is not full. Armor and hull repair cost:
 
 `ceil(hull reference value × (0.02 × missing armor fraction + 0.05 × missing hull fraction) × station service modifier × standing service multiplier)`
 
-Station service modifier is a displayed content value from 0.75 through 1.50. Standing service multiplier is 1.10 when Distrusted, 1.00 when Neutral, 0.95 when Friendly, 0.90 when Allied, and 0.85 when Honored. Hostile stations do not provide service. Repair never begins without confirmation of the total price.
+Station service modifier is a displayed content value from 0.75 through 1.50. Standing service multiplier is 1.10 when Distrusted, 1.00 when Neutral, 0.95 when Friendly, 0.90 when Allied, and 0.85 when Honored. Hostile stations do not provide service. Repair never begins without confirmation of the total price, including when that price is zero.
 
 Stations controlled by hostile factions may deny docking. A station cannot revoke docking while the player is already docked; it permits undocking and asset removal. Neutral-access recovery stations never deny docking based on standings.
 
@@ -1027,7 +1039,7 @@ The complete game must provide:
 - high-contrast modes;
 - shape, icon, and label distinctions in addition to color;
 - independent volume controls and optional reduced motion;
-- configurable confirmation prompts with a restore-defaults action;
+- configurable confirmation prompts with a restore-defaults action. Confirmation of a price, and of an action that cannot be undone such as deleting a campaign, is always asked and is not configurable;
 - search and filters for assets, markets, recipes, and skills;
 - route, fitting, market, and production previews before commitment;
 - an event log and loss report that explain important outcomes.

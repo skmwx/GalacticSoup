@@ -60,13 +60,14 @@ describe('asset protocol schemas', () => {
     const assets = await ask('assets.list', {}) as AssetsData;
     const hangar = assets.inventories.find((i) => i.location.kind === 'hangar')!;
     const cargo = assets.inventories.find((i) => i.location.kind === 'cargo')!;
-    const stack = hangar.stacks[0]!;
+    // The spare rounds a campaign starts with are in the hold.
+    const stack = cargo.stacks[0]!;
     const queries: Record<string, unknown> = {
       'assets.list': {}, 'wallet.get': {}, 'inventory.hangar': {
         stationId: assets.location.kind === 'station' ? assets.location.stationId : 'station.invalid',
       },
       'inventory.cargo': { shipId: assets.activeShipId }, 'item.inspect': { stackId: stack.id },
-      'inventory.maximum': { stackId: stack.id, destinationInventoryId: cargo.id },
+      'inventory.maximum': { stackId: stack.id, destinationInventoryId: hangar.id },
     };
     const before = await ask('diagnostics.stateHash', {});
     for (const [type, payload] of Object.entries(queries)) {

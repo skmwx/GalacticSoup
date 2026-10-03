@@ -1,23 +1,23 @@
 {
  "format": "galactic-soup/save",
  "formatVersion": 10,
- "protocolVersion": 13,
+ "protocolVersion": 14,
  "engineVersion": "0.1.0",
- "contentVersion": "0.1.0+6d2aa29cb3d4",
- "contentHash": "6d2aa29cb3d43c37839c78f48e0c754be5005f868dce715894a221314fd83e15",
+ "contentVersion": "0.1.0+296facab3d13",
+ "contentHash": "296facab3d13fb5e260b6f3c3ccbe670c1674b0f453e885b96d6bb29ac8ad1d2",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
  "displayName": "Test Pilot",
  "kind": "auto",
  "sequence": 1,
- "revision": 1126,
+ "revision": 1127,
  "simulationTimeMs": 273500,
  "savedAtRealMs": 1700000600000,
  "state": {
   "assets": {
-   "version": 10483,
-   "credits": 16786,
+   "version": 10487,
+   "credits": 16066,
    "location": {
     "kind": "site",
     "systemId": "system.borrell",
@@ -116,21 +116,6 @@
     }
    },
    "stacks": {
-    "ce0f36ba8e20edb4ebcba9757-e5": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e5",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2",
-     "definitionId": "ammo.projectile.small.fusion",
-     "quantity": 20,
-     "state": {
-      "kind": "plain"
-     },
-     "provenance": {
-      "grantedQuantity": 20,
-      "purchasedQuantity": 0,
-      "purchaseCostCredits": 0
-     },
-     "recoveryGrant": false
-    },
     "ce0f36ba8e20edb4ebcba9757-e676": {
      "id": "ce0f36ba8e20edb4ebcba9757-e676",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e675",
@@ -231,8 +216,8 @@
      },
      "recoveryGrant": true
     },
-    "ce0f36ba8e20edb4ebcba9757-e803": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e803",
+    "ce0f36ba8e20edb4ebcba9757-e8": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e8",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e798",
      "definitionId": "ammo.projectile.small.fusion",
      "quantity": 60,
@@ -240,9 +225,9 @@
       "kind": "plain"
      },
      "provenance": {
-      "grantedQuantity": 60,
-      "purchasedQuantity": 0,
-      "purchaseCostCredits": 0
+      "grantedQuantity": 12,
+      "purchasedQuantity": 48,
+      "purchaseCostCredits": 432
      },
      "recoveryGrant": false
     },
@@ -259,22 +244,37 @@
       }
      },
      "provenance": {
-      "grantedQuantity": 3,
-      "purchasedQuantity": 0,
-      "purchaseCostCredits": 0
+      "grantedQuantity": 0,
+      "purchasedQuantity": 3,
+      "purchaseCostCredits": 27
      },
      "recoveryGrant": false
     },
     "ce0f36ba8e20edb4ebcba9757-e1082": {
      "id": "ce0f36ba8e20edb4ebcba9757-e1082",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e1081",
-     "definitionId": "ammo.projectile.small.fusion",
-     "quantity": 19,
+     "definitionId": "item.salvage.alloy",
+     "quantity": 2,
      "state": {
       "kind": "plain"
      },
      "provenance": {
-      "grantedQuantity": 19,
+      "grantedQuantity": 2,
+      "purchasedQuantity": 0,
+      "purchaseCostCredits": 0
+     },
+     "recoveryGrant": false
+    },
+    "ce0f36ba8e20edb4ebcba9757-e1083": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1083",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e1081",
+     "definitionId": "ammo.projectile.small.fusion",
+     "quantity": 36,
+     "state": {
+      "kind": "plain"
+     },
+     "provenance": {
+      "grantedQuantity": 36,
       "purchasedQuantity": 0,
       "purchaseCostCredits": 0
      },
@@ -3630,7 +3630,7 @@
      "radiusKm": 0.0165,
      "createdAtMs": 273500,
      "expiresAtMs": 2073500,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e1083"
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e1084"
     }
    },
    "completions": {
@@ -3770,19 +3770,6 @@
      "id": 5,
      "sequence": 5,
      "definitionId": "notify.guidance.step",
-     "groupKey": "notify.guidance.step|guide.loop.carry-rounds",
-     "subjectIds": [],
-     "params": {
-      "stepKey": "content.guide.loop.carry-rounds.title"
-     },
-     "firstAtMs": 0,
-     "lastAtMs": 0,
-     "count": 1
-    },
-    {
-     "id": 6,
-     "sequence": 6,
-     "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.choose-site",
      "subjectIds": [],
      "params": {
@@ -3793,8 +3780,8 @@
      "count": 1
     },
     {
-     "id": 7,
-     "sequence": 7,
+     "id": 6,
+     "sequence": 6,
      "definitionId": "notify.navigation.undocked",
      "groupKey": "notify.navigation.undocked",
      "subjectIds": [],
@@ -3804,8 +3791,8 @@
      "count": 1
     },
     {
-     "id": 8,
-     "sequence": 8,
+     "id": 7,
+     "sequence": 7,
      "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.undock",
      "subjectIds": [],
@@ -3817,8 +3804,8 @@
      "count": 1
     },
     {
-     "id": 9,
-     "sequence": 9,
+     "id": 8,
+     "sequence": 8,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
@@ -3830,8 +3817,8 @@
      "count": 1
     },
     {
-     "id": 10,
-     "sequence": 10,
+     "id": 9,
+     "sequence": 9,
      "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.warp",
      "subjectIds": [],
@@ -3843,8 +3830,8 @@
      "count": 1
     },
     {
-     "id": 11,
-     "sequence": 11,
+     "id": 10,
+     "sequence": 10,
      "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.harder",
      "subjectIds": [],
@@ -3856,8 +3843,8 @@
      "count": 1
     },
     {
-     "id": 12,
-     "sequence": 12,
+     "id": 11,
+     "sequence": 11,
      "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.move",
      "subjectIds": [],
@@ -3869,8 +3856,8 @@
      "count": 1
     },
     {
-     "id": 13,
-     "sequence": 13,
+     "id": 12,
+     "sequence": 12,
      "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.lock",
      "subjectIds": [],
@@ -3882,8 +3869,8 @@
      "count": 1
     },
     {
-     "id": 14,
-     "sequence": 14,
+     "id": 13,
+     "sequence": 13,
      "definitionId": "notify.combat.hostile-lock",
      "groupKey": "notify.combat.hostile-lock",
      "subjectIds": [
@@ -3897,8 +3884,8 @@
      "count": 1
     },
     {
-     "id": 15,
-     "sequence": 15,
+     "id": 14,
+     "sequence": 14,
      "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.fire",
      "subjectIds": [],
@@ -3910,8 +3897,8 @@
      "count": 1
     },
     {
-     "id": 16,
-     "sequence": 16,
+     "id": 15,
+     "sequence": 15,
      "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.defend",
      "subjectIds": [],
@@ -3923,8 +3910,8 @@
      "count": 1
     },
     {
-     "id": 17,
-     "sequence": 17,
+     "id": 16,
+     "sequence": 16,
      "definitionId": "notify.combat.shield-low",
      "groupKey": "notify.combat.shield-low",
      "subjectIds": [
@@ -3938,8 +3925,8 @@
      "count": 1
     },
     {
-     "id": 18,
-     "sequence": 18,
+     "id": 17,
+     "sequence": 17,
      "definitionId": "notify.combat.armor-damaged",
      "groupKey": "notify.combat.armor-damaged",
      "subjectIds": [
@@ -3951,8 +3938,8 @@
      "count": 1
     },
     {
-     "id": 19,
-     "sequence": 19,
+     "id": 18,
+     "sequence": 18,
      "definitionId": "notify.combat.hull-damaged",
      "groupKey": "notify.combat.hull-damaged",
      "subjectIds": [
@@ -3964,8 +3951,8 @@
      "count": 1
     },
     {
-     "id": 20,
-     "sequence": 20,
+     "id": 19,
+     "sequence": 19,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
@@ -3977,8 +3964,8 @@
      "count": 1
     },
     {
-     "id": 21,
-     "sequence": 21,
+     "id": 20,
+     "sequence": 20,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
@@ -3990,8 +3977,8 @@
      "count": 1
     },
     {
-     "id": 22,
-     "sequence": 22,
+     "id": 21,
+     "sequence": 21,
      "definitionId": "notify.recovery.ship-lost",
      "groupKey": "notify.recovery.ship-lost",
      "subjectIds": [
@@ -4005,8 +3992,8 @@
      "count": 1
     },
     {
-     "id": 23,
-     "sequence": 23,
+     "id": 22,
+     "sequence": 22,
      "definitionId": "notify.recovery.insurance",
      "groupKey": "notify.recovery.insurance",
      "subjectIds": [],
@@ -4018,8 +4005,8 @@
      "count": 1
     },
     {
-     "id": 24,
-     "sequence": 24,
+     "id": 23,
+     "sequence": 23,
      "definitionId": "notify.recovery.ship-granted",
      "groupKey": "notify.recovery.ship-granted",
      "subjectIds": [
@@ -4028,6 +4015,21 @@
      "params": {},
      "firstAtMs": 104542,
      "lastAtMs": 104542,
+     "count": 1
+    },
+    {
+     "id": 24,
+     "sequence": 24,
+     "definitionId": "notify.station.bought",
+     "groupKey": "notify.station.bought",
+     "subjectIds": [],
+     "params": {
+      "itemKey": "content.ammo.projectile.small.fusion.name",
+      "quantity": 80,
+      "credits": 720
+     },
+     "firstAtMs": 105000,
+     "lastAtMs": 105000,
      "count": 1
     },
     {
@@ -4138,14 +4140,10 @@
    ]
   },
   "onboarding": {
-   "version": 12,
+   "version": 11,
    "hidden": false,
    "steps": {
     "guide.loop.upgrade": {
-     "outcome": "completed",
-     "atMs": 0
-    },
-    "guide.loop.carry-rounds": {
      "outcome": "completed",
      "atMs": 0
     },
@@ -4361,6 +4359,13 @@
       "origin": "cargo",
       "survived": true,
       "recoveryGrant": false
+     },
+     {
+      "definitionId": "ammo.projectile.small.fusion",
+      "quantity": 100,
+      "origin": "cargo",
+      "survived": false,
+      "recoveryGrant": false
      }
     ],
     "insurance": {
@@ -4384,8 +4389,8 @@
   "displayName": "Test Pilot",
   "seed": "bb22cc33dd44ee55ff6677889900aa11",
   "createdAtRealMs": 1700000000000,
-  "revision": 1126,
-  "nextEntityOrdinal": 1084,
+  "revision": 1127,
+  "nextEntityOrdinal": 1085,
   "nextEventOrdinal": 1536,
   "time": {
    "simulationTimeMs": 273500,
@@ -4416,11 +4421,11 @@
     "drawIndex": 2
    },
    "loot": {
-    "s0": 1462195825,
-    "s1": 3761086065,
-    "s2": 2867506892,
-    "s3": 1157591999,
-    "drawIndex": 12
+    "s0": 2038147157,
+    "s1": 1222952910,
+    "s2": 2512992514,
+    "s3": 1889490004,
+    "drawIndex": 14
    },
    "world": {
     "s0": 4255448290,
@@ -4441,7 +4446,7 @@
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e674"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e1083",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e1084",
      "kind": "encounter.wreckExpire",
      "dueAtMs": 2073500,
      "priority": 90,
@@ -4468,5 +4473,5 @@
    "nextInsertionOrdinal": 692
   }
  },
- "checksum": "53bf0650b4491aacf2b0862eb7b0de58aa98a6200a1c4d58d4ee7ffe12dea83a"
+ "checksum": "c7cedd98b139d887ce603a3bc0ad2b8d6fdedfc3272600fca14ccccadb57809b"
 }

@@ -109,10 +109,15 @@ export const FIT_VIOLATIONS = [
 
 export type FitViolationCode = (typeof FIT_VIOLATIONS)[number];
 
-/** Advice that does not make a fit invalid (Functional Specification 8.5). */
+/**
+ * Advice that does not make a fit invalid (Functional Specification 8.5, 10).
+ * All but `noReserveAmmunition` follow from the fit alone; that one is about
+ * the ship that wears it, whose hold carries nothing a weapon could reload.
+ */
 export const FIT_WARNINGS = [
   'noWeapon',
   'noAmmunition',
+  'noReserveAmmunition',
   'moduleOffline',
   'capacitorUnstable',
   'uncoveredDamageType',

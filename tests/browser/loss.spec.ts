@@ -208,8 +208,10 @@ test.describe('losing a ship', () => {
     await expect(page.getByRole('cell', { name: '200mm Autocannon' })).toHaveCount(2);
 
     await page.getByRole('button', { name: 'Hangar', exact: true }).click();
+    // The spare rounds went down with the ship and came back out of its
+    // wreck, so they are in the hold already; any in the hangar join them.
     const fusion = page.getByRole('table', { name: 'Station hangar' }).getByRole('row', { name: /Fusion S/ });
-    await fusion.getByRole('button', { name: 'Move to hold' }).click();
+    if ((await fusion.count()) > 0) await fusion.getByRole('button', { name: 'Move to hold' }).click();
     await expect(
       page.getByRole('table', { name: 'Ship cargo hold' }).getByRole('rowheader', { name: 'Fusion S' }),
     ).toBeVisible();

@@ -118,11 +118,24 @@ export interface StartingFitEntry {
   readonly ammunitionId?: string;
 }
 
+/**
+ * One item a new campaign is granted (Functional Specification 3.1).
+ *
+ * It starts in the station hangar unless it says `cargo`, which puts it in
+ * the starter ship's hold: spare ammunition has to be there, because a weapon
+ * reloads only from the hold (Functional Specification 9.4).
+ */
+export interface StartingItem {
+  readonly definitionId: string;
+  readonly quantity: number;
+  readonly location?: 'hangar' | 'cargo';
+}
+
 export interface EconomyRules {
   readonly startingCredits: number;
   readonly startingStationId: string;
   readonly starterHullId: string;
-  readonly startingItems: readonly { readonly definitionId: string; readonly quantity: number }[];
+  readonly startingItems: readonly StartingItem[];
   readonly startingFit: readonly StartingFitEntry[];
   readonly scarcityMinimum: number;
   readonly scarcityMaximum: number;

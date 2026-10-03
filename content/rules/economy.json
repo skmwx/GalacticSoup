@@ -1,6 +1,6 @@
 {
   "kind": "rules.economy",
-  "$comment": "Constants of Functional Specification 10 and 11.1-11.2.",
+  "$comment": "Constants of Functional Specification 10 and 11.1-11.2, and the starting state of 3.1. The starting fit loads one magazine from the granted rounds; the rest start in the ship's hold, because a weapon reloads only from there.",
   "values": {
     "scarcityMinimum": -1,
     "scarcityMaximum": 2,
@@ -34,7 +34,8 @@
       },
       {
         "definitionId": "ammo.projectile.small.fusion",
-        "quantity": 120
+        "quantity": 120,
+        "location": "cargo"
       }
     ],
     "startingFit": [

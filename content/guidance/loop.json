@@ -1,6 +1,6 @@
 {
   "kind": "guidance",
-  "$comment": "Contextual guidance for the MVP loop (MVP Scope 3; Functional Specification 3.2 as selected: the full multi-activity introduction is deferred). Steps are shown in this order, but most can be completed whenever the player happens to do the thing, so doing it early is never punished. 'requires' names only true prerequisites: the ready-check makes sense only after a sortie. Every step may be skipped and the whole guidance hidden and resumed. The closing steps teach what the phase 17 balance simulations found decides the harder sites: kill the patrol's cutters before its marksman, fight the base's nearest brawler while holding range, and never undock on an empty capacitor. The carry-rounds step exists because a starter magazine holds 20 rounds and the scout takes about 60: the spare rounds start in the hangar, and a gun reloads only from the hold.",
+  "$comment": "Contextual guidance for the MVP loop (MVP Scope 3; Functional Specification 3.2 as selected: the full multi-activity introduction is deferred). Steps are shown in this order, but most can be completed whenever the player happens to do the thing, so doing it early is never punished. 'requires' names only true prerequisites: the ready-check and the spare-rounds check make sense only after a sortie. Every step may be skipped and the whole guidance hidden and resumed. The closing steps teach what the phase 17 balance simulations found decides the harder sites: kill the patrol's cutters before its marksman, fight the base's nearest brawler while holding range, and never undock on an empty capacitor, which the free repair now refills. The carry-rounds step exists because a starter magazine holds 20 rounds and the scout takes about 60, and a gun reloads only from the hold. A new campaign starts with its spare rounds already there, so the step waits for the first return: it completes when the hold still carries two magazines' worth, and otherwise teaches buying or moving more.",
   "definitions": [
     {
       "id": "guide.loop",
@@ -17,18 +17,6 @@
           "skippable": true,
           "predicate": {
             "kind": "destinationSelected"
-          }
-        },
-        {
-          "id": "guide.loop.carry-rounds",
-          "titleKey": "content.guide.loop.carry-rounds.title",
-          "bodyKey": "content.guide.loop.carry-rounds.body",
-          "surface": "station.hangar",
-          "requires": [],
-          "skippable": true,
-          "predicate": {
-            "kind": "ammunitionInHold",
-            "minimumRounds": 40
           }
         },
         {
@@ -163,6 +151,20 @@
           "predicate": {
             "kind": "shipReady",
             "capacitorFraction": 0.95
+          }
+        },
+        {
+          "id": "guide.loop.carry-rounds",
+          "titleKey": "content.guide.loop.carry-rounds.title",
+          "bodyKey": "content.guide.loop.carry-rounds.body",
+          "surface": "station.market",
+          "requires": [
+            "guide.loop.return"
+          ],
+          "skippable": true,
+          "predicate": {
+            "kind": "ammunitionInHold",
+            "minimumRounds": 40
           }
         },
         {

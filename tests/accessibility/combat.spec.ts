@@ -40,10 +40,11 @@ async function audit(page: Page): Promise<void> {
   expect(results.violations).toEqual([]);
 }
 
-/** Flies to the scout site, locks the scout and opens fire, then pauses. */
+/**
+ * Flies to the scout site, locks the scout and opens fire, then pauses. The
+ * ship already carries its spare rounds.
+ */
 async function inAFight(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Hangar', exact: true }).click();
-  await page.getByRole('button', { name: 'Move to hold' }).first().click();
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
   await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
   await undock(page);

@@ -457,6 +457,38 @@ describe('before leaving', () => {
 
     harness.gateway.dispose();
   });
+
+  it('warns before undocking with no spare rounds in the hold, and asks first [FUNC-10, FUNC-9.4, MVP-AC-02]', async () => {
+    const sortie = await startSortie();
+    // A new ship carries its spare rounds; leave them in the hangar instead.
+    const assets = await sortie.data<AssetsData>('assets.list');
+    const ship = assets.ships.find((entry) => entry.active);
+    const hangar = assets.inventories.find((inventory) => inventory.location.kind === 'hangar');
+    const hold = assets.inventories.find((inventory) => inventory.id === ship?.cargoInventoryId);
+    for (const stack of hold?.stacks ?? []) {
+      await sortie.data('inventory.transfer', {
+        stackId: stack.id, destinationInventoryId: hangar?.id ?? '', quantity: stack.quantity,
+      });
+    }
+    await closeSortie(sortie);
+    const harness = await resume(sortie, 'Borrell Harbour');
+
+    await harness.user.click(screen.getByRole('button', { name: 'Departure' }));
+    const warning = 'Weapon 1: The hold carries no spare rounds for this weapon, so it cannot reload once its ' +
+      'magazine is empty. Buy rounds at the Market, or move them to the hold in the Hangar.';
+    expect(within(await screen.findByRole('list', { name: 'Before you undock' })).getByText(warning)).toBeInTheDocument();
+
+    // It never blocks the undock: it asks once, listing the warning again.
+    const undock = screen.getByRole('button', { name: /^Undock/ });
+    expect(undock).toBeEnabled();
+    await harness.user.click(undock);
+    const confirm = await screen.findByRole('dialog', { name: 'Undock with warnings?' });
+    expect(within(confirm).getByText(warning)).toBeInTheDocument();
+    await harness.user.click(within(confirm).getByRole('button', { name: 'Stay docked' }));
+    expect((await sortie.data<AssetsData>('assets.list')).location.kind).toBe('station');
+
+    harness.gateway.dispose();
+  });
 });
 
 describe('returning to a reopened campaign', () => {
