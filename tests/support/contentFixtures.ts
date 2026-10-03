@@ -31,6 +31,8 @@ export interface CompileResult {
   readonly ok: boolean;
   readonly bundle: Record<string, unknown> | null;
   readonly issues: readonly ContentIssue[];
+  /** Soft-budget notices; a pack that has some still compiles. */
+  readonly warnings: readonly { readonly file: string; readonly path: string; readonly detail: string }[];
   readonly stats: { readonly files: number; readonly definitions: number; readonly messages: number };
 }
 

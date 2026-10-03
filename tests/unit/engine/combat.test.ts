@@ -11,7 +11,9 @@ import {
   shipCombat,
   stacksIn,
   unlockRefusal,
+  validateCampaign,
   weaponState,
+  type CampaignState,
   type SlotRef,
 } from '@engine/domain';
 import {
@@ -414,6 +416,42 @@ describe('reloading', () => {
     expect(weapon(fixture).reload).not.toBeNull();
     expect(fixture.context.events.filter((event) => event.kind === 'combat.shotResolved'))
       .toHaveLength(1);
+  });
+
+  it('keeps a requested reload waiting while another ship\'s cycle completes [FUNC-9.4, TECH-9.2, TECH-15.3]', () => {
+    // Found by the full-campaign property run: every completion batch in the
+    // site restarts eligible weapons, and an opponent's shot landing in the
+    // middle of the player's cycle used to start the waiting reload there and
+    // then, leaving a weapon both cycling and reloading.
+    const fixture = combatFixture({
+      targetPositionKm: { x: 2, y: 0 },
+      armTarget: true,
+      playerCargoRounds: [{ ammunitionId: FUSION, rounds: 40 }],
+    });
+    lockTarget(fixture);
+    beginLock(fixture.context, fixture.targetId, fixture.playerId);
+    advance(fixture, 3000);
+
+    // The opponent's cycle is a second ahead, so it completes mid-way through the player's.
+    activateWeapon(fixture.context, fixture.targetId, WEAPON, fixture.playerId);
+    advance(fixture, 1000);
+    activateWeapon(fixture.context, fixture.playerId, WEAPON, fixture.targetId);
+    requestReload(fixture.context, fixture.playerId, WEAPON, FUSION, false);
+
+    advance(fixture, 2000);
+    const opponentShots = fixture.context.events.filter((event) =>
+      event.kind === 'combat.shotResolved' && event.params?.['attackerId'] === fixture.targetId);
+    expect(opponentShots).toHaveLength(1);
+    expect(weapon(fixture).cycle).not.toBeNull();
+    expect(weapon(fixture).pendingReload).not.toBeNull();
+    expect(weapon(fixture).reload).toBeNull();
+    expect(validateCampaign(fixture.draft as CampaignState, fixture.content)).toEqual([]);
+
+    advance(fixture, 500);
+    expect(weapon(fixture).cycle).toBeNull();
+    expect(weapon(fixture).pendingReload).toBeNull();
+    expect(weapon(fixture).reload).not.toBeNull();
+    expect(validateCampaign(fixture.draft as CampaignState, fixture.content)).toEqual([]);
   });
 
   it('reloads automatically when the magazine empties and resumes firing [FUNC-9.4]', () => {

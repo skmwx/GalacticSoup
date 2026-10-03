@@ -18,6 +18,7 @@ import process from 'node:process';
 
 import { REPO_ROOT } from '../config/aliases.mjs';
 import { compileContent, serialiseBundle } from './lib/content/compile.mjs';
+import { formatWarning } from './lib/content/budgets.mjs';
 import { formatIssue } from './lib/content/issues.mjs';
 import { readContentFiles } from './lib/content/read.mjs';
 import { loadSchemas } from './lib/content/schema.mjs';
@@ -39,6 +40,11 @@ if (!result.ok) {
   }
   process.stderr.write('\n');
   process.exit(1);
+}
+
+// A soft budget is a notice, not a failure (Technical Specification 13).
+for (const warning of result.warnings) {
+  process.stderr.write(`Content warning: ${formatWarning(warning)}\n`);
 }
 
 const reportsDir = path.join(REPO_ROOT, 'reports');

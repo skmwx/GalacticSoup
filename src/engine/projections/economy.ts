@@ -162,7 +162,7 @@ export function marketBuyPreview(
     available: unavailableReason === null && quote !== null,
     unavailableReason,
     token: null,
-    walletDeltaCredits: -(quote?.totalCredits ?? 0),
+    walletDeltaCredits: spending(quote?.totalCredits ?? 0),
     totalCredits: quote?.totalCredits ?? 0,
     traces: quote === null ? [trace] : tracesOf(quote),
     stationId: payload.stationId,
@@ -260,7 +260,7 @@ export function repairPreview(
   };
   const base: RepairPreviewData = {
     action: 'repair', available: unavailableReason === null, unavailableReason, token: null,
-    walletDeltaCredits: -total, totalCredits: total, traces: [trace], stationId: station.id,
+    walletDeltaCredits: spending(total), totalCredits: total, traces: [trace], stationId: station.id,
     shipId: ship.id, shieldDamage: ship.condition.damage.shield, armorDamage: ship.condition.damage.armor,
     hullDamage: ship.condition.damage.hull, missingArmorFraction, missingHullFraction,
     serviceModifier: station.serviceModifier, standingServiceMultiplier,
@@ -294,7 +294,7 @@ export function insurancePreview(
   };
   const base: InsurancePreviewData = {
     action: 'insurance.enhance', available: unavailableReason === null, unavailableReason, token: null,
-    walletDeltaCredits: -premium, totalCredits: premium, traces: [trace], stationId, shipId: ship.id,
+    walletDeltaCredits: spending(premium), totalCredits: premium, traces: [trace], stationId, shipId: ship.id,
     currentCoverage: ship.insurance.coverage, resultingCoverage: 'enhanced',
     // The same whole-credit settlement destruction pays (Functional Specification 4.1, 9.12).
     basicPayoutCredits: ship.recoveryGrant ? 0
@@ -391,7 +391,7 @@ export function resupplyPreview(
   const related = [...touched.values()];
   const base: ResupplyPreviewData = {
     action: 'resupply', available: unavailableReason === null, unavailableReason, token: null,
-    walletDeltaCredits: -total, totalCredits: total, traces, stationId, shipId: ship.id, lines,
+    walletDeltaCredits: spending(total), totalCredits: total, traces, stationId, shipId: ship.id, lines,
   };
   return deepFreeze(bindIfAvailable(state, base, payload, versions(state, stationId, 'resupply', ...related)));
 }
@@ -528,4 +528,13 @@ function tracesOf(quote: ReturnType<typeof bulkQuote>): readonly FormulaTraceDat
   return quote.quantity === 1 || canonicalJson(quote.firstUnitTrace) === canonicalJson(quote.lastUnitTrace)
     ? [quote.firstUnitTrace]
     : [quote.firstUnitTrace, quote.lastUnitTrace];
+}
+
+/**
+ * The wallet change of paying `credits`. A free service changes the wallet by
+ * zero, not by the negative zero that negating nothing produces: the two read
+ * differently once formatted, and only one of them is a number of credits.
+ */
+function spending(credits: number): number {
+  return credits === 0 ? 0 : -credits;
 }

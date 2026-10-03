@@ -131,13 +131,19 @@ export function loadSave(stored: unknown, context: LoadContext): LoadResult {
   }
 
   const envelope = migration.save as unknown as SaveEnvelope;
-  if (envelope.campaignId !== payload.state.campaignId) {
-    return failure(
-      saveLoadError('envelope', {
-        field: 'campaignId',
-        reason: 'disagreesWithPayload',
-      }),
-    );
+  // The envelope repeats what the manifest lists a save by. A save whose
+  // listing disagrees with its own payload would be resumed as something other
+  // than what the player was shown, so every repeated field must agree.
+  const repeated: readonly (readonly [string, unknown, unknown])[] = [
+    ['campaignId', envelope.campaignId, payload.state.campaignId],
+    ['displayName', envelope.displayName, payload.state.displayName],
+    ['revision', envelope.revision, payload.state.revision],
+    ['simulationTimeMs', envelope.simulationTimeMs, payload.state.time.simulationTimeMs],
+  ];
+  for (const [field, listed, held] of repeated) {
+    if (listed !== held) {
+      return failure(saveLoadError('envelope', { field, reason: 'disagreesWithPayload' }));
+    }
   }
 
   const contentChanged = envelope.contentHash !== context.content.contentHash;

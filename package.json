@@ -18,13 +18,16 @@
     "diagnose:content": "vitest run --project integration tests/integration/contentDiagnostics.test.ts",
     "balance": "vitest run --project integration tests/integration/progression tests/integration/balance && node scripts/balance-report.mjs",
     "balance:record": "vitest run --project integration tests/integration/progression tests/integration/balance && node scripts/balance-report.mjs --record",
+    "golden:record": "node scripts/golden-record.mjs",
+    "contracts:record": "node scripts/contracts-record.mjs",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:component": "vitest run --project component",
+    "test:performance": "vitest run --project performance",
     "test:browser": "playwright test --project=browser",
     "test:accessibility": "playwright test --project=accessibility",
-    "verify": "npm run typecheck && npm run check:architecture && npm run validate:content && npm run test:unit && npm run test:integration && npm run test:component && npm run traceability && npm run build"
+    "verify": "npm run typecheck && npm run check:architecture && npm run validate:content && npm run test:unit && npm run test:integration && npm run test:performance && npm run test:component && npm run traceability && npm run build"
   },
   "dependencies": {
     "react": "19.3.0",

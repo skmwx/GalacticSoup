@@ -15,7 +15,9 @@ export interface AddOptions {
 
 /** The sole writer of physical stacks/locations. Every operation, including a failed
  * reservation/release, is atomic even when called without an application transaction.
- * @implements TECH-8.3, FUNC-6.1, FUNC-6.2, FUNC-22.2, FUNC-22.3, MVP-AC-02, MVP-AC-06
+ * Capacity is checked before anything is removed, so a destination that is full leaves
+ * the goods where they were instead of destroying them (Functional Specification 22.6).
+ * @implements TECH-8.3, FUNC-6.1, FUNC-6.2, FUNC-22.2, FUNC-22.3, FUNC-22.6, MVP-AC-02, MVP-AC-06
  */
 export function inventoryService(draft: AssetDraft, content: ContentRepository) {
   function atomic<T>(operation: (work: AssetDraft) => T): T {

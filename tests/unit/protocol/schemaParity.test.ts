@@ -98,6 +98,9 @@ beforeAll(() => {
   ajv.addSchema(loadSchema('engine-error.schema.json'));
   ajv.addSchema(loadSchema('domain-event.schema.json'));
   ajv.addSchema(loadSchema('economy.common.schema.json'));
+  // A stale-preview error carries the replacement preview, so the error schema refers to it.
+  ajv.addSchema(loadSchema('assets.common.schema.json'));
+  ajv.addSchema(loadSchema('transaction-preview.data.schema.json'));
   validateRequest = ajv.compile(loadSchema('client-request.schema.json')) as Validator;
   validateResponse = ajv.compile(loadSchema('engine-response.schema.json')) as Validator;
   validateHealthData = ajv.compile(loadSchema('system.health.data.schema.json')) as Validator;
@@ -110,7 +113,6 @@ beforeAll(() => {
   validateContentMessagesData = ajv.compile(
     loadSchema('content.messages.data.schema.json'),
   ) as Validator;
-  ajv.addSchema(loadSchema('assets.common.schema.json'));
   ajv.addSchema(loadSchema('fitting.common.schema.json'));
   validateFittingDraftData = ajv.compile(
     loadSchema('fitting.draft.data.schema.json'),
@@ -136,9 +138,9 @@ beforeAll(() => {
   validateMarketListingsData = ajv.compile(
     loadSchema('market.listings.data.schema.json'),
   ) as Validator;
-  validateTransactionPreviewData = ajv.compile(
-    loadSchema('transaction-preview.data.schema.json'),
-  ) as Validator;
+  validateTransactionPreviewData = ajv.getSchema(
+    'https://galacticsoup.invalid/schemas/protocol/transaction-preview.data.schema.json',
+  ) as unknown as Validator;
   validateNavigationSiteData = ajv.compile(
     loadSchema('navigation.site.data.schema.json'),
   ) as Validator;

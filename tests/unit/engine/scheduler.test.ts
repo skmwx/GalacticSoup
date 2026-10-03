@@ -120,9 +120,47 @@ describe('scheduler', () => {
 
   it('keeps a scheduled campaign valid [TECH-15.3]', () => {
     const draft = testDraft();
-    scheduleBoundary(draft, { kind: 'a', dueAtMs: 5_000 });
+    scheduleBoundary(draft, { kind: 'economy.hour', dueAtMs: 5_000 });
 
     expect(validateCampaign(draft as CampaignState)).toEqual([]);
+  });
+
+  it('rejects a boundary that belongs to nothing the campaign holds [TECH-15.3]', () => {
+    const unknown = testDraft();
+    scheduleBoundary(unknown, { kind: 'a', dueAtMs: 5_000 });
+
+    // A kind the engine resolves, but for work no ship is doing.
+    const orphaned = testDraft();
+    scheduleBoundary(orphaned, {
+      kind: 'combat.weaponCycle',
+      dueAtMs: 5_000,
+      ownerId: entityIdOf(orphaned.campaignId, 1),
+    });
+
+    for (const draft of [unknown, orphaned]) {
+      const issues = validateCampaign(draft as CampaignState);
+      expect(issues.map((issue) => issue.rule)).toEqual(['schedulerOwnership']);
+      expect(issues[0]?.path).toBe('scheduler.entries[0]');
+    }
+  });
+
+  it('allows one world boundary and no owner for it [TECH-15.3]', () => {
+    const doubled = testDraft();
+    scheduleBoundary(doubled, { kind: 'economy.hour', dueAtMs: 5_000 });
+    scheduleBoundary(doubled, { kind: 'economy.hour', dueAtMs: 6_000 });
+
+    const owned = testDraft();
+    scheduleBoundary(owned, {
+      kind: 'economy.hour',
+      dueAtMs: 5_000,
+      ownerId: entityIdOf(owned.campaignId, 1),
+    });
+
+    for (const draft of [doubled, owned]) {
+      expect(validateCampaign(draft as CampaignState).map((issue) => issue.rule)).toEqual([
+        'schedulerOwnership',
+      ]);
+    }
   });
 
   it('rejects a real timestamp used as a due time [TECH-15.3]', () => {

@@ -1,0 +1,497 @@
+{
+ "format": "galactic-soup/save",
+ "formatVersion": 10,
+ "protocolVersion": 13,
+ "engineVersion": "0.1.0",
+ "contentVersion": "0.1.0+6d2aa29cb3d4",
+ "contentHash": "6d2aa29cb3d43c37839c78f48e0c754be5005f868dce715894a221314fd83e15",
+ "slotId": "slot-1",
+ "saveId": "slot-1:auto:1",
+ "campaignId": "ce0f36ba8e20edb4ebcba9757",
+ "displayName": "Test Pilot",
+ "kind": "auto",
+ "sequence": 1,
+ "revision": 5,
+ "simulationTimeMs": 0,
+ "savedAtRealMs": 1700000600000,
+ "state": {
+  "assets": {
+   "version": 5,
+   "credits": 4186,
+   "location": {
+    "kind": "station",
+    "stationId": "station.borrell.harbour",
+    "systemId": "system.borrell"
+   },
+   "activeShipId": "ce0f36ba8e20edb4ebcba9757-e1",
+   "lastDockedStationId": "station.borrell.harbour",
+   "ships": {
+    "ce0f36ba8e20edb4ebcba9757-e1": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1",
+     "owner": "player",
+     "hullId": "hull.independent.starter",
+     "location": {
+      "kind": "station",
+      "stationId": "station.borrell.harbour",
+      "systemId": "system.borrell"
+     },
+     "cargoInventoryId": "ce0f36ba8e20edb4ebcba9757-e3",
+     "fittingInventoryId": "ce0f36ba8e20edb4ebcba9757-e4",
+     "condition": {
+      "damage": {
+       "shield": 0,
+       "armor": 0,
+       "hull": 0
+      },
+      "capacitorCharge": 250
+     },
+     "insurance": {
+      "coverage": "basic",
+      "premiumPaidCredits": 0
+     },
+     "recoveryGrant": false
+    }
+   },
+   "inventories": {
+    "ce0f36ba8e20edb4ebcba9757-e2": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2",
+     "location": {
+      "kind": "hangar",
+      "stationId": "station.borrell.harbour"
+     },
+     "capacity": {
+      "kind": "unlimited"
+     }
+    },
+    "ce0f36ba8e20edb4ebcba9757-e3": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e3",
+     "location": {
+      "kind": "cargo",
+      "shipId": "ce0f36ba8e20edb4ebcba9757-e1"
+     },
+     "capacity": {
+      "kind": "limited",
+      "volumeCubicDecimetres": 135000
+     }
+    },
+    "ce0f36ba8e20edb4ebcba9757-e4": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e4",
+     "location": {
+      "kind": "fitting",
+      "shipId": "ce0f36ba8e20edb4ebcba9757-e1"
+     },
+     "capacity": {
+      "kind": "unlimited"
+     }
+    }
+   },
+   "stacks": {
+    "ce0f36ba8e20edb4ebcba9757-e5": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e5",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2",
+     "definitionId": "ammo.projectile.small.fusion",
+     "quantity": 100,
+     "state": {
+      "kind": "plain"
+     },
+     "provenance": {
+      "grantedQuantity": 100,
+      "purchasedQuantity": 0,
+      "purchaseCostCredits": 0
+     },
+     "recoveryGrant": false
+    },
+    "ce0f36ba8e20edb4ebcba9757-e6": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e6",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e4",
+     "definitionId": "module.shield.booster.small",
+     "quantity": 1,
+     "state": {
+      "kind": "fitted",
+      "slot": {
+       "kind": "system",
+       "index": 0
+      },
+      "online": true
+     },
+     "provenance": {
+      "grantedQuantity": 1,
+      "purchasedQuantity": 0,
+      "purchaseCostCredits": 0
+     },
+     "recoveryGrant": false
+    },
+    "ce0f36ba8e20edb4ebcba9757-e7": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e7",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e4",
+     "definitionId": "module.turret.autocannon.small",
+     "quantity": 1,
+     "state": {
+      "kind": "fitted",
+      "slot": {
+       "kind": "weapon",
+       "index": 0
+      },
+      "online": true
+     },
+     "provenance": {
+      "grantedQuantity": 1,
+      "purchasedQuantity": 0,
+      "purchaseCostCredits": 0
+     },
+     "recoveryGrant": false
+    },
+    "ce0f36ba8e20edb4ebcba9757-e8": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e8",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e4",
+     "definitionId": "ammo.projectile.small.fusion",
+     "quantity": 20,
+     "state": {
+      "kind": "charge",
+      "slot": {
+       "kind": "weapon",
+       "index": 0
+      }
+     },
+     "provenance": {
+      "grantedQuantity": 20,
+      "purchasedQuantity": 0,
+      "purchaseCostCredits": 0
+     },
+     "recoveryGrant": false
+    },
+    "ce0f36ba8e20edb4ebcba9757-e10": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e10",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2",
+     "definitionId": "ammo.projectile.small.phased",
+     "quantity": 240,
+     "state": {
+      "kind": "plain"
+     },
+     "provenance": {
+      "grantedQuantity": 0,
+      "purchasedQuantity": 240,
+      "purchaseCostCredits": 3814
+     },
+     "recoveryGrant": false
+    },
+    "ce0f36ba8e20edb4ebcba9757-e11": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e11",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2",
+     "definitionId": "module.turret.autocannon.small",
+     "quantity": 1,
+     "state": {
+      "kind": "plain"
+     },
+     "provenance": {
+      "grantedQuantity": 0,
+      "purchasedQuantity": 1,
+      "purchaseCostCredits": 12000
+     },
+     "recoveryGrant": false
+    }
+   }
+  },
+  "combat": {
+   "version": 1,
+   "ships": {},
+   "events": []
+  },
+  "economy": {
+   "stations": {
+    "station.borrell.harbour": {
+     "stationId": "station.borrell.harbour",
+     "services": {
+      "market": {
+       "available": true,
+       "version": 1
+      },
+      "repair": {
+       "available": true,
+       "version": 1
+      },
+      "resupply": {
+       "available": true,
+       "version": 1
+      },
+      "insurance": {
+       "available": true,
+       "version": 1
+      }
+     },
+     "listings": {
+      "ammo.hybrid.small.iron": {
+       "itemId": "ammo.hybrid.small.iron",
+       "stock": 1500,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.hybrid.small.plasma": {
+       "itemId": "ammo.hybrid.small.plasma",
+       "stock": 1100,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.projectile.small.fusion": {
+       "itemId": "ammo.projectile.small.fusion",
+       "stock": 2000,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.projectile.small.phased": {
+       "itemId": "ammo.projectile.small.phased",
+       "stock": 1160,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 2
+      },
+      "hull.independent.starter": {
+       "itemId": "hull.independent.starter",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "item.commodity.coolant": {
+       "itemId": "item.commodity.coolant",
+       "stock": 180,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "item.salvage.alloy": {
+       "itemId": "item.salvage.alloy",
+       "stock": 45,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "item.salvage.circuitry": {
+       "itemId": "item.salvage.circuitry",
+       "stock": 30,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.capacitor.battery.small": {
+       "itemId": "module.capacitor.battery.small",
+       "stock": 16,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.plating.armor.small": {
+       "itemId": "module.plating.armor.small",
+       "stock": 22,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.propulsion.afterburner.small": {
+       "itemId": "module.propulsion.afterburner.small",
+       "stock": 12,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.repair.armor.small": {
+       "itemId": "module.repair.armor.small",
+       "stock": 14,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.shield.booster.small": {
+       "itemId": "module.shield.booster.small",
+       "stock": 20,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.turret.autocannon.small": {
+       "itemId": "module.turret.autocannon.small",
+       "stock": 20,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.turret.railgun.small": {
+       "itemId": "module.turret.railgun.small",
+       "stock": 9,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      }
+     }
+    }
+   }
+  },
+  "encounter": {
+   "version": 1,
+   "active": null,
+   "wrecks": {},
+   "completions": {},
+   "lastOutcome": null
+  },
+  "fitting": {
+   "shipId": "ce0f36ba8e20edb4ebcba9757-e1",
+   "baseRevision": 3,
+   "slots": {
+    "weapon:0": {
+     "moduleId": "module.turret.autocannon.small",
+     "online": true,
+     "ammunitionId": "ammo.projectile.small.phased"
+    },
+    "system:0": {
+     "moduleId": "module.shield.booster.small",
+     "online": true,
+     "ammunitionId": null
+    }
+   }
+  },
+  "navigation": {
+   "version": 1,
+   "knownDestinationSiteIds": [
+    "site.borrell.derelict-lane",
+    "site.borrell.outpost-cradle",
+    "site.borrell.station",
+    "site.borrell.verge"
+   ],
+   "selectedEncounterId": null,
+   "selectedBookmarkId": null,
+   "currentSite": null,
+   "movementOrders": {},
+   "travel": null,
+   "lastCancellation": null
+  },
+  "notifications": {
+   "sequence": 2,
+   "entries": [
+    {
+     "id": 1,
+     "sequence": 1,
+     "definitionId": "notify.station.bought",
+     "groupKey": "notify.station.bought",
+     "subjectIds": [],
+     "params": {
+      "itemKey": "content.ammo.projectile.small.phased.name",
+      "quantity": 240,
+      "credits": 3814
+     },
+     "firstAtMs": 0,
+     "lastAtMs": 0,
+     "count": 1
+    },
+    {
+     "id": 2,
+     "sequence": 2,
+     "definitionId": "notify.station.bought",
+     "groupKey": "notify.station.bought",
+     "subjectIds": [],
+     "params": {
+      "itemKey": "content.module.turret.autocannon.small.name",
+      "quantity": 1,
+      "credits": 12000
+     },
+     "firstAtMs": 0,
+     "lastAtMs": 0,
+     "count": 1
+    }
+   ],
+   "raisedThisSite": []
+  },
+  "onboarding": {
+   "version": 1,
+   "hidden": false,
+   "steps": {}
+  },
+  "recovery": {
+   "version": 1,
+   "losses": 0,
+   "lastLoss": null
+  },
+  "stateVersion": 10,
+  "campaignId": "ce0f36ba8e20edb4ebcba9757",
+  "displayName": "Test Pilot",
+  "seed": "bb22cc33dd44ee55ff6677889900aa11",
+  "createdAtRealMs": 1700000000000,
+  "revision": 5,
+  "nextEntityOrdinal": 12,
+  "nextEventOrdinal": 8,
+  "time": {
+   "simulationTimeMs": 0,
+   "paused": true,
+   "rate": 1,
+   "accumulatorMs": 0
+  },
+  "random": {
+   "combat": {
+    "s0": 1850326506,
+    "s1": 3030271747,
+    "s2": 1110157900,
+    "s3": 4009249573,
+    "drawIndex": 0
+   },
+   "economy": {
+    "s0": 1517961906,
+    "s1": 4280701816,
+    "s2": 2386724089,
+    "s3": 2923943536,
+    "drawIndex": 0
+   },
+   "encounter": {
+    "s0": 252365494,
+    "s1": 247065611,
+    "s2": 1753276429,
+    "s3": 3154228701,
+    "drawIndex": 0
+   },
+   "loot": {
+    "s0": 2501019804,
+    "s1": 1366451539,
+    "s2": 2922537091,
+    "s3": 1647167798,
+    "drawIndex": 0
+   },
+   "world": {
+    "s0": 4255448290,
+    "s1": 206131620,
+    "s2": 3027529991,
+    "s3": 393920104,
+    "drawIndex": 0
+   }
+  },
+  "scheduler": {
+   "entries": [
+    {
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e9",
+     "kind": "economy.hour",
+     "dueAtMs": 3600000,
+     "priority": 100,
+     "insertionOrdinal": 1,
+     "ownerId": null
+    }
+   ],
+   "nextInsertionOrdinal": 2
+  }
+ },
+ "checksum": "2d380bcedb333d7f10bedb2b11867729b66bc5e2650920663212ad2bae17dbeb"
+}

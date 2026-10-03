@@ -6,6 +6,7 @@ const BASE_URL = `http://localhost:${PORT}`;
 // Browser-level checks run against the production build so that the boot path,
 // the module worker and content loading are exercised as shipped
 // (Technical Specification 3.1, 3.2, 15.1).
+// @implements TECH-15.1
 export default defineConfig({
   testDir: 'tests',
   fullyParallel: true,

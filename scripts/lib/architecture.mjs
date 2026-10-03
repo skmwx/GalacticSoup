@@ -7,6 +7,8 @@
  * The checker reads the declarations in `config/packages.mjs`. It is used by
  * `npm run check:architecture` and by tests/unit/architecture.test.ts, so a
  * boundary break fails the unit suite as well as the dedicated check.
+ *
+ * @implements TECH-4.3
  */
 import fs from 'node:fs';
 import path from 'node:path';

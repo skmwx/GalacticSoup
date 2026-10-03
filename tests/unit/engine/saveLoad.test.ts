@@ -141,6 +141,24 @@ describe('save load pipeline', () => {
     expect(reasonOf(envelope)).toBe('error.saveLoad.envelope');
   });
 
+  it('refuses an envelope whose listing misstates the campaign it holds [TECH-11.2, TECH-11.4]', () => {
+    const honest = sealed();
+
+    // Each field the manifest lists a save by is sealed again around a lie, so
+    // only the agreement check can catch it.
+    for (const [field, overrides] of [
+      ['displayName', { displayName: 'Someone Else' }],
+      ['revision', { revision: honest.revision + 5 }],
+      ['simulationTimeMs', { simulationTimeMs: honest.simulationTimeMs + 60_000 }],
+    ] as const) {
+      const result = loadSave(sealed(overrides), { content });
+      expect(result.ok, field).toBe(false);
+      if (result.ok) continue;
+      expect(result.error.messageKey).toBe('error.saveLoad.envelope');
+      expect(result.error.params).toMatchObject({ field, reason: 'disagreesWithPayload' });
+    }
+  });
+
   it('accepts content whose values changed but whose definitions all resolve [TECH-11.4]', () => {
     const envelope = sealed({
       contentHash: 'f'.repeat(64),

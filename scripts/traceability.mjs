@@ -2,10 +2,14 @@
 /**
  * `npm run traceability`
  *
- * Builds the coverage report required by Technical Specification 15.2: for each
- * stable requirement id, the implementing modules and the tests that cover it.
+ * Builds the coverage report required by Technical Specification 15.2 and MVP
+ * Scope 9.2: for every MVP acceptance criterion and every normative section
+ * MVP Scope selects, the engine modules, projections, interface code, content,
+ * protocol requests and tests that carry it.
  *
  * Sources of truth:
+ *   - `config/requirements.json` lists the requirements and says which are
+ *     included in this delivery;
  *   - production code claims a requirement with an `@implements <ID>` comment;
  *   - a test covers a requirement by carrying `[<ID>]` in its name.
  *
@@ -13,58 +17,19 @@
  * `FUNC-<section>` (Functional Specification) and `MVP-AC-<nn>`
  * (MVP Scope acceptance criteria).
  *
- * The report proves coverage; it does not replace human playtesting.
+ * The run fails when an included requirement is uncovered, when code or a test
+ * names an id the registry does not list, or when the registry names content
+ * or a request that does not exist. The report proves coverage; it does not
+ * replace human playtesting.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
 import { REPO_ROOT } from '../config/aliases.mjs';
+import { buildTraceability, renderMarkdown } from './lib/traceability.mjs';
 
-const ID_PATTERN = /\b(TECH-\d+(?:\.\d+)*|FUNC-\d+(?:\.\d+)*|MVP-AC-\d{2})\b/g;
-const IMPLEMENTS_PATTERN = /@implements\s+([^\n*]+)/g;
-const TAG_PATTERN = /\[((?:TECH|FUNC|MVP)-[^\]]+)\]/g;
-const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx']);
-
-/** @type {Map<string, { implementedBy: Set<string>, coveredBy: Set<string> }>} */
-const entries = new Map();
-
-for (const file of listFiles(path.join(REPO_ROOT, 'src'))) {
-  const source = fs.readFileSync(file, 'utf8');
-  IMPLEMENTS_PATTERN.lastIndex = 0;
-  let match;
-  while ((match = IMPLEMENTS_PATTERN.exec(source)) !== null) {
-    for (const id of idsIn(match[1] ?? '')) {
-      entryFor(id).implementedBy.add(relative(file));
-    }
-  }
-}
-
-for (const file of listFiles(path.join(REPO_ROOT, 'tests'))) {
-  const source = fs.readFileSync(file, 'utf8');
-  TAG_PATTERN.lastIndex = 0;
-  let match;
-  while ((match = TAG_PATTERN.exec(source)) !== null) {
-    for (const id of idsIn(match[1] ?? '')) {
-      entryFor(id).coveredBy.add(relative(file));
-    }
-  }
-}
-
-const ids = [...entries.keys()].sort(compareIds);
-const uncovered = ids.filter(
-  (id) => entries.get(id)?.implementedBy.size && !entries.get(id)?.coveredBy.size,
-);
-
-const report = {
-  generatedFor: 'Galactic Soup',
-  requirementCount: ids.length,
-  requirements: ids.map((id) => ({
-    id,
-    implementedBy: [...(entries.get(id)?.implementedBy ?? [])].sort(),
-    coveredBy: [...(entries.get(id)?.coveredBy ?? [])].sort(),
-  })),
-};
+const report = buildTraceability();
 
 const reportsDir = path.join(REPO_ROOT, 'reports');
 fs.mkdirSync(reportsDir, { recursive: true });
@@ -75,83 +40,17 @@ fs.writeFileSync(
 );
 fs.writeFileSync(path.join(reportsDir, 'traceability.md'), renderMarkdown(report), 'utf8');
 
+const { summary } = report;
 process.stdout.write(
-  `Traceability: ${String(ids.length)} requirement ids, ${String(
-    ids.filter((id) => (entries.get(id)?.coveredBy.size ?? 0) > 0).length,
-  )} covered by tests. Report written to reports/traceability.md.\n`,
+  `Traceability: ${String(summary.requirements)} requirements, ${String(summary.included)} included, ` +
+    `${String(summary.covered)} covered, ${String(summary.deferred)} deferred. ` +
+    'Report written to reports/traceability.md.\n',
 );
 
-if (uncovered.length > 0) {
-  process.stderr.write(
-    `\nThese requirements are claimed by production code but no test names them:\n`,
-  );
-  for (const id of uncovered) {
-    process.stderr.write(`  ${id}\n`);
+if (report.problems.length > 0) {
+  process.stderr.write(`\nThe traceability report has ${String(report.problems.length)} problem(s):\n`);
+  for (const problem of report.problems) {
+    process.stderr.write(`  ${problem}\n`);
   }
   process.exit(1);
-}
-
-function entryFor(id) {
-  let entry = entries.get(id);
-  if (entry === undefined) {
-    entry = { implementedBy: new Set(), coveredBy: new Set() };
-    entries.set(id, entry);
-  }
-  return entry;
-}
-
-function idsIn(text) {
-  ID_PATTERN.lastIndex = 0;
-  return [...text.matchAll(ID_PATTERN)].map((match) => match[1] ?? '').filter(Boolean);
-}
-
-function listFiles(dir) {
-  if (!fs.existsSync(dir)) {
-    return [];
-  }
-  /** @type {string[]} */
-  const found = [];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const absolute = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      found.push(...listFiles(absolute));
-    } else if (SOURCE_EXTENSIONS.has(path.extname(entry.name))) {
-      found.push(absolute);
-    }
-  }
-  return found.sort();
-}
-
-function relative(file) {
-  return path.relative(REPO_ROOT, file).split(path.sep).join('/');
-}
-
-function compareIds(a, b) {
-  return a.localeCompare(b, 'en', { numeric: true });
-}
-
-function renderMarkdown(data) {
-  const lines = [
-    '# Traceability report',
-    '',
-    'Generated by `npm run traceability`. Do not edit by hand.',
-    '',
-    `Requirement ids: ${String(data.requirementCount)}`,
-    '',
-    '| Requirement | Implemented by | Covered by |',
-    '|---|---|---|',
-  ];
-
-  for (const requirement of data.requirements) {
-    lines.push(
-      `| ${requirement.id} | ${cell(requirement.implementedBy)} | ${cell(requirement.coveredBy)} |`,
-    );
-  }
-
-  lines.push('');
-  return lines.join('\n');
-}
-
-function cell(files) {
-  return files.length === 0 ? '-' : files.map((file) => `\`${file}\``).join('<br>');
 }

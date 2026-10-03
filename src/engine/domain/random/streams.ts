@@ -18,7 +18,12 @@ import {
  * persists its four words and the number of draws taken from it; the draw
  * index is what a random check records alongside its outcome.
  *
- * @implements TECH-9.4
+ * Because the stream state is saved with the campaign, a loaded save continues
+ * the sequence where it stopped: an outcome already resolved is not rolled
+ * again, and reloading promises nothing about the next one
+ * (Functional Specification 4.3).
+ *
+ * @implements TECH-9.4, FUNC-4.3
  */
 
 /** Stable order: it defines how streams are seeded and serialised. */
@@ -32,6 +37,9 @@ export interface RandomStreamState extends RandomState {
 }
 
 export type RandomStreams = Readonly<Record<RandomStreamName, RandomStreamState>>;
+
+/** The four state words and the draw index. */
+const STREAM_FIELD_COUNT = 5;
 
 /** A mutable streams record, as held by a transaction draft. */
 export type MutableRandomStreams = Record<RandomStreamName, {
@@ -89,6 +97,11 @@ export function isRandomStreams(value: unknown): value is RandomStreams {
   return RANDOM_STREAMS.every((name) => {
     const stream = candidate[name];
     if (!isRandomState(stream)) {
+      return false;
+    }
+    // Four state words and the draw index, and nothing else: a stored stream
+    // is as closed as the schema that describes it.
+    if (Object.keys(stream).length !== STREAM_FIELD_COUNT) {
       return false;
     }
     const drawIndex = (stream as unknown as Record<string, unknown>)['drawIndex'];

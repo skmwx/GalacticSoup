@@ -11,9 +11,10 @@ const alias = aliasEntries();
 // (Technical Specification 6.2).
 const content = (): ReturnType<typeof contentPlugin> => contentPlugin();
 
-// Three named projects back the `test:unit`, `test:integration` and
-// `test:component` entry points (Technical Specification 15.1).
+// Named projects back the `test:unit`, `test:integration`, `test:performance`
+// and `test:component` entry points (Technical Specification 15.1).
 // Browser and accessibility levels run under Playwright.
+// @implements TECH-15.1
 export default defineConfig({
   resolve: { alias },
   test: {
@@ -34,6 +35,19 @@ export default defineConfig({
           name: 'integration',
           environment: 'node',
           include: ['tests/integration/**/*.test.ts'],
+        },
+      },
+      {
+        // Timing against the targets of Technical Specification 13. It is a
+        // level of its own so that it never shares a processor with the
+        // integration suite, which would measure the neighbours instead.
+        plugins: [content()],
+        resolve: { alias },
+        test: {
+          name: 'performance',
+          environment: 'node',
+          include: ['tests/performance/**/*.test.ts'],
+          fileParallelism: false,
         },
       },
       {

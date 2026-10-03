@@ -2,25 +2,464 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/transaction-preview.data.schema.json",
   "title": "TransactionPreviewData",
-  "description": "State-bound local market, repair, resupply or insurance preview (Technical Specification 7.4).",
-  "type": "object",
-  "required": ["action", "available", "unavailableReason", "token", "walletDeltaCredits", "totalCredits", "traces"],
-  "properties": {
-    "action": { "enum": ["market.buy", "market.sell", "repair", "resupply", "insurance.enhance"] },
-    "available": { "type": "boolean" },
-    "unavailableReason": { "type": ["string", "null"] },
-    "token": {
-      "anyOf": [
-        { "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/previewToken" },
-        { "type": "null" }
-      ]
+  "description": "State-bound local market, repair, resupply or insurance preview (Technical Specification 7.4). The action selects one of four closed shapes; a preview carries no field its shape does not name.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/marketPreview"
     },
-    "walletDeltaCredits": { "type": "integer" },
-    "totalCredits": { "type": "integer", "minimum": 0 },
-    "traces": {
-      "type": "array",
-      "items": { "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/formulaTrace" }
+    {
+      "$ref": "#/$defs/repairPreview"
+    },
+    {
+      "$ref": "#/$defs/resupplyPreview"
+    },
+    {
+      "$ref": "#/$defs/insurancePreview"
     }
-  },
-  "additionalProperties": true
+  ],
+  "$defs": {
+    "marketPreview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "available",
+        "unavailableReason",
+        "token",
+        "walletDeltaCredits",
+        "totalCredits",
+        "traces",
+        "stationId",
+        "item",
+        "quantity",
+        "sourceStackId",
+        "destinationInventoryId",
+        "averageUnitPriceCredits",
+        "firstUnitPriceCredits",
+        "lastUnitPriceCredits",
+        "initialStock",
+        "remainingStock",
+        "priceMovementCredits",
+        "cargoVolumeDeltaCubicDecimetres"
+      ],
+      "properties": {
+        "action": {
+          "enum": [
+            "market.buy",
+            "market.sell"
+          ]
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "token": {
+          "anyOf": [
+            {
+              "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/previewToken"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "walletDeltaCredits": {
+          "type": "integer"
+        },
+        "totalCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "traces": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/formulaTrace"
+          }
+        },
+        "stationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "item": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/marketItem"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sourceStackId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "destinationInventoryId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "averageUnitPriceCredits": {
+          "type": "number",
+          "minimum": 0
+        },
+        "firstUnitPriceCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "lastUnitPriceCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "initialStock": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "remainingStock": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "priceMovementCredits": {
+          "type": "integer"
+        },
+        "cargoVolumeDeltaCubicDecimetres": {
+          "type": "integer"
+        }
+      }
+    },
+    "repairPreview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "available",
+        "unavailableReason",
+        "token",
+        "walletDeltaCredits",
+        "totalCredits",
+        "traces",
+        "stationId",
+        "shipId",
+        "shieldDamage",
+        "armorDamage",
+        "hullDamage",
+        "missingArmorFraction",
+        "missingHullFraction",
+        "serviceModifier",
+        "standingServiceMultiplier"
+      ],
+      "properties": {
+        "action": {
+          "const": "repair"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "token": {
+          "anyOf": [
+            {
+              "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/previewToken"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "walletDeltaCredits": {
+          "type": "integer"
+        },
+        "totalCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "traces": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/formulaTrace"
+          }
+        },
+        "stationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shipId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shieldDamage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "armorDamage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hullDamage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "missingArmorFraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "missingHullFraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "serviceModifier": {
+          "type": "number",
+          "minimum": 0
+        },
+        "standingServiceMultiplier": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "resupplyLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot",
+        "ammunitionId",
+        "ammunitionNameKey",
+        "loadedRounds",
+        "magazineSize",
+        "roundsFromInventory",
+        "roundsPurchased",
+        "totalCredits",
+        "unavailableReason"
+      ],
+      "properties": {
+        "slot": {
+          "$ref": "https://galacticsoup.invalid/schemas/protocol/assets.common.schema.json#/$defs/slot"
+        },
+        "ammunitionId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ammunitionNameKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "loadedRounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "magazineSize": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "roundsFromInventory": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "roundsPurchased": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "totalCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "unavailableReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "resupplyPreview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "available",
+        "unavailableReason",
+        "token",
+        "walletDeltaCredits",
+        "totalCredits",
+        "traces",
+        "stationId",
+        "shipId",
+        "lines"
+      ],
+      "properties": {
+        "action": {
+          "const": "resupply"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "token": {
+          "anyOf": [
+            {
+              "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/previewToken"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "walletDeltaCredits": {
+          "type": "integer"
+        },
+        "totalCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "traces": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/formulaTrace"
+          }
+        },
+        "stationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shipId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resupplyLine"
+          }
+        }
+      }
+    },
+    "insurancePreview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "available",
+        "unavailableReason",
+        "token",
+        "walletDeltaCredits",
+        "totalCredits",
+        "traces",
+        "stationId",
+        "shipId",
+        "currentCoverage",
+        "resultingCoverage",
+        "basicPayoutCredits",
+        "enhancedPayoutCredits",
+        "premiumCredits"
+      ],
+      "properties": {
+        "action": {
+          "const": "insurance.enhance"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "unavailableReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "token": {
+          "anyOf": [
+            {
+              "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/previewToken"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "walletDeltaCredits": {
+          "type": "integer"
+        },
+        "totalCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "traces": {
+          "type": "array",
+          "items": {
+            "$ref": "https://galacticsoup.invalid/schemas/protocol/economy.common.schema.json#/$defs/formulaTrace"
+          }
+        },
+        "stationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shipId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "currentCoverage": {
+          "enum": [
+            "basic",
+            "enhanced"
+          ]
+        },
+        "resultingCoverage": {
+          "const": "enhanced"
+        },
+        "basicPayoutCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "enhancedPayoutCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "premiumCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    }
+  }
 }

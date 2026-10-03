@@ -39,7 +39,7 @@ test.describe('application boot', () => {
     await expect(page.getByText(/\d+ definitions in \d+ kinds/)).toBeVisible();
   });
 
-  test('makes no request outside its own origin [TECH-2, TECH-3.2]', async ({ page, baseURL }) => {
+  test('makes no request outside its own origin [TECH-2, TECH-3.2, FUNC-22.14]', async ({ page, baseURL }) => {
     const foreign: string[] = [];
     page.on('request', (request) => {
       if (baseURL !== undefined && !request.url().startsWith(baseURL)) {

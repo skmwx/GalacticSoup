@@ -6,6 +6,7 @@ import { isEntityId } from '../campaign/identity';
 import type { CampaignState } from '../campaign/state';
 import { parseSlotKey } from '../fitting/types';
 
+import { COMBAT_EVENT_LIMIT } from './recorder';
 import { combatantOf } from './state';
 import {
   LOCK_STATUSES,
@@ -47,7 +48,7 @@ export function isCombatState(value: unknown): value is CombatState {
   if (!Object.entries(ships).every(([key, entry]) => isEntityId(key) && shipCombat(entry))) {
     return false;
   }
-  return Array.isArray(value['events']) && value['events'].length <= 128 &&
+  return Array.isArray(value['events']) && value['events'].length <= COMBAT_EVENT_LIMIT &&
     value['events'].every(combatEvent);
 }
 

@@ -52,6 +52,10 @@ function expectValid(validate: Validator, value: unknown): void {
 beforeAll(() => {
   const ajv = new AjvConstructor({ allErrors: true, strict: true });
   ajv.addSchema(loadSchema('engine-error.schema.json'));
+  // A stale-preview error carries the replacement preview, so its schema refers to these.
+  ajv.addSchema(loadSchema('economy.common.schema.json'));
+  ajv.addSchema(loadSchema('assets.common.schema.json'));
+  ajv.addSchema(loadSchema('transaction-preview.data.schema.json'));
   ajv.addSchema(loadSchema('domain-event.schema.json'));
   validateRequest = ajv.compile(loadSchema('client-request.schema.json'));
   validateResponse = ajv.compile(loadSchema('engine-response.schema.json'));

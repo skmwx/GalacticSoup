@@ -21,6 +21,8 @@ import { planWrite } from './retention.ts';
  * It also exposes the hooks a persistence test needs - simulated write
  * failures, a corrupted document, a snapshot the manifest still names - which
  * a real store cannot offer.
+ *
+ * @implements TECH-16
  */
 
 export interface MemorySaveStoreOptions {

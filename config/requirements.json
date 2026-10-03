@@ -1,0 +1,1264 @@
+{
+  "$comment": "The machine-readable traceability source (Technical Specification 15.2; MVP Implementation Plan phase 20). One entry per MVP acceptance criterion and per normative section of the functional and technical specifications. scope says whether MVP Scope selects it; extent says how much of it; evidence \"tests\" marks a requirement that constrains or defines rather than adds behaviour, so tests alone demonstrate it. content and requests name the authored data and the protocol requests that carry it. npm run traceability joins this with the @implements claims in production code and the [ID] tags in test names, and fails when an included requirement is uncovered.",
+  "requirements": [
+    {
+      "id": "MVP-AC-01",
+      "title": "Start and resume",
+      "scope": "included",
+      "requests": [
+        "campaign.create",
+        "campaign.resume",
+        "campaign.close",
+        "campaign.reset",
+        "campaign.save",
+        "campaign.saves",
+        "campaign.session"
+      ]
+    },
+    {
+      "id": "MVP-AC-02",
+      "title": "Prepare",
+      "scope": "included",
+      "content": [
+        "content/economy/listings",
+        "content/catalog"
+      ],
+      "requests": [
+        "market.listings",
+        "market.previewBuy",
+        "market.confirmBuy",
+        "market.previewSell",
+        "market.confirmSell",
+        "fitting.draft",
+        "fitting.commit",
+        "ship.undockValidity",
+        "ship.undock"
+      ]
+    },
+    {
+      "id": "MVP-AC-03",
+      "title": "Command",
+      "scope": "included",
+      "content": [
+        "content/rules/navigation.json"
+      ],
+      "requests": [
+        "movement.approach",
+        "movement.orbit",
+        "movement.keepRange",
+        "movement.moveToPoint",
+        "movement.stop",
+        "navigation.warp",
+        "navigation.dock",
+        "targeting.lock",
+        "weapon.activate",
+        "module.activate"
+      ]
+    },
+    {
+      "id": "MVP-AC-04",
+      "title": "Understand combat",
+      "scope": "included",
+      "content": [
+        "content/rules/combat.json"
+      ],
+      "requests": [
+        "combat.state",
+        "ship.get",
+        "item.compare"
+      ]
+    },
+    {
+      "id": "MVP-AC-05",
+      "title": "Face varied pressure",
+      "scope": "included",
+      "content": [
+        "content/encounters"
+      ],
+      "requests": [
+        "encounter.state",
+        "navigation.destinations"
+      ]
+    },
+    {
+      "id": "MVP-AC-06",
+      "title": "Earn and convert rewards",
+      "scope": "included",
+      "content": [
+        "content/encounters/loot",
+        "content/encounters/npcs"
+      ],
+      "requests": [
+        "loot.contents",
+        "loot.take",
+        "market.confirmSell",
+        "resupply.confirm"
+      ]
+    },
+    {
+      "id": "MVP-AC-07",
+      "title": "Progress",
+      "scope": "included",
+      "content": [
+        "content/encounters/templates",
+        "content/catalog/modules"
+      ],
+      "requests": [
+        "navigation.selectDestination",
+        "navigation.destinations"
+      ]
+    },
+    {
+      "id": "MVP-AC-08",
+      "title": "Retreat and recover",
+      "scope": "included",
+      "content": [
+        "content/rules/economy.json"
+      ],
+      "requests": [
+        "navigation.retreat",
+        "loss.report",
+        "insurance.preview",
+        "insurance.confirm",
+        "navigation.selectBookmark",
+        "navigation.warpToBookmark"
+      ]
+    },
+    {
+      "id": "MVP-AC-09",
+      "title": "Continue",
+      "scope": "included",
+      "content": [
+        "content/encounters/templates"
+      ],
+      "requests": [
+        "navigation.destinations",
+        "encounter.state"
+      ]
+    },
+    {
+      "id": "MVP-AC-10",
+      "title": "Learn in game",
+      "scope": "included",
+      "content": [
+        "content/guidance",
+        "content/notifications",
+        "content/localization"
+      ],
+      "requests": [
+        "onboarding.state",
+        "onboarding.skipStep",
+        "notifications.list"
+      ]
+    },
+    {
+      "id": "FUNC-2",
+      "title": "Normative language and game terms",
+      "scope": "included",
+      "evidence": "tests"
+    },
+    {
+      "id": "FUNC-3.1",
+      "title": "Starting a campaign",
+      "scope": "included",
+      "extent": "The starting state of the included systems only.",
+      "content": [
+        "content/rules/economy.json"
+      ],
+      "requests": [
+        "campaign.create"
+      ]
+    },
+    {
+      "id": "FUNC-3.2",
+      "title": "Guided introduction",
+      "scope": "included",
+      "extent": "Contextual guidance for the MVP loop; the full multi-activity introduction is deferred.",
+      "content": [
+        "content/guidance"
+      ],
+      "requests": [
+        "onboarding.state",
+        "onboarding.hide",
+        "onboarding.show",
+        "onboarding.skipStep"
+      ]
+    },
+    {
+      "id": "FUNC-3.3",
+      "title": "Simulation time",
+      "scope": "included",
+      "extent": "Paused and 1x; faster rates are deferred.",
+      "content": [
+        "content/rules/time.json"
+      ],
+      "requests": [
+        "time.set",
+        "time.advance",
+        "campaign.frame"
+      ]
+    },
+    {
+      "id": "FUNC-3.4",
+      "title": "Saving and loading",
+      "scope": "included",
+      "extent": "One slot with automatic save and resume; manual-save controls, save history, export and import are deferred.",
+      "requests": [
+        "campaign.save",
+        "campaign.saves",
+        "campaign.resume",
+        "campaign.close",
+        "campaign.reset"
+      ]
+    },
+    {
+      "id": "FUNC-4.1",
+      "title": "Units and display",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-4.2",
+      "title": "Limits and clamping",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-4.3",
+      "title": "Random outcomes",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-4.4",
+      "title": "Attribute modifiers",
+      "scope": "included",
+      "content": [
+        "content/catalog/modules"
+      ],
+      "requests": [
+        "ship.get"
+      ]
+    },
+    {
+      "id": "FUNC-5.1",
+      "title": "Galaxy and regions",
+      "scope": "included",
+      "extent": "One low-danger system with a neutral-access station.",
+      "content": [
+        "content/universe"
+      ]
+    },
+    {
+      "id": "FUNC-5.2",
+      "title": "System contents",
+      "scope": "included",
+      "extent": "One system: a station site and three authored combat sites.",
+      "content": [
+        "content/universe/systems"
+      ],
+      "requests": [
+        "navigation.destinations"
+      ]
+    },
+    {
+      "id": "FUNC-5.3",
+      "title": "Sites",
+      "scope": "included",
+      "content": [
+        "content/universe/systems"
+      ],
+      "requests": [
+        "navigation.site"
+      ]
+    },
+    {
+      "id": "FUNC-5.4",
+      "title": "Persistent and replenishing content",
+      "scope": "included",
+      "extent": "Wreck persistence and expiry; belts and anomalies are deferred.",
+      "content": [
+        "content/rules/combat.json"
+      ],
+      "requests": [
+        "encounter.state"
+      ]
+    },
+    {
+      "id": "FUNC-6.1",
+      "title": "Credits and ownership",
+      "scope": "included",
+      "requests": [
+        "wallet.get",
+        "assets.list"
+      ]
+    },
+    {
+      "id": "FUNC-6.2",
+      "title": "Cargo and station hangars",
+      "scope": "included",
+      "requests": [
+        "inventory.hangar",
+        "inventory.cargo",
+        "inventory.transfer",
+        "inventory.split",
+        "inventory.merge",
+        "inventory.maximum",
+        "item.inspect"
+      ]
+    },
+    {
+      "id": "FUNC-6.3",
+      "title": "Ships and remote transport",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: additional hulls, remote assets and ship transport."
+    },
+    {
+      "id": "FUNC-7.1",
+      "title": "Selection and command model",
+      "scope": "included",
+      "extent": "Every movement command except Jump.",
+      "requests": [
+        "movement.approach",
+        "movement.orbit",
+        "movement.keepRange",
+        "movement.moveToPoint",
+        "movement.stop"
+      ]
+    },
+    {
+      "id": "FUNC-7.2",
+      "title": "Normal-space movement",
+      "scope": "included",
+      "content": [
+        "content/rules/navigation.json"
+      ],
+      "requests": [
+        "navigation.site"
+      ]
+    },
+    {
+      "id": "FUNC-7.3",
+      "title": "Warp",
+      "scope": "included",
+      "extent": "Same-system warp to the authored sites and to the player's own wreck.",
+      "content": [
+        "content/rules/navigation.json"
+      ],
+      "requests": [
+        "navigation.warp",
+        "navigation.warpToBookmark",
+        "navigation.retreat"
+      ]
+    },
+    {
+      "id": "FUNC-7.4",
+      "title": "Docking and gates",
+      "scope": "included",
+      "extent": "Docking; gates and jumps are deferred.",
+      "requests": [
+        "navigation.dock",
+        "ship.undock"
+      ]
+    },
+    {
+      "id": "FUNC-8.1",
+      "title": "Required hull lineups",
+      "scope": "included",
+      "extent": "The starter multi-role hull only.",
+      "content": [
+        "content/catalog/hulls"
+      ]
+    },
+    {
+      "id": "FUNC-8.2",
+      "title": "Ship attributes",
+      "scope": "included",
+      "content": [
+        "content/catalog/hulls"
+      ],
+      "requests": [
+        "ship.get"
+      ]
+    },
+    {
+      "id": "FUNC-8.3",
+      "title": "Module categories",
+      "scope": "included",
+      "content": [
+        "content/catalog/modules"
+      ]
+    },
+    {
+      "id": "FUNC-8.4",
+      "title": "Fitting resources and validity",
+      "scope": "included",
+      "requests": [
+        "fitting.begin",
+        "fitting.set",
+        "fitting.clear",
+        "fitting.revert",
+        "fitting.commit",
+        "fitting.draft",
+        "ship.undockValidity"
+      ]
+    },
+    {
+      "id": "FUNC-8.5",
+      "title": "Fitting information and saved fits",
+      "scope": "included",
+      "extent": "Fitting information and previews; saved fitting templates are deferred.",
+      "requests": [
+        "fitting.draft",
+        "item.compare"
+      ]
+    },
+    {
+      "id": "FUNC-9.1",
+      "title": "Combat state and legality",
+      "scope": "included",
+      "extent": "Authored hostiles; attacking non-hostiles and faction consequences are deferred.",
+      "requests": [
+        "combat.state"
+      ]
+    },
+    {
+      "id": "FUNC-9.2",
+      "title": "Locking",
+      "scope": "included",
+      "content": [
+        "content/rules/combat.json"
+      ],
+      "requests": [
+        "targeting.lock",
+        "targeting.unlock",
+        "combat.state"
+      ]
+    },
+    {
+      "id": "FUNC-9.3",
+      "title": "Movement relationships",
+      "scope": "included",
+      "requests": [
+        "combat.state"
+      ]
+    },
+    {
+      "id": "FUNC-9.4",
+      "title": "Weapon operation",
+      "scope": "included",
+      "content": [
+        "content/rules/combat.json",
+        "content/catalog/ammunition"
+      ],
+      "requests": [
+        "weapon.activate",
+        "weapon.deactivate",
+        "weapon.reload",
+        "weapon.changeAmmunition"
+      ]
+    },
+    {
+      "id": "FUNC-9.5",
+      "title": "Turret accuracy",
+      "scope": "included",
+      "content": [
+        "content/catalog/modules"
+      ],
+      "requests": [
+        "combat.state"
+      ]
+    },
+    {
+      "id": "FUNC-9.6",
+      "title": "Guided-weapon accuracy",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: guided weapons."
+    },
+    {
+      "id": "FUNC-9.7",
+      "title": "Damage types and defenses",
+      "scope": "included",
+      "content": [
+        "content/catalog/hulls",
+        "content/catalog/ammunition"
+      ],
+      "requests": [
+        "combat.state",
+        "module.activate",
+        "module.deactivate"
+      ]
+    },
+    {
+      "id": "FUNC-9.8",
+      "title": "Capacitor",
+      "scope": "included",
+      "content": [
+        "content/catalog/hulls"
+      ],
+      "requests": [
+        "combat.state",
+        "ship.get"
+      ]
+    },
+    {
+      "id": "FUNC-9.9",
+      "title": "Electronic and movement-control effects",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: electronic warfare and movement-control effects."
+    },
+    {
+      "id": "FUNC-9.10",
+      "title": "NPC behavior",
+      "scope": "included",
+      "extent": "Brawler, skirmisher and sniper roles; tacklers and support ships are deferred.",
+      "content": [
+        "content/encounters/npcs",
+        "content/encounters/templates"
+      ],
+      "requests": [
+        "encounter.state"
+      ]
+    },
+    {
+      "id": "FUNC-9.11",
+      "title": "Victory, loot, and retreat",
+      "scope": "included",
+      "extent": "Bounties, wrecks, loot and retreat; experience and standing rewards are deferred.",
+      "content": [
+        "content/encounters/loot"
+      ],
+      "requests": [
+        "loot.contents",
+        "loot.take",
+        "navigation.retreat"
+      ]
+    },
+    {
+      "id": "FUNC-9.12",
+      "title": "Player ship destruction and recovery",
+      "scope": "included",
+      "content": [
+        "content/rules/economy.json"
+      ],
+      "requests": [
+        "loss.report",
+        "insurance.preview",
+        "insurance.confirm"
+      ]
+    },
+    {
+      "id": "FUNC-10",
+      "title": "Stations and services",
+      "scope": "included",
+      "extent": "Market, fitting, repair, resupply and insurance at one independent station.",
+      "content": [
+        "content/universe/stations"
+      ],
+      "requests": [
+        "station.services",
+        "repair.preview",
+        "repair.confirm",
+        "resupply.preview",
+        "resupply.confirm"
+      ]
+    },
+    {
+      "id": "FUNC-11.1",
+      "title": "Market listings",
+      "scope": "included",
+      "extent": "Local quotes; skill and standing terms are at their neutral values.",
+      "content": [
+        "content/economy/listings"
+      ],
+      "requests": [
+        "market.listings"
+      ]
+    },
+    {
+      "id": "FUNC-11.2",
+      "title": "Market change",
+      "scope": "included",
+      "extent": "Hourly stock change and fixed recovery listings; regional events are deferred.",
+      "content": [
+        "content/economy/listings"
+      ],
+      "requests": [
+        "market.listings"
+      ]
+    },
+    {
+      "id": "FUNC-11.3",
+      "title": "Trading flow and information",
+      "scope": "included",
+      "extent": "Local buying and selling; remote quotes, history and routes are deferred.",
+      "requests": [
+        "market.previewBuy",
+        "market.confirmBuy",
+        "market.previewSell",
+        "market.confirmSell"
+      ]
+    },
+    {
+      "id": "FUNC-11.4",
+      "title": "Trade experience",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: trade experience."
+    },
+    {
+      "id": "FUNC-12.1",
+      "title": "Asteroids and resource information",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: mining and refining."
+    },
+    {
+      "id": "FUNC-12.2",
+      "title": "Mining operation",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: mining and refining."
+    },
+    {
+      "id": "FUNC-12.3",
+      "title": "Jettison and collection",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: mining and refining."
+    },
+    {
+      "id": "FUNC-12.4",
+      "title": "Refining",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: mining and refining."
+    },
+    {
+      "id": "FUNC-13.1",
+      "title": "System sweep",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: exploration, scanning and anomalies."
+    },
+    {
+      "id": "FUNC-13.2",
+      "title": "Resolving a signature",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: exploration, scanning and anomalies."
+    },
+    {
+      "id": "FUNC-13.3",
+      "title": "Anomaly categories and resolution",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: exploration, scanning and anomalies."
+    },
+    {
+      "id": "FUNC-14.1",
+      "title": "Access and ownership",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: planetary extraction."
+    },
+    {
+      "id": "FUNC-14.2",
+      "title": "Structures and capacity",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: planetary extraction."
+    },
+    {
+      "id": "FUNC-14.3",
+      "title": "Extraction and depletion",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: planetary extraction."
+    },
+    {
+      "id": "FUNC-14.4",
+      "title": "Processing",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: planetary extraction."
+    },
+    {
+      "id": "FUNC-14.5",
+      "title": "Control range and logistics",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: planetary extraction."
+    },
+    {
+      "id": "FUNC-15.1",
+      "title": "Recipes and knowledge",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: fabrication and industry."
+    },
+    {
+      "id": "FUNC-15.2",
+      "title": "Installing jobs",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: fabrication and industry."
+    },
+    {
+      "id": "FUNC-15.3",
+      "title": "Completion and cancellation",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: fabrication and industry."
+    },
+    {
+      "id": "FUNC-15.4",
+      "title": "Item quality",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: fabrication and industry."
+    },
+    {
+      "id": "FUNC-16.1",
+      "title": "Skill structure",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: skills and experience."
+    },
+    {
+      "id": "FUNC-16.2",
+      "title": "Earning experience",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: skills and experience."
+    },
+    {
+      "id": "FUNC-16.3",
+      "title": "Learning skills",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: skills and experience."
+    },
+    {
+      "id": "FUNC-17.1",
+      "title": "Faction content",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: factions and standings."
+    },
+    {
+      "id": "FUNC-17.2",
+      "title": "Standing changes",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: factions and standings."
+    },
+    {
+      "id": "FUNC-17.3",
+      "title": "Standing bands",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: factions and standings."
+    },
+    {
+      "id": "FUNC-17.4",
+      "title": "Recovery from hostile standing",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: factions and standings."
+    },
+    {
+      "id": "FUNC-18",
+      "title": "Progression, access, and end-state",
+      "scope": "included",
+      "extent": "No hidden gating, repeatable sites and no forced ending.",
+      "content": [
+        "content/encounters/templates"
+      ],
+      "requests": [
+        "navigation.destinations"
+      ]
+    },
+    {
+      "id": "FUNC-19.1",
+      "title": "Persistent frame",
+      "scope": "included",
+      "extent": "The parts that serve included systems.",
+      "requests": [
+        "campaign.frame",
+        "wallet.get"
+      ]
+    },
+    {
+      "id": "FUNC-19.2",
+      "title": "Space view",
+      "scope": "included",
+      "requests": [
+        "navigation.site",
+        "combat.state"
+      ]
+    },
+    {
+      "id": "FUNC-19.3",
+      "title": "Object and combat information",
+      "scope": "included",
+      "requests": [
+        "combat.state",
+        "encounter.state"
+      ]
+    },
+    {
+      "id": "FUNC-19.4",
+      "title": "Galaxy and system maps",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: galaxy and system maps."
+    },
+    {
+      "id": "FUNC-19.5",
+      "title": "Station screens",
+      "scope": "included",
+      "extent": "Market, hangar, fitting, repair, resupply and insurance.",
+      "requests": [
+        "station.services",
+        "market.listings",
+        "inventory.hangar"
+      ]
+    },
+    {
+      "id": "FUNC-19.6",
+      "title": "Comparisons and explanations",
+      "scope": "included",
+      "requests": [
+        "item.compare",
+        "item.inspect"
+      ]
+    },
+    {
+      "id": "FUNC-19.7",
+      "title": "Notifications",
+      "scope": "included",
+      "extent": "Every level; warp disruption and the 4x/8x slow-down are deferred with their systems.",
+      "content": [
+        "content/notifications",
+        "content/audio"
+      ],
+      "requests": [
+        "notifications.list",
+        "audio.cues"
+      ]
+    },
+    {
+      "id": "FUNC-20",
+      "title": "Accessibility and quality of life",
+      "scope": "included",
+      "extent": "For the included surfaces."
+    },
+    {
+      "id": "FUNC-21",
+      "title": "Full-game content coverage",
+      "scope": "included",
+      "extent": "Only the content floor MVP Scope 4 selects.",
+      "content": [
+        "content/catalog",
+        "content/encounters"
+      ]
+    },
+    {
+      "id": "FUNC-22.1",
+      "title": "A path to a usable ship, station and market",
+      "scope": "included",
+      "requests": [
+        "loss.report"
+      ]
+    },
+    {
+      "id": "FUNC-22.2",
+      "title": "No negative credits and no silently discarded item",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-22.3",
+      "title": "No item usable in two locations",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-22.4",
+      "title": "A preview and its confirmation use the same rules",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-22.5",
+      "title": "Dependent commands stop safely when a target disappears",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-22.6",
+      "title": "A full destination never destroys output",
+      "scope": "included",
+      "extent": "Loot and unloaded ammunition; production output is deferred."
+    },
+    {
+      "id": "FUNC-22.7",
+      "title": "Expiration never removes what the player occupies or owns",
+      "scope": "included",
+      "extent": "Wrecks and the occupied site."
+    },
+    {
+      "id": "FUNC-22.8",
+      "title": "Standing changes cannot strand the player",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: factions and standings."
+    },
+    {
+      "id": "FUNC-22.9",
+      "title": "Skills never decrease",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: skills and standings."
+    },
+    {
+      "id": "FUNC-22.10",
+      "title": "Every unavailable command is explained",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-22.11",
+      "title": "Cancelled commands refund nothing committed and consume nothing later",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-22.12",
+      "title": "Offline progress is always zero",
+      "scope": "included"
+    },
+    {
+      "id": "FUNC-22.13",
+      "title": "Pausing cannot be disabled",
+      "scope": "included",
+      "requests": [
+        "time.set"
+      ]
+    },
+    {
+      "id": "FUNC-22.14",
+      "title": "No multiplayer or direct piloting behaviour",
+      "scope": "included",
+      "evidence": "tests"
+    },
+    {
+      "id": "FUNC-23",
+      "title": "Functional acceptance criteria",
+      "scope": "deferred",
+      "reason": "Full-game criteria; this delivery is accepted against MVP-AC-01 to MVP-AC-10 (MVP Scope 9)."
+    },
+    {
+      "id": "TECH-2",
+      "title": "Technical goals and constraints",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-3.1",
+      "title": "Application form",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-3.2",
+      "title": "Browser support and offline operation",
+      "scope": "included",
+      "extent": "No gameplay network request; installable packaging and the service worker are deferred (MVP Scope 7).",
+      "evidence": "tests"
+    },
+    {
+      "id": "TECH-4.1",
+      "title": "Layers and dependency direction",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-4.2",
+      "title": "Runtime processes",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-4.3",
+      "title": "Source layout",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-5.1",
+      "title": "Identifiers and references",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-5.2",
+      "title": "Canonical units and numbers",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-5.3",
+      "title": "Collections and ordering",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-5.4",
+      "title": "Errors",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-6.1",
+      "title": "Data-driven content",
+      "scope": "included",
+      "content": [
+        "content"
+      ]
+    },
+    {
+      "id": "TECH-6.2",
+      "title": "Schema and semantic validation",
+      "scope": "included",
+      "content": [
+        "schemas/content"
+      ]
+    },
+    {
+      "id": "TECH-6.3",
+      "title": "Content compilation",
+      "scope": "included",
+      "requests": [
+        "content.summary",
+        "content.messages"
+      ]
+    },
+    {
+      "id": "TECH-7.1",
+      "title": "Message envelope",
+      "scope": "included",
+      "content": [
+        "schemas/protocol"
+      ],
+      "requests": [
+        "system.health",
+        "system.capabilities"
+      ]
+    },
+    {
+      "id": "TECH-7.2",
+      "title": "Command handling",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-7.3",
+      "title": "Queries and projections",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-7.4",
+      "title": "Previews and confirmations",
+      "scope": "included",
+      "requests": [
+        "market.previewBuy",
+        "repair.preview",
+        "resupply.preview",
+        "insurance.preview"
+      ]
+    },
+    {
+      "id": "TECH-8.1",
+      "title": "Campaign aggregate",
+      "scope": "included",
+      "content": [
+        "schemas/save/campaign-state.schema.json"
+      ]
+    },
+    {
+      "id": "TECH-8.2",
+      "title": "Entities and aggregates",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-8.3",
+      "title": "Items and inventories",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-8.4",
+      "title": "Knowledge and remote information",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: remote markets, maps and surveyed information."
+    },
+    {
+      "id": "TECH-9.1",
+      "title": "Authoritative clock",
+      "scope": "included",
+      "extent": "Paused and 1x.",
+      "content": [
+        "content/rules/time.json"
+      ]
+    },
+    {
+      "id": "TECH-9.2",
+      "title": "Scheduler and system order",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-9.3",
+      "title": "Movement and geometry",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-9.4",
+      "title": "Randomness",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-9.5",
+      "title": "Deterministic replay",
+      "scope": "included",
+      "requests": [
+        "diagnostics.stateHash"
+      ]
+    },
+    {
+      "id": "TECH-10.1",
+      "title": "Navigation, sites, and world state",
+      "scope": "included",
+      "extent": "One system: sites, warp and docking; routes and gates are deferred."
+    },
+    {
+      "id": "TECH-10.2",
+      "title": "Fitting and derived attributes",
+      "scope": "included",
+      "extent": "The fitting draft and attribute pipeline; saved fits are deferred."
+    },
+    {
+      "id": "TECH-10.3",
+      "title": "Targeting, modules, and combat",
+      "scope": "included",
+      "extent": "Turrets, repair and propulsion; guided weapons and control effects are deferred."
+    },
+    {
+      "id": "TECH-10.4",
+      "title": "Economy and markets",
+      "scope": "included",
+      "extent": "Local quotes and stock; price history and remote quotes are deferred."
+    },
+    {
+      "id": "TECH-10.5",
+      "title": "Mining, containers, and refining",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: mining and refining."
+    },
+    {
+      "id": "TECH-10.6",
+      "title": "Exploration and authored objectives",
+      "scope": "included",
+      "extent": "The declarative objective machine, as the contextual guidance uses it; scanning is deferred."
+    },
+    {
+      "id": "TECH-10.7",
+      "title": "Planetary extraction",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: planetary extraction."
+    },
+    {
+      "id": "TECH-10.8",
+      "title": "Fabrication and transport",
+      "scope": "deferred",
+      "reason": "MVP Scope 8: fabrication and ship transport."
+    },
+    {
+      "id": "TECH-10.9",
+      "title": "Skills, factions, progression, and recovery",
+      "scope": "included",
+      "extent": "Player destruction and recovery; skills and standings are deferred."
+    },
+    {
+      "id": "TECH-11.1",
+      "title": "Browser storage",
+      "scope": "included",
+      "extent": "One slot with internal rotation."
+    },
+    {
+      "id": "TECH-11.2",
+      "title": "Snapshot format",
+      "scope": "included",
+      "content": [
+        "schemas/save/save-envelope.schema.json"
+      ]
+    },
+    {
+      "id": "TECH-11.3",
+      "title": "Save timing and consistency",
+      "scope": "included",
+      "requests": [
+        "campaign.save"
+      ]
+    },
+    {
+      "id": "TECH-11.4",
+      "title": "Load, import, and migration",
+      "scope": "included",
+      "extent": "Load and migration; import and export are deferred.",
+      "requests": [
+        "campaign.resume"
+      ]
+    },
+    {
+      "id": "TECH-12.1",
+      "title": "UI state",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-12.2",
+      "title": "SVG views",
+      "scope": "included",
+      "extent": "The space view; system and galaxy maps are deferred."
+    },
+    {
+      "id": "TECH-12.3",
+      "title": "Interaction, shortcuts, and accessibility",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-12.4",
+      "title": "Notifications and audio",
+      "scope": "included",
+      "content": [
+        "content/notifications",
+        "content/audio"
+      ]
+    },
+    {
+      "id": "TECH-12.5",
+      "title": "Localization readiness",
+      "scope": "included",
+      "content": [
+        "content/localization"
+      ],
+      "requests": [
+        "content.messages"
+      ]
+    },
+    {
+      "id": "TECH-13",
+      "title": "Performance and resource limits",
+      "scope": "included",
+      "extent": "Engine timing, bounded histories and site budgets at the authored MVP maxima."
+    },
+    {
+      "id": "TECH-14",
+      "title": "Security and integrity",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-15.1",
+      "title": "Test levels",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-15.2",
+      "title": "Functional acceptance traceability",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-15.3",
+      "title": "Required invariant checks",
+      "scope": "included"
+    },
+    {
+      "id": "TECH-16",
+      "title": "Diagnostics and development support",
+      "scope": "included",
+      "extent": "The headless engine with in-memory persistence and a deterministic elapsed-time driver; the diagnostics panel is not an MVP surface (MVP Scope 5)."
+    },
+    {
+      "id": "TECH-17",
+      "title": "Future Java-server migration",
+      "scope": "included",
+      "evidence": "tests"
+    },
+    {
+      "id": "TECH-18",
+      "title": "Delivery and change rules",
+      "scope": "included",
+      "evidence": "tests"
+    },
+    {
+      "id": "TECH-19",
+      "title": "Technical completion criteria",
+      "scope": "deferred",
+      "reason": "Full-game criteria; the applicable ones are checked by the release gate of MVP Implementation Plan phase 21."
+    }
+  ]
+}

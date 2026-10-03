@@ -1,4 +1,4 @@
-import type { ContentRepository } from '@engine';
+import type { CampaignState, ContentRepository } from '@engine';
 import type {
   AssetsData,
   InventoryData,
@@ -157,13 +157,23 @@ export async function runCareer(career: CareerFixture, content: ContentRepositor
 
 class Stall extends Error {}
 
+export interface CareerOptions {
+  /**
+   * Opens the campaign the career flies. The default writes the starting state
+   * as a snapshot and resumes it; a recording opens it its own way so the
+   * whole career becomes a replayable log.
+   */
+  readonly open?: (start: CampaignState, content: ContentRepository) => Promise<ScenarioSession>;
+}
+
 export async function runCareerSeed(
   career: CareerFixture,
   seed: string,
   content: ContentRepository,
+  options: CareerOptions = {},
 ): Promise<CareerSeedRun> {
   const start = newCampaign(seed, content);
-  const session = await openSession(start, content);
+  const session = await (options.open ?? openSession)(start, content);
   const pilot = new CareerPilot(session, content, keptDefinitions(career));
   const entries: CareerEntry[] = [];
   let sorties = 0;

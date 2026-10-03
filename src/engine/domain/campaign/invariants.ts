@@ -2,6 +2,7 @@ import { sortedKeys } from '@shared';
 import type { ContentRepository } from '@engine/ports';
 import { validateAssets } from '../assets/validation';
 import { validateCombat } from '../combat/validation';
+import { ECONOMY_BOUNDARY_KIND } from '../economy/state';
 import { validateEconomy } from '../economy/validation';
 import { validateEncounter } from '../encounter/validation';
 import { validateNavigation } from '../navigation/validation';
@@ -35,7 +36,8 @@ import {
  * charge), 2-5 (asset references, ownership, capacity, reservations and
  * active-ship location), 6 (fitting slot, hardpoint and online-resource
  * consistency; no MVP item has a skill requirement), 7 and 12 (scheduler
- * entries, and the absence of a real timestamp as a completion condition),
+ * entries, each owned by live state or the one world boundary, and the
+ * absence of a real timestamp as a completion condition),
  * 8 (locks, movement targets and the scheduler entries that resolve them),
  * 9 (guidance steps and one-time rewards recorded once), 11 (streams,
  * simulation time, revisions, ordinals and notification sequence numbers).
@@ -128,6 +130,12 @@ export function validateCampaign(state: CampaignState, content?: ContentReposito
   validateOnboarding(state, add, content);
   validateNotifications(state, add, content);
 
+  // The ownership check reads the runtime the checks above have just proved
+  // well formed, so it is skipped when one of them found a malformed shape.
+  if (!issues.some((issue) => issue.rule.endsWith('Shape'))) {
+    validateSchedulerOwnership(state, add);
+  }
+
   return issues;
 }
 
@@ -194,6 +202,52 @@ function validateScheduler(state: CampaignState, add: Report): void {
       );
     }
   }
+}
+
+/**
+ * Every queued boundary has a live owner or is an allowed world event
+ * (Technical Specification 15.3, check 7).
+ *
+ * Each domain checks that the boundary it names exists, has its kind and
+ * belongs to its owner. This is the other direction: a boundary nothing names
+ * would resolve against work that no longer exists, or never resolve at all,
+ * so a campaign may not hold one. The only boundary without an owner is the
+ * market's hourly one, and there is at most one of it.
+ */
+function validateSchedulerOwnership(state: CampaignState, add: Report): void {
+  const owned = new Set<string>();
+  const own = (entryId: string | null | undefined): void => {
+    if (entryId !== null && entryId !== undefined) owned.add(entryId);
+  };
+
+  own(state.navigation.travel?.boundaryEntryId);
+  for (const ship of Object.values(state.combat.ships)) {
+    for (const lock of ship.locks) own(lock.boundaryEntryId);
+    for (const weapon of Object.values(ship.weapons)) {
+      own(weapon.cycle?.boundaryEntryId);
+      own(weapon.reload?.boundaryEntryId);
+    }
+    for (const module of Object.values(ship.modules)) own(module.cycle?.boundaryEntryId);
+  }
+  for (const npc of state.encounter.active?.npcs ?? []) own(npc.decisionBoundaryEntryId);
+  for (const wreck of Object.values(state.encounter.wrecks)) own(wreck.boundaryEntryId);
+
+  let worldBoundaries = 0;
+  state.scheduler.entries.forEach((entry, index) => {
+    const path = `scheduler.entries[${String(index)}]`;
+    if (entry.kind === ECONOMY_BOUNDARY_KIND) {
+      worldBoundaries += 1;
+      if (entry.ownerId !== null || worldBoundaries > 1) {
+        add('schedulerOwnership', path, 'The market hour is one world boundary without an owner.');
+      }
+    } else if (!owned.has(entry.entryId)) {
+      add(
+        'schedulerOwnership',
+        path,
+        `The "${entry.kind}" boundary belongs to nothing the campaign still holds.`,
+      );
+    }
+  });
 }
 
 function isCount(value: unknown): value is number {

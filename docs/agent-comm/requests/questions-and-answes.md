@@ -244,3 +244,59 @@ warnings as a list only, the question is one setting default (`DEFAULT_CONFIRMAT
 `src/ui/preferences/preferences.ts`); the settings would then offer it as an opt-in.
 
 **Answer:**
+
+---
+
+## Q9 - Phase 20 - The development diagnostics panel of Technical Specification 16 is not built
+
+**Asked:** 2026-10-03 (Phase 20, save, replay, invariant and traceability closure). **Blocking:** no.
+Phase 20 shipped with the reading below.
+
+Technical Specification 16 asks development builds for a local diagnostics panel (revision, time
+rate, system timings, scheduler size, projection sizes, save status, recent commands and errors)
+and for a player-initiated diagnostic export. Neither exists. What does exist from that section is
+the part the plan relies on: the engine runs headlessly with an in-memory store and a deterministic
+elapsed-time driver, and `diagnostics.stateHash` reports the canonical state hash.
+
+MVP Scope 5 lists the gameplay surfaces the MVP includes and says "only the following". A
+development panel is not a gameplay surface and is absent from production bundles by definition, so
+the traceability registry records Technical Specification 16 as included *to the extent of the
+headless engine and its deterministic driver* (`config/requirements.json`, `TECH-16`).
+
+If you want the panel before the release candidate, it is a self-contained piece of interface work
+behind a development flag and would be its own small phase. Otherwise nothing changes.
+
+**Answer:**
+
+---
+
+## Q10 - Phase 20 - A production build checks every invariant at every commit
+
+**Asked:** 2026-10-03 (Phase 20). **Blocking:** no. Nothing was changed.
+
+Technical Specification 14 says production performs *lightweight* checks at transaction boundaries
+and the *complete* checks before a save, after a load and after a migration; the complete checks at
+every boundary are for tests and development builds. The engine has run the complete checks at
+every commit in every build since Phase 3.
+
+Two things about that surfaced in this phase:
+
+- **Cost.** At the largest authored encounter one 50 ms quantum takes 1.3 ms at the median and
+  2.5 ms at the 95th percentile, against a target of 4 ms (Technical Specification 13). Most of that
+  is the copy, the complete validation and the freeze of the whole campaign, not the simulation.
+  The target is met, with about 1.5 times the headroom.
+- **Behaviour.** When a complete check fails, the transaction is abandoned and the previous state
+  stands. The property runs found a defect of exactly that kind (a reload asked for in the middle of
+  a weapon cycle; fixed, see the Phase 20 note). In a production build it would have refused every
+  later tick, so the game would have stopped at that instant. With lightweight checks only, the
+  game would have carried on with a weapon both cycling and reloading until the next save refused
+  to write.
+
+Stopping is the safer of the two and it is what found the defect, so Phase 20 left it. The choices:
+
+1. Keep the complete checks everywhere and change the wording of Technical Specification 14 to
+   allow it.
+2. Split the checks as the specification says. This buys back most of the 2.5 ms, and it is the
+   first thing to do if a later encounter outgrows the quantum budget.
+
+**Answer:**

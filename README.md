@@ -25,11 +25,15 @@ specification and technical specification define the game; `docs/MVPScope.md` an
 | `npm run validate:content` | Schema and semantic validation of the content bundle. |
 | `npm run test:unit` | Formula, contract and rule unit tests (Node environment). |
 | `npm run test:integration` | Engine and transport integration tests (Node environment). |
+| `npm run test:performance` | Engine timing against the Technical Specification 13 targets, run alone. |
 | `npm run test:component` | React component behaviour (jsdom). |
 | `npm run test:browser` | Playwright acceptance flows against the production build. |
 | `npm run test:accessibility` | Playwright accessibility flows. |
-| `npm run traceability` | Requirement coverage report in `reports/`. |
+| `npm run traceability` | Requirement coverage report in `reports/`; fails on an uncovered included requirement. |
 | `npm run verify` | Everything above except the two Playwright suites. |
+| `npm run balance` | The balance simulations and their report. |
+| `npm run golden:record` | Records the golden campaign: its replay log and one save per representative state. |
+| `npm run contracts:record` | Records the contract lock: versions, request catalogue and schema digests. |
 
 The Playwright suites need browsers: `npx playwright install chromium`.
 
@@ -68,7 +72,7 @@ src/
   shared/         dependency-free primitives
 content/          authored game data: rules, catalog, universe, economy, encounters
 schemas/          JSON Schemas for the protocol, for content and for saved state
-tests/            unit, integration, component, browser and accessibility levels
+tests/            unit, integration, performance, component, browser and accessibility levels
 scripts/          architecture, content and traceability checks
 ```
 
@@ -101,7 +105,7 @@ campaign are serialised and therefore finish in revision order.
 A save is a self-describing JSON envelope: the build and content it was written against, the
 campaign and revision it holds, the canonical `CampaignState` payload, and a SHA-256 over
 everything else in it. `schemas/save/save-envelope.schema.json` is its published contract and
-`tests/fixtures/saves/format-9.json` is the golden artefact that pins the format, its canonical
+`tests/fixtures/saves/format-10.json` is the golden artefact that pins the format, its canonical
 serialisation and its digest. Loading walks the steps the technical specification prescribes —
 bounds, checksum, shape, migrations, content compatibility, invariants — and nothing in that path
 writes, so a save that cannot be opened is left exactly as it was found and the loader falls back to
@@ -157,7 +161,8 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 12 exposes `loss.report`, `navigation.selectBookmark` and
+Protocol version 13 exposes the guidance and notification contracts (`onboarding.state` and its
+three commands, `notifications.list`, `audio.cues`), `loss.report`, `navigation.selectBookmark` and
 `navigation.warpToBookmark`, `encounter.state`, `loot.contents` and `loot.take` alongside
 `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`, `weapon.deactivate`,
 `weapon.reload`, `weapon.changeAmmunition`, `module.activate`, `module.deactivate`, `ship.get`,
@@ -170,10 +175,11 @@ capacitor recharge and endurance, active-module cycles and a bounded significant
 All combat actors use the same deterministic lifecycle for damage, repair, propulsion and support
 effects, so headless opponents and the player follow the same rules.
 
-Campaign state and save format are version 9. Previous development saves are rejected without
-modification; start a new campaign after upgrading. No pre-release migration is required by the
-MVP plan. The migration runner remains covered by fixture registries, and the older format fixtures
-are retained to verify rejection. See `docs/agent-comm/status/` for the per-phase handoffs.
+Campaign state and save format are version 10, and the protocol is version 13. These are the
+versions the MVP closes on; see Closed contracts below. Previous development saves are rejected
+without modification; start a new campaign after upgrading. No pre-release migration is required by
+the MVP plan. The migration runner remains covered by fixture registries, and the older format
+fixtures are retained to verify rejection. See `docs/agent-comm/status/` for the per-phase handoffs.
 
 ## The station
 
@@ -371,9 +377,68 @@ Modules under `src/shared` use explicit `.ts` import specifiers so the build too
 engine's own primitives directly. The content compiler therefore canonicalises and hashes with the
 same code the engine runs, instead of a second implementation that could drift.
 
+## Closed contracts
+
+The MVP protocol (version 13) and save format (version 10) are closed. Three things make that
+checkable rather than a statement:
+
+- **The schemas are closed.** Every published protocol and save schema names every field, refuses
+  any other and marks none optional except the few the specification itself makes optional. A static
+  audit of the schemas and a mutation audit of real saves hold the engine's own reader to at least
+  the same strictness, field by field.
+- **The lock.** `tests/fixtures/contracts/lock.json` records the versions, the request catalogue and
+  a digest of each schema's requirements. A schema that changes without the lock changing fails the
+  unit suite. Bump the version the change belongs to, then run `npm run contracts:record`.
+- **No shipped migration.** The released migration chain begins at these versions, so the registry
+  is empty; the runner is tested against fixture registries, including one applied to each golden
+  save.
+
+## The golden campaign
+
+`tests/fixtures/replays/golden-campaign.json` is one whole campaign as a replay log: the seed, every
+command with the answer it got, every elapsed delta, and the canonical state hash at checkpoints.
+It was flown through the protocol by the scripted pilot the balance careers use. It overreaches and
+loses its ship, recovers on the easiest site, progresses through the multi-opponent site and clears
+the mastery site. `tests/fixtures/saves/golden/` holds the sealed save taken at six states along
+it: docked with a fitting draft open, in warp, in a fight, after a loss, beside wrecks that still
+hold loot, and with every site cleared.
+
+`tests/integration/goldenCampaign.test.ts` records the campaign again and compares it byte for
+byte, replays the log through the in-process gateway and through the worker dispatcher, and reloads
+each save: it must open through the load pipeline, rebuild every projection the uninterrupted
+campaign showed there, and continue to the next golden state with the same hashes. The same saves
+are the subjects of the state audit and the starting points of half the property runs.
+
+The log and the saves are written against the shipped content, because only the shipped content
+reaches all six states. A content change that moves a fight makes them stale, exactly as it does
+the balance candidate; `npm run golden:record` records them again, and the diff is the review.
+
+## Property runs and performance
+
+`tests/integration/campaignProperties.test.ts` flies a seeded random pilot through thousands of
+steps from new campaigns and from golden saves. It asks for legal and illegal things in no
+particular order, and at every step the same things must hold: a refusal is a rule and never an
+internal error, one commit moves one revision, nothing that counts runs backwards, only elapsed
+time draws from a random stream, the wallet changes by exactly what a preview said, items are
+neither created nor destroyed by moving them, histories stay inside their bounds, and a snapshot
+taken anywhere loads to the same hash.
+
+`tests/performance/engine.test.ts` measures the engine at the largest authored encounter against
+the targets of Technical Specification 13 and writes `reports/performance.json`. It is a test level
+of its own (`npm run test:performance`) so that it never shares a processor with another suite. Content
+validation holds each authored encounter to per-site soft budgets and warns, without failing, when
+one outgrows them (`scripts/lib/content/budgets.mjs`).
+
 ## Traceability
 
-Production code claims a requirement with an `@implements TECH-7.1` comment; a test covers one by
-carrying `[TECH-7.1]` in its name. `npm run traceability` builds the report and fails when code
-claims a requirement that no test names. The report proves coverage; it does not replace human
+`config/requirements.json` lists every MVP acceptance criterion and every normative section of the
+functional and technical specifications, and says whether MVP Scope selects it, how much of it, and
+which content and protocol requests carry it. Production code claims a requirement with an
+`@implements TECH-7.1` comment; a test covers one by carrying `[TECH-7.1]` in its name.
+
+`npm run traceability` joins the three into `reports/traceability.md` and `.json`: for each included
+requirement, the engine modules, projections, interface code, content, requests and tests by
+level. It fails when an included requirement is uncovered, when code or a test names an id the
+registry does not list, when a deferred requirement is claimed, or when the registry names content
+or a request that does not exist. The report proves coverage; it does not replace human
 playtesting.

@@ -30,7 +30,7 @@
     },
     "replacementPreview": {
       "description": "Current authoritative preview returned with STALE_PREVIEW.",
-      "type": "object"
+      "$ref": "https://galacticsoup.invalid/schemas/protocol/transaction-preview.data.schema.json"
     }
   }
 }

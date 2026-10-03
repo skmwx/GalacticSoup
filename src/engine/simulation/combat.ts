@@ -633,6 +633,10 @@ function startNextCycle(context: SimulationContext, shipId: string, slot: SlotRe
   const runtime = weaponState(combatant.combat, weapon.key);
 
   if (runtime.pendingReload !== null) {
+    // The reload waits for this weapon's own cycle. Every completion batch in
+    // the site comes through here, so another ship's boundary must not start
+    // it while that cycle is still running (Functional Specification 9.4).
+    if (runtime.cycle !== null) return;
     const pending = runtime.pendingReload;
     setWeapon(context.draft, shipId, weapon.key, { ...runtime, pendingReload: null });
     beginReload(context, shipId, slot, pending.ammunitionId, pending.changing);

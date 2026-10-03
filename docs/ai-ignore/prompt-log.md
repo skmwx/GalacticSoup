@@ -65,7 +65,7 @@ please make the change
 # 012 Claude Opus EH
 Read the documents in docs\ root folder and docs\human-input .
 
-Phase 1 through 18 are implemented, implement phase 19 of the MVP.
+Phase 1 through 19 are implemented, implement phase 20 of the MVP.
 
 13: Opus EH
 14: Opus (up 5.5) EH
@@ -74,3 +74,4 @@ Phase 1 through 18 are implemented, implement phase 19 of the MVP.
 17: Opus EH
 18: Opus H
 19: Opus H
+20: Opus H

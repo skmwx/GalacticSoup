@@ -20,6 +20,7 @@ import {
 } from '../../../src/shared/index.ts';
 import { CONTENT_LIMITS } from '../../../src/adapters/content/limits.ts';
 
+import { budgetWarnings } from './budgets.mjs';
 import { issue, sortIssues } from './issues.mjs';
 import { validateBundle, validateDocument } from './schema.mjs';
 import { validateContentFloor } from './floor.mjs';
@@ -56,6 +57,7 @@ const AUTHORING_KEYS = new Set(['$comment', '$schema']);
  * @property {object | null} bundle
  * @property {import('./issues.mjs').ContentIssue[]} issues
  * @property {{ files: number, definitions: number, messages: number }} stats
+ * @property {import('./budgets.mjs').ContentWarning[]} warnings  Soft-budget notices; never a failure.
  *
  * @typedef {object} CompileOptions
  * @property {boolean} [floor]  Also hold the set to the MVP content floor
@@ -135,6 +137,7 @@ export function compileContent(files, options = {}) {
     ok: true,
     bundle,
     issues: [],
+    warnings: budgetWarnings(collected),
     stats: {
       files: documents.length,
       definitions: DEFINITION_KINDS.reduce(
@@ -330,6 +333,7 @@ function failure(issues) {
     ok: false,
     bundle: null,
     issues: sortIssues(issues),
+    warnings: [],
     stats: { files: 0, definitions: 0, messages: 0 },
   };
 }

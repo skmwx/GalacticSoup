@@ -14,6 +14,8 @@ import { createPortGateway, type ClientGateway, type MessagePortLike } from '@ga
  *
  * This module is test support. Nothing under `src/app` or `src/ui` imports it,
  * so the engine never reaches the interface bundle.
+ *
+ * @implements TECH-16
  */
 
 export interface DirectGatewayOptions {
