@@ -18,6 +18,12 @@ import { undock } from '../support/undock.ts';
  * Base's brawlers is nearest, clears it and comes home, and every site is
  * still offered.
  *
+ * The campaign is closed, the page loaded again and the campaign resumed at
+ * four checkpoints along the way (MVP Implementation Plan phase 21): prepared
+ * at the station, in space beside the patrol's wrecks, after the rewards were
+ * converted, and after the mastery site. Nothing is kept in memory across a
+ * checkpoint, so each one continues from what the save holds.
+ *
  * The pilot here is a simple competent one: each opponent is selected,
  * ordered against, locked and fired on until it is destroyed, in a fixed
  * priority at the patrol and nearest first at the base. Modules are switched
@@ -85,6 +91,21 @@ async function ensurePaused(page: Page): Promise<void> {
     await pause.click();
   }
   await expect(page.getByText('Paused', { exact: true })).toBeVisible();
+}
+
+/**
+ * Closes the campaign, loads the page again and resumes it. Closing saves, in
+ * space as well as docked, so what comes back is the state that was left.
+ */
+async function reopen(page: Page, heading: string): Promise<void> {
+  await page.getByRole('button', { name: /Close campaign/ }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'Resume campaign' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
+}
+
+function wallet(page: Page): Locator {
+  return page.locator('dd').filter({ hasText: /ISK$/ }).first();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -359,12 +380,12 @@ test.describe('progression to the mastery site', () => {
     await freshCampaign(page);
   });
 
-  test('clears the multi-opponent site, converts its rewards and clears the mastery site [MVP-AC-05, MVP-AC-06, MVP-AC-07, MVP-AC-09, FUNC-9.10, FUNC-9.11, FUNC-18]', async ({
+  test('clears the multi-opponent site, converts its rewards and clears the mastery site, reopening along the way [MVP-AC-01, MVP-AC-05, MVP-AC-06, MVP-AC-07, MVP-AC-09, FUNC-9.10, FUNC-9.11, FUNC-18]', async ({
     page,
   }) => {
     // Two sorties at 1x, each with warps, a fight of several minutes and a
-    // docking cycle, plus the wrecks of the first.
-    test.setTimeout(25 * 60_000);
+    // docking cycle, plus the wrecks of the first and four reopenings.
+    test.setTimeout(30 * 60_000);
 
     // Every site is offered from the start; tier is guidance, not a gate.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
@@ -384,6 +405,13 @@ test.describe('progression to the mastery site', () => {
     await resupply(page);
     await moveToHold(page, 'Phased Plasma S');
 
+    // Checkpoint: prepared at the station. The purchases and the fit come back.
+    const prepared = await wallet(page).innerText();
+    await reopen(page, 'Borrell Harbour');
+    await expect(wallet(page)).toHaveText(prepared);
+    await page.getByRole('button', { name: 'Fitting', exact: true }).click();
+    await expect(page.getByRole('cell', { name: '200mm Autocannon' })).toHaveCount(2);
+
     // The Pirate Patrol: cutters first, then the marksman that will not close.
     await depart(page, 'Pirate Patrol');
     await warp(page, '10', 'Derelict Lane');
@@ -396,6 +424,14 @@ test.describe('progression to the mastery site', () => {
       modules: ['Small Shield Booster'],
       bounty: '13,000',
     });
+
+    // Checkpoint: in space beside the wrecks. The cleared site comes back with
+    // every wreck and what each one holds.
+    await expect(region(page, 'In this site').locator('[data-kind="wreck"]')).toHaveCount(3);
+    await reopen(page, 'Derelict Lane');
+    await expect(region(page, 'In this site').locator('[data-kind="wreck"]')).toHaveCount(3);
+    await expect(opponent(page, 'Pirate')).toHaveCount(0);
+    await ensureRunning(page);
     await lootWrecks(page);
     await returnAndDock(page);
 
@@ -428,6 +464,15 @@ test.describe('progression to the mastery site', () => {
     // fill: the repair recharges it, so the ship leaves with a full capacitor.
     await repairAndRecharge(page, '370');
 
+    // Checkpoint: the rewards are converted. The wallet and the mastery fit
+    // come back.
+    const converted = await wallet(page).innerText();
+    await reopen(page, 'Borrell Harbour');
+    await expect(wallet(page)).toHaveText(converted);
+    await page.getByRole('button', { name: 'Fitting', exact: true }).click();
+    await expect(page.getByRole('cell', { name: '1MN Afterburner' })).toBeVisible();
+    await expect(page.getByRole('cell', { name: 'Small Armour Plating' })).toBeVisible();
+
     // The Pirate Base: arrive far off, burn and keep 10 km from whichever
     // brawler is nearest, and boost the shield when it runs low.
     await depart(page, 'Pirate Base');
@@ -444,6 +489,13 @@ test.describe('progression to the mastery site', () => {
     });
     await returnAndDock(page);
 
+    await expect(
+      region(page, 'Last sortie').getByText('Pirate Base cleared: 4 of 4 opponents destroyed, 26,000 ISK in bounties.'),
+    ).toBeVisible();
+
+    // Checkpoint: the mastery site is cleared. The reopened campaign still
+    // says so.
+    await reopen(page, 'Borrell Harbour');
     await expect(
       region(page, 'Last sortie').getByText('Pirate Base cleared: 4 of 4 opponents destroyed, 26,000 ISK in bounties.'),
     ).toBeVisible();

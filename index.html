@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark light" />
+    <!--
+      The icon is written into the page. A page that declares none makes the browser ask for
+      /favicon.ico, and an icon in a file is fetched whenever the browser chooses, which may be
+      after the network has gone. Either way the game would be asking for something.
+    -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='9' fill='%230d1320'/%3E%3Ccircle cx='24' cy='24' r='17' fill='none' stroke='%236fd3ff' stroke-width='2.5'/%3E%3Cellipse cx='24' cy='24' rx='17' ry='6.5' fill='none' stroke='%236fd3ff' stroke-width='1.75' opacity='.7' transform='rotate(-24 24 24)'/%3E%3Ccircle cx='24' cy='24' r='5' fill='%23e8edf7'/%3E%3Ccircle cx='39.5' cy='17' r='3' fill='%23e8edf7'/%3E%3C/svg%3E"
+    />
     <title>Galactic Soup</title>
   </head>
   <body>

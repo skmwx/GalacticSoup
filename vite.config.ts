@@ -24,6 +24,11 @@ export default defineConfig({
     // No gameplay network request may be introduced by the build
     // (Technical Specification 2, 3.2).
     assetsInlineLimit: 0,
+    // The preload polyfill is a `fetch` for browsers without module preload.
+    // Every release target has it, and without the polyfill the shipped
+    // scripts hold no network call at all, which the release gate checks
+    // (MVP Scope 7; MVP Implementation Plan phase 21).
+    modulePreload: { polyfill: false },
   },
   server: {
     port: 5173,

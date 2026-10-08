@@ -29,13 +29,19 @@ specification and technical specification define the game; `docs/MVPScope.md` an
 | `npm run test:component` | React component behaviour (jsdom). |
 | `npm run test:browser` | Playwright acceptance flows against the production build. |
 | `npm run test:accessibility` | Playwright accessibility flows. |
+| `npm run test:browser:firefox` | The acceptance flows in Firefox. |
+| `npm run test:accessibility:firefox` | The accessibility flows in Firefox. |
 | `npm run traceability` | Requirement coverage report in `reports/`; fails on an uncovered included requirement. |
-| `npm run verify` | Everything above except the two Playwright suites. |
+| `npm run verify` | Everything above except the Playwright suites. |
+| `npm run release:gate` | The release-candidate gate: every check above against one set of sources and one built bundle, in every release browser. |
+| `npm run release:report` | Writes `reports/release-gate.md` again from the gate's step records. |
+| `npm run release:record` | Records the candidate in `config/release-candidate.json`; refused unless the gate is green. |
 | `npm run balance` | The balance simulations and their report. |
 | `npm run golden:record` | Records the golden campaign: its replay log and one save per representative state. |
 | `npm run contracts:record` | Records the contract lock: versions, request catalogue and schema digests. |
 
-The Playwright suites need browsers: `npx playwright install chromium`.
+The Playwright suites need browsers: `npx playwright install chromium firefox`. The release gate also
+uses the Chrome and Edge installed on the machine, when they are there.
 
 ## Architecture in one paragraph
 
@@ -73,7 +79,7 @@ src/
 content/          authored game data: rules, catalog, universe, economy, encounters
 schemas/          JSON Schemas for the protocol, for content and for saved state
 tests/            unit, integration, performance, component, browser and accessibility levels
-scripts/          architecture, content and traceability checks
+scripts/          architecture, content and traceability checks, and the release gate
 ```
 
 ## The campaign and its clock
@@ -436,6 +442,39 @@ the targets of Technical Specification 13 and writes `reports/performance.json`.
 of its own (`npm run test:performance`) so that it never shares a processor with another suite. Content
 validation holds each authored encounter to per-site soft budgets and warns, without failing, when
 one outgrows them (`scripts/lib/content/budgets.mjs`).
+
+## The release gate
+
+`npm run release:gate` is the automated half of the MVP's completion gates (MVP Scope 9.1 and 9.2).
+It runs a fixed list of steps and leaves a record of each in `reports/release/steps/`:
+
+- the checks of `npm run verify`, and the balance report compared with its recorded candidate;
+- the production build, built twice and compared byte for byte, then audited: no shipped script may
+  contain a call that reaches the network or evaluates text, no markup or style may refer outside
+  the build, and the engine worker must carry the content the other steps validated;
+- the browser and accessibility suites, served exactly that bundle, in the Chromium and Firefox
+  builds Playwright pins;
+- the start, save and offline flows in the Chrome and Edge installed on the machine.
+
+Every record names the sources and the bundle its step ran against. The verdict in
+`reports/release-gate.md` is green only when every required step passed against the sources and the
+bundle that are there now, so a result left over from an earlier state cannot pass for evidence.
+Documents are not part of the candidate; everything else in the repository is.
+
+The browser suites play in real time, so the whole gate takes about an hour. `--only=<steps>`,
+`--from=<step>` and `--pending` run part of it; a browser test is retried once, and a test that
+needed the retry is named in the evidence.
+
+`tests/browser/offline.spec.ts` is the played half of the offline claim: it starts from a clean
+profile, checks that starting asked only for the build's own files, switches the network off and
+plays a whole loop, a save and a resume without a single request. The installable package and its
+service worker are deferred (MVP Scope 7), so loading the page again still needs the files to be
+served locally.
+
+`npm run release:record` writes `config/release-candidate.json` from a green gate: the versions, the
+content and tuning digests, the source digest and the bundle fingerprint. That record is the
+candidate the human playtest of MVP Scope 9.3 is run against;
+`docs/agent-comm/release/` holds the report and the playtest script.
 
 ## Traceability
 

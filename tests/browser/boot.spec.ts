@@ -1,10 +1,21 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /**
  * The shipped build must boot, start the dedicated engine worker and reach it
  * through the gateway, without any gameplay network request
  * (Technical Specification 2, 3.1, 3.2, 4.2).
  */
+
+/**
+ * Opens the build details once the start screen has rendered above them. The
+ * panel moves down when it does, and a click aimed at where the panel was
+ * misses it; Firefox loses that race about one time in six.
+ */
+async function openBuildDetails(page: Page): Promise<void> {
+  await expect(page.getByLabel('Pilot name')).toBeVisible();
+  await page.getByText('Build and engine details').click();
+}
+
 test.describe('application boot', () => {
   test('reaches the engine through the dedicated worker [TECH-3.1, TECH-4.2]', async ({
     page,
@@ -23,7 +34,7 @@ test.describe('application boot', () => {
     await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready over a dedicated worker\./);
 
     // The build identity is a diagnostics surface, not the main screen.
-    await page.getByText('Build and engine details').click();
+    await openBuildDetails(page);
     await expect(page.getByText('worker', { exact: true })).toBeVisible();
     await expect(page.getByText(/^\d+ request types$/)).toBeVisible();
 
@@ -33,7 +44,7 @@ test.describe('application boot', () => {
   test('serves the compiled content bundle to the worker [TECH-6.3]', async ({ page }) => {
     await page.goto('/');
 
-    await page.getByText('Build and engine details').click();
+    await openBuildDetails(page);
     // The version the build derived from the authored content and its digest.
     await expect(page.getByText(/^\d+\.\d+\.\d+\+[0-9a-f]{12}$/)).toBeVisible();
     await expect(page.getByText(/\d+ definitions in \d+ kinds/)).toBeVisible();

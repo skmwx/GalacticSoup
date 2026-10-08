@@ -1,0 +1,41 @@
+{
+  "$comment": "The release candidate (MVP Implementation Plan phase 21). Written by npm run release:record from a green release gate; do not edit by hand. A change to the sources or the bundle makes it stale until the gate has passed again.",
+  "candidate": "0.1.0-rc.1",
+  "applicationVersion": "0.1.0",
+  "engineVersion": "0.1.0",
+  "protocolVersion": 14,
+  "saveFormatVersion": 10,
+  "campaignStateVersion": 10,
+  "replayLogVersion": 1,
+  "contentVersion": "0.1.0+296facab3d13",
+  "contentHash": "296facab3d13fb5e260b6f3c3ccbe670c1674b0f453e885b96d6bb29ac8ad1d2",
+  "tuningDigest": "b17ca616a2922d4a31f7534ec7b90ccf5225487452ca2c390a45b675fc6e3524",
+  "contractLockDigest": "158ae6ce0d14340a6f76439ea8c11ecf234a97255055ce1cecacbe0996e77194",
+  "goldenCampaignDigest": "57ffdcdf9e072ddafe1ee44088c983ec9951b4ec2a4aade76aa26cb0bfaa7e6f",
+  "sourceDigest": "8b8606e34e62b8593afabac6d71374fd08b28c935f68d97e39903d4a8b9e96c1",
+  "buildFingerprint": "bc6e15aae57300e94a1b58fbfdf3e23ed7e63040e2cc47dcfd13aa0f6b0a82e1",
+  "browsers": {
+    "Chromium": "153.0.8010.12",
+    "Firefox": "155.0",
+    "Chrome": "155.0.8059.39",
+    "Edge": "154.0.4258.62"
+  },
+  "gate": {
+    "typecheck": "passed",
+    "architecture": "passed",
+    "content": "passed",
+    "unit": "passed: 1376 tests",
+    "integration": "passed: 134 tests",
+    "balance": "passed",
+    "performance": "passed: 5 tests",
+    "component": "passed: 114 tests",
+    "traceability": "passed",
+    "build": "passed",
+    "browser": "passed: 28 tests",
+    "accessibility": "passed: 34 tests",
+    "browser-firefox": "passed: 27 tests",
+    "accessibility-firefox": "passed: 34 tests",
+    "browser-chrome": "passed: 15 tests",
+    "browser-edge": "passed: 15 tests"
+  }
+}
