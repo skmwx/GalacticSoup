@@ -75,3 +75,11 @@ Phase 1 through 19 are implemented, implement phase 20 of the MVP.
 18: Opus H
 19: Opus H
 20: Opus H
+
+There are new answers in docs\agent-comm\requests\questions-and-answes.md starting from question 3. Go ahead and implement them, and if needed apply the changes to the specifications.
+
+21: Opus H
+
+Read the documents in docs\ root folder and docs\human-input .
+
+Phase 1 through 20 are implemented, and answers from questions-and-answers applied. Implement the final phase 21.
