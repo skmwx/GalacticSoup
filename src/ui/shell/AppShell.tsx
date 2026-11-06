@@ -102,10 +102,8 @@ function Shell({ gateway }: AppShellProps): JSX.Element {
 
       <main className={styles['main']}>
         {settingsOpen ? <SettingsPanel id={SETTINGS_PANEL_ID} onClose={closeSettings} /> : null}
-        {status.kind === 'ready' ? <GameRoot gateway={gateway} /> : null}
-
-        {status.kind === 'ready' ? (
-          <details className={styles['panel']}>
+        {settingsOpen && status.kind === 'ready' ? (
+          <details className={styles['diagnostics']}>
             <summary className={styles['panelHeading']}>
               {translate('shell.diagnostics.sectionLabel')}
             </summary>
@@ -150,6 +148,7 @@ function Shell({ gateway }: AppShellProps): JSX.Element {
             </dl>
           </details>
         ) : null}
+        {status.kind === 'ready' ? <GameRoot gateway={gateway} /> : null}
       </main>
     </div>
   );

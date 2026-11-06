@@ -1,19 +1,79 @@
 .play {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 18rem);
+  gap: var(--gs-space-3);
+  align-items: start;
+}
+.play > header, .shortcutNotice {
+  grid-column: 1 / -1;
+}
+.activity {
+  grid-column: 1;
+  grid-row: 3;
+  min-width: 0;
+}
+.context {
+  grid-column: 2;
+  grid-row: 3;
   display: flex;
   flex-direction: column;
   gap: var(--gs-space-3);
+  min-width: 0;
 }
-
-/*
- * A refused shortcut's reason. Empty, it cancels the gap it would add but
- * stays rendered, so the live region is in place before its first message.
- */
+/* Guidance and the live notification regions stay mounted when panels change. */
 .shortcutNotice {
   margin: 0;
-  font-size: var(--gs-font-small);
   color: var(--gs-color-warn);
+  font-size: var(--gs-font-small);
+}
+.shortcutNotice:empty {
+  display: block;
+  height: 0;
+  margin-block: calc(-.5 * var(--gs-space-3));
+}
+@media (max-width: 78rem) {
+  .play {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .context {
+    grid-column: 1;
+    grid-row: 4;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
 }
 
-.shortcutNotice:empty {
-  margin-bottom: calc(-1 * var(--gs-space-3));
+@media (max-width: 78rem) {
+  .context {
+    display: contents;
+  }
+  .context > section {
+    grid-column: 1;
+    grid-row: 4;
+  }
+  .context > section:first-child {
+    grid-row: 2;
+  }
+  .shortcutNotice {
+    grid-row: 5;
+  }
+}
+
+.tacticalSlot {
+  min-width: 0;
+}
+.tacticalSlot:empty {
+  display: none;
+}
+@media (max-width: 78rem) {
+  .context > .tacticalSlot {
+    grid-column: 1;
+    grid-row: 4;
+  }
+  .context > section:not(:first-child) {
+    grid-row: 5;
+  }
+  .shortcutNotice {
+    grid-row: 6;
+  }
 }

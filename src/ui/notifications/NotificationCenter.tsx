@@ -165,7 +165,7 @@ export function NotificationCenter({ notifications, slot, runner }: Notification
 
   return (
     <section className={styles['center']} aria-label={translate('notifications.region')}>
-      <div className={styles['toasts']}>
+      <div className={styles['toasts']} tabIndex={saveFailed || visible.length > 0 ? 0 : undefined}>
         {saveFailed ? (
           <p className={`${styles['toast']} ${styles['danger']}`} role="alert" data-save-integrity>
             <SeverityIcon severity="danger" className={styles['icon']} />

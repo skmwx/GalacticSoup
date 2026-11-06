@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { useCallback, useEffect, useRef, useState, type JSX, type ReactNode } from 'react';
+
+import { createPortal } from 'react-dom';
 
 import type { ClientGateway } from '@gateway';
 
 import { ActionButton, commandAvailability, useActionShortcuts, type ActionRunner } from '../actions';
 import { useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
+import { FlightReadouts } from '../frame/FlightReadouts';
 import { CombatLog } from './CombatLog';
 import { CommandBar } from './CommandBar';
 import { EncounterPanel } from './EncounterPanel';
@@ -52,6 +55,8 @@ export interface SpaceScreenProps {
   /** The clock the engine last answered with, for travel countdowns. */
   readonly simulationTimeMs: number;
   readonly paused: boolean;
+  /** Stable cockpit context column, shared with guidance and notifications. */
+  readonly sidebar?: HTMLElement | null;
 }
 
 /** The drawing's coordinate space. CSS scales it; the numbers stay stable. */
@@ -68,6 +73,7 @@ export function SpaceScreen({
   gateway,
   simulationTimeMs,
   paused,
+  sidebar = null,
 }: SpaceScreenProps): JSX.Element {
   const translate = useTranslate();
   const site = data.site;
@@ -83,6 +89,21 @@ export function SpaceScreen({
   const [showRanges, setShowRanges] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const stage = useRef<HTMLDivElement | null>(null);
+  const [viewport, setViewport] = useState<Viewport>(SPACE_VIEWPORT);
+  useEffect(() => {
+    const drawing = stage.current?.querySelector('svg');
+    if (drawing === null || drawing === undefined || typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(() => {
+      const box = drawing.getBoundingClientRect();
+      if (box.width <= 0 || box.height <= 0) return;
+      const heightPx = SPACE_VIEWPORT.widthPx * box.height / box.width;
+      setViewport((previous) => Math.abs(previous.heightPx - heightPx) < .5 ? previous : {
+        widthPx: SPACE_VIEWPORT.widthPx, heightPx,
+      });
+    });
+    observer.observe(drawing);
+    return () => { observer.disconnect(); };
+  }, [site === null]);
   const presets = site?.rangePresetsKm ?? [];
   const closestKm = presets[0] ?? 0;
   const [rangeKm, setRangeKm] = useState<number>(closestKm);
@@ -234,7 +255,7 @@ export function SpaceScreen({
 
   if (site === null) {
     return (
-      <section className={styles['space']} aria-labelledby="space-heading">
+      <section className={styles['space']} aria-labelledby="space-heading" data-external-context={sidebar !== null}>
         <div className={styles['heading']}>
           <h2 id="space-heading" className={styles['title']}>
             {translate('space.loading')}
@@ -247,7 +268,7 @@ export function SpaceScreen({
   const wreckData = encounter?.wrecks.find((entry) => entry.wreckId === selected?.id) ?? null;
 
   return (
-    <section className={styles['space']} aria-labelledby="space-heading">
+    <section className={styles['space']} aria-labelledby="space-heading" data-external-context={sidebar !== null}>
       <div className={styles['heading']}>
         <h2 id="space-heading" className={styles['title']}>
           {runtime === null ? translate('space.inTransit') : translate(runtime.siteNameKey)}
@@ -268,13 +289,17 @@ export function SpaceScreen({
         />
       </div>
 
+      <aside className={styles['shipRail']} aria-label={translate('tactical.status.heading')}>
+        <ShipStatusPanel combat={combat} site={site} encounter={encounter} />
+        <FlightReadouts data={data} />
+      </aside>
       <div className={styles['stage']} ref={stage}>
         <SiteView
           site={site}
           combat={combat}
           positions={positions}
           camera={camera.camera}
-          viewport={SPACE_VIEWPORT}
+          viewport={viewport}
           selectedId={selectedId}
           showRanges={showRanges}
           onSelect={setSelectedId}
@@ -335,7 +360,8 @@ export function SpaceScreen({
         )}
       </div>
 
-      <div className={styles['aside']}>
+      {renderSidebar(
+        <div className={`${styles['aside']} ${sidebar === null ? '' : styles['externalAside']}`}  role="region" aria-label={translate('cockpit.objects')} tabIndex={0}>
         <ObjectList
           objects={objects}
           combat={combat}
@@ -366,7 +392,24 @@ export function SpaceScreen({
           fireReason={fire.unavailableReason}
           onFire={fireAtTarget}
         />
-      </div>
+        <LocksPanel
+          data={data}
+          runner={runner}
+          combat={combat}
+          site={site}
+          encounter={encounter}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+        />
+        <EncounterPanel
+          encounter={encounter}
+          site={site}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+        />
+        </div>,
+        sidebar,
+      )}
 
       {data.error === null ? null : (
         <p className={styles['error']} role="alert">
@@ -392,7 +435,6 @@ export function SpaceScreen({
       />
 
       <div className={styles['tactical']}>
-        <ShipStatusPanel combat={combat} site={site} encounter={encounter} />
         <WeaponsPanel
           data={data}
           runner={runner}
@@ -404,22 +446,11 @@ export function SpaceScreen({
           onFire={fireAtTarget}
         />
         <ModulesPanel data={data} runner={runner} modules={combat?.modules ?? []} />
-        <LocksPanel
-          data={data}
-          runner={runner}
-          combat={combat}
-          site={site}
-          encounter={encounter}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-        />
-        <EncounterPanel
-          encounter={encounter}
-          site={site}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-        />
-        <CombatLog combat={combat} site={site} encounter={encounter} />
+
+        <details className={styles['panelDisclosure']}>
+          <summary>{translate('tactical.log.heading')}</summary>
+          <CombatLog combat={combat} site={site} encounter={encounter} />
+        </details>
       </div>
     </section>
   );
@@ -427,4 +458,9 @@ export function SpaceScreen({
 
 function round(value: number): number {
   return Math.round(value * 10) / 10;
+}
+
+/** Preserve the scene's selection state while placing context beside the activity. */
+function renderSidebar(content: ReactNode, target: HTMLElement | null): ReactNode {
+  return target === null ? content : createPortal(content, target);
 }

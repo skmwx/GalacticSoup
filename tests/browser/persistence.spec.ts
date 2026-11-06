@@ -1,3 +1,4 @@
+import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Page } from '@playwright/test';
 
 import { DEFAULT_SAVE_RETENTION, SAVE_FORMAT_VERSION } from '@engine';
@@ -126,6 +127,7 @@ async function damage(page: Page, saveIds: readonly string[], change: 'credits' 
 }
 
 async function closeAndResume(page: Page): Promise<void> {
+  await openGameMenu(page);
   await page.getByRole('button', { name: /Close campaign/ }).click();
   await page.getByRole('button', { name: 'Resume campaign' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
@@ -147,6 +149,7 @@ test.describe('save integrity in the browser', () => {
     }
     for (let round = 0; round < 2; round += 1) {
       const before = (await storedSlot(page)).snapshots.at(-1)?.sequence ?? 0;
+      await openGameMenu(page, false);
       await page.getByRole('button', { name: /Save now/ }).click();
       await expect.poll(async () => (await storedSlot(page)).snapshots.at(-1)?.sequence ?? 0).toBeGreaterThan(before);
     }
@@ -171,6 +174,7 @@ test.describe('save integrity in the browser', () => {
     await page.getByRole('button', { name: /Resume/ }).click();
     await expect(page.getByText('0s', { exact: true })).toBeHidden({ timeout: 10_000 });
     await page.getByRole('button', { name: /^Pause/ }).click();
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
 
@@ -197,6 +201,7 @@ test.describe('save integrity in the browser', () => {
 
   test('refuses a save written by a newer format, says why, and does not touch it [TECH-11.4, FUNC-22.10]', async ({ page }) => {
     await startCampaign(page);
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
 

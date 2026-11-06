@@ -119,7 +119,8 @@ export function SiteView({
       return;
     }
     drag.current = { x: event.clientX, y: event.clientY, moved: true };
-    onPan({ x: deltaX, y: deltaY });
+    const matrix = event.currentTarget.getScreenCTM?.();
+    onPan({ x: deltaX / (matrix?.a || 1), y: deltaY / (matrix?.d || 1) });
   };
 
   const onPointerUp = (event: ReactPointerEvent<SVGSVGElement>): void => {
@@ -650,6 +651,16 @@ function clickedPoint(
   camera: Camera,
   viewport: Viewport,
 ): Point {
+  // The cockpit gives the schematic a bounded height. Account for SVG
+  // letterboxing so choosing a point still lands exactly under the pointer.
+  const matrix = event.currentTarget.getScreenCTM?.();
+  if (matrix != null) {
+    const point = event.currentTarget.createSVGPoint();
+    point.x = event.clientX;
+    point.y = event.clientY;
+    const local = point.matrixTransform(matrix.inverse());
+    return screenToWorld(camera, viewport, { x: local.x, y: local.y });
+  }
   const box = event.currentTarget.getBoundingClientRect();
   const scaleX = box.width === 0 ? 1 : viewport.widthPx / box.width;
   const scaleY = box.height === 0 ? 1 : viewport.heightPx / box.height;

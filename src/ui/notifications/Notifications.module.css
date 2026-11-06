@@ -10,7 +10,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--gs-space-1);
-  min-height: calc(5.5rem * var(--gs-ui-scale));
+  min-height: 0;
 }
 
 .stack {
@@ -186,4 +186,25 @@
   grid-template-columns: minmax(8rem, auto) minmax(8rem, 16rem) auto;
   align-items: center;
   gap: var(--gs-space-2);
+}
+
+.center {
+  min-width: 0;
+}
+.toasts:empty {
+  display: none;
+}
+.stack:empty {
+  gap: 0;
+}
+/* New notifications grow within their own context column, never above the map. */
+.toasts {
+  max-height: 24rem;
+  overflow-y: auto;
+}
+@media (max-width: 78rem) {
+  .center:has([data-severity="danger"]), .center:has([data-save-integrity]) {
+    border: 2px solid var(--gs-color-danger);
+    padding: var(--gs-space-2);
+  }
 }

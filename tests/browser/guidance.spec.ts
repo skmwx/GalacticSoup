@@ -82,12 +82,17 @@ async function ensureRunning(page: Page): Promise<void> {
 
 async function confirmDialog(page: Page, name: string): Promise<void> {
   const dialog = page.getByRole('dialog', { name });
-  await expect(dialog.getByText('Calculatingâ€¦')).toBeHidden();
-  const confirm = dialog.getByRole('button', { name: 'Confirm' });
-  if (await confirm.isEnabled()) {
-    await confirm.click();
-  } else {
-    await dialog.getByRole('button', { name: 'Cancel' }).click();
+  // A running station clock can recharge the capacitor between preview and
+  // confirmation. Read the refreshed quote and explicitly confirm it again,
+  // just as the stale-price prompt asks; never bypass the engine's preview.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await expect(dialog.getByText('Calculating…')).toBeHidden();
+    const confirm = dialog.getByRole('button', { name: 'Confirm' });
+    if (await confirm.isEnabled()) await confirm.click();
+    else await dialog.getByRole('button', { name: 'Cancel' }).click();
+    const changed = dialog.getByRole('alert').filter({ hasText: 'Something changed while you were deciding.' });
+    await expect.poll(async () => !await dialog.isVisible() || await changed.isVisible()).toBe(true);
+    if (!await dialog.isVisible()) return;
   }
   await expect(dialog).toBeHidden();
 }

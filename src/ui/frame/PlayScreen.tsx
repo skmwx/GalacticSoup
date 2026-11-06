@@ -32,8 +32,8 @@ import { useSimulationClock } from './useSimulationClock';
  * It also answers the autosave triggers the clock's advances raise, which
  * the store coalesces with those its commands raise.
  *
- * Wherever the player is, the notifications and the contextual guidance sit
- * between the frame and the play surface. The guidance can open the station
+ * Wherever the player is, notifications and contextual guidance share the
+ * cockpit's context column. The guidance can open the station
  * surface its current step is carried out on, so which station surface is
  * open is held here rather than inside the station.
  *
@@ -63,6 +63,7 @@ export function PlayScreen({
 }: PlayScreenProps): JSX.Element {
   const translate = useTranslate();
   const runner = useActionRunner();
+  const [tacticalSidebar, setTacticalSidebar] = useState<HTMLDivElement | null>(null);
   const [stationPanel, setStationPanel] = useState<StationPanelId>('station.hub');
   const campaignId = sessionState.session?.campaign?.campaignId ?? null;
   const data = usePlayData({ gateway, session, campaignId });
@@ -105,7 +106,7 @@ export function PlayScreen({
       <PreferencesProvider {...(preferenceStorage === undefined ? {} : { storage: preferenceStorage })}>
         <AudioCuesProvider gateway={gateway} {...(cuePlayer === undefined ? {} : { player: cuePlayer })}>
           <ShortcutProvider>
-            <div className={styles['play']}>
+            <div className={styles['play']} data-cockpit>
               <CampaignFrame
                 session={session}
                 sessionState={sessionState}
@@ -113,41 +114,47 @@ export function PlayScreen({
                 runner={runner}
                 simulationTimeMs={clock.simulationTimeMs}
               />
-              <NotificationCenter
-                notifications={data.notifications}
-                slot={sessionState.slot}
-                runner={runner}
-              />
               <ShortcutNotice className={styles['shortcutNotice']} />
-              <GuidancePanel
-                data={data}
-                runner={runner}
-                onGoTo={data.docked ? (surface) => {
-                  setStationPanel(surface as StationPanelId);
-                } : null}
-                openSurface={data.docked ? stationPanel : 'space'}
-              />
-              {data.location === null ? (
-                <p role="status">{translate('play.loading')}</p>
-              ) : data.docked ? (
-                <StationScreen
-                  gateway={gateway}
+              <aside className={styles['context']} aria-label={translate('play.context')}>
+                <NotificationCenter
+                  notifications={data.notifications}
+                  slot={sessionState.slot}
+                  runner={runner}
+                />
+                <div className={styles['tacticalSlot']} ref={setTacticalSidebar} />
+                <GuidancePanel
                   data={data}
                   runner={runner}
-                  simulationTimeMs={clock.simulationTimeMs}
-                  panel={stationPanel}
-                  onPanelChange={setStationPanel}
-                  guidedSurface={guidedSurface(data.onboarding)}
+                  onGoTo={data.docked ? (surface) => {
+                    setStationPanel(surface as StationPanelId);
+                  } : null}
+                  openSurface={data.docked ? stationPanel : 'space'}
                 />
-              ) : (
-                <SpaceScreen
-                  data={data}
-                  runner={runner}
-                  gateway={gateway}
-                  simulationTimeMs={clock.simulationTimeMs}
-                  paused={paused}
-                />
-              )}
+              </aside>
+              <div className={styles['activity']}>
+                {data.location === null ? (
+                  <p role="status">{translate('play.loading')}</p>
+                ) : data.docked ? (
+                  <StationScreen
+                    gateway={gateway}
+                    data={data}
+                    runner={runner}
+                    simulationTimeMs={clock.simulationTimeMs}
+                    panel={stationPanel}
+                    onPanelChange={setStationPanel}
+                    guidedSurface={guidedSurface(data.onboarding)}
+                  />
+                ) : (
+                  <SpaceScreen
+                    data={data}
+                    runner={runner}
+                    gateway={gateway}
+                    simulationTimeMs={clock.simulationTimeMs}
+                    paused={paused}
+                    sidebar={tacticalSidebar}
+                  />
+                )}
+              </div>
             </div>
           </ShortcutProvider>
         </AudioCuesProvider>

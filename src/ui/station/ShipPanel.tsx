@@ -130,7 +130,7 @@ export function ShipSummary({ ship }: { readonly ship: ShipData }): JSX.Element 
         />
       </dl>
 
-      <div className={styles['tableWrapper']}>
+      <div className={styles['tableWrapper']} tabIndex={0}>
         <table className={styles['table']}>
           <caption className={styles['caption']}>{translate('ship.layersCaption')}</caption>
           <thead>
@@ -166,7 +166,7 @@ export function ShipSummary({ ship }: { readonly ship: ShipData }): JSX.Element 
       {ship.weapons.length === 0 ? (
         <p className={styles['muted']}>{translate('ship.noWeapons')}</p>
       ) : (
-        <div className={styles['tableWrapper']}>
+        <div className={styles['tableWrapper']} tabIndex={0}>
           <table className={styles['table']}>
             <caption className={styles['caption']}>{translate('ship.weaponsCaption')}</caption>
             <thead>
@@ -261,7 +261,7 @@ function ShipAttributes({ ship }: { readonly ship: ShipData }): JSX.Element {
   const { locale } = useLocalizer();
 
   return (
-    <div className={styles['tableWrapper']}>
+    <div className={styles['tableWrapper']} tabIndex={0}>
       <table className={styles['table']}>
         <caption className={styles['caption']}>{translate('ship.attributesCaption')}</caption>
         <thead>

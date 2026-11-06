@@ -1,4 +1,5 @@
 import { createMemorySaveStore } from '@adapters/persistence';
+import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -34,6 +35,13 @@ function renderShell(options: { onIssue?: (issue: LocalizationIssue) => void } =
   return { ...result, gateway };
 }
 
+async function openDiagnostics(): Promise<void> {
+  await screen.findByText(/Engine ready/);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Settings' }));
+  await user.click(screen.getByText('Build and engine details'));
+}
+
 describe('application shell', () => {
   it('reports the engine handshake once it completes [TECH-12.1]', async () => {
     const { gateway } = renderShell();
@@ -47,6 +55,7 @@ describe('application shell', () => {
   it('shows the engine and protocol versions the engine published [TECH-12.1]', async () => {
     const { gateway } = renderShell();
 
+    await openDiagnostics();
     expect(await screen.findByText('4.5.6')).toBeInTheDocument();
     expect(screen.getByText('direct')).toBeInTheDocument();
     expect(
@@ -60,6 +69,7 @@ describe('application shell', () => {
     const { gateway } = renderShell();
     const content = shippedContent();
 
+    await openDiagnostics();
     expect(await screen.findByText(content.contentVersion)).toBeInTheDocument();
     expect(screen.getByText('Build and engine details')).toBeInTheDocument();
 

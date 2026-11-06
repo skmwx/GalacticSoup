@@ -6,13 +6,10 @@ import { expect, test, type Page } from '@playwright/test';
  * (Technical Specification 2, 3.1, 3.2, 4.2).
  */
 
-/**
- * Opens the build details once the start screen has rendered above them. The
- * panel moves down when it does, and a click aimed at where the panel was
- * misses it; Firefox loses that race about one time in six.
- */
+/** Diagnostics are available through Settings, outside the gameplay layout. */
 async function openBuildDetails(page: Page): Promise<void> {
   await expect(page.getByLabel('Pilot name')).toBeVisible();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await page.getByText('Build and engine details').click();
 }
 

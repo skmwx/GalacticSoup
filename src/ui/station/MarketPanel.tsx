@@ -136,7 +136,7 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
         </label>
       </div>
 
-      <div className={styles['tableWrapper']}>
+      <div className={styles['tableWrapper']} tabIndex={0}>
         <table className={styles['table']}>
           <caption className={styles['caption']}>
             {translate('market.caption', { count: visible.length })}
@@ -210,7 +210,7 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
       {sellable.length === 0 ? (
         <p className={styles['muted']}>{translate('market.nothingToSell')}</p>
       ) : (
-        <div className={styles['tableWrapper']}>
+        <div className={styles['tableWrapper']} tabIndex={0}>
           <table className={styles['table']}>
             <caption className={styles['caption']}>{translate('market.sellCaption')}</caption>
             <thead>

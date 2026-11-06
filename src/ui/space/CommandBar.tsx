@@ -288,6 +288,8 @@ export function CommandBar({
         />
       </div>
 
+      <details className={styles['pointControls']}>
+        <summary>{translate('cockpit.coordinates')}</summary>
       <div className={styles['commandRow']}>
         {/* Arming the view is presentation, not a command, so it does not
             go through the action runner. */}
@@ -338,6 +340,7 @@ export function CommandBar({
           onRun={moveToPoint}
         />
       </div>
+      </details>
 
       <div className={styles['commandRow']}>
         <label className={styles['field']}>

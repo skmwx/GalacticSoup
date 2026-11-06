@@ -1,3 +1,4 @@
+import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -86,6 +87,7 @@ test.describe('station interface', () => {
     const wallet = await page.getByText(/ISK$/).first().innerText();
 
     // Close, reopen, and find the same wallet, the same fit and the same cover.
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();

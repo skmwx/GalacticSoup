@@ -302,7 +302,7 @@ function FittedSlots({ ship }: { readonly ship: ShipData }): JSX.Element {
   const { locale } = useLocalizer();
 
   return (
-    <div className={styles['tableWrapper']}>
+    <div className={styles['tableWrapper']} tabIndex={0}>
       <table className={styles['table']}>
         <caption className={styles['caption']}>{translate('fitting.currentCaption')}</caption>
         <thead>

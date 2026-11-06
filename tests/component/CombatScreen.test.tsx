@@ -168,8 +168,8 @@ describe('a fight in progress', () => {
     expect(booster).toHaveAttribute('aria-pressed', 'true');
     expect(within(modules).getByText(/per second\) for 15 capacitor a cycle/)).toBeInTheDocument();
 
-    // The persistent frame carries the same condition while undocked.
-    expect(document.querySelector('[data-readout="defenses"]')?.textContent).toMatch(/Shield \d+%/);
+    // The cockpit ship rail carries the condition once, alongside flight controls.
+    expect(document.querySelector('[data-readout="defenses"]')?.textContent).toMatch(/Shield\d+ \/ 350/);
     expect(document.querySelector('[data-readout="threats"]')?.textContent).toBe('1 hostile');
     expect(document.querySelector('[data-readout="locks"]')?.textContent).toBe('1 of 3');
 

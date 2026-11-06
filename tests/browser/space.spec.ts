@@ -1,3 +1,4 @@
+import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -94,6 +95,7 @@ test.describe('traversal', () => {
     await page.getByRole('button', { name: /Pause/ }).click();
 
     // Reopening finds the ship where the engine left it.
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
@@ -108,6 +110,7 @@ test.describe('traversal', () => {
     await page.getByRole('button', { name: /^Approach/ }).click();
     await expect(page.getByText('Approaching')).toBeVisible();
 
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
@@ -119,6 +122,7 @@ test.describe('traversal', () => {
   test('sets a course by clicking the schematic view [FUNC-19.2]', async ({ page }) => {
     await undock(page);
 
+    await page.getByText('Coordinates & point navigation', { exact: true }).click();
     await page.getByRole('button', { name: 'Pick a point' }).click();
     const view = page.getByRole('img', { name: /Schematic view/ });
     await expect(view).toHaveAttribute('data-choosing', 'true');

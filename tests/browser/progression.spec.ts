@@ -1,3 +1,4 @@
+import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
@@ -98,6 +99,7 @@ async function ensurePaused(page: Page): Promise<void> {
  * space as well as docked, so what comes back is the state that was left.
  */
 async function reopen(page: Page, heading: string): Promise<void> {
+  await openGameMenu(page);
   await page.getByRole('button', { name: /Close campaign/ }).click();
   await page.reload();
   await page.getByRole('button', { name: 'Resume campaign' }).click();
@@ -227,11 +229,12 @@ async function nearestHostile(page: Page): Promise<string | null> {
   return best?.id ?? null;
 }
 
-/** The shield's share of its maximum, as the frame's defence readout states it. */
+/** Read the live ship-layer value, rather than the former duplicated header summary. */
 async function shieldShare(page: Page): Promise<number> {
-  const text = (await page.locator('[data-readout="defenses"]').textContent().catch(() => null)) ?? '';
-  const match = /Shield ([\d.]+)%/.exec(text);
-  return match === null ? 1 : Number(match[1]) / 100;
+  const text = await page.locator('[data-panel="status"] [data-layer-name="shield"]').textContent();
+  const match = /\(([\d.]+)%\)/.exec(text ?? '');
+  if (match === null) throw new Error('The live shield percentage is missing.');
+  return Number(match[1]) / 100;
 }
 
 /** Clicks a control if it is there and enabled now; the fight moves on either way. */

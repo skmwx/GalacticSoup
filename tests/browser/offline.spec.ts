@@ -1,3 +1,4 @@
+import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
@@ -164,6 +165,7 @@ test.describe('playing without a network', () => {
     const wallet = await page.locator('dd').filter({ hasText: /ISK$/ }).first().innerText();
 
     // Close and resume: the save store is local too.
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await expect(page.getByText(new RegExp(`Saved campaign: ${PILOT}`))).toBeVisible();
     await page.getByRole('button', { name: 'Resume campaign' }).click();

@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 
 import type { BookmarkDestinationData, DestinationData, ShipData } from '@protocol';
 
@@ -75,6 +75,12 @@ export function DeparturePanel({
   const selectedBookmark = bookmarks.find((entry) => entry.selected) ?? null;
   const { preferences } = usePreferences();
   const [confirming, setConfirming] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const briefing = destinations.find((entry) => entry.encounterId === previewId) ?? selected ?? [...destinations].sort((a, b) => a.tier - b.tier)[0] ?? null;
+  const { locale } = useLocalizer();
+  useEffect(() => {
+    if (selected !== null) setPreviewId(selected.encounterId);
+  }, [selected?.encounterId]);
   const warnings = undockWarnings(data.ship, translate);
   const undockNow = async (): Promise<void> => {
     await data.send('ship.undock', {});
@@ -87,55 +93,36 @@ export function DeparturePanel({
       </h3>
       <p className={styles['muted']}>{translate('departure.detail')}</p>
 
-      <div className={styles['tableWrapper']}>
-        <table className={styles['table']} aria-label={translate('departure.table')}>
-          <thead>
-            <tr>
-              <th scope="col">{translate('departure.site')}</th>
-              <th scope="col">{translate('departure.tier')}</th>
-              <th scope="col">{translate('departure.rewards')}</th>
-              <th scope="col">{translate('departure.choose')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {destinations.map((entry) => {
-              const choose = commandAvailability(entry.commands, 'navigation.selectDestination');
-              return (
-                <tr key={entry.encounterId} data-destination={entry.encounterId}>
-                  <th scope="row">
-                    {translate(entry.nameKey)}
-                    <span className={styles['muted']}> {translate(entry.descriptionKey)}</span>
-                  </th>
-                  <td>{translate('departure.tierValue', { tier: entry.tier })}</td>
-                  <td>
-                    {translate(entry.rewardSummaryKey)}
-                    <Disclosure entry={entry} />
-                  </td>
-                  <td>
-                    <ActionButton
-                      actionId="navigation.selectDestination"
-                      runner={runner}
-                      available={choose.available && !entry.selected}
-                      unavailableReason={
-                        entry.selected ? 'departure.alreadySelected' : choose.unavailableReason
-                      }
-                      label={
-                        entry.selected
-                          ? translate('departure.selected')
-                          : translate('departure.select', { site: translate(entry.nameKey) })
-                      }
-                      onRun={async () => {
-                        await data.send('navigation.selectDestination', {
-                          encounterId: entry.encounterId,
-                        });
-                      }}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className={styles['departureGrid']}>
+        <div className={styles['destinationList']} role="group" aria-label={translate('departure.table')}>
+          {[...destinations].sort((a, b) => a.tier - b.tier).map((entry) => {
+            const choose = commandAvailability(entry.commands, 'navigation.selectDestination');
+            return <article key={entry.encounterId} data-destination={entry.encounterId} className={styles['briefing']}>
+              <button type="button" className={styles['destinationCard']}
+                aria-pressed={briefing?.encounterId === entry.encounterId}
+                onClick={() => { setPreviewId(entry.encounterId); }}>
+                <strong>{translate(entry.nameKey)}</strong>
+                <small>{translate('departure.tierValue', { tier: entry.tier })}</small>
+                <small>{translate('departure.totalBounty', { bounty: formatCredits(entry.totalBountyCredits, locale) })}</small>
+              </button>
+              <ActionButton actionId="navigation.selectDestination" runner={runner}
+                available={choose.available && !entry.selected}
+                unavailableReason={entry.selected ? 'departure.alreadySelected' : choose.unavailableReason}
+                label={entry.selected ? translate('departure.selected') : translate('departure.select', { site: translate(entry.nameKey) })}
+                onRun={async () => {
+                  setPreviewId(entry.encounterId);
+                  await data.send('navigation.selectDestination', { encounterId: entry.encounterId });
+                }} />
+            </article>;
+          })}
+        </div>
+        {briefing === null ? null : <section className={styles['briefing']} aria-label={translate('departure.briefing')}>
+          <h4>{translate(briefing.nameKey)}</h4>
+          <p className={styles['muted']}>{translate('departure.tierValue', { tier: briefing.tier })}</p>
+          <p>{translate(briefing.descriptionKey)}</p>
+          <p>{translate(briefing.rewardSummaryKey)}</p>
+          <Disclosure entry={briefing} />
+        </section>}
       </div>
 
       {bookmarks.length === 0 ? null : (
@@ -147,6 +134,7 @@ export function DeparturePanel({
         />
       )}
 
+      <div className={styles['departureAction']}>
       <p
         className={styles['muted']}
         role="status"
@@ -181,6 +169,7 @@ export function DeparturePanel({
         />
       </div>
 
+      </div>
       <Dialog
         open={confirming}
         title={translate('departure.confirm.title')}
@@ -241,7 +230,7 @@ function BookmarkTable({
     <>
       <h4 className={styles['panelHeading']}>{translate('departure.bookmarks.heading')}</h4>
       <p className={styles['muted']}>{translate('departure.bookmarks.detail')}</p>
-      <div className={styles['tableWrapper']}>
+      <div className={styles['tableWrapper']} tabIndex={0}>
         <table className={styles['table']} aria-label={translate('departure.bookmarks.table')}>
           <thead>
             <tr>

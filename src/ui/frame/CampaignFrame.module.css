@@ -1,8 +1,8 @@
 .frame {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--gs-space-3);
+  align-items: center;
+  gap: var(--gs-space-2) var(--gs-space-3);
   background: var(--gs-color-surface-raised);
   border: var(--gs-border);
   border-radius: var(--gs-radius);
@@ -48,7 +48,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--gs-space-2);
-  flex: 1 1 100%;
+  flex: 0 1 auto;
 }
 
 .controls button {
@@ -62,7 +62,7 @@
 }
 
 .saveStatus {
-  flex: 1 1 100%;
+  flex: 0 1 auto;
   margin: 0;
   font-size: var(--gs-font-small);
   color: var(--gs-color-text-muted);
@@ -98,4 +98,101 @@
 .alert {
   color: var(--gs-color-danger);
   font-weight: 600;
+}
+
+.frame {
+  position: relative;
+}
+.identity {
+  flex: 1 1 14rem;
+}
+.readouts {
+  flex: 0 1 auto;
+}
+.controls {
+  flex: 0 1 auto;
+}
+.saveStatus {
+  flex: 0 1 auto;
+  font-size: var(--gs-font-small);
+}
+.menu {
+  position: relative;
+}
+.menu > summary {
+  cursor: pointer;
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-2) var(--gs-space-3);
+  background: var(--gs-color-surface);
+}
+.menuBody {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + var(--gs-space-2));
+  z-index: 10;
+  width: min(23rem, calc(100vw - 3rem));
+  padding: var(--gs-space-3);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  box-shadow: 0 12px 40px #0008;
+  display: grid;
+  gap: var(--gs-space-2);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.management {
+  display: block;
+}
+.management > summary {
+  cursor: pointer;
+  padding: var(--gs-space-2) 0;
+}
+.management[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+}
+.menuBody button {
+  font: inherit;
+  color: inherit;
+  background: var(--gs-color-surface);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-2);
+}
+.flightReadouts {
+  display: grid;
+  gap: var(--gs-space-2);
+  margin: 0;
+}
+.flightReadouts .readout {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gs-space-2);
+  flex-wrap: wrap;
+}
+.flightReadouts dd {
+  font-size: var(--gs-font-small);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 45rem) {
+  .frame {
+    gap: var(--gs-space-2);
+  }
+  .identity {
+    flex-basis: 100%;
+  }
+}
+
+.frame {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+@media (max-width: 60rem) {
+  .frame {
+    position: relative;
+  }
 }

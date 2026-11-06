@@ -131,7 +131,7 @@ function DamageTaken({ report }: { readonly report: LossData }): JSX.Element {
       {report.incoming.length === 0 ? (
         <p className={styles['muted']}>{translate('loss.damage.none')}</p>
       ) : (
-        <div className={styles['tableWrapper']}>
+        <div className={styles['tableWrapper']} tabIndex={0}>
           <table className={styles['table']}>
             <caption className={styles['caption']}>{translate('loss.damage.caption')}</caption>
             <thead>

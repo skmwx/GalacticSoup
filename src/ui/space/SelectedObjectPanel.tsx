@@ -82,6 +82,17 @@ export function SelectedObjectPanel({
       <p className={styles['objectKind']} data-selected-name>
         {object.player ? translate('space.object.you') : translate(object.nameKey)}
       </p>
+      <ObjectCommands
+        object={object}
+        data={data}
+        runner={runner}
+        variant="panel"
+        rangeKm={rangeKm}
+        closestKm={closestKm}
+        canFire={canFire}
+        fireReason={fireReason}
+        onFire={onFire}
+      />
       <dl className={styles['readouts']}>
         <dt>{translate('space.selected.kind')}</dt>
         <dd>{translate(`space.kind.${object.kind}`)}</dd>
@@ -172,17 +183,7 @@ export function SelectedObjectPanel({
           label={translate('tactical.selected.resistances', { name: translate(object.nameKey) })}
         />
       )}
-      <ObjectCommands
-        object={object}
-        data={data}
-        runner={runner}
-        variant="panel"
-        rangeKm={rangeKm}
-        closestKm={closestKm}
-        canFire={canFire}
-        fireReason={fireReason}
-        onFire={onFire}
-      />
+
     </section>
   );
 }

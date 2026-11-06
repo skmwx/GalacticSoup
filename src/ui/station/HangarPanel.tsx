@@ -189,7 +189,7 @@ function InventoryTable({
       {plain.length === 0 ? (
         <p className={styles['muted']}>{translate('inventory.empty')}</p>
       ) : (
-        <div className={styles['tableWrapper']}>
+        <div className={styles['tableWrapper']} tabIndex={0}>
           <table className={styles['table']}>
             <caption className={styles['caption']}>{title}</caption>
             <thead>

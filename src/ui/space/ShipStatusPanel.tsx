@@ -42,11 +42,11 @@ export function ShipStatusPanel({ combat, site, encounter }: ShipStatusPanelProp
       {combat?.defenses === null || combat === null ? (
         <p className={styles['muted']}>{translate('tactical.status.none')}</p>
       ) : (
-        <DefenseLayers defenses={combat.defenses} label={translate('tactical.status.resistances')} />
+        <div data-readout="defenses"><DefenseLayers defenses={combat.defenses} label={translate('tactical.status.resistances')} /></div>
       )}
 
       {capacitor === null ? null : (
-        <div className={styles['capacitor']} data-capacitor="true">
+        <div className={styles['capacitor']} data-capacitor="true" data-readout="capacitor">
           <p className={styles['layer']}>
             <span className={styles['layerName']}>{translate('tactical.capacitor')}</span>
             <span className={styles['layerValue']}>
@@ -74,6 +74,18 @@ export function ShipStatusPanel({ combat, site, encounter }: ShipStatusPanelProp
             </span>
           </p>
           <dl className={styles['readouts']}>
+            <dt>{translate('tactical.capacitorOutlook')}</dt>
+            <dd data-capacitor-outlook={capacitor.stable ? 'stable' : 'draining'}>
+              {capacitor.stable || capacitor.enduranceSeconds === null
+                ? translate('tactical.capacitorStable')
+                : translate('tactical.capacitorEndurance', {
+                    seconds: formatStat(Math.round(capacitor.enduranceSeconds * 10) / 10, locale),
+                  })}
+            </dd>
+          </dl>
+          <details className={styles['disclosure']}>
+            <summary>{translate('cockpit.capacitorDetails')}</summary>
+          <dl className={styles['readouts']}>
             <dt>{translate('tactical.capacitorRecent')}</dt>
             <dd>
               {translate('tactical.perSecond', {
@@ -92,15 +104,8 @@ export function ShipStatusPanel({ combat, site, encounter }: ShipStatusPanelProp
                 value: formatStat(capacitor.rechargePerSecond, locale),
               })}
             </dd>
-            <dt>{translate('tactical.capacitorOutlook')}</dt>
-            <dd data-capacitor-outlook={capacitor.stable ? 'stable' : 'draining'}>
-              {capacitor.stable || capacitor.enduranceSeconds === null
-                ? translate('tactical.capacitorStable')
-                : translate('tactical.capacitorEndurance', {
-                    seconds: formatStat(Math.round(capacitor.enduranceSeconds * 10) / 10, locale),
-                  })}
-            </dd>
           </dl>
+          </details>
           {capacitor.stable ? null : (
             <SubstitutedExplanation
               trace={capacitor.enduranceTrace}

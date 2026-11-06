@@ -1,11 +1,11 @@
-import { useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 
 import type { CampaignSession, CampaignSessionState } from '@gateway';
 import type { SaveSlotData } from '@protocol';
 
 import { ActionButton, useActionShortcuts, type ActionRunner } from '../actions';
 import { formatSimulationDuration } from '../format/duration';
-import { formatCredits, formatPercent, formatSpeedKmPerSecond } from '../format/numbers';
+import { formatCredits } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import styles from './CampaignFrame.module.css';
 import type { PlayData } from './usePlayData';
@@ -20,14 +20,10 @@ import type { PlayData } from './usePlayData';
  * projection, the clock from the engine's answer to an advance, the balance
  * from the wallet.
  *
- * While undocked it additionally reports where the ship is, how dangerous the
- * system is, how fast the ship is travelling and what it has been ordered to
- * do, and - from the tactical view - shield, armour, hull and capacitor, the
- * locks the ship holds, the modules it is running and how many ships have
- * locked it, which are the hostile effects the included systems can produce.
- * The notifications themselves sit just below the frame, and the frame holds
- * the control that hides or shows the contextual guidance (J), which is
- * campaign state and therefore a command.
+ * Flight instruments live in the ship rail; this compact header keeps the
+ * clock and pause available. Guidance and save controls are in the game menu,
+ * with Close, Reset and campaign metadata behind a separate disclosure.
+ * Reset always asks for confirmation before deleting the campaign.
  *
  * @implements FUNC-19.1, FUNC-3.3, FUNC-3.2, TECH-12.1, MVP-AC-03, MVP-AC-10
  */
@@ -50,6 +46,28 @@ export function CampaignFrame({
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const menu = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const dismiss = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape' && menu.current?.open) {
+        menu.current.open = false;
+        setConfirmingReset(false);
+        menu.current.querySelector('summary')?.focus();
+      }
+    };
+    const outside = (event: PointerEvent): void => {
+      if (menu.current?.open && !menu.current.contains(event.target as Node)) {
+        menu.current.open = false;
+        setConfirmingReset(false);
+      }
+    };
+    document.addEventListener('keydown', dismiss);
+    document.addEventListener('pointerdown', outside);
+    return () => {
+      document.removeEventListener('keydown', dismiss);
+      document.removeEventListener('pointerdown', outside);
+    };
+  }, []);
 
   const campaign = sessionState.session?.campaign ?? null;
   const time = sessionState.session?.time ?? null;
@@ -108,79 +126,7 @@ export function CampaignFrame({
               : translate('frame.running', { rate: time?.rate ?? 1 })}
           </dd>
         </div>
-        {data.docked ? null : (
-          <>
-            <div className={styles['readout']}>
-              <dt>{translate('frame.speed')}</dt>
-              <dd data-readout="speed">
-                {translate('space.speed', {
-                  speed: formatSpeedKmPerSecond(playerSpeedKmPerSecond(data), locale),
-                })}
-              </dd>
-            </div>
-            <div className={styles['readout']}>
-              <dt>{translate('frame.order')}</dt>
-              <dd data-readout="order">{describeOrder(data, translate)}</dd>
-            </div>
-            {data.combat?.defenses === null || data.combat === null ? null : (
-              <>
-                <div className={styles['readout']}>
-                  <dt>{translate('frame.defenses')}</dt>
-                  <dd data-readout="defenses">
-                    {data.combat.defenses.layers
-                      .map((layer) =>
-                        translate('frame.layer', {
-                          layer: translate(`layer.${layer.layer}`),
-                          percent: formatPercent(layer.fractionRemaining, locale),
-                        }),
-                      )
-                      .join(' · ')}
-                  </dd>
-                </div>
-                <div className={styles['readout']}>
-                  <dt>{translate('frame.capacitor')}</dt>
-                  <dd data-readout="capacitor">
-                    {formatPercent(
-                      data.combat.capacitorCapacity > 0
-                        ? data.combat.capacitorCharge / data.combat.capacitorCapacity
-                        : 0,
-                      locale,
-                    )}
-                  </dd>
-                </div>
-                <div className={styles['readout']}>
-                  <dt>{translate('frame.locks')}</dt>
-                  <dd data-readout="locks">
-                    {translate('frame.locksValue', {
-                      held: data.combat.locks.filter((lock) => lock.status === 'locked').length,
-                      maximum: data.combat.maxLockedTargets,
-                    })}
-                  </dd>
-                </div>
-                <div className={styles['readout']}>
-                  <dt>{translate('frame.modules')}</dt>
-                  <dd data-readout="modules">
-                    {translate('frame.modulesValue', {
-                      active: data.combat.modules.filter((module) => module.cycle !== null).length,
-                      weapons: data.combat.weapons.filter((weapon) => weapon.repeating).length,
-                    })}
-                  </dd>
-                </div>
-                <div className={styles['readout']}>
-                  <dt>{translate('frame.threats')}</dt>
-                  <dd
-                    data-readout="threats"
-                    className={data.combat.hostileLocks.length > 0 ? styles['alert'] : undefined}
-                  >
-                    {data.combat.hostileLocks.length === 0
-                      ? translate('frame.threatsNone')
-                      : translate('frame.threatsValue', { count: data.combat.hostileLocks.length })}
-                  </dd>
-                </div>
-              </>
-            )}
-          </>
-        )}
+
       </dl>
 
       <div className={styles['controls']}>
@@ -191,6 +137,12 @@ export function CampaignFrame({
           label={paused ? translate('frame.resume') : translate('frame.pause')}
           onRun={toggleTime}
         />
+      </div>
+      <details className={styles['menu']} ref={menu} onToggle={(event) => {
+        if (!event.currentTarget.open) setConfirmingReset(false);
+      }}>
+        <summary>{translate('frame.menu')}</summary>
+        <div className={styles['menuBody']}>
         <ActionButton
           actionId="guidance.toggle"
           runner={runner}
@@ -206,6 +158,8 @@ export function CampaignFrame({
             await session.save('manual');
           }}
         />
+        <details className={styles['management']}>
+          <summary>{translate('frame.management')}</summary>
         <ActionButton
           actionId="campaign.close"
           runner={runner}
@@ -243,7 +197,6 @@ export function CampaignFrame({
             }}
           />
         )}
-      </div>
 
       {confirmingReset ? (
         <p className={styles['warning']}>{translate('campaign.resetDetail')}</p>
@@ -261,6 +214,10 @@ export function CampaignFrame({
             <dd>{campaign?.stateVersion ?? ''}</dd>
           </div>
         </dl>
+      </details>
+
+        </details>
+        </div>
       </details>
 
       <p
@@ -304,21 +261,6 @@ function describeLocation(data: PlayData, translate: Translate): string {
     system: translate(runtime.systemNameKey),
     danger: runtime.dangerRating,
   });
-}
-
-/** The order the ship is carrying out, which is authoritative state. */
-function describeOrder(data: PlayData, translate: Translate): string {
-  const travel = data.site?.travelStatus ?? null;
-  if (travel !== null) {
-    return translate(`space.travel.${travel.kind}.${travel.phase}`);
-  }
-  const order = data.site?.movementOrder ?? null;
-  return order === null ? translate('frame.orderNone') : translate(`space.order.${order.kind}`);
-}
-
-function playerSpeedKmPerSecond(data: PlayData): number {
-  const player = data.site?.site?.objects.find((object) => object.player) ?? null;
-  return player === null ? 0 : Math.hypot(player.velocity.x, player.velocity.y);
 }
 
 function describeSave(slot: SaveSlotData | null, translate: Translate): string {

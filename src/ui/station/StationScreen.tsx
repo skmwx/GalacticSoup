@@ -12,6 +12,7 @@ import { LossReport } from './LossReport';
 import { MarketPanel } from './MarketPanel';
 import { NoShipNotice } from './NoShipNotice';
 import { ServicesPanel } from './ServicesPanel';
+import { ShipReadiness } from './ShipReadiness';
 import { ShipPanel } from './ShipPanel';
 import { SortieSummary } from './SortieSummary';
 import styles from './Station.module.css';
@@ -139,16 +140,8 @@ export function StationScreen({
 
   return (
     <section className={styles['station']} aria-labelledby="station-heading">
-      <div>
-        <h2 id="station-heading" className={styles['heading']}>
-          {data.services === null
-            ? translate('station.loading')
-            : translate(data.services.nameKey)}
-        </h2>
-        <p className={styles['subheading']}>{translate('station.docked')}</p>
-      </div>
-
       {guidedSurface === null ? null : <GuidedHint id={guidedHintId} />}
+      <div className={styles['rail']}>
       <nav className={styles['tabs']} aria-label={translate('station.navigation')}>
         {PANELS.map((panel) => {
           const action = actionById(panel);
@@ -181,6 +174,19 @@ export function StationScreen({
           );
         })}
       </nav>
+        <ShipReadiness data={data} onInspect={() => { setOpen('station.ship'); }} />
+      </div>
+      <div className={styles['stationContent']}>
+      <div>
+        <h2 id="station-heading" className={styles['heading']}>
+          {data.services === null
+            ? translate('station.loading')
+            : translate(data.services.nameKey)}
+        </h2>
+        <p className={styles['subheading']}>{translate('station.docked')}</p>
+      </div>
+
+
 
       {data.error === null ? null : (
         <p className={styles['error']} role="alert">
@@ -268,6 +274,7 @@ export function StationScreen({
       {open === 'station.departure' ? (
         <DeparturePanel data={data} runner={runner} simulationTimeMs={simulationTimeMs} />
       ) : null}
+      </div>
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { openGameMenuByKeyboard as openGameMenu } from '../support/cockpit.ts';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -54,6 +55,7 @@ test.describe('campaign accessibility', () => {
     await audit(page);
 
     // Reach "Close campaign" by tabbing from the top of the panel.
+    await openGameMenu(page);
     const close = page.getByRole('button', { name: 'Close campaign' });
     await close.focus();
     await expect(close).toBeFocused();
@@ -68,6 +70,7 @@ test.describe('campaign accessibility', () => {
     await page.getByRole('button', { name: 'Start campaign' }).click();
     await expect(page.getByText(PILOT, { exact: true })).toBeVisible();
 
+    await openGameMenu(page);
     const reset = page.getByRole('button', { name: 'Reset campaign' });
     await reset.focus();
     await page.keyboard.press('Enter');
@@ -77,6 +80,7 @@ test.describe('campaign accessibility', () => {
 
     await page.getByRole('button', { name: 'Keep playing' }).focus();
     await page.keyboard.press('Enter');
+    await openGameMenu(page);
     await expect(page.getByRole('button', { name: 'Reset campaign' })).toBeVisible();
   });
 
@@ -90,6 +94,7 @@ test.describe('campaign accessibility', () => {
       document.documentElement.style.setProperty('--gs-text-scale', '2');
     });
 
+    await openGameMenu(page);
     await expect(page.getByRole('button', { name: 'Close campaign' })).toBeVisible();
     const overflows = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,

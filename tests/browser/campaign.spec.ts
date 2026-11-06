@@ -1,3 +1,4 @@
+import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Page } from '@playwright/test';
 
 import { SAVE_FORMAT_VERSION } from '@engine';
@@ -41,6 +42,7 @@ async function startCampaign(page: Page, name = PILOT): Promise<void> {
 
 /** The campaign identity lives behind the frame's details disclosure. */
 async function campaignIdentity(page: Page): Promise<string> {
+  await openGameMenu(page);
   await page.getByText('Campaign details').click();
   return page.getByText(/^c[0-9a-f]{24}$/).innerText();
 }
@@ -58,6 +60,7 @@ test.describe('campaign persistence', () => {
     const identity = await campaignIdentity(page);
     await expect(page.getByText('Saved at revision 1.')).toBeVisible();
 
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
     await expect(page.getByText(new RegExp(`Saved campaign: ${PILOT}`))).toBeVisible();
@@ -83,6 +86,7 @@ test.describe('campaign persistence', () => {
     await startCampaign(page);
     await expect(page.getByText('0s', { exact: true })).toBeVisible();
 
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
@@ -94,6 +98,7 @@ test.describe('campaign persistence', () => {
   test('deletes the campaign and its saves on reset [FUNC-3.4]', async ({ page }) => {
     await startCampaign(page);
 
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Reset campaign/ }).click();
     await page.getByRole('button', { name: /Delete this campaign/ }).click();
 
@@ -177,10 +182,12 @@ test.describe('campaign persistence', () => {
       (s) => `${before.inventories[s.inventoryId]?.location.kind ?? '?'}:${s.state.kind}`,
     );
     expect(placed.sort()).toEqual(['cargo:plain', 'fitting:charge', 'fitting:fitted', 'fitting:fitted']);
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
     await expect(page.getByText(PILOT, { exact: true })).toBeVisible();
+    await openGameMenu(page);
     await page.getByRole('button', { name: /Close campaign/ }).click();
     await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
     expect(await savedAssets()).toEqual(before);
@@ -195,6 +202,7 @@ test.describe('campaign persistence', () => {
     });
 
     await startCampaign(page);
+    await openGameMenu(page, false);
     await page.getByRole('button', { name: /Save now/ }).click();
     await expect(page.getByText(/Saved at revision/)).toBeVisible();
 

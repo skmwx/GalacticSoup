@@ -1,3 +1,4 @@
+import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
@@ -80,6 +81,7 @@ async function ensurePaused(page: Page): Promise<void> {
 }
 
 async function reopen(page: Page, heading: string): Promise<void> {
+  await openGameMenu(page);
   await page.getByRole('button', { name: /Close campaign/ }).click();
   await page.reload();
   await page.getByRole('button', { name: 'Resume campaign' }).click();
@@ -193,6 +195,7 @@ test.describe('the first vertical slice', () => {
 
     // Close and reopen in the middle of the fight: the lock, the running
     // guns and the booster come back exactly as they were.
+    await page.getByText('Combat log', { exact: true }).first().click();
     await expect(region(page, 'Combat log').locator('[data-event="damage"]').first()).toBeVisible({
       timeout: 30_000,
     });

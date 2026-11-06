@@ -1,11 +1,58 @@
 .station {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: var(--gs-space-3);
+  align-items: start;
+}
+.rail {
+  display: grid;
+  gap: var(--gs-space-3);
+  min-width: 0;
+}
+.stationContent {
   display: flex;
   flex-direction: column;
   gap: var(--gs-space-3);
+  min-width: 0;
+}
+.stationContent > .panel {
+  border: var(--gs-border);
+  background: var(--gs-color-surface);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-3);
+}
+.readiness {
+  padding: var(--gs-space-3);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface-raised);
+  display: grid;
+  gap: var(--gs-space-2);
+}
+.readiness h3, .readiness p {
+  margin: 0;
+}
+.readiness dl {
+  margin: 0;
+  display: grid;
+  gap: var(--gs-space-2);
+  font-size: var(--gs-font-small);
+}
+.readiness dt {
+  color: var(--gs-color-text-muted);
+}
+.readiness dd {
+  margin: 0;
+  font-family: var(--gs-font-mono);
+}
+.readiness button {
+  font: inherit;
+  color: inherit;
   background: var(--gs-color-surface);
   border: var(--gs-border);
   border-radius: var(--gs-radius);
-  padding: var(--gs-space-3);
+  padding: var(--gs-space-2);
+  cursor: pointer;
 }
 
 .heading {
@@ -20,11 +67,28 @@
 }
 
 .tabs {
-  display: flex;
+  display: grid;
+  gap: var(--gs-space-1);
+  padding: var(--gs-space-2);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface);
+}
+.tabs .tile {
+  padding: var(--gs-space-2);
+  border-color: transparent;
+  background: transparent;
+}
+.tabs .tile[aria-current='page'] {
+  background: var(--gs-color-surface-raised);
+  border-color: var(--gs-color-accent);
+}
+.tabs .tileHeader {
   flex-wrap: wrap;
-  gap: var(--gs-space-2);
-  border-bottom: var(--gs-border);
-  padding-bottom: var(--gs-space-2);
+  width: 100%;
+}
+.tabs .tabKey {
+  margin-inline-start: auto;
 }
 
 .tiles {
@@ -354,4 +418,116 @@
   font-size: var(--gs-font-small);
   font-style: italic;
   color: var(--gs-color-text-muted);
+}
+
+.departureGrid {
+  display: grid;
+  grid-template-columns: minmax(11rem, .8fr) minmax(0, 1.2fr);
+  gap: var(--gs-space-3);
+  align-items: start;
+}
+.destinationList {
+  display: grid;
+  gap: var(--gs-space-2);
+}
+.destinationCard {
+  padding: var(--gs-space-3);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: start;
+  display: grid;
+  gap: var(--gs-space-1);
+}
+.destinationCard[aria-pressed='true'] {
+  border-color: var(--gs-color-accent);
+  background: var(--gs-color-surface-raised);
+  outline: 1px solid var(--gs-color-accent);
+}
+.destinationCard small {
+  color: var(--gs-color-text-muted);
+  font-size: var(--gs-font-small);
+}
+.briefing {
+  border: var(--gs-border);
+  padding: var(--gs-space-3);
+  border-radius: var(--gs-radius);
+  display: grid;
+  gap: var(--gs-space-2);
+}
+.briefing h4, .briefing p {
+  margin: 0;
+}
+.departureAction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gs-space-3);
+  flex-wrap: wrap;
+  border: var(--gs-border);
+  border-inline-start: 3px solid var(--gs-color-accent);
+  padding: var(--gs-space-3);
+  background: var(--gs-color-surface-raised);
+  border-radius: var(--gs-radius);
+}
+@media (max-width: 55rem) {
+  .station {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rail {
+    display: contents;
+  }
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .readiness {
+    order: 2;
+  }
+}
+@media (max-width: 40rem) {
+  .departureGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .slots, .figures, .tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .input {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+.destinationList > .briefing {
+  padding: var(--gs-space-2);
+  gap: var(--gs-space-1);
+}
+.destinationCard {
+  padding: var(--gs-space-2);
+  grid-template-columns: minmax(0, 1fr) auto;
+  border-color: transparent;
+}
+.destinationCard strong {
+  grid-column: 1 / -1;
+}
+.destinationCard small:last-child {
+  grid-column: 1 / -1;
+}
+.readiness dl > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--gs-space-1);
+}
+.readiness .bar {
+  grid-column: 1 / -1;
+}
+.destinationList > .briefing {
+  padding: var(--gs-space-1);
+}
+.destinationCard {
+  padding: var(--gs-space-1);
+  gap: 0;
 }

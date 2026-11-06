@@ -198,6 +198,11 @@ function WeaponGroupView({
         })}
       </h4>
 
+      <ul className={styles['plainList']}>
+        {group.weapons.map((weapon) => (
+          <WeaponRow key={`${weapon.slot.kind}:${String(weapon.slot.index)}`} weapon={weapon} data={data} runner={runner} targetId={targetId} site={site} encounter={encounter} shipId={shipId} />
+        ))}
+      </ul>
       {lead === undefined ? null : (
         <dl className={styles['readouts']}>
           <dt>{translate('tactical.weapons.ranges')}</dt>
@@ -247,11 +252,7 @@ function WeaponGroupView({
         </div>
       )}
 
-      <ul className={styles['plainList']}>
-        {group.weapons.map((weapon) => (
-          <WeaponRow key={`${weapon.slot.kind}:${String(weapon.slot.index)}`} weapon={weapon} data={data} runner={runner} targetId={targetId} site={site} encounter={encounter} shipId={shipId} />
-        ))}
-      </ul>
+
     </article>
   );
 }
@@ -309,6 +310,8 @@ function WeaponRow({
           hold: formatQuantity(loaded?.cargoRounds ?? 0, locale),
         })}
       </p>
+      <details className={styles['disclosure']}>
+        <summary>{translate('cockpit.weaponControls', { slot: weapon.slot.index + 1 })}</summary>
       <div className={styles['commandRow']}>
         <ActionButton
           actionId="weapon.activate"
@@ -377,7 +380,8 @@ function WeaponRow({
           />
           {choice === null ? null : <ChargeSummary option={choice} />}
         </div>
-      )}
+      )}      </details>
+
     </li>
   );
 }
