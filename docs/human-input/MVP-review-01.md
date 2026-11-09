@@ -56,4 +56,4 @@ Remove "Coordinates & point navigation" drop down, and make it a right click in 
 
 Remove "Your ship" from the list of objects present in the sector.
 
-Combine weapons panel and equipment panel (where the shiels booster is)
+Combine weapons panel and equipment panel (where the shiels booster is), and make it more compact. This combined panel and navigation panel should be each be a  column under the radar view, sharing the vertical space.

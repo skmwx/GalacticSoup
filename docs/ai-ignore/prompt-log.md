@@ -92,5 +92,13 @@ Please propose several options as to how this can be improved, write your propos
 
 The game is already running on localhost:5173 , I'm assuming you can use either browser or playwright mcp configured for the project.
 
-# 023 Sold 6.1 High
+# 023 Sol 6.1 High
 I like the 1st proposal, go ahead and implement it.
+
+# 024 Sol 6.1 High
+For context, read docs\00_GameDesignBrief.md
+docs\01_FunctionalSpecification.md
+docs\02_TechnicalSpecification.md
+docs\human-input\CurrentState.md
+
+I've reviewed the game and found quite a number of UI elements that I'd like to fix, my findings are in docs\human-input\MVP-review-01.md. Please review it and make a phased implementation plan, each phase to be done by a coding agent in one session.
