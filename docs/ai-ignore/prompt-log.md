@@ -83,3 +83,14 @@ There are new answers in docs\agent-comm\requests\questions-and-answes.md starti
 Read the documents in docs\ root folder and docs\human-input .
 
 Phase 1 through 20 are implemented, and answers from questions-and-answers applied. Implement the final phase 21.
+
+# 022: Sol 6.1 High
+Please have a look at the current game's UI.
+A lot of space is unused (left and right columns), rarely used elements (for example, Reset Campaign button) are brought up in the same place as everyday use elements, the design is too vertical and requires a lot of scrolling back and forth during gameplay.
+
+Please propose several options as to how this can be improved, write your proposals in md format, with and make an simple HTML mockup for each.
+
+The game is already running on localhost:5173 , I'm assuming you can use either browser or playwright mcp configured for the project.
+
+# 023 Sold 6.1 High
+I like the 1st proposal, go ahead and implement it.
