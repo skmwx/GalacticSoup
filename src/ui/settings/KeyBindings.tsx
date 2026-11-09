@@ -10,6 +10,7 @@ import {
   useBindings,
   type ActionDefinition,
 } from '../actions';
+import { TooltipButton } from '../common/TooltipButton';
 import { useTranslate } from '../localization';
 import { usePreferences } from '../preferences';
 import styles from './Settings.module.css';
@@ -149,17 +150,17 @@ export function KeyBindings(): JSX.Element {
                       >
                         {isCapturing ? translate('settings.keys.pressKey') : translate('settings.keys.change')}
                       </button>
-                      <button
-                        type="button"
+                      <TooltipButton
                         className={styles['button']}
-                        disabled={key === null}
+                        unavailable={key === null}
+                        reason={translate('settings.keys.clearNone')}
                         aria-label={translate('settings.keys.clearFor', { action: name })}
                         onClick={() => {
                           bind(action, null);
                         }}
                       >
                         {translate('settings.keys.clear')}
-                      </button>
+                      </TooltipButton>
                     </td>
                   </tr>
                 );

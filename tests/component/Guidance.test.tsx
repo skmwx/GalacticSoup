@@ -63,7 +63,7 @@ describe('contextual guidance', () => {
 
     await harness.user.click(within(guidance).getByRole('button', { name: 'Show me' }));
     expect(await screen.findByRole('heading', { name: 'Departure', level: 3 })).toBeInTheDocument();
-    expect(within(guidance).getByRole('button', { name: 'Show me' })).toBeDisabled();
+    expect(within(guidance).getByRole('button', { name: 'Show me' })).toBeUnavailable();
     expect(guidance).toHaveTextContent('You are already there.');
   });
 

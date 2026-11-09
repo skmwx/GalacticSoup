@@ -204,17 +204,17 @@ describe('command bar', () => {
     await undock(harness);
 
     // Nothing is selected, so the orders that need a target are refused.
-    expect(screen.getByRole('button', { name: /^Approach/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /^Stop/ })).toBeEnabled();
-    expect(screen.getByRole('button', { name: /^Retreat/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Approach/ })).toBeUnavailable();
+    expect(screen.getByRole('button', { name: /^Stop/ })).not.toBeUnavailable();
+    expect(screen.getByRole('button', { name: /^Retreat/ })).toBeUnavailable();
     expect(
       screen.getByText('There is no combat site to retreat from.'),
     ).toBeInTheDocument();
 
     await harness.user.click(screen.getByRole('button', { name: /Borrell Harbour/ }));
 
-    expect(screen.getByRole('button', { name: /^Approach/ })).toBeEnabled();
-    expect(screen.getByRole('button', { name: /^Dock/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^Approach/ })).not.toBeUnavailable();
+    expect(screen.getByRole('button', { name: /^Dock/ })).not.toBeUnavailable();
 
     harness.gateway.dispose();
   });

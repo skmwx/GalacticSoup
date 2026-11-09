@@ -113,11 +113,12 @@
   transition: border-color var(--gs-transition);
 }
 
-.tile:hover:not(:disabled) {
+.tile:hover:not(:disabled):not([aria-disabled='true']) {
   border-color: var(--gs-color-accent);
 }
 
-.tile:disabled {
+.tile:disabled,
+.tile[aria-disabled='true'] {
   cursor: not-allowed;
   border-style: dashed;
   color: var(--gs-color-text-muted);

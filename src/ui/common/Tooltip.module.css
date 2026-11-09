@@ -1,0 +1,57 @@
+/*
+ * The visual popup is fixed-positioned in a portal, so it never takes part in
+ * the layout of the control it explains (Technical Specification 12.3).
+ */
+.tooltip {
+  position: fixed;
+  z-index: 1000;
+  max-width: min(22rem, calc(100vw - 16px));
+  padding: var(--gs-space-1) var(--gs-space-2);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  color: var(--gs-color-text);
+  font-size: var(--gs-font-small);
+  line-height: 1.35;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 45%);
+  overflow-wrap: break-word;
+  pointer-events: auto;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: var(--gs-space-2);
+  font-weight: 600;
+}
+
+.heading kbd {
+  font-family: var(--gs-font-mono);
+  font-weight: 400;
+  color: var(--gs-color-text-muted);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: 0 var(--gs-space-1);
+}
+
+.reason {
+  color: var(--gs-color-warn);
+}
+
+.heading + .reason {
+  margin-top: var(--gs-space-1);
+}
+
+/* Present for assistive technology, invisible and taking no space. */
+.description {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

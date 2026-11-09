@@ -51,8 +51,17 @@ describe('campaign surface', () => {
     const harness = renderGame();
 
     expect(await screen.findByLabelText('Pilot name')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Start campaign' })).toBeDisabled();
+    const start = screen.getByRole('button', { name: 'Start campaign' });
+    expect(start).toBeUnavailable();
+    // The reason is a tooltip on the control, not text beside it [FUNC-22.10].
+    expect(start).toHaveAccessibleDescription('Enter a pilot name to start.');
     expect(screen.queryByRole('button', { name: 'Resume campaign' })).not.toBeInTheDocument();
+
+    // Neither the button nor implicit form submission starts a nameless campaign.
+    await harness.user.click(start);
+    await harness.user.type(screen.getByLabelText('Pilot name'), '   {Enter}');
+    expect(screen.getByRole('button', { name: 'Start campaign' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Pilot name')).toBeInTheDocument();
 
     harness.gateway.dispose();
   });

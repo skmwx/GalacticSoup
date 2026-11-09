@@ -99,11 +99,12 @@
   transition: border-color var(--gs-transition);
 }
 
-.panel button:hover:not(:disabled) {
+.panel button:hover:not(:disabled):not([aria-disabled='true']) {
   border-color: var(--gs-color-accent);
 }
 
-.panel button:disabled {
+.panel button:disabled,
+.panel button[aria-disabled='true'] {
   cursor: not-allowed;
   color: var(--gs-color-text-muted);
 }

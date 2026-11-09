@@ -1,7 +1,8 @@
-import { useId, type JSX, type ReactNode } from 'react';
+import type { JSX, ReactNode } from 'react';
 
 import type { MessageKey } from '@shared';
 
+import { describedBy, useTooltip } from '../common/Tooltip';
 import { useTranslate } from '../localization';
 import { ActionIcon } from './ActionIcon';
 import styles from './ActionButton.module.css';
@@ -16,9 +17,20 @@ import type { ActionRunner } from './useActionRunner';
  * The button takes its label and icon from the registry, its shortcut from
  * the player's bindings and its availability from a projection, so what it
  * offers and what the engine permits cannot drift apart. The key is drawn on
- * the button and announced as its keyboard shortcut. When an action is unavailable the button stays
- * visible and says why, because a control that disappears teaches the player
- * nothing (Functional Specification 22.10).
+ * the button and announced as its keyboard shortcut.
+ *
+ * When an action is unavailable the button stays visible and says why, because
+ * a control that disappears teaches the player nothing (Functional
+ * Specification 22.10). The reason is a tooltip, shown on hover and on keyboard
+ * focus, rather than text beside the button, so a refusal does not reflow the
+ * controls around it. For that to work by keyboard the button is marked
+ * `aria-disabled` rather than natively disabled - a native disabled button
+ * cannot take focus - and activation is refused here instead, by pointer and
+ * keyboard alike, while it is unavailable or its command is in flight.
+ *
+ * The `icon` presentation draws the icon alone, for dense rows. Its accessible
+ * name is still the full label (including any item it names), and its name and
+ * shortcut appear in the tooltip instead of on the button.
  *
  * @implements TECH-12.3, FUNC-22.10
  */
@@ -27,12 +39,14 @@ export interface ActionButtonProps {
   readonly actionId: string;
   readonly runner: ActionRunner;
   readonly onRun: () => void | Promise<void>;
-  /** False disables the control; the reason below says why. */
+  /** False makes the control unavailable; the tooltip says why. */
   readonly available?: boolean;
   readonly unavailableReason?: MessageKey | null;
   /** Overrides the registry label, for a control that names its subject. */
   readonly label?: string;
   readonly variant?: 'primary' | 'quiet' | 'danger';
+  /** `icon` draws the icon only; the label becomes the name and the tooltip. */
+  readonly display?: 'full' | 'icon';
   readonly pressed?: boolean;
   readonly children?: ReactNode;
 }
@@ -45,45 +59,65 @@ export function ActionButton({
   unavailableReason = null,
   label,
   variant = 'quiet',
+  display = 'full',
   pressed,
   children,
 }: ActionButtonProps): JSX.Element {
   const translate = useTranslate();
   const action = actionById(actionId);
   const key = useBinding(actionId);
-  const reasonId = useId();
   const pending = runner.isPending(actionId);
   const disabled = !available || pending;
-  const reason = !available && unavailableReason !== null ? translate(unavailableReason) : null;
+  const iconOnly = display === 'icon';
+  const name = label ?? translate(action.labelKey);
+  // A full button shows its pending state as text; an icon-only one says it
+  // in the tooltip instead.
+  const reason = !available
+    ? translate(unavailableReason ?? 'shortcut.unavailable')
+    : pending && iconOnly
+      ? translate('action.pending')
+      : null;
+  const tooltip = useTooltip({
+    description: reason,
+    heading: iconOnly ? (
+      <>
+        <span>{name}</span>
+        {key === null ? null : <kbd>{keyLabel(key)}</kbd>}
+      </>
+    ) : undefined,
+  });
 
   return (
-    <span className={styles['wrapper']}>
+    <span className={styles['wrapper']} {...tooltip.anchorProps}>
       <button
         type="button"
-        className={`${styles['button']} ${styles[variant] ?? ''}`}
+        className={`${styles['button']} ${styles[variant] ?? ''} ${iconOnly ? (styles['iconOnly'] ?? '') : ''}`}
         data-action={action.id}
-        disabled={disabled}
+        aria-disabled={disabled ? true : undefined}
+        aria-describedby={describedBy(tooltip.describedBy)}
+        {...(iconOnly ? { 'aria-label': name } : {})}
         {...(pressed === undefined ? {} : { 'aria-pressed': pressed })}
-        {...(reason === null ? {} : { 'aria-describedby': reasonId })}
         {...(key === null ? {} : { 'aria-keyshortcuts': keyLabel(key) })}
-        onClick={() => {
+        onClick={(event) => {
+          if (disabled) {
+            event.preventDefault();
+            return;
+          }
           runner.run(actionId, async () => {
             await onRun();
           });
         }}
       >
         <ActionIcon icon={action.icon} className={styles['icon']} />
-        <span className={styles['label']}>{label ?? translate(action.labelKey)}</span>
-        {key === null ? null : (
+        {iconOnly ? null : <span className={styles['label']}>{name}</span>}
+        {key === null || iconOnly ? null : (
           <kbd className={styles['shortcut']}>{keyLabel(key)}</kbd>
         )}
-        {pending ? <span className={styles['pending']}>{translate('action.pending')}</span> : null}
+        {pending && !iconOnly ? (
+          <span className={styles['pending']}>{translate('action.pending')}</span>
+        ) : null}
       </button>
-      {reason === null ? null : (
-        <span id={reasonId} className={styles['reason']}>
-          {reason}
-        </span>
-      )}
+      {tooltip.element}
       {children}
     </span>
   );

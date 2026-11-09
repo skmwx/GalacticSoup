@@ -11,6 +11,7 @@ import {
   type ActionRunner,
   type CommandAvailability as Availability,
 } from '../actions';
+import { TooltipButton } from '../common/TooltipButton';
 import { formatDistanceKm } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
@@ -53,7 +54,7 @@ export interface CommandBarProps {
   onRangeChange(rangeKm: number): void;
 }
 
-const REFUSED: Availability = { available: false, unavailableReason: null };
+const NO_SELECTION: Availability = { available: false, unavailableReason: 'shortcut.noSelection' };
 
 /** A prefix that keeps a bookmark's option value apart from a site id. */
 const BOOKMARK_VALUE = 'bookmark:';
@@ -143,7 +144,7 @@ export function CommandBar({
 
   const siteCommand = (command: string): Availability => availability(site.commands, command);
   const targetCommand = (command: string): Availability =>
-    selected === null ? REFUSED : availability(selected.commands, command);
+    selected === null ? NO_SELECTION : availability(selected.commands, command);
 
   const dockTarget =
     selected !== null && availability(selected.commands, 'navigation.dock').available
@@ -293,11 +294,11 @@ export function CommandBar({
       <div className={styles['commandRow']}>
         {/* Arming the view is presentation, not a command, so it does not
             go through the action runner. */}
-        <button
-          type="button"
+        <TooltipButton
           className={styles['objectButton']}
           aria-pressed={choosingPoint}
-          disabled={!siteCommand('movement.moveToPoint').available}
+          unavailable={!siteCommand('movement.moveToPoint').available}
+          reason={translate(siteCommand('movement.moveToPoint').unavailableReason ?? 'shortcut.unavailable')}
           onClick={() => {
             onChoosingPointChange(!choosingPoint);
           }}
@@ -306,7 +307,7 @@ export function CommandBar({
           {choosingPoint
             ? translate('space.commands.pointCancel')
             : translate('space.commands.pointArm')}
-        </button>
+        </TooltipButton>
         <label className={styles['field']}>
           {translate('space.commands.pointX')}
           <input

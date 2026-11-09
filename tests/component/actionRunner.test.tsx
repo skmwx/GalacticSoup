@@ -137,7 +137,7 @@ describe('an action button', () => {
     await user.click(button);
 
     await waitFor(() => {
-      expect(button).toBeDisabled();
+      expect(button).toBeUnavailable();
     });
     expect(work).toHaveBeenCalledTimes(1);
 
@@ -146,7 +146,7 @@ describe('an action button', () => {
       await held.promise;
     });
     await waitFor(() => {
-      expect(button).toBeEnabled();
+      expect(button).not.toBeUnavailable();
     });
     expect(work).toHaveBeenCalledTimes(1);
   });
@@ -169,8 +169,181 @@ describe('an action button', () => {
     render(<Unavailable />);
 
     const button = screen.getByRole('button', { name: /Buy/ });
-    expect(button).toBeDisabled();
+    expect(button).toBeUnavailable();
     expect(screen.getByText(/wallet does not have enough credits/)).toBeInTheDocument();
     expect(button).toHaveAccessibleDescription(/wallet does not have enough credits/);
   });
 });
+
+/**
+ * Disabled reasons as tooltips and the icon-only presentation
+ * (Technical Specification 12.3; Functional Specification 22.10).
+ *
+ * An unavailable control keeps keyboard focus and explains itself on hover and
+ * focus, in a tooltip outside the layout, while refusing activation by pointer
+ * and keyboard alike.
+ */
+describe('a disabled-reason tooltip', () => {
+  const MARKET = 'Market';
+  const REASON = /wallet does not have enough credits/;
+
+  function Refused({ work, display }: { readonly work: () => Promise<void>; readonly display?: 'full' | 'icon' }) {
+    const runner = useActionRunner();
+    return (
+      <LocalizationProvider>
+        <ActionButton
+          actionId="market.buy"
+          runner={runner}
+          available={false}
+          unavailableReason="market.unavailable.insufficientCredits"
+          label="Buy Fusion S"
+          display={display ?? 'full'}
+          onRun={work}
+        />
+        <button type="button">Next</button>
+      </LocalizationProvider>
+    );
+  }
+
+  const popup = (): HTMLElement | null => document.body.querySelector('[data-tooltip]');
+
+  it('refuses pointer and keyboard activation while unavailable [TECH-12.3]', async () => {
+    const work = vi.fn(() => Promise.resolve());
+    render(<Refused work={work} />);
+    const user = userEvent.setup();
+    const button = screen.getByRole('button', { name: /Buy Fusion S/ });
+
+    await user.click(button);
+    button.focus();
+    await user.keyboard('{Enter}');
+    await user.keyboard(' ');
+
+    expect(work).not.toHaveBeenCalled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('can be reached by keyboard and shows its reason on focus [FUNC-22.10]', async () => {
+    render(<Refused work={() => Promise.resolve()} />);
+    const user = userEvent.setup();
+    const button = screen.getByRole('button', { name: /Buy Fusion S/ });
+
+    expect(popup()).toBeNull();
+    await user.tab();
+    expect(button).toHaveFocus();
+    expect(popup()).toHaveTextContent(REASON);
+    // The popup is presentation; the description is announced once, from the control.
+    expect(popup()).toHaveAttribute('aria-hidden', 'true');
+    expect(button).toHaveAccessibleDescription(REASON);
+
+    await user.tab();
+    expect(popup()).toBeNull();
+  });
+
+  it('shows its reason on hover, outside the layout, and Escape dismisses it [FUNC-22.10]', async () => {
+    const { container } = render(<Refused work={() => Promise.resolve()} />);
+    const user = userEvent.setup();
+    const button = screen.getByRole('button', { name: /Buy Fusion S/ });
+
+    await user.hover(button);
+    const shown = popup();
+    expect(shown).toHaveTextContent(REASON);
+    // Drawn in a portal, not beside the control.
+    expect(container.contains(shown)).toBe(false);
+
+    button.focus();
+    await user.keyboard('{Escape}');
+    expect(popup()).toBeNull();
+    expect(button).toHaveFocus();
+  });
+
+  it('dismisses on Escape without swallowing it, so a surrounding dialog still closes [TECH-12.3]', async () => {
+    const onDocumentEscape = vi.fn();
+    const listener = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onDocumentEscape();
+    };
+    document.addEventListener('keydown', listener, true);
+    try {
+      render(<Refused work={() => Promise.resolve()} />);
+      const user = userEvent.setup();
+      await user.tab();
+      expect(popup()).not.toBeNull();
+      await user.keyboard('{Escape}');
+      expect(popup()).toBeNull();
+      expect(onDocumentEscape).toHaveBeenCalledTimes(1);
+    } finally {
+      document.removeEventListener('keydown', listener, true);
+    }
+  });
+
+  it('shows one tooltip at a time when focus and pointer are on different controls [TECH-12.3]', async () => {
+    function Two() {
+      const runner = useActionRunner();
+      return (
+        <LocalizationProvider>
+          <ActionButton
+            actionId="market.buy"
+            runner={runner}
+            available={false}
+            unavailableReason="market.unavailable.insufficientCredits"
+            onRun={() => undefined}
+          />
+          <ActionButton
+            actionId="market.sell"
+            runner={runner}
+            available={false}
+            unavailableReason="shortcut.noSelection"
+            onRun={() => undefined}
+          />
+        </LocalizationProvider>
+      );
+    }
+    render(<Two />);
+    const user = userEvent.setup();
+
+    await user.tab();
+    expect(document.body.querySelectorAll('[data-tooltip]')).toHaveLength(1);
+    expect(popup()).toHaveTextContent(REASON);
+
+    await user.hover(screen.getByRole('button', { name: /Sell/ }));
+    expect(document.body.querySelectorAll('[data-tooltip]')).toHaveLength(1);
+    expect(popup()).toHaveTextContent(/Select something/);
+  });
+
+  it('gives an icon-only control its full name and puts name and shortcut in the tooltip [TECH-12.3]', async () => {
+    function IconOnly() {
+      const runner = useActionRunner();
+      return (
+        <LocalizationProvider>
+          <ActionButton actionId="station.market" runner={runner} display="icon" onRun={() => undefined} />
+        </LocalizationProvider>
+      );
+    }
+    render(<IconOnly />);
+    const user = userEvent.setup();
+    const button = screen.getByRole('button', { name: MARKET });
+
+    // No visible label or shortcut badge on the button itself.
+    expect(button).toHaveTextContent('');
+    expect(button.querySelector('kbd')).toBeNull();
+    expect(button).toHaveAttribute('aria-keyshortcuts', 'M');
+
+    await user.hover(button);
+    expect(popup()).toHaveTextContent(MARKET);
+    expect(popup()?.querySelector('kbd')).toHaveTextContent('M');
+  });
+
+  it('keeps an icon-only control unavailable with its reason in the tooltip [FUNC-22.10]', async () => {
+    const work = vi.fn(() => Promise.resolve());
+    render(<Refused work={work} display="icon" />);
+    const user = userEvent.setup();
+    const button = screen.getByRole('button', { name: 'Buy Fusion S' });
+
+    expect(button).toHaveAccessibleDescription(REASON);
+    await user.hover(button);
+    expect(popup()).toHaveTextContent('Buy Fusion S');
+    expect(popup()).toHaveTextContent(REASON);
+    await user.click(button);
+    expect(work).not.toHaveBeenCalled();
+  });
+});
+

@@ -3,6 +3,7 @@ import { useId, useState, type JSX } from 'react';
 import type { ClientGateway } from '@gateway';
 
 import { ActionIcon, actionById, keyLabel, useActionShortcuts, useBindings, type ActionRunner } from '../actions';
+import { TooltipButton } from '../common/TooltipButton';
 import { GuidedBadge, GuidedHint } from '../guidance';
 import { useTranslate } from '../localization';
 import { DeparturePanel } from './DeparturePanel';
@@ -23,8 +24,9 @@ import type { PlayData } from '../frame/usePlayData';
  *
  * The services are spatially and visually distinct tiles, each with its own
  * icon and its own explanation, rather than rows of one universal table. A
- * tile a station does not offer stays visible and says why, so the player
- * learns what the station is rather than what is missing from the screen.
+ * tile a station does not offer stays visible and says why in its tooltip, so
+ * the player learns what the station is rather than what is missing from the
+ * screen, without the refusal reflowing the rail.
  *
  * Which surface is open is presentation state and lives here; everything the
  * surfaces show arrived from the engine.
@@ -148,16 +150,16 @@ export function StationScreen({
           const state = availability(panel);
           const key = bindings.byAction.get(panel) ?? null;
           return (
-            <button
+            <TooltipButton
               key={panel}
-              type="button"
               className={styles['tile']}
               data-action={panel}
               data-guided={guidedSurface === panel ? 'true' : undefined}
               aria-describedby={guidedSurface === panel ? guidedHintId : undefined}
               aria-current={open === panel ? 'page' : undefined}
               aria-keyshortcuts={key === null ? undefined : keyLabel(key)}
-              disabled={!state.available}
+              unavailable={!state.available}
+              reason={translate(state.reason ?? 'station.unavailable.service')}
               onClick={() => {
                 setOpen(panel);
               }}
@@ -170,7 +172,7 @@ export function StationScreen({
                 )}
               </span>
               {guidedSurface === panel && open !== panel ? <GuidedBadge /> : null}
-            </button>
+            </TooltipButton>
           );
         })}
       </nav>
@@ -221,11 +223,11 @@ export function StationScreen({
             const action = actionById(panel);
             const state = availability(panel);
             return (
-              <button
+              <TooltipButton
                 key={panel}
-                type="button"
                 className={styles['tile']}
-                disabled={!state.available}
+                unavailable={!state.available}
+                reason={translate(state.reason ?? 'station.unavailable.service')}
                 data-guided={guidedSurface === panel ? 'true' : undefined}
                 aria-describedby={guidedSurface === panel ? guidedHintId : undefined}
                 onClick={() => {
@@ -238,13 +240,9 @@ export function StationScreen({
                 </span>
                 {guidedSurface === panel ? <GuidedBadge /> : null}
                 <span className={styles['tileDetail']}>
-                  {state.available
-                    ? action.descriptionKey === null
-                      ? ''
-                      : translate(action.descriptionKey)
-                    : translate(state.reason ?? 'station.unavailable.service')}
+                  {action.descriptionKey === null ? '' : translate(action.descriptionKey)}
                 </span>
-              </button>
+              </TooltipButton>
             );
           })}
         </div>

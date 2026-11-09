@@ -1,7 +1,7 @@
 .wrapper {
+  position: relative;
   display: inline-flex;
   flex-direction: column;
-  gap: var(--gs-space-1);
   align-items: flex-start;
   max-width: 100%;
 }
@@ -23,11 +23,11 @@
   min-height: var(--gs-target-min);
 }
 
-.button:hover:not(:disabled) {
+.button:hover:not([aria-disabled='true']) {
   border-color: var(--gs-color-accent);
 }
 
-.button:disabled {
+.button[aria-disabled='true'] {
   cursor: not-allowed;
   color: var(--gs-color-text-muted);
   border-style: dashed;
@@ -61,10 +61,16 @@
   color: var(--gs-color-text-muted);
 }
 
-.reason {
-  font-size: var(--gs-font-small);
-  color: var(--gs-color-warn);
-  max-width: 28rem;
+/*
+ * The icon-only presentation for dense rows: a square control that still
+ * meets the minimum pointer target (WCAG 2.5.8). Its name and shortcut are in
+ * the tooltip and its accessible name.
+ */
+.iconOnly {
+  justify-content: center;
+  gap: 0;
+  padding: var(--gs-space-1);
+  min-width: var(--gs-target-min);
 }
 
 .primary {

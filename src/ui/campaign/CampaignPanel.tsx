@@ -3,6 +3,7 @@ import { useId, useState, type FormEvent, type JSX } from 'react';
 import type { CampaignSession, CampaignSessionState } from '@gateway';
 import type { ResumableSaveData, SaveSlotData, SaveStatusData } from '@protocol';
 
+import { TooltipButton } from '../common/TooltipButton';
 import { formatSimulationDuration } from '../format/duration';
 import { useTranslate } from '../localization';
 import styles from './CampaignPanel.module.css';
@@ -39,7 +40,9 @@ export function CampaignPanel({ session, state }: CampaignPanelProps): JSX.Eleme
 
   const start = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
-    if (name.trim().length === 0) {
+    // The start button is `aria-disabled` rather than disabled, so implicit
+    // submission is refused here too.
+    if (busy || name.trim().length === 0) {
       return;
     }
     void session.create(name);
@@ -61,9 +64,13 @@ export function CampaignPanel({ session, state }: CampaignPanelProps): JSX.Eleme
               {resumable.contentMatches ? null : (
                 <p className={styles['warning']}>{translate('campaign.contentChanged')}</p>
               )}
-              <button type="button" onClick={() => void session.resume()} disabled={busy}>
+              <TooltipButton
+                unavailable={busy}
+                reason={translate('campaign.busy')}
+                onClick={() => void session.resume()}
+              >
                 {translate('campaign.resume')}
-              </button>
+              </TooltipButton>
             </div>
           )}
 
@@ -81,9 +88,13 @@ export function CampaignPanel({ session, state }: CampaignPanelProps): JSX.Eleme
                 setName(event.target.value);
               }}
             />
-            <button type="submit" disabled={busy || name.trim().length === 0}>
+            <TooltipButton
+              type="submit"
+              unavailable={busy || name.trim().length === 0}
+              reason={translate(busy ? 'campaign.busy' : 'campaign.start.needsName')}
+            >
               {translate('campaign.start')}
-            </button>
+            </TooltipButton>
             {resumable === null ? null : (
               <p className={styles['warning']}>{translate('campaign.startReplaces')}</p>
             )}

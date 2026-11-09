@@ -266,11 +266,11 @@ describe('emergency controls while a command is pending', () => {
       </LocalizationProvider>,
     );
     await user.click(screen.getByRole('button', { name: /^Warp/ }));
-    expect(screen.getByRole('button', { name: /^Warp/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Warp/ })).toBeUnavailable();
 
     for (const name of [/^Pause|^Resume|^Time/, /^Stop/, /^Retreat/]) {
       const button = screen.getAllByRole('button', { name }).at(0);
-      expect(button).toBeEnabled();
+      expect(button).not.toBeUnavailable();
       await user.click(button as HTMLElement);
     }
     expect(ran).toEqual(['time.toggle', 'movement.stop', 'navigation.retreat']);

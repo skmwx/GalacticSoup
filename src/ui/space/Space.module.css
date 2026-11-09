@@ -785,3 +785,9 @@
 .title {
   font-size: calc(1.25rem * var(--gs-text-scale));
 }
+
+.objectButton[aria-disabled='true'] {
+  cursor: not-allowed;
+  border-style: dashed;
+  color: var(--gs-color-text-muted);
+}

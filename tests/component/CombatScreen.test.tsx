@@ -214,7 +214,7 @@ describe('combat commands', () => {
     const { sortie, opponent } = await arrivedAndLockable();
     const harness = await resume(sortie, 'Verge Belt');
 
-    expect(within(panel('Weapons')).getByRole('button', { name: /^Fire\s?E$/ })).toBeDisabled();
+    expect(within(panel('Weapons')).getByRole('button', { name: /^Fire\s?E$/ })).toBeUnavailable();
     expect(within(panel('Weapons')).getAllByText('Lock a target and select it to aim the weapons.').length)
       .toBeGreaterThan(0);
 
@@ -346,7 +346,7 @@ describe('wrecks and loot', () => {
     await harness.user.click(objectEntry(/Wreck/));
     const loot = panel('Wreck');
     expect(loot).toHaveAttribute('data-wreck', wreckId);
-    expect(await within(loot).findByRole('button', { name: 'Take 2 x Burned Alloy Plate' })).toBeEnabled();
+    expect(await within(loot).findByRole('button', { name: 'Take 2 x Burned Alloy Plate' })).not.toBeUnavailable();
 
     await harness.user.click(within(loot).getByRole('button', { name: /^Take all/ }));
     expect(await within(loot).findByText('The wreck is empty.')).toBeInTheDocument();
@@ -453,7 +453,7 @@ describe('before leaving', () => {
     expect(
       within(warnings).getByText('Weapon 1: This weapon has no ammunition loaded. Load a charge under Fitting.'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Undock/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^Undock/ })).not.toBeUnavailable();
 
     harness.gateway.dispose();
   });
@@ -480,7 +480,7 @@ describe('before leaving', () => {
 
     // It never blocks the undock: it asks once, listing the warning again.
     const undock = screen.getByRole('button', { name: /^Undock/ });
-    expect(undock).toBeEnabled();
+    expect(undock).not.toBeUnavailable();
     await harness.user.click(undock);
     const confirm = await screen.findByRole('dialog', { name: 'Undock with warnings?' });
     expect(within(confirm).getByText(warning)).toBeInTheDocument();
@@ -507,7 +507,7 @@ describe('returning to a reopened campaign', () => {
     await harness.user.click(screen.getByRole('button', { name: /^Pause/ }));
 
     await harness.user.click(screen.getByRole('button', { name: 'Market' }));
-    expect(await screen.findByRole('button', { name: 'Sell Fusion S' })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: 'Sell Fusion S' })).not.toBeUnavailable();
 
     harness.gateway.dispose();
   }, 30_000);

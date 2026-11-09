@@ -102,3 +102,15 @@ docs\02_TechnicalSpecification.md
 docs\human-input\CurrentState.md
 
 I've reviewed the game and found quite a number of UI elements that I'd like to fix, my findings are in docs\human-input\MVP-review-01.md. Please review it and make a phased implementation plan, each phase to be done by a coding agent in one session.
+
+# 025 Opus 5.5 Medium
+For context, read docs\00_GameDesignBrief.md
+docs\01_FunctionalSpecification.md
+docs\02_TechnicalSpecification.md
+docs\human-input\CurrentState.md
+
+I've reviewed the game and found quite a number of UI elements that I'd like to fix, my findings are in docs\human-input\MVP-review-01.md. 
+
+There is an implementation plan prepared in docs\MVPUIReview01ImplementationPlan.md , we are doing phase by phase implementation of it.
+
+Please implement UIR1-01.

@@ -94,7 +94,7 @@ describe('station hub', () => {
 
     expect(screen.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeInTheDocument();
     for (const service of ['Market', 'Hangar', 'Fitting', 'Services', 'Ship']) {
-      expect(screen.getByRole('button', { name: service })).toBeEnabled();
+      expect(screen.getByRole('button', { name: service })).not.toBeUnavailable();
     }
 
     harness.gateway.dispose();
@@ -258,7 +258,7 @@ describe('market', () => {
     await harness.user.type(within(dialog).getByLabelText('Quantity'), '5');
 
     await waitFor(() => {
-      expect(within(dialog).getByRole('button', { name: /Confirm/ })).toBeDisabled();
+      expect(within(dialog).getByRole('button', { name: /Confirm/ })).toBeUnavailable();
     });
     expect(
       within(dialog).getAllByText(/wallet does not have enough credits/)[0],
@@ -389,7 +389,7 @@ describe('fitting', () => {
 
     const apply = await screen.findByRole('button', { name: 'Apply fit' });
     await waitFor(() => {
-      expect(apply).toBeEnabled();
+      expect(apply).not.toBeUnavailable();
     });
     await harness.user.click(apply);
 
@@ -439,7 +439,7 @@ describe('services', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Confirm repair' });
 
     await waitFor(() => {
-      expect(within(dialog).getByRole('button', { name: /Confirm/ })).toBeDisabled();
+      expect(within(dialog).getByRole('button', { name: /Confirm/ })).toBeUnavailable();
     });
     expect(within(dialog).getAllByText(/already fully repaired and its capacitor is full/)[0]).toBeInTheDocument();
     // The capacitor the free repair would recharge is one of its figures.

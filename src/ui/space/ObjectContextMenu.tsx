@@ -39,7 +39,7 @@ export function ObjectContextMenu({
 
   useEffect(() => {
     returnFocus.current = document.activeElement;
-    const first = menu.current?.querySelector<HTMLElement>('button:not(:disabled)');
+    const first = menu.current?.querySelector<HTMLElement>("button:not(:disabled):not([aria-disabled='true'])");
     first?.focus();
 
     const onPointerDown = (event: PointerEvent): void => {

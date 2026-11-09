@@ -250,7 +250,7 @@ describe('the loss report', () => {
     });
     expect(
       await within(region('Ship lost')).findByRole('button', { name: 'Your wreck is the destination' }),
-    ).toBeDisabled();
+    ).toBeUnavailable();
 
     harness.gateway.dispose();
   }, 60_000);
@@ -316,7 +316,7 @@ describe('a pilot with no ship', () => {
     expect(within(summary).getByText('You have no ship, so there is no hold.')).toBeInTheDocument();
 
     await harness.user.click(screen.getByRole('button', { name: 'Departure' }));
-    expect(screen.getByRole('button', { name: /^Undock/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Undock/ })).toBeUnavailable();
     expect(
       screen.getByText('You have no ship. Buy a hull at the market before undocking.'),
     ).toBeInTheDocument();
@@ -335,11 +335,11 @@ describe('a pilot with no ship', () => {
 
     await harness.user.click(screen.getByRole('button', { name: 'Fitting' }));
     expect(screen.getByText('You have no ship to fit. Buy a hull at the market first.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Change fit/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Change fit/ })).toBeUnavailable();
 
     await harness.user.click(screen.getByRole('button', { name: 'Services' }));
     for (const name of ['Repair the ship', 'Resupply ammunition', 'Improve insurance']) {
-      expect(screen.getByRole('button', { name })).toBeDisabled();
+      expect(screen.getByRole('button', { name })).toBeUnavailable();
     }
     expect(
       screen.getAllByText('You have no ship to service. Buy a hull at the market first.').length,
@@ -370,7 +370,7 @@ describe('a pilot with no ship', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Confirm purchase' });
     const confirm = within(dialog).getByRole('button', { name: 'Confirm' });
     await waitFor(() => {
-      expect(confirm).toBeEnabled();
+      expect(confirm).not.toBeUnavailable();
     });
     await harness.user.click(confirm);
 
@@ -384,7 +384,7 @@ describe('a pilot with no ship', () => {
 
     await harness.user.click(screen.getByRole('button', { name: 'Departure' }));
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /^Undock/ })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /^Undock/ })).not.toBeUnavailable();
     });
     await harness.user.click(screen.getByRole('button', { name: 'Ship' }));
     expect(await screen.findByText('Wayfarer')).toBeInTheDocument();
@@ -429,7 +429,7 @@ describe('recovery-grant equipment', () => {
     await harness.user.click(within(granted).getByRole('button', { name: /^Sell / }));
     const dialog = await screen.findByRole('dialog', { name: 'Confirm sale' });
     expect(await within(dialog).findByText('Recovery-grant items cannot be sold.')).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Confirm' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Confirm' })).toBeUnavailable();
 
     expect(harness.issues).toEqual([]);
     harness.gateway.dispose();
@@ -456,8 +456,8 @@ describe('going back for the wreck', () => {
       expect(destinations.selectedEncounterId).toBeNull();
     });
     expect(await screen.findByText('Destination: your wreck at Outpost Cradle')).toBeInTheDocument();
-    expect(within(row).getByRole('button', { name: 'Chosen' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /^Undock/ })).toBeEnabled();
+    expect(within(row).getByRole('button', { name: 'Chosen' })).toBeUnavailable();
+    expect(screen.getByRole('button', { name: /^Undock/ })).not.toBeUnavailable();
 
     harness.gateway.dispose();
   }, 60_000);
