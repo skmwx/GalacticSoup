@@ -5,13 +5,13 @@ This is an MVP review done by a human.
 # UI
 
 ## Overall
-Collapse the two headers into one, two take too much valuable vertical space.
+Collapse the three headers into one, 3 take too much valuable vertical space.
 
-Game name is not needed (but keep the icon). Player name and the current system stay. "Engine ready over a dedicated worker." is not needed. Settings become game menu button without text label, just the icon currently used for settings. Under game menu, there are current game menu items plus settings.
+Game name is not needed (but keep the icon). Player name and the current system stay. "Engine ready over a dedicated worker." is not needed. Settings should become a game menu button without text label, just the icon currently used for settings. Under game menu, there should be current game menu items, and an entry for "settings", which should lead to the settings as they are now.
 
 Sound and alert should be moved to settings.
 
-When a button is disabled for some reason, don't write the reason next to it distorting the UI. Make reason to appear in the tooltip.
+When a button is disabled for some reason in any view, don't write the reason next to it distorting the UI. Make the reason to appear in the tooltip.
 
 ## Overview
 When docked, the overview main section has buttons that are duplicates of left hand menu. Remove them.
@@ -50,10 +50,10 @@ Similar with resupply ammunition.
 Site selection should happen in space, not at departure.
 
 ## In Space
- Harbor should be one of the destinations, no need for a separate retreat button.
+Harbor should be one of the destinations, no need for a separate retreat button.
 
- Remove "Coordinates & point navigation" drop down, and make it a right click in the radar view and if it happens to be on an empty space, have "Set course" menu.
+Remove "Coordinates & point navigation" drop down, and make it a right click in the radar view and if it happens to be on an empty space, have "Set course" menu.
 
- Remove "Your ship" from the list of objects present in the sector.
+Remove "Your ship" from the list of objects present in the sector.
 
- Make weapons panel 
+Combine weapons panel and equipment panel (where the shiels booster is)
