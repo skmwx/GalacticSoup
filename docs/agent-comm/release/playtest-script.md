@@ -90,7 +90,8 @@ anything that surprised you.
 **Input and presentation (MVP-AC-03, MVP-AC-10)**
 
 - [ ] Fight the Pirate Scout with the keyboard alone, using the keys the buttons show.
-- [ ] Fight it again with the mouse alone, pausing to give orders.
+- [ ] Fight it again with the mouse alone, pausing to give orders. Right-click empty space in the
+      radar and use Set course at least once.
 - [ ] In Settings, change the interface size, the text size, the contrast and reduced motion. Is the
       game still readable and usable at each?
 - [ ] Rebind one key in Settings and use it.

@@ -46,6 +46,11 @@ import type { SitePositions } from './useSiteMotion';
  * object list beside it is the control surface, so selection never depends on
  * reaching a shape inside an SVG.
  *
+ * A secondary click on an object opens that object's commands; on empty space
+ * it opens the point menu with the world point under the pointer, converted
+ * through the SVG transform and the camera at that moment. The point menu's
+ * course point is drawn as a crosshair until the menu closes.
+ *
  * @implements FUNC-19.2, FUNC-9.1, TECH-12.2, MVP-AC-03, MVP-AC-04
  */
 
@@ -62,11 +67,12 @@ export interface SiteViewProps {
   onSelect(objectId: string | null): void;
   /** Panning by hand, in pixels. */
   onPan(deltaPx: Point): void;
-  /** True while the player is choosing a destination point. */
-  readonly choosingPoint: boolean;
-  onChoosePoint(pointKm: Point): void;
   /** A secondary click on an object, at a position in the page. */
   onContextMenu?(objectId: string, pagePoint: Point): void;
+  /** A secondary click on empty space: the world point under it, and where in the page. */
+  onPointMenu?(pointKm: Point, pagePoint: Point): void;
+  /** The point an open point menu would set a course to, drawn as a crosshair. */
+  readonly coursePoint?: Point | null;
 }
 
 /** Transparent hit targets are at least this wide (Technical Specification 12.2). */
@@ -87,9 +93,9 @@ export function SiteView({
   showRanges,
   onSelect,
   onPan,
-  choosingPoint,
-  onChoosePoint,
   onContextMenu,
+  onPointMenu,
+  coursePoint = null,
 }: SiteViewProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
@@ -134,21 +140,25 @@ export function SiteView({
       onSelect(objectId);
       return;
     }
-    if (choosingPoint) {
-      onChoosePoint(clickedPoint(event, camera, viewport));
-      return;
-    }
     onSelect(null);
   };
 
   const onContext = (event: ReactMouseEvent<SVGSVGElement>): void => {
     const objectId = objectIdAt(event.target);
-    if (objectId === null || onContextMenu === undefined) {
+    const pagePoint = { x: event.clientX, y: event.clientY };
+    if (objectId !== null) {
+      // An object's own menu, never a course to the point beneath it.
+      if (onContextMenu === undefined) return;
+      event.preventDefault();
+      onSelect(objectId);
+      onContextMenu(objectId, pagePoint);
+      return;
+    }
+    if (onPointMenu === undefined) {
       return;
     }
     event.preventDefault();
-    onSelect(objectId);
-    onContextMenu(objectId, { x: event.clientX, y: event.clientY });
+    onPointMenu(clickedPoint(event, camera, viewport), pagePoint);
   };
 
   if (runtime === null) {
@@ -171,13 +181,14 @@ export function SiteView({
   return (
     <svg
       className={styles['view']}
-      data-choosing={choosingPoint ? 'true' : 'false'}
+      data-course={coursePoint === null ? 'false' : 'true'}
       viewBox={`0 0 ${viewport.widthPx} ${viewport.heightPx}`}
       role="img"
       aria-label={translate('space.view.label', {
         site: translate(runtime.siteNameKey),
         objects: runtime.objects.length,
       })}
+      aria-description={translate('space.view.hint')}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -213,6 +224,7 @@ export function SiteView({
       {/* 3. paths and intent */}
       <g className={styles['layerIntent']} data-layer="intent">
         {player === null ? null : intentPath(site, runtime.objects, player, camera, viewport, positionOf)}
+        {coursePoint === null ? null : <CourseMarker at={worldToScreen(camera, viewport, coursePoint)} />}
         {runtime.objects.map((object) => {
           const from = worldToScreen(camera, viewport, positionOf(object));
           const speed = Math.hypot(object.velocity.x, object.velocity.y);
@@ -369,6 +381,16 @@ const VECTOR_SECONDS = 4;
 function objectIdAt(target: EventTarget | null): string | null {
   const element = target as Element | null;
   return element?.closest?.('[data-object-id]')?.getAttribute('data-object-id') ?? null;
+}
+
+/** The point an open point menu would set a course to. */
+function CourseMarker({ at }: { readonly at: Point }): JSX.Element {
+  return (
+    <g className={styles['courseMarker']} data-course-marker="true" transform={`translate(${at.x} ${at.y})`}>
+      <circle r={7} />
+      <path d="M0,-13 L0,-4 M0,4 L0,13 M-13,0 L-4,0 M4,0 L13,0" />
+    </g>
+  );
 }
 
 function SelectionBrackets(): JSX.Element {
@@ -647,12 +669,12 @@ function intentPath(
 }
 
 function clickedPoint(
-  event: ReactPointerEvent<SVGSVGElement>,
+  event: ReactMouseEvent<SVGSVGElement>,
   camera: Camera,
   viewport: Viewport,
 ): Point {
   // The cockpit gives the schematic a bounded height. Account for SVG
-  // letterboxing so choosing a point still lands exactly under the pointer.
+  // letterboxing so the chosen point lands exactly under the pointer.
   const matrix = event.currentTarget.getScreenCTM?.();
   if (matrix != null) {
     const point = event.currentTarget.createSVGPoint();

@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type JSX, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type JSX,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from 'react';
 
 import { createPortal } from 'react-dom';
 
@@ -10,6 +18,7 @@ import type { PlayData } from '../frame/usePlayData';
 import { FlightReadouts } from '../frame/FlightReadouts';
 import { CombatLog } from './CombatLog';
 import { CommandBar } from './CommandBar';
+import { CourseCommands } from './CourseCommands';
 import { EncounterPanel } from './EncounterPanel';
 import { LocksPanel } from './LocksPanel';
 import { LootPanel, takeEverything } from './LootPanel';
@@ -23,7 +32,7 @@ import { SiteView } from './SiteView';
 import styles from './Space.module.css';
 import { TravelStatus } from './TravelStatus';
 import { WeaponsPanel } from './WeaponsPanel';
-import type { Point, Viewport } from './camera';
+import { worldToScreen, type Point, type Viewport } from './camera';
 import { fireAvailability, weaponTargetId } from './tactical';
 import { useCamera } from './useCamera';
 import { useReducedMotion } from '../preferences/useReducedMotion';
@@ -62,10 +71,21 @@ export interface SpaceScreenProps {
 /** The drawing's coordinate space. CSS scales it; the numbers stay stable. */
 export const SPACE_VIEWPORT: Viewport = { widthPx: 960, heightPx: 600 };
 
-interface MenuState {
-  readonly objectId: string;
-  readonly position: Point;
-}
+/**
+ * An open context menu: an object's commands, or the course to a point in
+ * empty space. The point is fixed in world kilometres when the menu opens, so
+ * the camera following the ship cannot move the destination; only the arrow
+ * keys move it, on purpose.
+ */
+type MenuState =
+  | { readonly kind: 'object'; readonly objectId: string; readonly position: Point }
+  | { readonly kind: 'point'; readonly pointKm: Point; readonly position: Point };
+
+/** How far one arrow key moves a course point, in screen pixels; Shift moves five times as far. */
+export const COURSE_NUDGE_PX = 24;
+
+/** How far from the chosen point the point menu opens, in pixels. */
+const COURSE_MENU_OFFSET_PX = 16;
 
 export function SpaceScreen({
   data,
@@ -84,8 +104,6 @@ export function SpaceScreen({
   const reducedMotion = useReducedMotion();
   const positions = useSiteMotion({ site, paused, reducedMotion });
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [choosingPoint, setChoosingPoint] = useState(false);
-  const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
   const [showRanges, setShowRanges] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const stage = useRef<HTMLDivElement | null>(null);
@@ -118,7 +136,8 @@ export function SpaceScreen({
   const objects = runtime?.objects ?? [];
   const player = objects.find((object) => object.player) ?? null;
   const selected = objects.find((object) => object.id === selectedId) ?? null;
-  const menuObject = menu === null ? null : (objects.find((object) => object.id === menu.objectId) ?? null);
+  const menuObject =
+    menu?.kind !== 'object' ? null : (objects.find((object) => object.id === menu.objectId) ?? null);
   const targetId = weaponTargetId(combat, selectedId);
   const fire = fireAvailability(combat, targetId);
 
@@ -130,11 +149,17 @@ export function SpaceScreen({
     }
   }, [selectedId, selected]);
 
+  // An object menu does not outlive its object, nor a point menu its site:
+  // entering warp leaves nothing to set a course in.
+  const siteInstanceId = runtime?.instanceId ?? null;
   useEffect(() => {
-    if (menu !== null && menuObject === null) {
+    if (menu?.kind === 'object' && menuObject === null) {
       setMenu(null);
     }
   }, [menu, menuObject]);
+  useEffect(() => {
+    setMenu((previous) => (previous?.kind === 'point' ? null : previous));
+  }, [siteInstanceId]);
 
   // Selecting a wreck opens it; selecting anything else closes it.
   const { openWreck, openWreckId } = data;
@@ -187,14 +212,73 @@ export function SpaceScreen({
     setSelectedId(candidates[next]?.id ?? null);
   };
 
-  const openMenuAt = (objectId: string, pagePoint: Point): void => {
+  const stagePosition = (pagePoint: Point): Point => {
     const box = stage.current?.getBoundingClientRect();
+    return {
+      x: Math.max(0, pagePoint.x - (box?.left ?? 0)),
+      y: Math.max(0, pagePoint.y - (box?.top ?? 0)),
+    };
+  };
+
+  const openMenuAt = (objectId: string, pagePoint: Point): void => {
+    setMenu({ kind: 'object', objectId, position: stagePosition(pagePoint) });
+  };
+
+  const openPointMenu = (pointKm: Point, pagePoint: Point): void => {
+    // Opened just beside the point, so the crosshair it sets a course to stays visible.
+    const at = stagePosition(pagePoint);
     setMenu({
-      objectId,
-      position: {
-        x: Math.max(0, pagePoint.x - (box?.left ?? 0)),
-        y: Math.max(0, pagePoint.y - (box?.top ?? 0)),
-      },
+      kind: 'point',
+      pointKm: roundedPoint(pointKm),
+      position: { x: at.x + COURSE_MENU_OFFSET_PX, y: at.y + COURSE_MENU_OFFSET_PX },
+    });
+  };
+
+  /** Where a world point is drawn, in page pixels, through the drawing's own transform. */
+  const pagePointOf = (pointKm: Point): Point => {
+    const drawing = stage.current?.querySelector('svg') ?? null;
+    const local = worldToScreen(camera.camera, viewport, pointKm);
+    const matrix = drawing?.getScreenCTM?.() ?? null;
+    if (drawing !== null && matrix !== null) {
+      const point = drawing.createSVGPoint();
+      point.x = local.x;
+      point.y = local.y;
+      const page = point.matrixTransform(matrix);
+      return { x: page.x, y: page.y };
+    }
+    const box = drawing?.getBoundingClientRect();
+    const scale = box === undefined || box.width === 0 ? 1 : box.width / viewport.widthPx;
+    return { x: (box?.left ?? 0) + local.x * scale, y: (box?.top ?? 0) + local.y * scale };
+  };
+
+  /**
+   * The keyboard path to a course: the point menu on the view's centre, which
+   * the arrow keys then move. Without a site there is nowhere to set a course.
+   */
+  const openPointMenuAtCentre = (): string | undefined => {
+    if (runtime === null) {
+      const move = commandAvailability(site?.commands ?? [], 'movement.moveToPoint');
+      return move.unavailableReason ?? 'shortcut.unavailable';
+    }
+    const centreKm = camera.camera.centreKm;
+    openPointMenu(centreKm, pagePointOf(centreKm));
+    return undefined;
+  };
+
+  const nudgeCoursePoint = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+    if (menu?.kind !== 'point') return;
+    const step = ((event.shiftKey ? 5 : 1) * COURSE_NUDGE_PX) / camera.camera.pixelsPerKm;
+    const delta =
+      event.key === 'ArrowUp' ? { x: 0, y: step }
+      : event.key === 'ArrowDown' ? { x: 0, y: -step }
+      : event.key === 'ArrowLeft' ? { x: -step, y: 0 }
+      : event.key === 'ArrowRight' ? { x: step, y: 0 }
+      : null;
+    if (delta === null) return;
+    event.preventDefault();
+    setMenu({
+      ...menu,
+      pointKm: roundedPoint({ x: menu.pointKm.x + delta.x, y: menu.pointKm.y + delta.y }),
     });
   };
 
@@ -204,6 +288,7 @@ export function SpaceScreen({
     // Anchored beside the list entry but kept inside the stage, so it never
     // opens off-screen when the list sits below the view on a narrow layout.
     setMenu({
+      kind: 'object',
       objectId,
       position: {
         x: Math.max(0, Math.min(box.left - (stageBox?.left ?? 0), (stageBox?.width ?? 0) - 240)),
@@ -219,6 +304,7 @@ export function SpaceScreen({
     'space.ranges': () => {
       setShowRanges((previous) => !previous);
     },
+    'space.setCourse': openPointMenuAtCentre,
     'space.selectNext': () => {
       cycleSelection(1);
     },
@@ -304,11 +390,9 @@ export function SpaceScreen({
           showRanges={showRanges}
           onSelect={setSelectedId}
           onPan={camera.panBy}
-          choosingPoint={choosingPoint}
-          onChoosePoint={(chosen) => {
-            setPoint({ x: round(chosen.x), y: round(chosen.y) });
-          }}
           onContextMenu={openMenuAt}
+          onPointMenu={openPointMenu}
+          coursePoint={menu?.kind === 'point' ? menu.pointKm : null}
         />
         <div className={styles['viewControls']}>
           <ActionButton actionId="space.zoomIn" runner={runner} onRun={camera.zoomIn} />
@@ -327,8 +411,43 @@ export function SpaceScreen({
               setShowRanges((previous) => !previous);
             }}
           />
+          <ActionButton
+            actionId="space.setCourse"
+            runner={runner}
+            display="icon"
+            available={runtime !== null}
+            unavailableReason={
+              commandAvailability(site.commands, 'movement.moveToPoint').unavailableReason ?? 'shortcut.unavailable'
+            }
+            expanded={menu?.kind === 'point'}
+            onRun={() => {
+              openPointMenuAtCentre();
+            }}
+          />
         </div>
-        {menu === null || menuObject === null ? null : (
+        {menu?.kind === 'point' && runtime !== null ? (
+          <ObjectContextMenu
+            kind="point"
+            label={translate('space.course.menu')}
+            position={menu.position}
+            onClose={() => {
+              setMenu(null);
+            }}
+            onKeyDown={nudgeCoursePoint}
+          >
+            <CourseCommands
+              data={data}
+              site={site}
+              runner={runner}
+              pointKm={menu.pointKm}
+              shipKm={playerPosition}
+              onDone={() => {
+                setMenu(null);
+              }}
+            />
+          </ObjectContextMenu>
+        ) : null}
+        {menu?.kind !== 'object' || menuObject === null ? null : (
           <ObjectContextMenu
             label={translate('tactical.menu.label', {
               name: menuObject.player ? translate('space.object.you') : translate(menuObject.nameKey),
@@ -428,9 +547,6 @@ export function SpaceScreen({
         selected={selected}
         runner={runner}
         simulationTimeMs={simulationTimeMs}
-        choosingPoint={choosingPoint}
-        onChoosingPointChange={setChoosingPoint}
-        point={point}
         rangeKm={rangeKm}
         onRangeChange={setRangeKm}
       />
@@ -457,8 +573,14 @@ export function SpaceScreen({
   );
 }
 
+/** A course point to a tenth of a kilometre, as it is announced and sent. */
+function roundedPoint(point: Point): Point {
+  return { x: round(point.x), y: round(point.y) };
+}
+
 function round(value: number): number {
-  return Math.round(value * 10) / 10;
+  // `+ 0` turns a negative zero into zero, so "-0" is never announced.
+  return Math.round(value * 10) / 10 + 0;
 }
 
 /** Preserve the scene's selection state while placing context beside the activity. */

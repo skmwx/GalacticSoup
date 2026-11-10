@@ -120,21 +120,88 @@ test.describe('traversal', () => {
     await expect(page.getByText('Approaching')).toBeVisible();
   });
 
-  test('sets a course by clicking the schematic view [FUNC-19.2]', async ({ page }) => {
+  test('sets a course from the radar point menu after pan, zoom and resize [FUNC-19.2, FUNC-7.1]', async ({ page }) => {
     await undock(page);
-
-    await page.getByText('Coordinates & point navigation', { exact: true }).click();
-    await page.getByRole('button', { name: 'Pick a point' }).click();
     const view = page.getByRole('img', { name: /Schematic view/ });
-    await expect(view).toHaveAttribute('data-choosing', 'true');
+    const pointMenu = page.getByRole('group', { name: 'Commands for empty space' });
+    const marker = page.locator('[data-course-marker="true"]');
+
+    // The coordinates disclosure is gone.
+    await expect(page.getByText('Coordinates & point navigation')).toHaveCount(0);
+    await expect(page.getByLabel('X (km)')).toHaveCount(0);
+
+    /**
+     * Right-clicks empty space at a share of the view, then checks that the
+     * course point is drawn exactly under the pointer: the conversion through
+     * the SVG transform and the camera lands where the player clicked.
+     */
+    const rightClickAt = async (shareX: number, shareY: number): Promise<void> => {
+      const box = await view.boundingBox();
+      if (box === null) throw new Error('The view was not laid out.');
+      const x = box.x + box.width * shareX;
+      const y = box.y + box.height * shareY;
+      await page.mouse.click(x, y, { button: 'right' });
+      await expect(pointMenu).toBeVisible();
+      const drawn = await marker.boundingBox();
+      if (drawn === null) throw new Error('The course point was not drawn.');
+      expect(Math.abs(drawn.x + drawn.width / 2 - x)).toBeLessThan(2.5);
+      expect(Math.abs(drawn.y + drawn.height / 2 - y)).toBeLessThan(2.5);
+    };
+    const announcedPoint = async (): Promise<{ x: number; y: number }> => {
+      const value = await pointMenu.getByRole('status').getAttribute('data-course-point');
+      const [x, y] = (value ?? '').split(',').map(Number);
+      return { x: x ?? Number.NaN, y: y ?? Number.NaN };
+    };
+
+    // Opening and cancelling gives no order.
+    await rightClickAt(0.25, 0.3);
+    const first = await announcedPoint();
+    await page.keyboard.press('Escape');
+    await expect(pointMenu).toHaveCount(0);
+    await expect(marker).toHaveCount(0);
+    await expect(page.locator('[data-readout="order"]')).not.toHaveText('Moving to a point');
+
+    // Zoomed in, the same place on screen is a point nearer the centre.
+    await page.getByRole('button', { name: /^Zoom in/ }).click();
+    await rightClickAt(0.25, 0.3);
+    const zoomed = await announcedPoint();
+    expect(zoomed).not.toEqual(first);
+    await page.keyboard.press('Escape');
+
+    // Dragging the view pans it; the same place on screen is then another point.
     const box = await view.boundingBox();
     if (box === null) throw new Error('The view was not laid out.');
-    await view.click({ position: { x: box.width * 0.25, y: box.height * 0.25 } });
+    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.6);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.6 + 120, box.y + box.height * 0.6 + 40, { steps: 6 });
+    await page.mouse.up();
+    await rightClickAt(0.25, 0.3);
+    const panned = await announcedPoint();
+    expect(panned.x).toBeLessThan(zoomed.x);
+    expect(panned.y).toBeGreaterThan(zoomed.y);
+    await page.keyboard.press('Escape');
 
-    // The click filled the coordinates, and the course is still an engine
-    // command rather than something the view did on its own.
-    await expect(page.getByLabel('X (km)')).not.toHaveValue('0');
-    await page.getByRole('button', { name: 'Set course' }).click();
-    await expect(page.getByText('Moving to a point')).toBeVisible();
+    // A narrower window rescales the drawing; the point still lands under the pointer.
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await rightClickAt(0.7, 0.6);
+    const chosen = await announcedPoint();
+
+    await pointMenu.getByRole('button', { name: /^Set course/ }).click();
+    await expect(pointMenu).toHaveCount(0);
+    await expect(page.locator('[data-readout="order"]')).toHaveText('Moving to a point');
+    await expect(page.locator('[data-intent="moveToPoint"]')).toHaveCount(1);
+    expect(Number.isFinite(chosen.x) && Number.isFinite(chosen.y)).toBe(true);
+  });
+
+  test('opens object commands, not a course, on a secondary click on an object [FUNC-19.2]', async ({ page }) => {
+    await undock(page);
+    const station = page.locator('[data-object="station"]');
+    const box = await station.boundingBox();
+    if (box === null) throw new Error('The station was not drawn.');
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { button: 'right' });
+
+    await expect(page.getByRole('group', { name: 'Commands for Borrell Harbour' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Commands for empty space' })).toHaveCount(0);
+    await expect(page.locator('[data-course-marker="true"]')).toHaveCount(0);
   });
 });

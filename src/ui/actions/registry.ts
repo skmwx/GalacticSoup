@@ -362,6 +362,16 @@ export const ACTIONS: readonly ActionDefinition[] = [
     category: 'flight',
   },
   {
+    // Opens the radar's point menu at the centre of the view: the keyboard
+    // equivalent of a secondary click on empty space.
+    id: 'space.setCourse',
+    labelKey: 'action.space.setCourse',
+    descriptionKey: null,
+    icon: 'moveTo',
+    shortcut: '.',
+    category: 'flight',
+  },
+  {
     id: 'movement.stop',
     labelKey: 'action.movement.stop',
     descriptionKey: null,

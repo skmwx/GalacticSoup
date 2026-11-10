@@ -127,6 +127,43 @@ test.describe('space accessibility', () => {
     await expect(page.getByText(/Aligning for warp/).first()).toBeVisible();
   });
 
+  test('sets a course with the keyboard alone through the point menu [FUNC-20, FUNC-19.2, TECH-12.3]', async ({ page }) => {
+    await undock(page);
+    const view = page.getByRole('img', { name: /Schematic view/ });
+    await expect(view).toHaveAccessibleDescription('Right-click empty space to set a course.');
+
+    // The remappable set-course key opens the point menu on the view's centre,
+    // announces the point and puts focus on Set course.
+    await page.locator('body').click({ position: { x: 1, y: 1 } });
+    await page.keyboard.press('.');
+    const menu = page.getByRole('group', { name: 'Commands for empty space' });
+    await expect(menu).toBeVisible();
+    const setCourse = menu.getByRole('button', { name: /^Set course/ });
+    await expect(setCourse).toBeFocused();
+    const status = menu.getByRole('status');
+    await expect(status).toHaveText(/from your ship/);
+    await audit(page);
+
+    // The arrow keys move the point; the announcement follows it.
+    const before = await status.textContent();
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Shift+ArrowUp');
+    await expect(status).not.toHaveText(before ?? '');
+
+    await page.keyboard.press('Enter');
+    await expect(menu).toHaveCount(0);
+    await expect(page.locator('[data-readout="order"]')).toHaveText('Moving to a point');
+
+    // The radar button opens the same menu and takes focus back on Escape.
+    const button = page.getByRole('button', { name: /^Set course on the radar/ });
+    await button.focus();
+    await page.keyboard.press('Enter');
+    await expect(menu).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
+    await expect(button).toBeFocused();
+  });
+
   test('stays readable at a doubled interface scale [TECH-12.3]', async ({ page }) => {
     await undock(page);
     await page.evaluate(() => {

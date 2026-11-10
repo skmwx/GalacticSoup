@@ -34,16 +34,10 @@
   padding: var(--gs-space-2);
   min-width: 0;
 }
-.panelDisclosure > summary, .pointControls > summary {
+.panelDisclosure > summary {
   cursor: pointer;
   color: var(--gs-color-text-muted);
   font-size: var(--gs-font-small);
-}
-.pointControls {
-  order: 4;
-}
-.pointControls[open] > .commandRow {
-  margin-top: var(--gs-space-2);
 }
 
 .heading {
@@ -81,9 +75,6 @@
   touch-action: none;
 }
 
-.view[data-choosing='true'] {
-  cursor: crosshair;
-}
 
 .viewControls {
   position: absolute;
@@ -126,6 +117,14 @@
   stroke: var(--gs-color-accent);
   stroke-width: 1.5;
   stroke-dasharray: 6 4;
+}
+
+/* The point an open point menu would set a course to: a ringed cross, not only a colour. */
+.courseMarker {
+  fill: none;
+  stroke: var(--gs-color-accent);
+  stroke-width: 2;
+  pointer-events: none;
 }
 
 .vector {
@@ -616,12 +615,25 @@
   display: flex;
   flex-direction: column;
   gap: var(--gs-space-2);
-  max-width: min(22rem, 90%);
+  /* Its own width, so a menu clamped near the right edge does not shrink to a sliver. */
+  width: max-content;
+  max-width: min(22rem, 100%);
   padding: var(--gs-space-2);
   border: 1px solid var(--gs-color-accent);
   border-radius: var(--gs-radius);
   background: var(--gs-color-surface);
   box-shadow: 0 4px 16px rgb(0 0 0 / 50%);
+}
+
+.contextMenu[data-context-menu='point'] {
+  max-width: min(17rem, 100%);
+}
+
+.courseCommands {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gs-space-1);
 }
 
 .space > .error {

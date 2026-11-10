@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -81,6 +81,15 @@ async function selectedEncounter(harness: Harness): Promise<string | null> {
   const response = await harness.gateway.request('navigation.destinations', EMPTY_PAYLOAD);
   if (!response.ok) throw new Error('The engine refused navigation.destinations.');
   return response.data.selectedEncounterId;
+}
+
+/** The world point a point menu's announcement carries, in kilometres. */
+function coursePoint(status: HTMLElement): { x: number; y: number } {
+  const [x, y] = (status.getAttribute('data-course-point') ?? '').split(',').map(Number);
+  if (x === undefined || y === undefined || !Number.isFinite(x) || !Number.isFinite(y)) {
+    throw new Error('The point menu announced no point.');
+  }
+  return { x, y };
 }
 
 describe('leaving the station', () => {
@@ -311,21 +320,112 @@ describe('command bar', () => {
     harness.gateway.dispose();
   });
 
-  it('issues a move-to-point order from the keyboard-operable fields [MVP-AC-03, FUNC-20]', async () => {
+  it('sets a course from the keyboard through the point menu, sending nothing until Set course [MVP-AC-03, FUNC-7.1, FUNC-20]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await undock(harness);
+    const before = (await site(harness)).movementOrder;
+
+    // The set-course key (.) opens the point menu on the view's centre.
+    await harness.user.keyboard('.');
+    const menu = await screen.findByRole('group', { name: 'Commands for empty space' });
+    const announced = within(menu).getByRole('status');
+    expect(announced).toHaveTextContent(/^Course point: x .+ km, y .+ km, .+ km from your ship\.$/);
+    expect(within(menu).getByRole('button', { name: /^Set course/ })).toHaveFocus();
+    const view = screen.getByRole('img', { name: /Schematic view/ });
+    expect(view).toHaveAttribute('data-course', 'true');
+    expect(view).toHaveAccessibleDescription('Right-click empty space to set a course.');
+
+    // The arrow keys move the point: one step is 24 px, which is 2 km at the
+    // opening zoom; Shift moves five steps.
+    const start = coursePoint(announced);
+    await harness.user.keyboard('{ArrowRight}{Shift>}{ArrowUp}{/Shift}');
+    const moved = coursePoint(announced);
+    expect(moved.x).toBeCloseTo(start.x + 2, 5);
+    expect(moved.y).toBeCloseTo(start.y + 10, 5);
+    // Opening and moving the point gave no order.
+    expect((await site(harness)).movementOrder).toEqual(before);
+
+    await harness.user.click(within(menu).getByRole('button', { name: /^Set course/ }));
+
+    await waitFor(async () => {
+      expect((await site(harness)).movementOrder).toEqual({ kind: 'moveToPoint', point: moved });
+    });
+    expect(screen.queryByRole('group', { name: 'Commands for empty space' })).toBeNull();
+    expect(view).toHaveAttribute('data-course', 'false');
+    // There are no coordinate fields any more.
+    expect(screen.queryByLabelText('X (km)')).toBeNull();
+    expect(screen.queryByText('Coordinates & point navigation')).toBeNull();
+
+    harness.gateway.dispose();
+  });
+
+  it('opens the point menu on a secondary click on empty space, at the world point under it [FUNC-19.2, TECH-12.2]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await undock(harness);
+    const before = (await site(harness)).movementOrder;
+    const view = screen.getByRole('img', { name: /Schematic view/ });
+
+    // Two clicks 48 px apart on each axis are 4 km apart at the opening zoom,
+    // with the world's y axis pointing up.
+    fireEvent.contextMenu(view, { clientX: 300, clientY: 200 });
+    const first = coursePoint(within(await screen.findByRole('group', { name: 'Commands for empty space' })).getByRole('status'));
+    await harness.user.keyboard('{Escape}');
+    expect(screen.queryByRole('group', { name: 'Commands for empty space' })).toBeNull();
+
+    fireEvent.contextMenu(view, { clientX: 348, clientY: 152 });
+    const menu = await screen.findByRole('group', { name: 'Commands for empty space' });
+    const second = coursePoint(within(menu).getByRole('status'));
+    expect(second.x - first.x).toBeCloseTo(4, 5);
+    expect(second.y - first.y).toBeCloseTo(4, 5);
+
+    // Closing it sends nothing.
+    await harness.user.click(within(menu).getByRole('button', { name: 'Close menu' }));
+    expect((await site(harness)).movementOrder).toEqual(before);
+
+    fireEvent.contextMenu(view, { clientX: 348, clientY: 152 });
+    await harness.user.click(
+      within(await screen.findByRole('group', { name: 'Commands for empty space' })).getByRole('button', { name: /^Set course/ }),
+    );
+    await waitFor(async () => {
+      expect((await site(harness)).movementOrder).toEqual({ kind: 'moveToPoint', point: second });
+    });
+
+    harness.gateway.dispose();
+  });
+
+  it('opens an object menu, not the point menu, on a secondary click on an object [FUNC-19.2, TECH-12.3]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await undock(harness);
+    const view = screen.getByRole('img', { name: /Schematic view/ });
+    const stationId = (await site(harness)).site?.objects.find((object) => object.kind === 'station')?.id;
+    const hit = view.querySelector(`[data-object-id="${String(stationId)}"]`);
+    if (hit === null) throw new Error('The station has no hit target.');
+
+    fireEvent.contextMenu(hit, { clientX: 10, clientY: 10 });
+
+    expect(await screen.findByRole('group', { name: 'Commands for Borrell Harbour' })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Commands for empty space' })).toBeNull();
+    expect(view).toHaveAttribute('data-course', 'false');
+
+    harness.gateway.dispose();
+  });
+
+  it('opens the point menu from the radar button, and gives focus back when it closes [FUNC-20, TECH-12.3]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
 
-    await harness.user.clear(screen.getByLabelText('X (km)'));
-    await harness.user.type(screen.getByLabelText('X (km)'), '6');
-    await harness.user.clear(screen.getByLabelText('Y (km)'));
-    await harness.user.type(screen.getByLabelText('Y (km)'), '-3');
-    await harness.user.click(screen.getByRole('button', { name: 'Set course' }));
+    const button = screen.getByRole('button', { name: /^Set course on the radar/ });
+    await harness.user.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    const menu = await screen.findByRole('group', { name: 'Commands for empty space' });
+    await harness.user.keyboard('{Escape}');
 
-    await waitFor(async () => {
-      const current = await site(harness);
-      expect(current.movementOrder).toEqual({ kind: 'moveToPoint', point: { x: 6, y: -3 } });
-    });
+    expect(menu).not.toBeInTheDocument();
+    expect(button).toHaveFocus();
 
     harness.gateway.dispose();
   });
@@ -423,8 +523,10 @@ describe('text', () => {
     const harness = renderGame({ onIssue });
     await startCampaign(harness);
     await undock(harness);
+    // The point menu's own text resolves too.
+    await harness.user.keyboard('.');
+    await screen.findByRole('group', { name: 'Commands for empty space' });
     await harness.user.click(stationObject());
-    await harness.user.click(screen.getByRole('button', { name: 'Pick a point' }));
 
     expect(onIssue.mock.calls.map(([issue]) => issue)).toEqual([]);
 

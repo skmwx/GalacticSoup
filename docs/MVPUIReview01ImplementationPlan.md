@@ -1,6 +1,6 @@
 # MVP UI review 01 implementation plan
 
-Status: in progress; UIR1-01 to UIR1-07 complete.
+Status: in progress; UIR1-01 to UIR1-08 complete.
 
 Source review: `human-input/MVP-review-01.md`. Context: `00_GameDesignBrief.md`, `01_FunctionalSpecification.md`, `02_TechnicalSpecification.md`, `human-input/CurrentState.md`, and the implemented MVP.
 
@@ -19,7 +19,7 @@ Phase IDs use **UIR1** to distinguish this work from the completed original MVP 
 | UIR1-05 | One compact fitting surface with inline editing | 01 | Complete (`agent-comm/status/uir1-05-completion.md`) |
 | UIR1-06 | Station overview cleanup and inline priced services | 01, 02 | Complete (`agent-comm/status/uir1-06-completion.md`) |
 | UIR1-07 | Destination selection in space and Harbor return destination | 02, 06 | Complete (`agent-comm/status/uir1-07-completion.md`) |
-| UIR1-08 | Empty-radar context menu for setting a course | 01, 07 | Pending |
+| UIR1-08 | Empty-radar context menu for setting a course | 01, 07 | Complete (`agent-comm/status/uir1-08-completion.md`) |
 | UIR1-09 | Compact combined equipment panel and navigation columns | 07, 08 | Pending |
 | UIR1-10 | Integrated UI acceptance, release checks, human review handoff | All preceding phases | Pending |
 

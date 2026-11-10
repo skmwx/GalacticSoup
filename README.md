@@ -243,6 +243,13 @@ The drawing is one labelled image. The list beside it is what selection actually
 the site is reachable with the keyboard alone, and the selected object announces itself rather than
 being implied by a highlight.
 
+A secondary click on empty space opens a point menu with Set course, the ordinary move-to-point
+order. The point is fixed in world kilometres when the menu opens, so the camera following the ship
+cannot move it, and nothing is sent until Set course is pressed. The keyboard path is the remappable
+`.` key (or the radar's set-course button): it opens the same menu on the centre of the view,
+announces the point and its distance from the ship, and the arrow keys move it (Shift for five
+steps). There are no coordinate fields.
+
 Whether an order can be given is a rule, so the engine decides it. `navigation.site` and
 `navigation.destinations` carry, for each subject, which commands it offers and the message the
 refused ones would answer with; the command bar pairs that with a registry entry and shows a

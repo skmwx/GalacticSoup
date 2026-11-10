@@ -1,17 +1,14 @@
-import { useEffect, useState, type JSX } from 'react';
+import type { JSX } from 'react';
 
 import type { SiteData, SiteObjectData } from '@protocol';
 
 import {
   ActionButton,
-  ActionIcon,
-  actionById,
   commandAvailability as availability,
   useActionShortcuts,
   type ActionRunner,
   type CommandAvailability as Availability,
 } from '../actions';
-import { TooltipButton } from '../common/TooltipButton';
 import { formatDistanceKm } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
@@ -30,7 +27,8 @@ import styles from './Space.module.css';
  *
  * Where to go is chosen below the orders, in the destination chooser: the
  * system's station, its encounter sites and the player's own wrecks, each
- * with its briefing, and the warp or dock that reaches it.
+ * with its briefing, and the warp or dock that reaches it. A course to a point
+ * in the site is set from the radar's point menu, not from here.
  *
  * @implements FUNC-7.1, FUNC-7.2, FUNC-7.3, FUNC-7.4, FUNC-19.2, FUNC-5.4, FUNC-9.12, TECH-12.3, MVP-AC-03, MVP-AC-08
  */
@@ -42,11 +40,6 @@ export interface CommandBarProps {
   readonly runner: ActionRunner;
   /** The clock the engine last answered with, for a wreck's countdown. */
   readonly simulationTimeMs: number;
-  /** True while a click on the view will set the destination point. */
-  readonly choosingPoint: boolean;
-  onChoosingPointChange(choosing: boolean): void;
-  /** The point a click on the view last chose, in kilometres. */
-  readonly point: { readonly x: number; readonly y: number };
   /**
    * The distance range orders use. The screen holds it, because the context
    * menu gives the same orders at the same distance.
@@ -63,24 +56,12 @@ export function CommandBar({
   selected,
   runner,
   simulationTimeMs,
-  choosingPoint,
-  onChoosingPointChange,
-  point,
   rangeKm,
   onRangeChange,
 }: CommandBarProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const presets = site.rangePresetsKm;
-  // The coordinate fields are edited as text so a partial entry such as "-"
-  // is not turned into a number before the player has finished typing.
-  const [pointText, setPointText] = useState(() => asText(point));
-  useEffect(() => {
-    setPointText(asText(point));
-  }, [point.x, point.y]);
-  const destinationPoint = { x: Number(pointText.x), y: Number(pointText.y) };
-  const pointUsable =
-    Number.isFinite(destinationPoint.x) && Number.isFinite(destinationPoint.y);
 
   const siteCommand = (command: string): Availability => availability(site.commands, command);
   const targetCommand = (command: string): Availability =>
@@ -93,17 +74,6 @@ export function CommandBar({
       return;
     }
     await data.send(command, { targetId: selected.id, distanceKm: rangeKm });
-  };
-
-  const moveToPoint = async (): Promise<void> => {
-    if (!pointUsable) {
-      return;
-    }
-    onChoosingPointChange(false);
-    await data.send('movement.moveToPoint', {
-      xKm: destinationPoint.x,
-      yKm: destinationPoint.y,
-    });
   };
 
   // A movement order needs a selected object; without one the key says so.
@@ -184,78 +154,7 @@ export function CommandBar({
         />
       </div>
 
-      <details className={styles['pointControls']}>
-        <summary>{translate('cockpit.coordinates')}</summary>
-      <div className={styles['commandRow']}>
-        {/* Arming the view is presentation, not a command, so it does not
-            go through the action runner. */}
-        <TooltipButton
-          className={styles['objectButton']}
-          aria-pressed={choosingPoint}
-          unavailable={!siteCommand('movement.moveToPoint').available}
-          reason={translate(siteCommand('movement.moveToPoint').unavailableReason ?? 'shortcut.unavailable')}
-          onClick={() => {
-            onChoosingPointChange(!choosingPoint);
-          }}
-        >
-          <ActionIcon icon={actionById('movement.moveToPoint').icon} />
-          {choosingPoint
-            ? translate('space.commands.pointCancel')
-            : translate('space.commands.pointArm')}
-        </TooltipButton>
-        <label className={styles['field']}>
-          {translate('space.commands.pointX')}
-          <input
-            type="number"
-            value={pointText.x}
-            onChange={(event) => {
-              setPointText({ ...pointText, x: event.target.value });
-            }}
-          />
-        </label>
-        <label className={styles['field']}>
-          {translate('space.commands.pointY')}
-          <input
-            type="number"
-            value={pointText.y}
-            onChange={(event) => {
-              setPointText({ ...pointText, y: event.target.value });
-            }}
-          />
-        </label>
-        <ActionButton
-          actionId="movement.moveToPoint"
-          runner={runner}
-          available={siteCommand('movement.moveToPoint').available && pointUsable}
-          unavailableReason={
-            pointUsable
-              ? siteCommand('movement.moveToPoint').unavailableReason
-              : 'space.commands.pointInvalid'
-          }
-          label={translate('space.commands.pointSubmit')}
-          onRun={moveToPoint}
-        />
-      </div>
-      </details>
-
       <DestinationChooser data={data} site={site} runner={runner} simulationTimeMs={simulationTimeMs} />
-
-      {choosingPoint ? (
-        <p className={styles['muted']} role="status">
-          {translate('space.commands.pointHint')}
-        </p>
-      ) : null}
     </section>
   );
-}
-
-function asText(point: { readonly x: number; readonly y: number }): {
-  x: string;
-  y: string;
-} {
-  return { x: String(round(point.x)), y: String(round(point.y)) };
-}
-
-function round(value: number): number {
-  return Math.round(value * 10) / 10;
 }
