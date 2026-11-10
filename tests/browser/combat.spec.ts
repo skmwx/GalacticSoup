@@ -4,6 +4,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { undock } from '../support/undock.ts';
 import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
+import { takeService } from '../support/services.ts';
 
 /**
  * The first end-to-end vertical slice in a real browser
@@ -255,17 +256,7 @@ test.describe('the first vertical slice', () => {
     await expect(fittingSlots(page).filter({ hasText: '200mm Autocannon' })).toHaveCount(2);
 
     // Top the magazines up, if the fight left any short.
-    await page.getByRole('button', { name: 'Services', exact: true }).click();
-    await page.getByRole('button', { name: 'Resupply ammunition' }).click();
-    const resupply = page.getByRole('dialog', { name: 'Confirm resupply' });
-    await expect(resupply.getByText('Calculating…')).toBeHidden();
-    const confirm = resupply.getByRole('button', { name: 'Confirm' });
-    if (await confirm.isEnabled()) {
-      await confirm.click();
-    } else {
-      await resupply.getByRole('button', { name: 'Cancel' }).click();
-    }
-    await expect(resupply).toBeHidden();
+    await takeService(page, 'Resupply ammunition', 'Confirm resupply');
 
     // Close and reopen after converting the rewards: the wallet and the fit
     // are what the conversion left.

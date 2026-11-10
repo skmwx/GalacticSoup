@@ -1,7 +1,7 @@
 {
   "format": "galactic-soup/replay",
   "formatVersion": 1,
-  "protocolVersion": 16,
+  "protocolVersion": 17,
   "engineVersion": "0.1.0",
   "saveFormatVersion": 10,
   "contentVersion": "0.1.0+296facab3d13",
@@ -137,7 +137,7 @@
     {"type":"market.confirmSell","payload":{"token":{"action":"market.sell","canonicalParameters":"{\"quantity\":1,\"stackId\":\"ce0f36ba8e20edb4ebcba9757-e1451\",\"stationId\":\"station.borrell.harbour\"}","campaignRevision":2824,"relevantVersions":{"assets":23701,"service:station.borrell.harbour:market":1,"listing:station.borrell.harbour:item.salvage.alloy":2},"valuesHash":"e709dbc85a047919bc4814a29919a1f10064575e794057236bf7ef87dfb26fa3"}},"error":null},
     {"type":"market.confirmSell","payload":{"token":{"action":"market.sell","canonicalParameters":"{\"quantity\":1,\"stackId\":\"ce0f36ba8e20edb4ebcba9757-e1977\",\"stationId\":\"station.borrell.harbour\"}","campaignRevision":2825,"relevantVersions":{"assets":23703,"service:station.borrell.harbour:market":1,"listing:station.borrell.harbour:item.salvage.circuitry":1},"valuesHash":"77230b67b571660c3e4e817f36ebbaf00f0cc1698048d31a898886616e19e53a"}},"error":null},
     {"type":"market.confirmSell","payload":{"token":{"action":"market.sell","canonicalParameters":"{\"quantity\":39,\"stackId\":\"ce0f36ba8e20edb4ebcba9757-e1978\",\"stationId\":\"station.borrell.harbour\"}","campaignRevision":2826,"relevantVersions":{"assets":23705,"service:station.borrell.harbour:market":1,"listing:station.borrell.harbour:ammo.hybrid.small.iron":1},"valuesHash":"9496c959fc81164e73e23df09dfcb9a0ee1c9a2ea389e1a101afccbb031db24d"}},"error":null},
-    {"type":"repair.confirm","payload":{"token":{"action":"repair","canonicalParameters":"{\"shipId\":\"ce0f36ba8e20edb4ebcba9757-e797\"}","campaignRevision":2827,"relevantVersions":{"assets":23707,"service:station.borrell.harbour:repair":1},"valuesHash":"fec23e538c2b4627d1e04e4caa03c9fbf32d687e3d82ea2c39d82d42be56bbdb"}},"error":null},
+    {"type":"repair.confirm","payload":{"token":{"action":"repair","canonicalParameters":"{\"shipId\":\"ce0f36ba8e20edb4ebcba9757-e797\"}","campaignRevision":2827,"relevantVersions":{"assets":23707,"service:station.borrell.harbour:repair":1},"valuesHash":"82428bf56acd44e9f67ef74050043e4ac1e4acd2879a71536732b430c9d249ce"}},"error":null},
     {"type":"resupply.confirm","payload":{"token":{"action":"resupply","canonicalParameters":"{\"shipId\":\"ce0f36ba8e20edb4ebcba9757-e797\"}","campaignRevision":2828,"relevantVersions":{"assets":23708,"service:station.borrell.harbour:resupply":1},"valuesHash":"0a8a8b0de70ae5140b108f1e4d59861fd8218245166a51988407c44abbf004a0"}},"error":null},
     {"type":"market.confirmBuy","payload":{"token":{"action":"market.buy","canonicalParameters":"{\"destinationInventoryId\":\"ce0f36ba8e20edb4ebcba9757-e798\",\"itemId\":\"ammo.projectile.small.phased\",\"quantity\":138,\"stationId\":\"station.borrell.harbour\"}","campaignRevision":2829,"relevantVersions":{"assets":23712,"service:station.borrell.harbour:market":1,"listing:station.borrell.harbour:ammo.projectile.small.phased":3},"valuesHash":"0a458c12871ab45fcaa420b5dd7e0e3eb577d994a67a5855932811652e2d3127"}},"error":null},
     {"type":"navigation.selectDestination","payload":{"encounterId":"encounter.borrell.pirate-patrol"},"error":null},
@@ -199,7 +199,7 @@
     {"type":"fitting.set","payload":{"slotKind":"engineering","slotIndex":1,"moduleId":"module.capacitor.battery.small","online":true},"error":null},
     {"type":"fitting.commit","payload":{},"error":null},
     {"type":"inventory.transfer","payload":{"stackId":"ce0f36ba8e20edb4ebcba9757-e2937","destinationInventoryId":"ce0f36ba8e20edb4ebcba9757-e798","quantity":100},"error":null},
-    {"type":"repair.confirm","payload":{"token":{"action":"repair","canonicalParameters":"{\"shipId\":\"ce0f36ba8e20edb4ebcba9757-e797\"}","campaignRevision":4731,"relevantVersions":{"assets":37678,"service:station.borrell.harbour:repair":1},"valuesHash":"d3d1632621ede9f8f8f31908851146613f1c11cbaca6bc599b6c8114244c2a67"}},"error":null},
+    {"type":"repair.confirm","payload":{"token":{"action":"repair","canonicalParameters":"{\"shipId\":\"ce0f36ba8e20edb4ebcba9757-e797\"}","campaignRevision":4731,"relevantVersions":{"assets":37678,"service:station.borrell.harbour:repair":1},"valuesHash":"ac2a2df4d3b6733048b0449bf50df0b486ddd21ed6cb1f85b0118e0537693dfe"}},"error":null},
     {"type":"navigation.selectDestination","payload":{"encounterId":"encounter.borrell.pirate-base"},"error":null},
     {"type":"ship.undock","payload":{},"error":null},
     {"type":"navigation.warp","payload":{"destinationSiteId":"site.borrell.outpost-cradle","arrivalDistanceKm":30},"error":null},
@@ -283,7 +283,7 @@
     {"advanceMs":250,"times":1},
     {"type":"market.confirmSell","payload":{"token":{"action":"market.sell","canonicalParameters":"{\"quantity\":6,\"stackId\":\"ce0f36ba8e20edb4ebcba9757-e676\",\"stationId\":\"station.borrell.harbour\"}","campaignRevision":7819,"relevantVersions":{"assets":63026,"service:station.borrell.harbour:market":1,"listing:station.borrell.harbour:item.salvage.alloy":3},"valuesHash":"5a92fc2b952cdec040f4733bf2f310a9daab72019185221b8e27c49611d28d8a"}},"error":null},
     {"type":"market.confirmSell","payload":{"token":{"action":"market.sell","canonicalParameters":"{\"quantity\":5,\"stackId\":\"ce0f36ba8e20edb4ebcba9757-e677\",\"stationId\":\"station.borrell.harbour\"}","campaignRevision":7820,"relevantVersions":{"assets":63028,"service:station.borrell.harbour:market":1,"listing:station.borrell.harbour:item.salvage.circuitry":2},"valuesHash":"08531ca8bc50097ce120d0f1b71827e354a1c35b5a0e6f3d586923e96f8f9b29"}},"error":null},
-    {"type":"repair.confirm","payload":{"token":{"action":"repair","canonicalParameters":"{\"shipId\":\"ce0f36ba8e20edb4ebcba9757-e797\"}","campaignRevision":7821,"relevantVersions":{"assets":63030,"service:station.borrell.harbour:repair":1},"valuesHash":"e36cf4d4f93863a4909e47b2c81d6545cce111e35a1022213f10a556a0c7ee44"}},"error":null},
+    {"type":"repair.confirm","payload":{"token":{"action":"repair","canonicalParameters":"{\"shipId\":\"ce0f36ba8e20edb4ebcba9757-e797\"}","campaignRevision":7821,"relevantVersions":{"assets":63030,"service:station.borrell.harbour:repair":1},"valuesHash":"70cad6279a53bb8d92c10907c761d28286507dcc4e9fa1b01c3c413428b12450"}},"error":null},
     {"type":"market.confirmBuy","payload":{"token":{"action":"market.buy","canonicalParameters":"{\"destinationInventoryId\":\"ce0f36ba8e20edb4ebcba9757-e798\",\"itemId\":\"ammo.projectile.small.phased\",\"quantity\":280,\"stationId\":\"station.borrell.harbour\"}","campaignRevision":7822,"relevantVersions":{"assets":63031,"service:station.borrell.harbour:market":1,"listing:station.borrell.harbour:ammo.projectile.small.phased":6},"valuesHash":"d280a832880c8380947df91070787cc4710e00bda1ac92fe4d9467fbb6c1eec3"}},"error":null}
   ],
   "checkpoints": [

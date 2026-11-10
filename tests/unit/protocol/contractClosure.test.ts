@@ -38,6 +38,8 @@ const OPTIONAL_BY_SPECIFICATION: Readonly<Record<string, readonly string[]>> = {
     '/#expectedRevision',
     // Functional Specification 11.3: bought goods go to the hangar by default.
     '/$defs/marketBuyPreviewPayload#destinationInventoryId',
+    // Functional Specification 10: a repair without a scope repairs every layer.
+    '/$defs/repairPreviewPayload#scope',
     // Technical Specification 12.5: absent asks for the default locale.
     '/$defs/contentMessagesPayload#locale',
   ],

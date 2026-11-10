@@ -211,43 +211,55 @@ function MarketDetails({
   );
 }
 
+/**
+ * What a repair restores. The scope names the paid layers it repairs; the
+ * shield and the capacitor come free with every scope. A damaged layer the
+ * scope leaves alone is listed as staying damaged, so a partial repair never
+ * reads as a whole one (Functional Specification 10).
+ */
 function RepairDetails({ preview }: { readonly preview: RepairPreviewData }): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
+  const repairsArmor = preview.scope !== 'hull';
+  const repairsHull = preview.scope !== 'armor';
+  const layer = (labelKey: string, points: number, fraction: number, repaired: boolean): JSX.Element => (
+    <Figure
+      label={translate(labelKey)}
+      value={translate(repaired ? 'repair.damageDetail' : 'repair.damageKept', {
+        points: formatQuantity(points, locale),
+        fraction: formatPercent(fraction, locale),
+      })}
+    />
+  );
 
   return (
-    <dl className={styles['figures']}>
-      <Figure
-        label={translate('repair.shieldDamage')}
-        value={formatQuantity(preview.shieldDamage, locale)}
-      />
-      <Figure
-        label={translate('repair.armorDamage')}
-        value={translate('repair.damageDetail', {
-          points: formatQuantity(preview.armorDamage, locale),
-          fraction: formatPercent(preview.missingArmorFraction, locale),
-        })}
-      />
-      <Figure
-        label={translate('repair.hullDamage')}
-        value={translate('repair.damageDetail', {
-          points: formatQuantity(preview.hullDamage, locale),
-          fraction: formatPercent(preview.missingHullFraction, locale),
-        })}
-      />
-      {preview.capacitorCapacity <= 0 ? null : (
+    <>
+      <p className={styles['dialogSubject']}>{translate(`repair.scope.${preview.scope}`)}</p>
+      <dl className={styles['figures']}>
         <Figure
-          label={translate('repair.capacitor')}
-          value={translate('repair.capacitorDetail', {
-            percent: formatPercent(preview.capacitorCharge / preview.capacitorCapacity, locale),
-          })}
+          label={translate('repair.shieldDamage')}
+          value={translate('repair.shieldDetail', { points: formatQuantity(preview.shieldDamage, locale) })}
         />
-      )}
-      <Figure
-        label={translate('repair.serviceModifier')}
-        value={formatPercent(preview.serviceModifier, locale)}
-      />
-    </dl>
+        {repairsArmor || preview.armorDamage > 0
+          ? layer('repair.armorDamage', preview.armorDamage, preview.missingArmorFraction, repairsArmor)
+          : null}
+        {repairsHull || preview.hullDamage > 0
+          ? layer('repair.hullDamage', preview.hullDamage, preview.missingHullFraction, repairsHull)
+          : null}
+        {preview.capacitorCapacity <= 0 ? null : (
+          <Figure
+            label={translate('repair.capacitor')}
+            value={translate('repair.capacitorDetail', {
+              percent: formatPercent(preview.capacitorCharge / preview.capacitorCapacity, locale),
+            })}
+          />
+        )}
+        <Figure
+          label={translate('repair.serviceModifier')}
+          value={formatPercent(preview.serviceModifier, locale)}
+        />
+      </dl>
+    </>
   );
 }
 

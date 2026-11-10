@@ -72,7 +72,7 @@ anything that surprised you.
 
 - [ ] Fly to the Pirate Patrol in the ship you were given, take some damage and Retreat. You should
       get home, and the site should be offered again.
-- [ ] In Services, use "Improve insurance", then fly the starter ship to the Pirate Base and let it be
+- [ ] On the Overview, use "Improve insurance", then fly the starter ship to the Pirate Base and let it be
       destroyed. Read the loss report. Does it tell you what killed you, what you lost, what
       survived, what the insurance paid and how you were given a ship?
 - [ ] Recover what survived from your wreck (it is offered as a destination), come home, and clear

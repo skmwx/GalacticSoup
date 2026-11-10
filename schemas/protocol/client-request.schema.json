@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 16
+      "const": 17
     },
     "requestId": {
       "type": "string",
@@ -1217,8 +1217,26 @@
       "if": {
         "properties": {
           "type": {
+            "const": "repair.preview"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/repairPreviewPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "enum": [
-              "repair.preview",
               "resupply.preview",
               "insurance.preview"
             ]
@@ -1551,6 +1569,25 @@
       "properties": {
         "stationId": {
           "$ref": "#/$defs/stationId"
+        }
+      }
+    },
+    "repairPreviewPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shipId"
+      ],
+      "properties": {
+        "shipId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "scope": {
+          "enum": [
+            "armor",
+            "hull",
+            "all"
+          ]
         }
       }
     },

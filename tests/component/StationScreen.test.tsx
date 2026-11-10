@@ -4,13 +4,22 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createMemorySaveStore } from '@adapters/persistence';
-import { createEngineHost, type ContentRepository } from '@engine';
+import {
+  captureSnapshot,
+  createEngineHost,
+  DEFAULT_SAVE_RETENTION,
+  DEFAULT_SLOT_ID,
+  ENGINE_VERSION,
+  type CampaignState,
+  type ContentRepository,
+} from '@engine';
 import { createDirectGateway } from '@gateway/direct';
-import { EMPTY_PAYLOAD, type AssetsData } from '@protocol';
+import { EMPTY_PAYLOAD, PROTOCOL_VERSION, type AssetsData, type RepairPreviewData } from '@protocol';
 import { cubicDecimetres, type LocalizationIssue } from '@shared';
 import { GameRoot, LocalizationProvider } from '@ui';
 
 import { shippedContent } from '../support/content.ts';
+import { testCampaign } from '../support/campaign.ts';
 
 /**
  * The station interface (MVP-AC-01, MVP-AC-02, MVP-AC-04, MVP-AC-06).
@@ -96,9 +105,10 @@ describe('station hub', () => {
     await startCampaign(harness);
 
     expect(screen.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeInTheDocument();
-    for (const service of ['Market', 'Hangar', 'Fitting', 'Services', 'Ship']) {
+    for (const service of ['Market', 'Hangar', 'Fitting', 'Ship']) {
       expect(screen.getByRole('button', { name: service })).not.toBeUnavailable();
     }
+    expect(screen.getByRole('region', { name: 'Services' })).toBeInTheDocument();
 
     harness.gateway.dispose();
   });
@@ -810,12 +820,114 @@ describe('fitting', () => {
 });
 
 describe('services', () => {
-  it('previews insurance and commits it [FUNC-10, MVP-AC-02]', async () => {
+  /**
+   * Resumes a new docked campaign whose active ship is damaged as given, so
+   * the priced repairs have something to price. The clock is paused, so
+   * nothing regenerates while the test looks.
+   */
+  async function resumeDamaged(condition: {
+    readonly damage: { readonly shield: number; readonly armor: number; readonly hull: number };
+    readonly capacitorCharge?: number;
+  }): Promise<Harness> {
+    const content = shippedContent();
+    const state = structuredClone(testCampaign()) as CampaignState;
+    const shipId = state.assets.activeShipId!;
+    const ship = state.assets.ships[shipId]!;
+    (state.assets.ships as Record<string, unknown>)[shipId] = {
+      ...ship,
+      condition: {
+        damage: condition.damage,
+        capacitorCharge: condition.capacitorCharge ?? ship.condition.capacitorCharge,
+      },
+    };
+    const store = createMemorySaveStore();
+    const envelope = captureSnapshot({
+      campaign: state, content, engineVersion: ENGINE_VERSION, protocolVersion: PROTOCOL_VERSION,
+      slotId: DEFAULT_SLOT_ID, kind: 'auto', sequence: 1, savedAtRealMs: 1_700_000_600_000,
+    });
+    await store.write({ envelope, retention: DEFAULT_SAVE_RETENTION });
+    const gateway = createDirectGateway({
+      host: createEngineHost({ content, saves: store }),
+      defaultTimeoutMs: 5_000,
+    });
+    render(
+      <LocalizationProvider>
+        <GameRoot gateway={gateway} />
+      </LocalizationProvider>,
+    );
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Resume campaign' }));
+    await screen.findByRole('heading', { level: 2, name: 'Borrell Harbour' });
+    return { gateway, store, user };
+  }
+
+  function services(): HTMLElement {
+    return screen.getByRole('region', { name: 'Services' });
+  }
+
+  /** Waits for a service button to be priced, and returns it. */
+  async function priced(name: RegExp): Promise<HTMLElement> {
+    return waitFor(() => {
+      const button = within(services()).getByRole('button', { name });
+      expect(button).not.toHaveAccessibleName(/pricing/);
+      return button;
+    });
+  }
+
+  async function preview(harness: Harness, scope: 'armor' | 'hull' | 'all'): Promise<RepairPreviewData> {
+    const shipId = (await assets(harness)).activeShipId!;
+    const response = await harness.gateway.request('repair.preview', { shipId, scope });
+    if (!response.ok) throw new Error('The engine refused repair.preview.');
+    return response.data;
+  }
+
+  const isk = (credits: number): string => `${credits.toLocaleString('en')} ISK`;
+
+  it('offers every service on the Overview with its price, and no Services surface [FUNC-10, FUNC-19.5]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
-    await openPanel(harness, 'Services');
 
-    await harness.user.click(screen.getByRole('button', { name: 'Improve insurance' }));
+    // The rail is the only way between surfaces; the Overview does not repeat it.
+    expect(screen.queryByRole('button', { name: 'Services' })).not.toBeInTheDocument();
+    for (const surface of ['Market', 'Hangar', 'Fitting', 'Ship', 'Departure']) {
+      expect(screen.getAllByRole('button', { name: surface })).toHaveLength(1);
+    }
+
+    // A whole, charged ship has nothing to repair; each choice says why.
+    const armor = await priced(/^Repair armour/);
+    expect(armor).toBeUnavailable();
+    expect(armor).toHaveAccessibleDescription(/The armour is not damaged/);
+    const hull = within(services()).getByRole('button', { name: /^Repair hull/ });
+    expect(hull).toBeUnavailable();
+    expect(hull).toHaveAccessibleDescription(/The hull is not damaged/);
+    const all = within(services()).getByRole('button', { name: /^Repair all/ });
+    expect(all).toBeUnavailable();
+    expect(all).toHaveAccessibleDescription(/already fully repaired and its capacitor is full/);
+    // An operation with nothing to do names no price.
+    expect(all).toHaveAccessibleName('Repair all');
+
+    // Insurance can be bought; its button names the premium the engine quoted.
+    const shipId = (await assets(harness)).activeShipId!;
+    const quote = await harness.gateway.request('insurance.preview', { shipId });
+    if (!quote.ok) throw new Error('The engine refused insurance.preview.');
+    const insurance = await priced(/^Improve insurance/);
+    expect(insurance).toHaveAccessibleName(`Improve insurance · ${isk(quote.data.totalCredits)}`);
+    expect(insurance).not.toBeUnavailable();
+    // The Services shortcut still works: it brings focus to the services here.
+    await openPanel(harness, 'Market');
+    await harness.user.keyboard('r');
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Services' })).toHaveFocus();
+    });
+
+    harness.gateway.dispose();
+  });
+
+  it('previews insurance from the Overview and commits it [FUNC-10, MVP-AC-02]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+
+    await harness.user.click(await priced(/^Improve insurance/));
     const dialog = await screen.findByRole('dialog', { name: 'Confirm insurance' });
 
     await within(dialog).findByText('Basic');
@@ -825,28 +937,78 @@ describe('services', () => {
       expect(screen.queryByRole('dialog', { name: 'Confirm insurance' })).not.toBeInTheDocument();
     });
     expect((await assets(harness)).credits).toBeLessThan(20_000);
-
-    harness.gateway.dispose();
-  });
-
-  it('refuses a repair with nothing to restore, and says so [FUNC-10, FUNC-22.10]', async () => {
-    const harness = renderGame();
-    await startCampaign(harness);
-    await openPanel(harness, 'Services');
-
-    await harness.user.click(screen.getByRole('button', { name: 'Repair the ship' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Confirm repair' });
-
     await waitFor(() => {
-      expect(within(dialog).getByRole('button', { name: /Confirm/ })).toBeUnavailable();
+      expect(within(services()).getByRole('button', { name: /^Improve insurance/ })).toBeUnavailable();
     });
-    expect(within(dialog).getAllByText(/already fully repaired and its capacitor is full/)[0]).toBeInTheDocument();
-    // The capacitor the free repair would recharge is one of its figures.
-    expect(within(dialog).getByText('Capacitor')).toBeInTheDocument();
-    expect(within(dialog).getByText('100% now, recharged to full for free')).toBeInTheDocument();
 
     harness.gateway.dispose();
   });
+
+  it('repairs armour only for the price on its button, leaving the hull [FUNC-10, TECH-7.4]', async () => {
+    const harness = await resumeDamaged({ damage: { shield: 12, armor: 40, hull: 30 } });
+    const armorQuote = await preview(harness, 'armor');
+    const hullQuote = await preview(harness, 'hull');
+    const allQuote = await preview(harness, 'all');
+    expect(armorQuote.totalCredits).toBeGreaterThan(0);
+    expect(hullQuote.totalCredits).toBeGreaterThan(0);
+
+    expect(await priced(/^Repair armour/)).toHaveAccessibleName(`Repair armour · ${isk(armorQuote.totalCredits)}`);
+    expect(await priced(/^Repair hull/)).toHaveAccessibleName(`Repair hull · ${isk(hullQuote.totalCredits)}`);
+    expect(await priced(/^Repair all/)).toHaveAccessibleName(`Repair all · ${isk(allQuote.totalCredits)}`);
+
+    const before = await assets(harness);
+    await harness.user.click(within(services()).getByRole('button', { name: /^Repair armour/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Confirm armour repair' });
+    // The confirmation names the scope, the layer left alone and the exact total.
+    expect(within(dialog).getByText(/Repair the armour only/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/not repaired by this choice/)).toBeInTheDocument();
+    expect(within(dialog).getAllByText(isk(armorQuote.totalCredits)).length).toBeGreaterThan(0);
+    await harness.user.click(within(dialog).getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    const after = await assets(harness);
+    expect(after.credits).toBe(before.credits - armorQuote.totalCredits);
+    const ship = await harness.gateway.request('ship.get', { shipId: after.activeShipId! });
+    if (!ship.ok) throw new Error('The engine refused ship.get.');
+    const missing = Object.fromEntries(
+      ship.data.layers.map((layer) => [layer.layer, layer.maximumHitPoints - layer.hitPoints]),
+    );
+    expect(missing).toEqual({ shield: 0, armor: 0, hull: 30 });
+    // Armour has nothing left; hull keeps its price.
+    await waitFor(() => {
+      expect(within(services()).getByRole('button', { name: /^Repair armour/ })).toBeUnavailable();
+    });
+    expect(await priced(/^Repair hull/)).toHaveAccessibleName(`Repair hull · ${isk(hullQuote.totalCredits)}`);
+
+    harness.gateway.dispose();
+  }, 30_000);
+
+  it('confirms a free whole repair for a shield and a capacitor alone [FUNC-10, FUNC-22.10]', async () => {
+    const harness = await resumeDamaged({ damage: { shield: 25, armor: 0, hull: 0 }, capacitorCharge: 10 });
+
+    expect(await priced(/^Repair armour/)).toBeUnavailable();
+    expect(within(services()).getByRole('button', { name: /^Repair hull/ })).toBeUnavailable();
+    const all = await priced(/^Repair all/);
+    expect(all).toHaveAccessibleName(`Repair all · ${isk(0)}`);
+
+    const before = await assets(harness);
+    await harness.user.click(all);
+    // Free is still confirmed, with its zero total.
+    const dialog = await screen.findByRole('dialog', { name: 'Confirm full repair' });
+    expect(within(dialog).getByText('25 points, restored for free')).toBeInTheDocument();
+    await harness.user.click(within(dialog).getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect((await assets(harness)).credits).toBe(before.credits);
+    await waitFor(() => {
+      expect(within(services()).getByRole('button', { name: /^Repair all/ })).toBeUnavailable();
+    });
+
+    harness.gateway.dispose();
+  }, 30_000);
 });
 
 describe('ship', () => {
@@ -884,9 +1046,10 @@ describe('ship', () => {
     const harness = renderGame({ onIssue });
     await startCampaign(harness);
 
-    for (const panel of ['Market', 'Hangar', 'Fitting', 'Services', 'Ship']) {
+    for (const panel of ['Market', 'Hangar', 'Fitting', 'Ship', 'Overview']) {
       await openPanel(harness, panel);
     }
+    await screen.findByRole('button', { name: /^Improve insurance ·/ });
 
     expect(onIssue.mock.calls.map(([issue]) => issue)).toEqual([]);
 

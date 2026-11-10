@@ -565,11 +565,19 @@ While docked, the station view is the main hub. Undocking is allowed only with a
 
 A warning never blocks undocking. While one stands, undocking first lists the warnings and asks the player to undock anyway or stay docked. That question is a configurable confirmation prompt under section 20; when the player has switched it off, the warnings are still listed beside the undock control.
 
-Repair service restores shield, armor, and hull instantly, and recharges the capacitor to full. Shield repair and the capacitor recharge are free, and the service is available whenever a layer is damaged or the capacitor is not full. Armor and hull repair cost:
+Repair service restores layers instantly and recharges the capacitor to full. The player chooses which paid layers to repair:
+
+- **Repair armor** restores armor only; it is available while armor is damaged.
+- **Repair hull** restores hull only; it is available while hull is damaged.
+- **Repair all** restores armor and hull; it is available whenever a layer is damaged or the capacitor is not full.
+
+Every choice also restores the shield and recharges the capacitor. Shield repair and the capacitor recharge are free, so Repair all costs nothing when only they need restoring. A repair costs the formula below applied to the layers it restores, with a missing fraction of zero for a layer it leaves damaged, rounded up once:
 
 `ceil(hull reference value × (0.02 × missing armor fraction + 0.05 × missing hull fraction) × station service modifier × standing service multiplier)`
 
-Station service modifier is a displayed content value from 0.75 through 1.50. Standing service multiplier is 1.10 when Distrusted, 1.00 when Neutral, 0.95 when Friendly, 0.90 when Allied, and 0.85 when Honored. Hostile stations do not provide service. Repair never begins without confirmation of the total price, including when that price is zero.
+Because each choice is rounded on its own, Repair armor and Repair hull together may cost one credit more than Repair all.
+
+Station service modifier is a displayed content value from 0.75 through 1.50. Standing service multiplier is 1.10 when Distrusted, 1.00 when Neutral, 0.95 when Friendly, 0.90 when Allied, and 0.85 when Honored. Hostile stations do not provide service. Each repair choice shows its current price before it is chosen. Repair never begins without confirmation of the chosen layers and the total price, including when that price is zero. The price is checked again at confirmation; if the damage, the wallet, or the service has changed, the player is shown the new figures and confirms again.
 
 Stations controlled by hostile factions may deny docking. A station cannot revoke docking while the player is already docked; it permits undocking and asset removal. Neutral-access recovery stations never deny docking based on standings.
 
@@ -999,6 +1007,8 @@ The system map displays permanent sites, resolved anomalies, unresolved signatur
 ### 19.5 Station screens
 
 The station hub presents available services as spatially and visually distinct actions. It must not require the player to navigate a dense universal table to find routine functions.
+
+One navigation list leads to the station's screens; the hub's overview does not repeat it. Routine operations with a single price, such as repair, ammunition resupply, and insurance, are offered on the overview itself, each naming its current price and opening the confirmation for it.
 
 Market, fitting, hangar, repair, refinery, fabrication, academy, ship dealer, and transport screens share:
 

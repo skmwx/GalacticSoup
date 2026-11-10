@@ -4,7 +4,7 @@ import { type EngineError, invalidRequest } from './errors';
 import { isRequestType, SAVE_KIND_NAMES, type RequestType } from './requests';
 import { findTransportViolation } from './transport';
 import { MAX_REQUEST_ID_LENGTH, PROTOCOL_VERSION, UNKNOWN_REQUEST_ID } from './version';
-import { ECONOMIC_ACTIONS } from './economy';
+import { ECONOMIC_ACTIONS, REPAIR_SCOPES } from './economy';
 
 /**
  * Envelope and payload validation (Technical Specification 7.2, step 1).
@@ -395,7 +395,16 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
       return isPositiveWhole(fields['quantity']) ? null : payloadField(type, 'quantity', 'format');
     }
 
-    case 'repair.preview':
+    case 'repair.preview': {
+      const unexpected = unexpectedField(fields, ['shipId', 'scope']);
+      if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
+      if (!isEntityId(fields['shipId'])) return payloadField(type, 'shipId', 'format');
+      if ('scope' in fields && !(REPAIR_SCOPES as readonly unknown[]).includes(fields['scope'])) {
+        return payloadField(type, 'scope', 'format');
+      }
+      return null;
+    }
+
     case 'resupply.preview':
     case 'insurance.preview': {
       const unexpected = unexpectedField(fields, ['shipId']);

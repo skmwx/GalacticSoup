@@ -173,13 +173,13 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 16 exposes the guidance and notification contracts (`onboarding.state` and its
+Protocol version 17 exposes the guidance and notification contracts (`onboarding.state` and its
 three commands, `notifications.list`, `audio.cues`), `loss.report`, `navigation.selectBookmark` and
 `navigation.warpToBookmark`, `encounter.state`, `loot.contents` and `loot.take` alongside
 `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`, `weapon.deactivate`,
 `weapon.reload`, `weapon.changeAmmunition`, `module.activate`, `module.deactivate`, `ship.get`,
-`ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market (with module slots, ammunition suitability and local owned stacks), repair,
-resupply and insurance contracts, the navigation queries and orders, and the authored content
+`ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market (with module slots, ammunition suitability and local owned stacks), repair
+(armour, hull or all), resupply and insurance contracts, the navigation queries and orders, and the authored content
 catalogue.
 
 The tactical state includes layered shield, armour and hull condition, damage resistances,
@@ -187,7 +187,7 @@ capacitor recharge and endurance, active-module cycles and a bounded significant
 All combat actors use the same deterministic lifecycle for damage, repair, propulsion and support
 effects, so headless opponents and the player follow the same rules.
 
-Campaign state and save format are version 10, and the protocol is version 16. These are the
+Campaign state and save format are version 10, and the protocol is version 17. These are the
 versions the MVP closes on; see Closed contracts below. Previous development saves are rejected
 without modification; start a new campaign after upgrading. No pre-release migration is required by
 the MVP plan. The migration runner remains covered by fixture registries, and the older format
@@ -196,9 +196,11 @@ fixtures are retained to verify rejection. See `docs/agent-comm/status/` for the
 ## The station
 
 While docked, the persistent frame carries what is true wherever the player is - pilot, station,
-wallet, the simulation clock and its pause control, the save state - and the station hub presents
-each service as its own tile rather than as rows of one table: market, hangar, fitting, services and
-ship.
+wallet, the simulation clock and its pause control, the save state - and a rail leads to each
+station screen in turn rather than to rows of one table: overview, market, hangar, fitting, ship and
+departure. The overview carries the last sortie, any loss, and the priced services: Repair armour,
+Repair hull, Repair all, Resupply ammunition and Improve insurance, each naming its current price and
+opening its confirmation.
 
 Nothing on those screens is authoritative. A price came out of the quote service, the modules a slot
 offers came out of the fitting projection, and every value travels with the calculation that
@@ -330,8 +332,8 @@ active modules, `t` take all, `]` and `[` step the selection, `b` draw ranges.
 Back at the station the hub summarises the last sortie and what the hold carries, and the
 departure panel discloses each site's opponents, bounties, possible loot and completion count, and
 warns - without blocking - about an unloaded weapon, a weapon with no spare rounds in the hold, or
-unrepaired armour and hull before undocking. The repair service restores every layer and recharges
-the capacitor; the shield and the capacitor are free.
+unrepaired armour and hull before undocking. The repair service restores armour, hull or both, for
+the price of the chosen layers, and always restores the shield and recharges the capacitor for free.
 Docking refreshes every station surface, so a campaign reopened in space finds the market current
 when it comes home.
 

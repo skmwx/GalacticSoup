@@ -185,6 +185,22 @@ describe('command payload validation', () => {
     expect(validateClientRequest(envelope({ type, payload })).ok).toBe(expected);
   });
 
+  it.each([
+    ['no scope, the whole repair', { shipId: 'c0123456789abcdef01234567-e4' }, true],
+    ['the armour scope', { shipId: 'c0123456789abcdef01234567-e4', scope: 'armor' }, true],
+    ['the hull scope', { shipId: 'c0123456789abcdef01234567-e4', scope: 'hull' }, true],
+    ['the all scope', { shipId: 'c0123456789abcdef01234567-e4', scope: 'all' }, true],
+    ['an unknown scope', { shipId: 'c0123456789abcdef01234567-e4', scope: 'shield' }, false],
+    ['a null scope', { shipId: 'c0123456789abcdef01234567-e4', scope: null }, false],
+    ['an unexpected field', { shipId: 'c0123456789abcdef01234567-e4', layers: ['armor'] }, false],
+  ])('validates repair.preview with %s [TECH-7.1, FUNC-10]', (_label, payload, expected) => {
+    expect(validateClientRequest(envelope({ type: 'repair.preview', payload })).ok).toBe(expected);
+    // Resupply and insurance take no scope.
+    if ('scope' in payload) {
+      expect(validateClientRequest(envelope({ type: 'resupply.preview', payload })).ok).toBe(false);
+    }
+  });
+
   it.each(['navigation.destinations', 'navigation.site', 'ship.undock', 'movement.stop', 'navigation.retreat'])(
     'requires an empty payload for %s [TECH-7.1, FUNC-7.1]',
     (type) => {

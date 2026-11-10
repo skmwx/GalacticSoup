@@ -61,8 +61,9 @@ export function GuidancePanel({ data, runner, onGoTo, openSurface }: GuidancePan
   const step = found?.step ?? null;
   const done = chain.completedCount + chain.skippedCount;
   const skip = commandAvailability(step?.commands, 'onboarding.skipStep');
-  const surfaceLabel = step === null ? null : translate(surfaceLabelKey(step.surface));
-  const canGo = step !== null && step.surface !== 'space' && onGoTo !== null && openSurface !== step.surface;
+  const surface = step === null ? null : presentedSurface(step.surface);
+  const surfaceLabel = surface === null ? null : translate(surfaceLabelKey(surface));
+  const canGo = surface !== null && surface !== 'space' && onGoTo !== null && openSurface !== surface;
 
   return (
     <section
@@ -96,14 +97,14 @@ export function GuidancePanel({ data, runner, onGoTo, openSurface }: GuidancePan
       )}
 
       <div className={styles['toolbar']}>
-        {step !== null && step.surface !== 'space' && onGoTo !== null ? (
+        {surface !== null && surface !== 'space' && onGoTo !== null ? (
           <ActionButton
             actionId="guidance.goTo"
             runner={runner}
             available={canGo}
             unavailableReason={canGo ? null : 'guidance.alreadyThere'}
             onRun={() => {
-              onGoTo(step.surface);
+              onGoTo(surface);
             }}
           />
         ) : null}
@@ -145,9 +146,25 @@ export function GuidancePanel({ data, runner, onGoTo, openSurface }: GuidancePan
   );
 }
 
+/**
+ * Surfaces guidance content may name that the interface has folded into
+ * another, and where their controls now are. Repair, resupply and insurance
+ * moved from their own Services surface onto the station Overview; authored
+ * steps and saved guidance progress still say `station.services`.
+ */
+const SURFACE_REDIRECTS: Readonly<Record<string, string>> = {
+  'station.services': 'station.hub',
+};
+
+/** The surface a step is carried out on as the interface presents it now. */
+export function presentedSurface(surface: string): string {
+  return SURFACE_REDIRECTS[surface] ?? surface;
+}
+
 /** The message key naming where a step is carried out. */
 export function surfaceLabelKey(surface: string): string {
-  return surface === 'space' ? 'guidance.surface.space' : actionById(surface).labelKey;
+  const presented = presentedSurface(surface);
+  return presented === 'space' ? 'guidance.surface.space' : actionById(presented).labelKey;
 }
 
 /** The chain and step the engine points the player at. */
@@ -164,5 +181,6 @@ export function currentOf(
 /** The station surface the current step is carried out on, while the guidance shows. */
 export function guidedSurface(onboarding: OnboardingData | null): string | null {
   if (onboarding === null || onboarding.hidden) return null;
-  return currentOf(onboarding)?.step.surface ?? null;
+  const surface = currentOf(onboarding)?.step.surface;
+  return surface === undefined ? null : presentedSurface(surface);
 }

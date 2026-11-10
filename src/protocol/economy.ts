@@ -69,10 +69,20 @@ export interface MarketTransactionPreviewData extends PreviewBaseData {
   readonly cargoVolumeDeltaCubicDecimetres: number;
 }
 
+/**
+ * Which paid layers a repair restores (Functional Specification 10): armour
+ * alone, hull alone, or both. Every scope also restores the shield and
+ * recharges the capacitor, which are free.
+ */
+export const REPAIR_SCOPES = ['armor', 'hull', 'all'] as const;
+export type RepairScope = (typeof REPAIR_SCOPES)[number];
+
 export interface RepairPreviewData extends PreviewBaseData {
   readonly action: 'repair';
   readonly stationId: string;
   readonly shipId: string;
+  /** The paid layers this preview prices and its confirmation restores. */
+  readonly scope: RepairScope;
   readonly shieldDamage: number;
   readonly armorDamage: number;
   readonly hullDamage: number;
@@ -225,3 +235,9 @@ export interface MarketListingsData {
 }
 
 export interface ShipEconomicPayload { readonly shipId: string }
+
+/** A repair preview; an omitted scope is the whole repair, as before scopes existed. */
+export interface RepairPreviewPayload {
+  readonly shipId: string;
+  readonly scope?: RepairScope;
+}

@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { undock } from '../support/undock.ts';
 import { marketMode } from '../support/market.ts';
 import { chooseModule } from '../support/fitting.ts';
+import { serviceButton, servicesRegion } from '../support/services.ts';
 
 /**
  * A first-time player follows the in-game guidance through the easiest
@@ -193,8 +194,10 @@ test.describe('guided first loop', () => {
     // Get ready: repair, which also recharges the capacitor, and resupply.
     expect(await step(page, 'Get the ship ready')).toContain('capacitor');
     await showMe(page);
-    for (const [control, dialog] of [['Repair the ship', 'Confirm repair'], ['Resupply ammunition', 'Confirm resupply']] as const) {
-      const open = page.getByRole('button', { name: control });
+    // The services are on the Overview, which Show me opened.
+    await expect(servicesRegion(page)).toBeVisible();
+    for (const [control, dialog] of [['Repair all', 'Confirm full repair'], ['Resupply ammunition', 'Confirm resupply']] as const) {
+      const open = await serviceButton(page, control);
       if (await open.isEnabled()) {
         await open.click();
         await confirmDialog(page, dialog);

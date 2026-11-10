@@ -1,6 +1,10 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
+ * Version 17 adds repair scopes: `repair.preview` takes an optional `scope`
+ * (armour, hull or all; omitted is all) and the repair preview states the scope
+ * it priced, so the station can offer armour-only and hull-only repairs beside
+ * the whole one.
  * Version 16 adds market suitability and the sell side to `market.listings`:
  * each listing says which slot a module occupies or which weapons accept a
  * charge (and whether the active ship's committed fit carries one), and the
@@ -30,7 +34,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 16;
+export const PROTOCOL_VERSION = 17;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

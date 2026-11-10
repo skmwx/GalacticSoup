@@ -157,7 +157,7 @@ export type { ContentTextProviderProps, LocalizationProviderProps } from './loca
 export { GLOBAL_STYLES_HREF } from './styles/globalStyles';
 export { AudioCuesProvider, createCuePlayer, createRecordingCuePlayer, useAudioCues } from './audio';
 export type { AudioCuesProviderProps, AudioCuesValue, CuePlayer } from './audio';
-export { currentOf, GuidancePanel, guidedSurface } from './guidance';
+export { currentOf, GuidancePanel, guidedSurface, presentedSurface, surfaceLabelKey } from './guidance';
 export type { GuidancePanelProps } from './guidance';
 export {
   EventLog,

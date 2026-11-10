@@ -1,4 +1,4 @@
-import { useId, useState, type JSX } from 'react';
+import { useEffect, useId, useRef, useState, type JSX } from 'react';
 
 import type { ClientGateway } from '@gateway';
 
@@ -24,11 +24,16 @@ import type { PlayData } from '../frame/usePlayData';
 /**
  * The station hub (Functional Specification 10, 19.5).
  *
- * The services are spatially and visually distinct tiles, each with its own
- * icon and its own explanation, rather than rows of one universal table. A
- * tile a station does not offer stays visible and says why in its tooltip, so
- * the player learns what the station is rather than what is missing from the
- * screen, without the refusal reflowing the rail.
+ * The left rail is the one way between the station's surfaces: each is a
+ * distinct entry with its own icon and shortcut. An entry a station does not
+ * offer stays visible and says why in its tooltip, so the player learns what
+ * the station is rather than what is missing from the screen, without the
+ * refusal reflowing the rail.
+ *
+ * The Overview does not repeat the rail. It carries what a returning pilot
+ * acts on: any loss, the last sortie, and the priced repair, resupply and
+ * insurance operations, which have no surface of their own. The old Services
+ * shortcut still works and brings the player to them.
  *
  * Which surface is open is presentation state and lives here (or with the
  * caller); everything the surfaces show arrived from the engine. Leaving the
@@ -64,15 +69,13 @@ const PANELS: readonly PanelId[] = STATION_PANELS;
 
 /**
  * Which station service a surface needs before it is worth opening, or `null`
- * when it needs none. The services surface needs no single one: it offers
- * three, and each says for itself whether this station provides it.
+ * when it needs none.
  */
 const REQUIRED_SERVICE: Readonly<Record<PanelId, string | null>> = {
   'station.hub': null,
   'station.market': 'market',
   'station.hangar': null,
   'station.fitting': 'fitting',
-  'station.services': null,
   'station.ship': null,
   'station.departure': null,
 };
@@ -105,22 +108,40 @@ export function StationScreen({
   const openMarket = (): void => {
     setOpen('station.market');
   };
+  // The Services shortcut predates the services moving onto the Overview; it
+  // now opens the Overview and puts focus on them.
+  const servicesHeading = useRef<HTMLHeadingElement | null>(null);
+  const [focusServices, setFocusServices] = useState(false);
+  useEffect(() => {
+    if (focusServices && open === 'station.hub' && servicesHeading.current !== null) {
+      servicesHeading.current.focus();
+      servicesHeading.current.scrollIntoView?.({ block: 'nearest' });
+      setFocusServices(false);
+    }
+  }, [focusServices, open]);
 
   const bindings = useBindings();
   useActionShortcuts(
-    Object.fromEntries(
-      PANELS.map((panel) => [
-        panel,
-        () => {
-          const state = availability(panel);
-          if (!state.available) {
-            return state.reason ?? 'station.unavailable.service';
-          }
-          setOpen(panel);
-          return undefined;
-        },
-      ]),
-    ),
+    {
+      ...Object.fromEntries(
+        PANELS.map((panel) => [
+          panel,
+          () => {
+            const state = availability(panel);
+            if (!state.available) {
+              return state.reason ?? 'station.unavailable.service';
+            }
+            setOpen(panel);
+            return undefined;
+          },
+        ]),
+      ),
+      'station.services': () => {
+        setOpen('station.hub');
+        setFocusServices(true);
+        return undefined;
+      },
+    },
   );
 
   const availability = (panel: PanelId): { available: boolean; reason: string | null } => {
@@ -210,34 +231,7 @@ export function StationScreen({
       {open === 'station.hub' ? <SortieSummary encounter={data.encounter} assets={data.assets} /> : null}
 
       {open === 'station.hub' ? (
-        <div className={styles['tiles']}>
-          {PANELS.filter((panel) => panel !== 'station.hub').map((panel) => {
-            const action = actionById(panel);
-            const state = availability(panel);
-            return (
-              <TooltipButton
-                key={panel}
-                className={styles['tile']}
-                unavailable={!state.available}
-                reason={translate(state.reason ?? 'station.unavailable.service')}
-                data-guided={guidedSurface === panel ? 'true' : undefined}
-                aria-describedby={guidedSurface === panel ? guidedHintId : undefined}
-                onClick={() => {
-                  setOpen(panel);
-                }}
-              >
-                <span className={styles['tileHeader']}>
-                  <ActionIcon icon={action.icon} />
-                  {translate(action.labelKey)}
-                </span>
-                {guidedSurface === panel ? <GuidedBadge /> : null}
-                <span className={styles['tileDetail']}>
-                  {action.descriptionKey === null ? '' : translate(action.descriptionKey)}
-                </span>
-              </TooltipButton>
-            );
-          })}
-        </div>
+        <ServicesPanel ref={servicesHeading} gateway={gateway} data={data} runner={runner} />
       ) : null}
 
       {open === 'station.hub' && report !== null && !lossIsRecent ? (
@@ -257,9 +251,6 @@ export function StationScreen({
         <HangarPanel gateway={gateway} data={data} runner={runner} />
       ) : null}
       {open === 'station.fitting' ? <FittingPanel data={data} runner={runner} /> : null}
-      {open === 'station.services' ? (
-        <ServicesPanel gateway={gateway} data={data} runner={runner} />
-      ) : null}
       {open === 'station.ship' ? <ShipPanel data={data} /> : null}
       {open === 'station.departure' ? (
         <DeparturePanel data={data} runner={runner} simulationTimeMs={simulationTimeMs} />

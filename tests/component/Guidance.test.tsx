@@ -6,7 +6,7 @@ import { createMemorySaveStore } from '@adapters/persistence';
 import { createEngineHost } from '@engine';
 import { createDirectGateway } from '@gateway/direct';
 import type { ShipData } from '@protocol';
-import { DeparturePanel, GameRoot, LocalizationProvider, useActionRunner, type PlayData } from '@ui';
+import { DeparturePanel, GameRoot, LocalizationProvider, presentedSurface, surfaceLabelKey, useActionRunner, type PlayData } from '@ui';
 
 import { shippedContent } from '../support/content.ts';
 import { openGameMenu } from '../support/gameMenu.ts';
@@ -113,6 +113,15 @@ describe('contextual guidance', () => {
 
     await harness.user.keyboard('j');
     expect(await screen.findByRole('region', { name: 'Flight school' })).toBeInTheDocument();
+  });
+
+  it('sends a step written for the old Services surface to the Overview [FUNC-3.2, FUNC-19.5]', () => {
+    // Repair, resupply and insurance moved onto the Overview; authored steps
+    // and saved progress still name the Services surface.
+    expect(presentedSurface('station.services')).toBe('station.hub');
+    expect(surfaceLabelKey('station.services')).toBe('action.station.hub');
+    expect(presentedSurface('station.market')).toBe('station.market');
+    expect(surfaceLabelKey('space')).toBe('guidance.surface.space');
   });
 });
 

@@ -9,7 +9,7 @@ import { encounterProjection, lossReportProjection, wreckContentsProjection } fr
 import { audioCuesProjection, notificationsProjection, onboardingProjection } from '@engine/projections';
 import type { HangarPayload, CargoPayload, StackPayload, MaximumInventoryPayload,
   ComparePayload, ShipPayload } from '@protocol';
-import type { MarketBuyPreviewPayload, MarketSellPreviewPayload, ShipEconomicPayload,
+import type { MarketBuyPreviewPayload, MarketSellPreviewPayload, RepairPreviewPayload, ShipEconomicPayload,
   StationPayload } from '@protocol';
 import type { ContentMessagesPayload, WreckPayload } from '@protocol';
 import {
@@ -459,7 +459,7 @@ function query(session: Session, type: RequestType, payload: unknown): unknown {
     case 'market.previewSell':
       return marketSellPreview(session.campaign!, session.content, payload as MarketSellPreviewPayload);
     case 'repair.preview':
-      return repairPreview(session.campaign!, session.content, payload as ShipEconomicPayload);
+      return repairPreview(session.campaign!, session.content, payload as RepairPreviewPayload);
     case 'resupply.preview':
       return resupplyPreview(session.campaign!, session.content, payload as ShipEconomicPayload);
     case 'insurance.preview':

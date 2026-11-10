@@ -17,6 +17,8 @@ import {
   resupplyPreview,
 } from '@engine/projections';
 
+import type { StationId } from '@shared';
+
 import { testCampaign, testSimulation } from '../../support/campaign.ts';
 import { shippedContent } from '../../support/content.ts';
 
@@ -169,6 +171,148 @@ describe('station service previews and confirmations', () => {
     expect(result.data.events.map((event) => event.kind)).toContain('repair.completed');
     // Done once, it has nothing left to do.
     expect(repairPreview(result.campaign!, content, { shipId }).available).toBe(false);
+  });
+
+  it('repairs armour only, hull only, or both, pricing each scope with one rounding [FUNC-10, TECH-7.4]', () => {
+    const draft = draftOf(testCampaign());
+    const shipId = draft.assets.activeShipId!;
+    const ship = draft.assets.ships[shipId]!;
+    draft.assets.ships[shipId] = {
+      ...ship,
+      condition: { damage: { shield: 10, armor: 25, hull: 10 }, capacitorCharge: 1 },
+    };
+    draft.assets.version += 1;
+    const state = draft as CampaignState;
+    const rules = content.rules.economy;
+    const hull = content.requireHull(ship.hullId);
+    const station = content.requireStation(stationId as StationId);
+    const armor = repairPreview(state, content, { shipId, scope: 'armor' });
+    const hullOnly = repairPreview(state, content, { shipId, scope: 'hull' });
+    const all = repairPreview(state, content, { shipId, scope: 'all' });
+    const unscoped = repairPreview(state, content, { shipId });
+
+    const factor = hull.referenceValueCredits * station.serviceModifier;
+    expect(armor.scope).toBe('armor');
+    expect(armor.totalCredits).toBe(Math.ceil(factor * rules.repairArmorFraction * armor.missingArmorFraction));
+    expect(hullOnly.totalCredits).toBe(Math.ceil(factor * rules.repairHullFraction * hullOnly.missingHullFraction));
+    expect(all.totalCredits).toBe(Math.ceil(factor * (
+      rules.repairArmorFraction * all.missingArmorFraction + rules.repairHullFraction * all.missingHullFraction)));
+    expect(armor.totalCredits).toBeGreaterThan(0);
+    expect(hullOnly.totalCredits).toBeGreaterThan(0);
+    // An omitted scope is the whole repair, priced the same way.
+    expect(unscoped.scope).toBe('all');
+    expect(unscoped.totalCredits).toBe(all.totalCredits);
+    // Each trace names only the layers it prices.
+    expect(armor.traces[0]?.formulaKey).toBe('repair.armorPrice');
+    expect(armor.traces[0]?.operands.map((operand) => operand.key)).not.toContain('missingHullFraction');
+    expect(hullOnly.traces[0]?.formulaKey).toBe('repair.hullPrice');
+    expect(hullOnly.traces[0]?.operands.map((operand) => operand.key)).not.toContain('missingArmorFraction');
+
+    const capacity = armor.capacitorCapacity;
+    const confirm = (preview: typeof armor) =>
+      runCommand({ campaign: state, content, type: 'repair.confirm', payload: { token: preview.token! } });
+
+    const armorResult = confirm(armor);
+    expect(armorResult.kind).toBe('committed');
+    if (armorResult.kind !== 'committed') return;
+    expect(armorResult.campaign!.assets.credits).toBe(draft.assets.credits - armor.totalCredits);
+    // Armour only: the hull stays damaged; shield and capacitor come free.
+    expect(armorResult.campaign!.assets.ships[shipId]!.condition).toEqual({
+      damage: { shield: 0, armor: 0, hull: 10 }, capacitorCharge: capacity,
+    });
+
+    const hullResult = confirm(hullOnly);
+    expect(hullResult.kind).toBe('committed');
+    if (hullResult.kind !== 'committed') return;
+    expect(hullResult.campaign!.assets.credits).toBe(draft.assets.credits - hullOnly.totalCredits);
+    expect(hullResult.campaign!.assets.ships[shipId]!.condition).toEqual({
+      damage: { shield: 0, armor: 25, hull: 0 }, capacitorCharge: capacity,
+    });
+
+    const allResult = confirm(all);
+    expect(allResult.kind).toBe('committed');
+    if (allResult.kind !== 'committed') return;
+    expect(allResult.campaign!.assets.credits).toBe(draft.assets.credits - all.totalCredits);
+    expect(allResult.campaign!.assets.ships[shipId]!.condition).toEqual({
+      damage: { shield: 0, armor: 0, hull: 0 }, capacitorCharge: capacity,
+    });
+
+    // After an armour repair the hull price is unchanged, and the armour
+    // scope has nothing left to repair.
+    const after = armorResult.campaign!;
+    expect(repairPreview(after, content, { shipId, scope: 'hull' }).totalCredits).toBe(hullOnly.totalCredits);
+    const nothing = repairPreview(after, content, { shipId, scope: 'armor' });
+    expect(nothing.available).toBe(false);
+    expect(nothing.unavailableReason).toBe('repair.unavailable.noArmorDamage');
+    expect(nothing.token).toBeNull();
+  });
+
+  it('refuses a stale or unaffordable scoped repair and never charges twice [FUNC-10, TECH-7.4]', () => {
+    const draft = draftOf(testCampaign());
+    const shipId = draft.assets.activeShipId!;
+    const ship = draft.assets.ships[shipId]!;
+    draft.assets.ships[shipId] = {
+      ...ship,
+      condition: { ...ship.condition, damage: { shield: 0, armor: 30, hull: 20 } },
+    };
+    draft.assets.version += 1;
+    const state = draft as CampaignState;
+    const armor = repairPreview(state, content, { shipId, scope: 'armor' });
+
+    // More armour damage after the preview: the old price is refused with the
+    // replacement, and nothing is charged.
+    const worse = draftOf(state);
+    const worn = worse.assets.ships[shipId]!;
+    worse.assets.ships[shipId] = {
+      ...worn,
+      condition: { ...worn.condition, damage: { shield: 0, armor: 60, hull: 20 } },
+    };
+    worse.assets.version += 1;
+    const stale = runCommand({ campaign: worse as CampaignState, content, type: 'repair.confirm',
+      payload: { token: armor.token! } });
+    expect(stale.kind).toBe('failed');
+    if (stale.kind !== 'failed') return;
+    expect(stale.error.code).toBe('STALE_PREVIEW');
+    const replacement = stale.error.replacementPreview;
+    expect(replacement?.action).toBe('repair');
+    expect(replacement?.totalCredits).toBeGreaterThan(armor.totalCredits);
+
+    // A confirmed repair cannot be confirmed again with the same token.
+    const once = runCommand({ campaign: state, content, type: 'repair.confirm', payload: { token: armor.token! } });
+    expect(once.kind).toBe('committed');
+    if (once.kind !== 'committed') return;
+    const twice = runCommand({ campaign: once.campaign!, content, type: 'repair.confirm',
+      payload: { token: armor.token! } });
+    expect(twice.kind).toBe('failed');
+
+    // A scope the wallet cannot meet is unavailable and says why.
+    const poor = draftOf(state);
+    poor.assets.credits = 0;
+    poor.assets.version += 1;
+    const hull = repairPreview(poor as CampaignState, content, { shipId, scope: 'hull' });
+    expect(hull.available).toBe(false);
+    expect(hull.unavailableReason).toBe('market.unavailable.insufficientCredits');
+    expect(hull.totalCredits).toBeGreaterThan(0);
+  });
+
+  it('offers only the whole repair when the shield and capacitor alone need restoring [FUNC-10]', () => {
+    const draft = draftOf(testCampaign());
+    const shipId = draft.assets.activeShipId!;
+    const ship = draft.assets.ships[shipId]!;
+    draft.assets.ships[shipId] = {
+      ...ship,
+      condition: { damage: { shield: 40, armor: 0, hull: 0 }, capacitorCharge: 3 },
+    };
+    draft.assets.version += 1;
+    const state = draft as CampaignState;
+
+    expect(repairPreview(state, content, { shipId, scope: 'armor' }).unavailableReason)
+      .toBe('repair.unavailable.noArmorDamage');
+    expect(repairPreview(state, content, { shipId, scope: 'hull' }).unavailableReason)
+      .toBe('repair.unavailable.noHullDamage');
+    const all = repairPreview(state, content, { shipId, scope: 'all' });
+    expect(all.available).toBe(true);
+    expect(all.totalCredits).toBe(0);
   });
 
   it('tops up loaded magazines from owned local ammunition before buying [MVP-AC-02, FUNC-6.1, TECH-8.3]', () => {

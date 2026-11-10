@@ -23,6 +23,7 @@ import type {
   MarketSellPreviewPayload,
   MarketTransactionPreviewData,
   RepairPreviewData,
+  RepairPreviewPayload,
   ResupplyPreviewData,
   ShipEconomicPayload,
   StationPayload,
@@ -369,7 +370,7 @@ export interface ProtocolContract {
   'market.confirmBuy': { payload: ConfirmPreviewPayload; data: CommandResultData };
   'market.previewSell': { payload: MarketSellPreviewPayload; data: MarketTransactionPreviewData };
   'market.confirmSell': { payload: ConfirmPreviewPayload; data: CommandResultData };
-  'repair.preview': { payload: ShipEconomicPayload; data: RepairPreviewData };
+  'repair.preview': { payload: RepairPreviewPayload; data: RepairPreviewData };
   'repair.confirm': { payload: ConfirmPreviewPayload; data: CommandResultData };
   'resupply.preview': { payload: ShipEconomicPayload; data: ResupplyPreviewData };
   'resupply.confirm': { payload: ConfirmPreviewPayload; data: CommandResultData };

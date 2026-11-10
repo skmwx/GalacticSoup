@@ -1,6 +1,7 @@
 import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Page } from '@playwright/test';
 import { chooseModule, fittingSlots } from '../support/fitting.ts';
+import { serviceButton } from '../support/services.ts';
 
 /**
  * The station loop in a real browser
@@ -75,11 +76,14 @@ test.describe('station interface', () => {
       /may undock/,
     );
 
-    // Use a station service.
-    await page.getByRole('button', { name: 'Services', exact: true }).click();
-    await page.getByRole('button', { name: 'Improve insurance' }).click();
+    // Use a station service, from the Overview, for the price on its button.
+    const priced = await serviceButton(page, 'Improve insurance', true);
+    const premium = /· (.+ ISK)$/.exec(await priced.innerText())?.[1];
+    expect(premium).toBeDefined();
+    await priced.click();
     const insurance = page.getByRole('dialog', { name: 'Confirm insurance' });
     await expect(insurance.getByText('Enhanced', { exact: true })).toBeVisible();
+    await expect(insurance.getByText(premium!, { exact: true }).first()).toBeVisible();
     await insurance.getByRole('button', { name: 'Confirm' }).click();
     await expect(insurance).toBeHidden();
 
@@ -95,14 +99,9 @@ test.describe('station interface', () => {
     await expect(page.getByText(wallet, { exact: true }).first()).toBeVisible();
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
     await expect(fittingSlots(page).filter({ hasText: 'Small Armour Plating' })).toBeVisible();
-    await page.getByRole('button', { name: 'Services', exact: true }).click();
-    await page.getByRole('button', { name: 'Improve insurance' }).click();
-    await expect(
-      page
-        .getByRole('dialog', { name: 'Confirm insurance' })
-        .getByText(/already has enhanced insurance/)
-        .first(),
-    ).toBeVisible();
+    const covered = await serviceButton(page, 'Improve insurance', true);
+    await expect(covered).toHaveAttribute('aria-disabled', 'true');
+    await expect(covered).toHaveAccessibleDescription(/already has enhanced insurance/);
   });
 
   test('moves a stack between the hangar and the hold [FUNC-6.2]', async ({ page }) => {

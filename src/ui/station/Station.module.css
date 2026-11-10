@@ -91,12 +91,6 @@
   margin-inline-start: auto;
 }
 
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: var(--gs-space-3);
-}
-
 .tile {
   display: flex;
   flex-direction: column;
@@ -142,10 +136,29 @@
   padding: 0 var(--gs-space-1);
 }
 
-.tileDetail {
-  margin: 0;
-  color: var(--gs-color-text-muted);
-  font-size: var(--gs-font-small);
+/* Overview services: one line per service, its priced operations beside it. */
+.serviceRows {
+  display: grid;
+  gap: var(--gs-space-2);
+}
+.serviceRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gs-space-2) var(--gs-space-3);
+}
+.serviceLabel {
+  min-width: 7rem;
+  font-weight: 600;
+}
+.serviceActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gs-space-2);
+}
+.panelHeading:focus-visible {
+  outline: 2px solid var(--gs-color-focus, var(--gs-color-accent));
+  outline-offset: 2px;
 }
 
 .panel {

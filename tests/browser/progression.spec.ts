@@ -4,6 +4,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { undock } from '../support/undock.ts';
 import { marketMode } from '../support/market.ts';
 import { applyFit, chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
+import { takeService } from '../support/services.ts';
 
 /**
  * From the starting fit to the mastery site, in a real browser
@@ -160,17 +161,7 @@ async function refit(page: Page, choices: readonly (readonly [string, string])[]
 }
 
 async function resupply(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Services', exact: true }).click();
-  await page.getByRole('button', { name: 'Resupply ammunition' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Confirm resupply' });
-  await expect(dialog.getByText('Calculating…')).toBeHidden();
-  const confirm = dialog.getByRole('button', { name: 'Confirm' });
-  if (await confirm.isEnabled()) {
-    await confirm.click();
-  } else {
-    await dialog.getByRole('button', { name: 'Cancel' }).click();
-  }
-  await expect(dialog).toBeHidden();
+  await takeService(page, 'Resupply ammunition', 'Confirm resupply');
 }
 
 async function moveToHold(page: Page, item: string): Promise<void> {
@@ -333,18 +324,9 @@ const BOOSTER = 'Small Shield Booster';
  * shows it full. No simulation time passes.
  */
 async function repairAndRecharge(page: Page, capacity: string): Promise<void> {
-  await page.getByRole('button', { name: 'Services', exact: true }).click();
-  await page.getByRole('button', { name: 'Repair the ship' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Confirm repair' });
-  await expect(dialog.getByText('Calculating…')).toBeHidden();
-  await expect(dialog.getByText(/recharged to full for free$/)).toBeVisible();
-  const confirm = dialog.getByRole('button', { name: 'Confirm' });
-  if (await confirm.isEnabled()) {
-    await confirm.click();
-  } else {
-    await dialog.getByRole('button', { name: 'Cancel' }).click();
-  }
-  await expect(dialog).toBeHidden();
+  await takeService(page, 'Repair all', 'Confirm full repair', async (dialog) => {
+    await expect(dialog.getByText(/recharged to full for free$/)).toBeVisible();
+  });
   await page.getByRole('button', { name: 'Ship', exact: true }).click();
   await expect(page.getByText(new RegExp(`^${capacity} of ${capacity},`))).toBeVisible({ timeout: 10_000 });
 }

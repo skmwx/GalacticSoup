@@ -31,6 +31,7 @@ import {
   type MarketSellPreviewPayload,
   type MarketTransactionPreviewData,
   type RepairPreviewData,
+  type RepairPreviewPayload,
   type ResupplyPreviewData,
   type InsurancePreviewData,
   type PreviewTokenData,
@@ -133,7 +134,7 @@ function project(
   switch (action) {
     case 'market.buy': return marketBuyPreview(state, transaction.content, parameters as MarketBuyPreviewPayload);
     case 'market.sell': return marketSellPreview(state, transaction.content, parameters as MarketSellPreviewPayload);
-    case 'repair': return repairPreview(state, transaction.content, parameters as ShipEconomicPayload);
+    case 'repair': return repairPreview(state, transaction.content, parameters as RepairPreviewPayload);
     case 'resupply': return resupplyPreview(state, transaction.content, parameters as ShipEconomicPayload);
     case 'insurance.enhance': return insurancePreview(state, transaction.content, parameters as ShipEconomicPayload);
   }
@@ -196,11 +197,19 @@ function applyRepair(
 ): void {
   debitWallet(draft, preview.totalCredits);
   const ship = draft.assets.ships[preview.shipId]!;
-  // The capacitor is recharged with the free shield repair
-  // (Functional Specification 10).
+  const damage = ship.condition.damage;
+  // Only the paid layers the scope names are restored; the shield and the
+  // capacitor come free with any repair (Functional Specification 10).
   draft.assets.ships[preview.shipId] = {
     ...ship,
-    condition: { damage: { shield: 0, armor: 0, hull: 0 }, capacitorCharge: preview.capacitorCapacity },
+    condition: {
+      damage: {
+        shield: 0,
+        armor: preview.scope === 'hull' ? damage.armor : 0,
+        hull: preview.scope === 'armor' ? damage.hull : 0,
+      },
+      capacitorCharge: preview.capacitorCapacity,
+    },
   };
   draft.assets.version += 1;
   transaction.publish('repair.completed', { shipId: preview.shipId, totalCredits: preview.totalCredits });

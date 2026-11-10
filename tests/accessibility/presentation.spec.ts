@@ -4,6 +4,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { gameMenuButton, openSettings } from '../support/cockpit.ts';
 import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule } from '../support/fitting.ts';
+import { serviceButton } from '../support/services.ts';
 
 /**
  * Presentation settings, input and accessibility across the MVP surfaces
@@ -23,7 +24,7 @@ import { chooseAmmunition, chooseModule } from '../support/fitting.ts';
 const PILOT = 'Presentation Pilot';
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const STORAGE_KEY = 'galactic-soup.preferences';
-const SURFACES = ['Overview', 'Market', 'Hangar', 'Fitting', 'Services', 'Ship', 'Departure'] as const;
+const SURFACES = ['Overview', 'Market', 'Hangar', 'Fitting', 'Ship', 'Departure'] as const;
 
 interface Variant {
   readonly name: string;
@@ -350,10 +351,9 @@ test.describe('presentation settings and accessibility', () => {
       'Item details',
     );
 
-    await surface(page, 'Services').click();
-    await checkDialogFocus(page, page.getByRole('button', { name: 'Repair the ship' }), 'Confirm repair');
-    await checkDialogFocus(page, page.getByRole('button', { name: 'Resupply ammunition' }), 'Confirm resupply');
-    await checkDialogFocus(page, page.getByRole('button', { name: 'Improve insurance' }), 'Confirm insurance');
+    // A new ship has nothing to repair or resupply, so insurance is the
+    // service whose confirmation is opened here.
+    await checkDialogFocus(page, await serviceButton(page, 'Improve insurance', true), 'Confirm insurance');
 
     // The undock question needs a warning: a ship with no gun.
     await surface(page, 'Fitting').click();

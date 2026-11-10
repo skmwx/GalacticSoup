@@ -30,6 +30,8 @@ import type {
   MarketTransactionPreviewData,
   PreviewTokenData,
   RepairPreviewData,
+  RepairPreviewPayload,
+  RepairScope,
   ResupplyLineData,
   ResupplyPreviewData,
   ShipEconomicPayload,
@@ -54,6 +56,8 @@ const REASON = {
   capacity: 'market.unavailable.insufficientCapacity',
   source: 'market.unavailable.sourceNotLocal',
   restored: 'repair.unavailable.nothingToRestore',
+  noArmorDamage: 'repair.unavailable.noArmorDamage',
+  noHullDamage: 'repair.unavailable.noHullDamage',
   supplied: 'resupply.unavailable.fullySupplied',
   ammunition: 'resupply.unavailable.noAmmunitionLoaded',
   enhanced: 'insurance.unavailable.alreadyEnhanced',
@@ -326,11 +330,23 @@ export function marketSellPreview(
   return deepFreeze(bindIfAvailable(state, base, payload, versions(state, payload.stationId, 'market', listing)));
 }
 
+/**
+ * A repair of the chosen paid layers (Functional Specification 10).
+ *
+ * Armour alone, hull alone, or both: the authored formula is applied to the
+ * selected layers' missing fractions and rounded up once. Every scope also
+ * restores the shield and recharges the capacitor for nothing, so a cheaper
+ * partial repair never leaves the free part undone. A partial scope is offered
+ * only while its own layer is damaged; the whole repair is offered whenever
+ * anything at all is missing, the capacitor included. An omitted scope is the
+ * whole repair.
+ */
 export function repairPreview(
   state: CampaignState,
   content: ContentRepository,
-  payload: ShipEconomicPayload,
+  payload: RepairPreviewPayload,
 ): RepairPreviewData {
+  const scope: RepairScope = payload.scope ?? 'all';
   const ship = requireShip(state, payload.shipId);
   const station = content.requireStation(stationForShip(ship.location, content));
   const hull = content.requireHull(ship.hullId);
@@ -341,27 +357,38 @@ export function repairPreview(
   const missingHullFraction = hullMaximum === 0 ? 0 : ship.condition.damage.hull / hullMaximum;
   const rules = content.rules.economy;
   const standingServiceMultiplier = 1;
-  const unrounded = hull.referenceValueCredits *
-    (rules.repairArmorFraction * missingArmorFraction + rules.repairHullFraction * missingHullFraction) *
-    station.serviceModifier * standingServiceMultiplier;
+  const paysArmor = scope !== 'hull';
+  const paysHull = scope !== 'armor';
+  const layerTerm =
+    (paysArmor ? rules.repairArmorFraction * missingArmorFraction : 0) +
+    (paysHull ? rules.repairHullFraction * missingHullFraction : 0);
+  const unrounded = hull.referenceValueCredits * layerTerm * station.serviceModifier * standingServiceMultiplier;
   const total = Math.ceil(unrounded);
   let unavailableReason = serviceReason(state, station.id, 'repair');
-  const damaged = Object.values(ship.condition.damage).some((amount) => amount > 0);
   // The capacitor is recharged with the free shield repair, so a ship with
   // nothing broken but less than a full charge still has something to restore
   // (Functional Specification 10).
   const capacitorCapacity = attributeValue(derived, 'capacitorCapacity');
+  if (scope === 'armor' && ship.condition.damage.armor <= 0) unavailableReason ??= REASON.noArmorDamage;
+  if (scope === 'hull' && ship.condition.damage.hull <= 0) unavailableReason ??= REASON.noHullDamage;
+  const damaged = Object.values(ship.condition.damage).some((amount) => amount > 0);
   const discharged = ship.condition.capacitorCharge < capacitorCapacity;
   if (!damaged && !discharged) unavailableReason ??= REASON.restored;
   if (total > state.assets.credits) unavailableReason ??= REASON.credits;
+  const armorOperands: FormulaTraceData['operands'] = [
+    { key: 'armorRepairFraction', value: rules.repairArmorFraction },
+    { key: 'missingArmorFraction', value: missingArmorFraction },
+  ];
+  const hullOperands: FormulaTraceData['operands'] = [
+    { key: 'hullRepairFraction', value: rules.repairHullFraction },
+    { key: 'missingHullFraction', value: missingHullFraction },
+  ];
   const trace: FormulaTraceData = {
-    formulaKey: 'repair.totalPrice',
+    formulaKey: REPAIR_FORMULA[scope],
     operands: [
       { key: 'hullReferenceValueCredits', value: hull.referenceValueCredits },
-      { key: 'armorRepairFraction', value: rules.repairArmorFraction },
-      { key: 'missingArmorFraction', value: missingArmorFraction },
-      { key: 'hullRepairFraction', value: rules.repairHullFraction },
-      { key: 'missingHullFraction', value: missingHullFraction },
+      ...(paysArmor ? armorOperands : []),
+      ...(paysHull ? hullOperands : []),
       { key: 'stationServiceModifier', value: station.serviceModifier },
       { key: 'standingServiceMultiplier', value: standingServiceMultiplier },
     ],
@@ -371,13 +398,20 @@ export function repairPreview(
   const base: RepairPreviewData = {
     action: 'repair', available: unavailableReason === null, unavailableReason, token: null,
     walletDeltaCredits: spending(total), totalCredits: total, traces: [trace], stationId: station.id,
-    shipId: ship.id, shieldDamage: ship.condition.damage.shield, armorDamage: ship.condition.damage.armor,
+    shipId: ship.id, scope, shieldDamage: ship.condition.damage.shield, armorDamage: ship.condition.damage.armor,
     hullDamage: ship.condition.damage.hull, missingArmorFraction, missingHullFraction,
     capacitorCharge: ship.condition.capacitorCharge, capacitorCapacity,
     serviceModifier: station.serviceModifier, standingServiceMultiplier,
   };
   return deepFreeze(bindIfAvailable(state, base, payload, versions(state, station.id, 'repair')));
 }
+
+/** The price formula each repair scope is explained with. */
+const REPAIR_FORMULA: Readonly<Record<RepairScope, string>> = {
+  armor: 'repair.armorPrice',
+  hull: 'repair.hullPrice',
+  all: 'repair.totalPrice',
+};
 
 export function insurancePreview(
   state: CampaignState,

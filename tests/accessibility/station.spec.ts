@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { serviceButton } from '../support/services.ts';
 
 /**
  * The station surfaces under keyboard-only operation
@@ -13,7 +14,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 const PILOT = 'Keyboard Pilot';
 
-const PANELS = ['Market', 'Hangar', 'Fitting', 'Services', 'Ship'] as const;
+const PANELS = ['Market', 'Hangar', 'Fitting', 'Ship'] as const;
 
 async function freshCampaign(page: Page): Promise<void> {
   await page.goto('/');
@@ -162,13 +163,13 @@ test.describe('station accessibility', () => {
   });
 
   test('does not rely on colour alone to report a refusal [TECH-12.3]', async ({ page }) => {
-    await page.getByRole('button', { name: 'Services', exact: true }).click();
-    await page.getByRole('button', { name: 'Repair the ship' }).click();
-
-    // An undamaged ship cannot be repaired, and the reason is words.
-    const dialog = page.getByRole('dialog', { name: 'Confirm repair' });
-    await expect(dialog.getByText(/already fully repaired/).first()).toBeVisible();
-    await expect(dialog.getByRole('button', { name: /Confirm/ })).toBeDisabled();
+    // An undamaged ship cannot be repaired, and the reason is words: the
+    // tooltip that focus shows, and the button's accessible description.
+    const repair = await serviceButton(page, 'Repair all', true);
+    await expect(repair).toBeDisabled();
+    await expect(repair).toHaveAccessibleDescription(/already fully repaired/);
+    await repair.focus();
+    await expect(page.getByText(/already fully repaired/).last()).toBeVisible();
   });
 
   test('stays readable at a doubled interface scale [TECH-12.3]', async ({ page }) => {
