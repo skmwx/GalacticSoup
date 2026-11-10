@@ -114,3 +114,5 @@ I've reviewed the game and found quite a number of UI elements that I'd like to 
 There is an implementation plan prepared in docs\MVPUIReview01ImplementationPlan.md , we are doing phase by phase implementation of it.
 
 Please implement UIR1-01.
+Please implement UIR1-02.
+Please implement UIR1-03.

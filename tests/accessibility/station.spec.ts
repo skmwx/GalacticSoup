@@ -58,6 +58,29 @@ test.describe('station accessibility', () => {
     }
   });
 
+  test('switches the market to Sell with the keyboard and audits both modes [TECH-12.3, FUNC-11.3]', async ({ page }) => {
+    await page.getByRole('button', { name: 'Market', exact: true }).click();
+    const buyMode = page.getByRole('radio', { name: 'Buy', exact: true });
+    await expect(buyMode).toBeChecked();
+    // Charge suitability is words, not only a colour.
+    const fusion = page.getByRole('row', { name: /^Fusion S/ });
+    await expect(fusion.getByText('Fits a weapon you have fitted')).toBeVisible();
+    await audit(page);
+
+    // Arrow keys move between the two modes, as in any radio group.
+    await buyMode.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('radio', { name: 'Sell', exact: true })).toBeChecked();
+    await expect(page.getByRole('table', { name: /Stacks you own here/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Buy / })).toHaveCount(0);
+
+    // Icon-only controls keep item- and place-specific names and a tooltip.
+    const sell = page.getByRole('button', { name: 'Sell Fusion S (Hold)' });
+    await sell.focus();
+    await expect(page.locator('[data-tooltip]')).toContainText('Sell Fusion S (Hold)');
+    await audit(page);
+  });
+
   test('passes an automated audit inside a confirmation [TECH-12.3]', async ({ page }) => {
     await page.getByRole('button', { name: 'Market', exact: true }).click();
     await page.getByRole('button', { name: 'Buy Fusion S' }).click();

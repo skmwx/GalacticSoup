@@ -157,8 +157,54 @@ export interface StationServicesData {
   readonly services: readonly StationServiceData[];
 }
 
+/** A weapon definition that can load a charge, and whether the active ship's committed fit carries one. */
+export interface MarketCompatibleWeaponData {
+  readonly definitionId: string;
+  readonly nameKey: string;
+  readonly fitted: boolean;
+}
+
+/**
+ * How a charge relates to the active ship's committed fit. `compatible` means
+ * at least one fitted weapon accepts it; it says nothing about whether that
+ * weapon is online, loaded or able to fire.
+ */
+export type MarketFitMatch = 'compatible' | 'incompatible' | 'noWeapons' | 'noShip';
+
+/**
+ * What an item is for, before it is bought: the slot a module occupies, or the
+ * weapons a charge suits. `null` for anything else.
+ */
+export type MarketSuitabilityData =
+  | { readonly kind: 'module'; readonly slot: string; readonly hardpoint: string | null }
+  | {
+      readonly kind: 'ammunition';
+      readonly weapons: readonly MarketCompatibleWeaponData[];
+      readonly currentFit: MarketFitMatch;
+    };
+
+/**
+ * A plain stack the player owns here and could offer for sale: in this
+ * station's hangar, or in the hold of the active ship docked at it. Fitted
+ * modules and loaded charges are never listed.
+ */
+export interface MarketOwnedStackData {
+  readonly stackId: string;
+  readonly inventoryId: string;
+  readonly source: 'hangar' | 'cargo';
+  readonly quantity: number;
+  readonly item: ItemData;
+  readonly recoveryGrant: boolean;
+  /** What the station pays for one unit, or `null` when it does not trade the item. */
+  readonly unitSalePriceCredits: number | null;
+  readonly sellable: boolean;
+  readonly unavailableReason: string | null;
+  readonly suitability: MarketSuitabilityData | null;
+}
+
 export interface MarketListingData {
   readonly item: MarketItemData;
+  readonly suitability: MarketSuitabilityData | null;
   readonly supply: 'dynamic' | 'fixed';
   readonly stock: number | null;
   readonly stationSellPriceCredits: number;
@@ -173,6 +219,8 @@ export interface MarketListingsData {
   readonly stationId: string;
   readonly simulationHour: number;
   readonly listings: readonly MarketListingData[];
+  /** Local stacks for the sell side; empty unless docked here. */
+  readonly owned: readonly MarketOwnedStackData[];
   readonly unavailableReason: string | null;
 }
 

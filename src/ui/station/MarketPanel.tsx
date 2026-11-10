@@ -1,7 +1,13 @@
 import { useId, useMemo, useState, type JSX } from 'react';
 
 import type { ClientGateway } from '@gateway';
-import type { MarketListingData, StackData } from '@protocol';
+import type {
+  FormulaTraceData,
+  MarketItemData,
+  MarketListingData,
+  MarketOwnedStackData,
+  MarketSuitabilityData,
+} from '@protocol';
 
 import { ActionButton, type ActionRunner } from '../actions';
 import { Dialog } from '../common/Dialog';
@@ -18,20 +24,26 @@ import { useTransactionPreview } from './useTransactionPreview';
 /**
  * The local market (Functional Specification 11.1, 11.3, 19.5).
  *
- * Both quote sides, the stock and the formula behind each price come from the
- * engine. Buying and selling go through the same preview-and-confirm path, and
- * a purchase lands in the station hangar unless the player sends it to the
- * ship's hold, which is what the functional specification prescribes.
+ * The market shows one direction at a time, from the player's side: Buy lists
+ * what the station offers and what the player pays; Sell lists what the player
+ * owns here - in the station hangar or the docked ship's hold, never fitted
+ * modules or loaded charges - and what the station pays. The stock, both
+ * prices, the formula behind each, which slot a module occupies and which
+ * weapons a charge suits all come from the engine. Buying and selling go
+ * through the same preview-and-confirm path, and a purchase lands in the
+ * station hangar unless the player sends it to the ship's hold, which is what
+ * the functional specification prescribes.
  *
  * Deferred trade surfaces - remote quotes, price history, routes - are absent
  * rather than shown as empty panels.
  *
- * Recovery-grant stacks are listed with their label. Whether one may be sold
- * is the sale preview's answer, which refuses it and says why, rather than
- * something this screen decides (Functional Specification 9.12). A pilot
- * with no ship is told that the hull they buy here becomes their active ship.
+ * An owned stack the station will not take stays listed, with its Sell control
+ * unavailable and the engine's reason in its tooltip: the item is not traded
+ * here, or it is a recovery grant with no sale value (Functional Specification
+ * 9.12). A pilot with no ship is told that the hull they buy here becomes
+ * their active ship.
  *
- * @implements FUNC-11.1, FUNC-11.3, FUNC-19.5, FUNC-9.12, MVP-AC-02, MVP-AC-06, MVP-AC-08
+ * @implements FUNC-11.1, FUNC-11.3, FUNC-19.5, FUNC-8.3, FUNC-9.12, MVP-AC-02, MVP-AC-06, MVP-AC-08
  */
 
 export interface MarketPanelProps {
@@ -39,6 +51,8 @@ export interface MarketPanelProps {
   readonly data: PlayData;
   readonly runner: ActionRunner;
 }
+
+type MarketMode = 'buy' | 'sell';
 
 interface BuyIntent {
   readonly itemId: string;
@@ -49,29 +63,38 @@ interface BuyIntent {
 interface SellIntent {
   readonly stackId: string;
   readonly quantity: number;
+  readonly available: number;
+}
+
+/** What the inspection dialog shows: the item, and the one price of the active mode. */
+interface Inspection {
+  readonly item: MarketItemData;
+  readonly suitability: MarketSuitabilityData | null;
+  readonly mode: MarketMode;
+  readonly priceCredits: number | null;
+  readonly trace: FormulaTraceData | null;
+  readonly supply: MarketListingData['supply'] | null;
 }
 
 export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
+  const [mode, setMode] = useState<MarketMode>('buy');
   const [filter, setFilter] = useState('');
   const [buy, setBuy] = useState<BuyIntent | null>(null);
   const [sell, setSell] = useState<SellIntent | null>(null);
-  const [inspecting, setInspecting] = useState<MarketListingData | null>(null);
+  const [inspecting, setInspecting] = useState<Inspection | null>(null);
   const [comparedWith, setComparedWith] = useState<string | null>(null);
   const filterId = useId();
+  const modeName = useId();
 
   const stationId = data.services?.stationId ?? null;
-  const listings = data.market?.listings ?? [];
-  const visible = useMemo(
-    () =>
-      listings.filter((listing) =>
-        translate(listing.item.nameKey).toLowerCase().includes(filter.trim().toLowerCase()),
-      ),
-    [listings, filter, translate],
-  );
-
-  const sellable = useMemo(() => localSellableStacks(data), [data]);
+  const listings = useMemo(() => data.market?.listings ?? [], [data.market]);
+  const owned = useMemo(() => data.market?.owned ?? [], [data.market]);
+  const matches = (nameKey: string): boolean =>
+    translate(nameKey).toLowerCase().includes(filter.trim().toLowerCase());
+  const visibleListings = listings.filter((listing) => matches(listing.item.nameKey));
+  const visibleOwned = owned.filter((stack) => matches(stack.item.nameKey));
 
   const buyPreview = useTransactionPreview({
     gateway,
@@ -104,6 +127,11 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
 
   const unavailable = data.market?.unavailableReason ?? null;
 
+  const inspect = (next: Inspection): void => {
+    setInspecting(next);
+    setComparedWith(null);
+  };
+
   return (
     <section className={styles['panel']} aria-labelledby="market-heading">
       <h3 id="market-heading" className={styles['panelHeading']}>
@@ -121,6 +149,23 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
       ) : null}
 
       <div className={styles['toolbar']}>
+        <fieldset className={styles['modeSwitch']}>
+          <legend className={styles['visuallyHidden']}>{translate('market.mode')}</legend>
+          {(['buy', 'sell'] as const).map((option) => (
+            <label key={option} className={styles['modeOption']}>
+              <input
+                type="radio"
+                name={modeName}
+                value={option}
+                checked={mode === option}
+                onChange={() => {
+                  setMode(option);
+                }}
+              />
+              <span>{translate(`market.mode.${option}`)}</span>
+            </label>
+          ))}
+        </fieldset>
         <label className={styles['field']} htmlFor={filterId}>
           {translate('market.filter')}
           <input
@@ -136,131 +181,132 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
         </label>
       </div>
 
-      <div className={styles['tableWrapper']} tabIndex={0}>
-        <table className={styles['table']}>
-          <caption className={styles['caption']}>
-            {translate('market.caption', { count: visible.length })}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">{translate('market.item')}</th>
-              <th scope="col">{translate('market.youPay')}</th>
-              <th scope="col">{translate('market.youReceive')}</th>
-              <th scope="col">{translate('market.stock')}</th>
-              <th scope="col">{translate('market.actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((listing) => (
-              <tr key={listing.item.definitionId}>
-                <th scope="row">{translate(listing.item.nameKey)}</th>
-                <td className={styles['numeric']}>
-                  {translate('credits.amount', {
-                    credits: formatCredits(listing.stationSellPriceCredits, locale),
-                  })}
-                </td>
-                <td className={styles['numeric']}>
-                  {translate('credits.amount', {
-                    credits: formatCredits(listing.stationBuyPriceCredits, locale),
-                  })}
-                </td>
-                <td className={styles['numeric']}>
-                  {listing.stock === null
-                    ? translate('market.stock.unlimited')
-                    : formatQuantity(listing.stock, locale)}
-                </td>
-                <td>
-                  <div className={styles['rowActions']}>
-                    <ActionButton
-                      actionId="market.buy"
-                      runner={runner}
-                      available={listing.available}
-                      unavailableReason={listing.unavailableReason}
-                      label={translate('market.buyItem', {
-                        item: translate(listing.item.nameKey),
-                      })}
-                      onRun={() => {
-                        setBuy({
-                          itemId: listing.item.definitionId,
-                          quantity: 1,
-                          destinationInventoryId: undefined,
-                        });
-                      }}
-                    />
-                    <ActionButton
-                      actionId="item.inspect"
-                      runner={runner}
-                      label={translate('market.inspectItem', {
-                        item: translate(listing.item.nameKey),
-                      })}
-                      onRun={() => {
-                        setInspecting(listing);
-                        setComparedWith(null);
-                      }}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <h4 className={styles['panelHeading']}>{translate('market.sellHeading')}</h4>
-      {sellable.length === 0 ? (
-        <p className={styles['muted']}>{translate('market.nothingToSell')}</p>
-      ) : (
-        <div className={styles['tableWrapper']} tabIndex={0}>
+      {mode === 'buy' ? (
+        <div className={styles['tableWrapper']} tabIndex={0} data-market-mode="buy">
           <table className={styles['table']}>
-            <caption className={styles['caption']}>{translate('market.sellCaption')}</caption>
+            <caption className={styles['caption']}>
+              {translate('market.caption', { count: visibleListings.length })}
+            </caption>
             <thead>
               <tr>
                 <th scope="col">{translate('market.item')}</th>
-                <th scope="col">{translate('inventory.quantity')}</th>
-                <th scope="col">{translate('market.youReceive')}</th>
-                <th scope="col">{translate('market.actions')}</th>
+                <th scope="col">{translate('market.fits')}</th>
+                <th scope="col" className={styles['numeric']}>
+                  {translate('market.youPay')}
+                </th>
+                <th scope="col" className={styles['numeric']}>
+                  {translate('market.stock')}
+                </th>
+                <th scope="col">
+                  <span className={styles['visuallyHidden']}>{translate('market.actions')}</span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {sellable.map((stack) => {
-                const listing = listings.find(
-                  (entry) => entry.item.definitionId === stack.item.definitionId,
-                );
+              {visibleListings.map((listing) => {
+                const name = translate(listing.item.nameKey);
                 return (
-                  <tr key={stack.id} data-recovery-grant={stack.recoveryGrant ? 'true' : undefined}>
-                    <th scope="row">
-                      {translate(stack.item.nameKey)}
-                      {stack.recoveryGrant ? <RecoveryGrantLabel /> : null}
-                    </th>
-                    <td className={styles['numeric']}>
-                      {formatQuantity(stack.quantity, locale)}
+                  <tr key={listing.item.definitionId}>
+                    <th scope="row">{name}</th>
+                    <td className={styles['suitabilityCell']}>
+                      <Suitability suitability={listing.suitability} />
                     </td>
                     <td className={styles['numeric']}>
-                      {listing === undefined
-                        ? translate('market.notTraded')
-                        : translate('credits.amount', {
-                            credits: formatCredits(listing.stationBuyPriceCredits, locale),
-                          })}
+                      {translate('credits.amount', {
+                        credits: formatCredits(listing.stationSellPriceCredits, locale),
+                      })}
+                    </td>
+                    <td className={styles['numeric']}>
+                      {listing.stock === null
+                        ? translate('market.stock.unlimited')
+                        : formatQuantity(listing.stock, locale)}
                     </td>
                     <td>
-                      <ActionButton
-                        actionId="market.sell"
-                        runner={runner}
-                        available={listing !== undefined && unavailable === null}
-                        unavailableReason={
-                          listing === undefined ? 'market.unavailable.listing' : unavailable
-                        }
-                        label={translate('market.sellItem', {
-                          item: translate(stack.item.nameKey),
-                        })}
-                        onRun={() => {
-                          setSell({ stackId: stack.id, quantity: stack.quantity });
-                        }}
-                      />
+                      <div className={styles['rowActions']}>
+                        <ActionButton
+                          actionId="market.buy"
+                          runner={runner}
+                          display="icon"
+                          available={listing.available}
+                          unavailableReason={listing.unavailableReason}
+                          label={translate('market.buyItem', { item: name })}
+                          onRun={() => {
+                            setBuy({
+                              itemId: listing.item.definitionId,
+                              quantity: 1,
+                              destinationInventoryId: undefined,
+                            });
+                          }}
+                        />
+                        <ActionButton
+                          actionId="item.inspect"
+                          runner={runner}
+                          display="icon"
+                          label={translate('market.inspectItem', { item: name })}
+                          onRun={() => {
+                            inspect({
+                              item: listing.item,
+                              suitability: listing.suitability,
+                              mode: 'buy',
+                              priceCredits: listing.stationSellPriceCredits,
+                              trace: listing.stationSellTrace,
+                              supply: listing.supply,
+                            });
+                          }}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+        </div>
+      ) : owned.length === 0 ? (
+        <p className={styles['muted']} data-market-mode="sell">
+          {translate('market.nothingToSell')}
+        </p>
+      ) : (
+        <div className={styles['tableWrapper']} tabIndex={0} data-market-mode="sell">
+          <table className={styles['table']}>
+            <caption className={styles['caption']}>
+              {translate('market.sellCaption', { count: visibleOwned.length })}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">{translate('market.item')}</th>
+                <th scope="col">{translate('market.fits')}</th>
+                <th scope="col">{translate('market.source')}</th>
+                <th scope="col" className={styles['numeric']}>
+                  {translate('inventory.quantity')}
+                </th>
+                <th scope="col" className={styles['numeric']}>
+                  {translate('market.youReceive')}
+                </th>
+                <th scope="col">
+                  <span className={styles['visuallyHidden']}>{translate('market.actions')}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleOwned.map((stack) => (
+                <OwnedRow
+                  key={stack.stackId}
+                  stack={stack}
+                  listing={listings.find(
+                    (entry) => entry.item.definitionId === stack.item.definitionId,
+                  )}
+                  runner={runner}
+                  onSell={() => {
+                    setSell({
+                      stackId: stack.stackId,
+                      quantity: stack.quantity,
+                      available: stack.quantity,
+                    });
+                  }}
+                  onInspect={inspect}
+                />
+              ))}
             </tbody>
           </table>
         </div>
@@ -293,7 +339,15 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
           onCommitted={() => {
             setSell(null);
           }}
-        />
+        >
+          <QuantityField
+            initial={sell.quantity}
+            maximum={sell.available}
+            onChange={(quantity) => {
+              setSell({ ...sell, quantity });
+            }}
+          />
+        </TransactionDialog>
       )}
 
       {inspecting === null ? null : (
@@ -304,31 +358,13 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
             setInspecting(null);
           }}
         >
-          <ItemSummary
-            item={inspecting.item}
-            facts={[
-              {
-                label: translate('market.youPay'),
-                value: translate('credits.amount', {
-                  credits: formatCredits(inspecting.stationSellPriceCredits, locale),
-                }),
-              },
-              {
-                label: translate('market.youReceive'),
-                value: translate('credits.amount', {
-                  credits: formatCredits(inspecting.stationBuyPriceCredits, locale),
-                }),
-              },
-              {
-                label: translate('market.supply'),
-                value: translate(`market.supply.${inspecting.supply}`),
-              },
-            ]}
-          />
-          <FormulaExplanation
-            traces={[inspecting.stationSellTrace, inspecting.stationBuyTrace]}
-            label={translate('market.explainPrice')}
-          />
+          <ItemSummary item={inspecting.item} facts={inspectionFacts(inspecting, translate, locale)} />
+          {inspecting.trace === null ? null : (
+            <FormulaExplanation
+              traces={[inspecting.trace]}
+              label={translate('market.explainPrice')}
+            />
+          )}
           <label className={styles['field']}>
             {translate('compare.pick')}
             <select
@@ -361,6 +397,219 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
   );
 }
 
+interface OwnedRowProps {
+  readonly stack: MarketOwnedStackData;
+  readonly listing: MarketListingData | undefined;
+  readonly runner: ActionRunner;
+  readonly onSell: () => void;
+  readonly onInspect: (inspection: Inspection) => void;
+}
+
+/** One stack the player owns here, with where it is and what the station pays. */
+function OwnedRow({ stack, listing, runner, onSell, onInspect }: OwnedRowProps): JSX.Element {
+  const translate = useTranslate();
+  const { locale } = useLocalizer();
+  const name = translate(stack.item.nameKey);
+  const source = translate(`market.source.${stack.source}`);
+  return (
+    <tr
+      data-recovery-grant={stack.recoveryGrant ? 'true' : undefined}
+      data-source={stack.source}
+    >
+      <th scope="row">
+        {name}
+        {stack.recoveryGrant ? <RecoveryGrantLabel /> : null}
+      </th>
+      <td className={styles['suitabilityCell']}>
+        <Suitability suitability={stack.suitability} />
+      </td>
+      <td>{source}</td>
+      <td className={styles['numeric']}>{formatQuantity(stack.quantity, locale)}</td>
+      <td className={styles['numeric']}>
+        {stack.unitSalePriceCredits === null
+          ? translate('market.notTraded')
+          : translate('credits.amount', {
+              credits: formatCredits(stack.unitSalePriceCredits, locale),
+            })}
+      </td>
+      <td>
+        <div className={styles['rowActions']}>
+          <ActionButton
+            actionId="market.sell"
+            runner={runner}
+            display="icon"
+            available={stack.sellable}
+            unavailableReason={stack.unavailableReason}
+            label={translate('market.sellItemFrom', { item: name, source })}
+            onRun={onSell}
+          />
+          <ActionButton
+            actionId="item.inspect"
+            runner={runner}
+            display="icon"
+            label={translate('market.inspectItemFrom', { item: name, source })}
+            onRun={() => {
+              onInspect({
+                item: stack.item,
+                suitability: stack.suitability,
+                mode: 'sell',
+                priceCredits: stack.unitSalePriceCredits,
+                trace: listing?.stationBuyTrace ?? null,
+                supply: listing?.supply ?? null,
+              });
+            }}
+          />
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+/**
+ * What an item is for: a module's slot, or the weapons a charge suits and
+ * whether one of them is in the active ship's committed fit. The match is
+ * stated in words, with a mark that is not colour alone.
+ */
+function Suitability({
+  suitability,
+}: {
+  readonly suitability: MarketSuitabilityData | null;
+}): JSX.Element | null {
+  const translate = useTranslate();
+  if (suitability === null) {
+    return null;
+  }
+  if (suitability.kind === 'module') {
+    return <span data-suitability="module">{moduleSlotText(suitability, translate)}</span>;
+  }
+  return (
+    <span className={styles['suitability']} data-suitability="ammunition">
+      <span>{ammunitionUsesText(suitability, translate)}</span>
+      <span className={styles['fitMatch']} data-fit-match={suitability.currentFit}>
+        {suitability.currentFit === 'compatible' ? (
+          <span aria-hidden="true" className={styles['fitMark']}>
+            ✓{' '}
+          </span>
+        ) : null}
+        <span>{translate(`market.fitMatch.${suitability.currentFit}`)}</span>
+      </span>
+    </span>
+  );
+}
+
+type Translate = ReturnType<typeof useTranslate>;
+
+function moduleSlotText(
+  suitability: Extract<MarketSuitabilityData, { kind: 'module' }>,
+  translate: Translate,
+): string {
+  const slot = translate(`slot.${suitability.slot}`);
+  return suitability.hardpoint === null
+    ? translate('market.slotFit', { slot })
+    : translate('market.slotFitHardpoint', {
+        slot,
+        hardpoint: translate(`hardpoint.${suitability.hardpoint}`),
+      });
+}
+
+function ammunitionUsesText(
+  suitability: Extract<MarketSuitabilityData, { kind: 'ammunition' }>,
+  translate: Translate,
+): string {
+  if (suitability.weapons.length === 0) {
+    return translate('market.chargeFor.none');
+  }
+  return translate('market.chargeFor', {
+    weapons: suitability.weapons.map((weapon) => translate(weapon.nameKey)).join(', '),
+  });
+}
+
+/** The inspection facts of one mode: its single price, supply, and what the item is for. */
+function inspectionFacts(
+  inspection: Inspection,
+  translate: Translate,
+  locale: string,
+): { readonly label: string; readonly value: string }[] {
+  const facts: { label: string; value: string }[] = [
+    {
+      label: translate(inspection.mode === 'buy' ? 'market.youPay' : 'market.youReceive'),
+      value:
+        inspection.priceCredits === null
+          ? translate('market.notTraded')
+          : translate('credits.amount', {
+              credits: formatCredits(inspection.priceCredits, locale),
+            }),
+    },
+  ];
+  if (inspection.supply !== null) {
+    facts.push({
+      label: translate('market.supply'),
+      value: translate(`market.supply.${inspection.supply}`),
+    });
+  }
+  const suitability = inspection.suitability;
+  if (suitability?.kind === 'module') {
+    facts.push({ label: translate('market.fits'), value: moduleSlotText(suitability, translate) });
+  } else if (suitability?.kind === 'ammunition') {
+    facts.push({
+      label: translate('market.fits'),
+      value: ammunitionUsesText(suitability, translate),
+    });
+    facts.push({
+      label: translate('market.yourFit'),
+      value: translate(`market.fitMatch.${suitability.currentFit}`),
+    });
+  }
+  return facts;
+}
+
+/**
+ * A whole positive quantity, up to an optional maximum. The field may be
+ * empty or out of range while the player retypes it; the quantity the preview
+ * asks about keeps its last usable value until the text is one again.
+ */
+function QuantityField({
+  initial,
+  maximum,
+  onChange,
+}: {
+  readonly initial: number;
+  readonly maximum?: number;
+  readonly onChange: (quantity: number) => void;
+}): JSX.Element {
+  const translate = useTranslate();
+  const id = useId();
+  const [text, setText] = useState(String(initial));
+  return (
+    <>
+      <label className={styles['field']} htmlFor={id}>
+        {translate('market.quantity')}
+      </label>
+      <input
+        id={id}
+        className={styles['input']}
+        type="number"
+        min={1}
+        {...(maximum === undefined ? {} : { max: maximum })}
+        step={1}
+        value={text}
+        onChange={(event) => {
+          setText(event.target.value);
+          const next = Number(event.target.value);
+          if (
+            /^\d+$/.test(event.target.value.trim()) &&
+            Number.isSafeInteger(next) &&
+            next > 0 &&
+            (maximum === undefined || next <= maximum)
+          ) {
+            onChange(next);
+          }
+        }}
+      />
+    </>
+  );
+}
+
 interface BuyDialogProps {
   readonly data: PlayData;
   readonly intent: BuyIntent;
@@ -384,11 +633,7 @@ function BuyDialog({
   onClose,
 }: BuyDialogProps): JSX.Element {
   const translate = useTranslate();
-  const quantityId = useId();
   const destinationId = useId();
-  // The field may be empty while the player is retyping it; the quantity the
-  // preview asks about keeps its last usable value until it is not.
-  const [text, setText] = useState(String(intent.quantity));
   const cargo = data.assets?.inventories.find(
     (inventory) =>
       inventory.location.kind === 'cargo' &&
@@ -406,22 +651,10 @@ function BuyDialog({
       onClose={onClose}
       onCommitted={onClose}
     >
-      <label className={styles['field']} htmlFor={quantityId}>
-        {translate('market.quantity')}
-      </label>
-      <input
-        id={quantityId}
-        className={styles['input']}
-        type="number"
-        min={1}
-        step={1}
-        value={text}
-        onChange={(event) => {
-          setText(event.target.value);
-          const next = Number.parseInt(event.target.value, 10);
-          if (Number.isSafeInteger(next) && next > 0) {
-            onChange({ ...intent, quantity: next });
-          }
+      <QuantityField
+        initial={intent.quantity}
+        onChange={(quantity) => {
+          onChange({ ...intent, quantity });
         }}
       />
       <label className={styles['field']} htmlFor={destinationId}>
@@ -445,27 +678,4 @@ function BuyDialog({
       </select>
     </TransactionDialog>
   );
-}
-
-/** Plain stacks in the local hangar or the docked ship's hold. */
-function localSellableStacks(data: PlayData): readonly StackData[] {
-  const assets = data.assets;
-  if (assets === null) {
-    return [];
-  }
-  const local = new Set(
-    assets.inventories
-      .filter(
-        (inventory) =>
-          inventory.location.kind === 'hangar' ||
-          (inventory.location.kind === 'cargo' &&
-            inventory.location.shipId === assets.activeShipId),
-      )
-      .map((inventory) => inventory.id),
-  );
-  return assets.inventories
-    .filter((inventory) => local.has(inventory.id))
-    .flatMap((inventory) => inventory.stacks)
-    .filter((stack) => stack.state.kind === 'plain')
-    .sort((left, right) => left.id.localeCompare(right.id));
 }

@@ -2,6 +2,7 @@ import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { marketMode } from '../support/market.ts';
 
 /**
  * The shipped build needs nothing but its own files
@@ -152,6 +153,7 @@ test.describe('playing without a network', () => {
 
     // Convert the reward: the sale is a market transaction, which autosaves.
     await page.getByRole('button', { name: 'Market', exact: true }).click();
+    await marketMode(page, 'Sell');
     await page.getByRole('button', { name: 'Sell Burned Alloy Plate' }).click();
     const sale = page.getByRole('dialog', { name: 'Confirm sale' });
     await expect(sale.getByText('Calculating…')).toBeHidden();

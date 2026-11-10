@@ -1,9 +1,11 @@
 import {
   HARDPOINT_KINDS,
   SLOT_KINDS,
+  type AmmunitionDefinition,
   type ContentRepository,
   type HardpointKind,
   type HullDefinition,
+  type ModuleDefinition,
   type SlotKind,
 } from '@engine/ports';
 
@@ -26,6 +28,15 @@ import type { FitDescription, FitViolation, FitViolationCode, SlotRef } from './
  *
  * @implements FUNC-8.4, FUNC-22.10, TECH-10.2
  */
+
+/**
+ * Whether a module can load a charge: only a turret does, and only charges of
+ * its ammunition group. Fitting validity, and every surface that says which
+ * weapon a charge suits, ask this one rule.
+ */
+export function moduleAcceptsCharge(module: ModuleDefinition, charge: AmmunitionDefinition): boolean {
+  return module.category === 'turret' && charge.group === module.turret.ammunitionGroup;
+}
 
 export interface ResourceUse {
   readonly used: number;
@@ -113,7 +124,7 @@ export function assessFit(input: FitAssessmentInput): FitAssessment {
       violations.push(
         violation('ammunitionUnknown', slot, { ammunitionId: fitted.charge.ammunitionId }),
       );
-    } else if (charge.group !== module.turret.ammunitionGroup) {
+    } else if (!moduleAcceptsCharge(module, charge)) {
       violations.push(
         violation('ammunitionMismatch', slot, {
           ammunitionId: charge.id,

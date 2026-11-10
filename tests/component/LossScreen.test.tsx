@@ -423,13 +423,20 @@ describe('recovery-grant equipment', () => {
     }
 
     await harness.user.click(screen.getByRole('button', { name: 'Market' }));
-    const granted = panel('Local market').querySelector('tr[data-recovery-grant="true"]');
-    if (!(granted instanceof HTMLElement)) throw new Error('No recovery-grant row is offered for sale.');
+    await harness.user.click(within(panel('Local market')).getByRole('radio', { name: 'Sell' }));
+    const granted = await waitFor(() => {
+      const row = panel('Local market').querySelector('tr[data-recovery-grant="true"]');
+      if (!(row instanceof HTMLElement)) throw new Error('No recovery-grant row is listed among owned goods.');
+      return row;
+    });
     expect(within(granted).getByText('Recovery grant')).toBeInTheDocument();
-    await harness.user.click(within(granted).getByRole('button', { name: /^Sell / }));
-    const dialog = await screen.findByRole('dialog', { name: 'Confirm sale' });
-    expect(await within(dialog).findByText('Recovery-grant items cannot be sold.')).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Confirm' })).toBeUnavailable();
+    // Owned but not saleable: the row stays, its Sell control is refused and
+    // says why, and activating it opens nothing.
+    const sell = within(granted).getByRole('button', { name: /^Sell / });
+    expect(sell).toBeUnavailable();
+    expect(sell).toHaveAccessibleDescription('Recovery-grant items cannot be sold.');
+    await harness.user.click(sell);
+    expect(screen.queryByRole('dialog', { name: 'Confirm sale' })).not.toBeInTheDocument();
 
     expect(harness.issues).toEqual([]);
     harness.gateway.dispose();

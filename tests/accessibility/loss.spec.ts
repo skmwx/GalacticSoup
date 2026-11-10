@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { marketMode } from '../support/market.ts';
 
 /**
  * The loss report and the shipless station under automated audit
@@ -77,6 +78,7 @@ test.describe('loss accessibility', () => {
     await page.getByRole('button', { name: 'Apply fit' }).click();
     await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
     await page.getByRole('button', { name: 'Market', exact: true }).click();
+    await marketMode(page, 'Sell');
     await page.getByRole('button', { name: 'Sell 200mm Autocannon' }).click();
     const sale = page.getByRole('dialog', { name: 'Confirm sale' });
     await expect(sale.getByText('Calculating…')).toBeHidden();

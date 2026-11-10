@@ -38,6 +38,43 @@
         "referenceValueCredits": { "type": "integer", "minimum": 0 }
       }
     },
+    "marketSuitability": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "slot", "hardpoint"],
+          "properties": {
+            "kind": { "const": "module" },
+            "slot": { "enum": ["weapon", "system", "engineering", "utility"] },
+            "hardpoint": { "enum": ["turret", "launcher", "mining", null] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "weapons", "currentFit"],
+          "properties": {
+            "kind": { "const": "ammunition" },
+            "weapons": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["definitionId", "nameKey", "fitted"],
+                "properties": {
+                  "definitionId": { "type": "string", "pattern": "^module[.]" },
+                  "nameKey": { "type": "string", "minLength": 1 },
+                  "fitted": { "type": "boolean" }
+                }
+              }
+            },
+            "currentFit": { "enum": ["compatible", "incompatible", "noWeapons", "noShip"] }
+          }
+        }
+      ]
+    },
     "previewToken": {
       "type": "object",
       "additionalProperties": false,

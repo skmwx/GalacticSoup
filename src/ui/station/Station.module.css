@@ -199,7 +199,12 @@
   composes: input;
 }
 
+/*
+ * Positioned so a visually hidden header inside the table stays within the
+ * scrolling box instead of widening the page.
+ */
 .tableWrapper {
+  position: relative;
   overflow-x: auto;
 }
 
@@ -548,4 +553,85 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/*
+ * The market's Buy/Sell switch: two radio buttons drawn as one segmented
+ * control. The native inputs stay in place for keyboard and assistive
+ * technology; the checked one is marked by fill and weight, not colour alone.
+ */
+.modeSwitch {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  overflow: hidden;
+}
+
+.modeOption {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.modeOption input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.modeOption span {
+  padding: var(--gs-space-2) var(--gs-space-3);
+  min-width: 4.5rem;
+  text-align: center;
+}
+
+.modeOption + .modeOption span {
+  border-left: var(--gs-border);
+}
+
+.modeOption input:checked + span {
+  background: var(--gs-color-surface-raised);
+  color: var(--gs-color-accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.modeOption input:focus-visible + span {
+  outline: 2px solid var(--gs-color-focus);
+  outline-offset: -2px;
+}
+
+.suitabilityCell {
+  min-width: 10rem;
+}
+
+/* Words, not figures: override the table's monospace cells. */
+.table td.suitabilityCell {
+  font-family: var(--gs-font-stack);
+}
+
+.suitability {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fitMatch {
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+
+.fitMatch[data-fit-match='compatible'] {
+  color: var(--gs-color-ok);
+  font-weight: 600;
+}
+
+.fitMark {
+  font-weight: 700;
 }

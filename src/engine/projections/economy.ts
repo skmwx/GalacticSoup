@@ -6,10 +6,12 @@ import {
   isLocalInventory,
   listingDefinition,
   maximumThatFits,
+  moduleAcceptsCharge,
   requireInventory,
   requireStack,
   requireStationEconomy,
   shipFit,
+  stacksIn,
   unitQuote,
   type CampaignState,
   type EconomyServiceName,
@@ -22,7 +24,9 @@ import type {
   MarketBuyPreviewPayload,
   MarketListingData,
   MarketListingsData,
+  MarketOwnedStackData,
   MarketSellPreviewPayload,
+  MarketSuitabilityData,
   MarketTransactionPreviewData,
   PreviewTokenData,
   RepairPreviewData,
@@ -108,6 +112,7 @@ export function marketListingsProjection(
     const stationBuys = unitQuote(content, definition, listing, 'stationBuys');
     return {
       item: marketItemData(content, definition.itemId),
+      suitability: suitabilityOf(state, content, definition.itemId),
       supply: definition.supply,
       stock: definition.supply === 'fixed' ? null : listing.stock,
       stationSellPriceCredits: stationSells.unitPriceCredits,
@@ -124,8 +129,105 @@ export function marketListingsProjection(
     stationId,
     simulationHour: Math.floor(state.time.simulationTimeMs / 3_600_000),
     listings,
+    owned: docked ? ownedLocalStacks(state, content, stationId, unavailableReason) : [],
     unavailableReason,
   });
+}
+
+/**
+ * The plain stacks the player could offer this station: its hangar first, then
+ * the active ship's hold. Fitted modules and loaded charges live in the fitting
+ * store and are never offered, and goods elsewhere are not local
+ * (Functional Specification 6.1, 11.3).
+ *
+ * Every owned stack is listed, even one this station will not take, so the
+ * player can see why: the item is not traded here, or it is a recovery grant
+ * with no sale value (Functional Specification 9.12).
+ */
+function ownedLocalStacks(
+  state: CampaignState,
+  content: ContentRepository,
+  stationId: string,
+  marketReason: string | null,
+): MarketOwnedStackData[] {
+  const assets = state.assets;
+  const sources: { readonly inventoryId: string; readonly source: MarketOwnedStackData['source'] }[] = [];
+  const hangar = Object.values(assets.inventories).find(
+    (inventory) => inventory.location.kind === 'hangar' && inventory.location.stationId === stationId,
+  );
+  if (hangar !== undefined) sources.push({ inventoryId: hangar.id, source: 'hangar' });
+  const ship = assets.activeShipId === null ? undefined : assets.ships[assets.activeShipId];
+  if (ship !== undefined && ship.location.kind === 'station' && ship.location.stationId === stationId) {
+    sources.push({ inventoryId: ship.cargoInventoryId, source: 'cargo' });
+  }
+  const listed = new Map(content.listings(stationId).map((definition) => [definition.itemId, definition]));
+  const economy = requireStationEconomy(state.economy, stationId);
+
+  return sources.flatMap(({ inventoryId, source }) =>
+    stacksIn(assets, inventoryId)
+      .filter((stack) => stack.state.kind === 'plain' && stack.quantity > 0)
+      .map((stack): MarketOwnedStackData => {
+        const definition = listed.get(stack.definitionId);
+        const listing = definition === undefined
+          ? undefined
+          : economy.listings[definition.itemId];
+        const unitSalePriceCredits = definition === undefined || listing === undefined
+          ? null
+          : unitQuote(content, definition, listing, 'stationBuys').unitPriceCredits;
+        const unavailableReason = marketReason ??
+          (unitSalePriceCredits === null ? REASON.listing : stack.recoveryGrant ? REASON.recoverySale : null);
+        return {
+          stackId: stack.id,
+          inventoryId,
+          source,
+          quantity: stack.quantity,
+          item: itemDataOf(content.requireTradeable(stack.definitionId), content),
+          recoveryGrant: stack.recoveryGrant,
+          unitSalePriceCredits,
+          sellable: unavailableReason === null,
+          unavailableReason,
+          suitability: suitabilityOf(state, content, stack.definitionId),
+        };
+      }),
+  );
+}
+
+/**
+ * What a definition is for, from the same rules fitting applies: a module's
+ * slot and hardpoint, or every weapon that accepts a charge and whether the
+ * active ship's committed fit carries one (Functional Specification 8.3, 8.4).
+ * A draft is not the fit, so only a committed change moves the answer.
+ */
+function suitabilityOf(
+  state: CampaignState,
+  content: ContentRepository,
+  definitionId: string,
+): MarketSuitabilityData | null {
+  const module = content.module(definitionId);
+  if (module !== undefined) {
+    return { kind: 'module', slot: module.slot, hardpoint: module.hardpoint ?? null };
+  }
+  const charge = content.ammunition(definitionId);
+  if (charge === undefined) return null;
+
+  const shipId = state.assets.activeShipId;
+  const fitted = shipId === null || state.assets.ships[shipId] === undefined
+    ? null
+    : shipFit(state.assets, shipId).flatMap((slot) => {
+        const definition = content.module(slot.moduleId);
+        return definition?.category === 'turret' ? [definition] : [];
+      });
+  const fittedIds = new Set(fitted?.map((definition) => definition.id) ?? []);
+  const weapons = content.modules()
+    .filter((candidate) => moduleAcceptsCharge(candidate, charge))
+    .sort((left, right) => left.id.localeCompare(right.id))
+    .map((weapon) => ({ definitionId: weapon.id, nameKey: weapon.nameKey, fitted: fittedIds.has(weapon.id) }));
+  const currentFit = fitted === null
+    ? 'noShip'
+    : fitted.length === 0
+      ? 'noWeapons'
+      : fitted.some((weapon) => moduleAcceptsCharge(weapon, charge)) ? 'compatible' : 'incompatible';
+  return { kind: 'ammunition', weapons, currentFit };
 }
 
 export function marketBuyPreview(

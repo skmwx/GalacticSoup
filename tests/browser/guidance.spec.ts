@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { marketMode } from '../support/market.ts';
 
 /**
  * A first-time player follows the in-game guidance through the easiest
@@ -183,6 +184,7 @@ test.describe('guided first loop', () => {
     // Sell what was looted, at the market.
     expect(await step(page, 'Sell your loot')).toContain('Market');
     await showMe(page);
+    await marketMode(page, 'Sell');
     const salvage = page.getByRole('button', { name: /^Sell Burned Alloy Plate/ });
     await ((await salvage.count()) > 0 ? salvage : page.getByRole('button', { name: /^Sell / })).first().click();
     await confirmDialog(page, 'Confirm sale');
@@ -207,6 +209,7 @@ test.describe('guided first loop', () => {
     if ((await heading.innerText()) === 'Carry spare rounds') {
       expect(await step(page, 'Carry spare rounds')).toContain("reloads only from the ship's hold");
       await showMe(page);
+      await marketMode(page, 'Buy');
       await page.getByRole('button', { name: 'Buy Fusion S' }).click();
       const rounds = page.getByRole('dialog', { name: 'Confirm purchase' });
       await rounds.getByLabel('Quantity').fill('40');
@@ -217,6 +220,7 @@ test.describe('guided first loop', () => {
     // Improve the fit: a second autocannon, bought and fitted.
     expect(await step(page, 'Improve the fit', 5 * 60_000)).toContain('second autocannon');
     await page.getByRole('button', { name: 'Market', exact: true }).click();
+    await marketMode(page, 'Buy');
     await page.getByRole('button', { name: 'Buy 200mm Autocannon' }).click();
     await confirmDialog(page, 'Confirm purchase');
     await showMe(page);

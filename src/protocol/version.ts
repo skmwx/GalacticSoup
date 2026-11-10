@@ -1,6 +1,11 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
+ * Version 16 adds market suitability and the sell side to `market.listings`:
+ * each listing says which slot a module occupies or which weapons accept a
+ * charge (and whether the active ship's committed fit carries one), and the
+ * view lists the plain stacks owned locally with their sale price and why one
+ * cannot be sold.
  * Version 15 adds the station's system name and danger rating to the station
  * services view, so the campaign header can say which system a docked pilot is
  * in without the interface reading content.
@@ -25,7 +30,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 15;
+export const PROTOCOL_VERSION = 16;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

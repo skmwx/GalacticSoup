@@ -2,6 +2,7 @@ import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { marketMode } from '../support/market.ts';
 
 /**
  * From the starting fit to the mastery site, in a real browser
@@ -116,6 +117,7 @@ function wallet(page: Page): Locator {
 
 async function buy(page: Page, item: string, quantity = 1, toHold = false): Promise<void> {
   await page.getByRole('button', { name: 'Market', exact: true }).click();
+  await marketMode(page, 'Buy');
   await page.getByRole('button', { name: `Buy ${item}` }).click();
   const purchase = page.getByRole('dialog', { name: 'Confirm purchase' });
   if (quantity !== 1) await purchase.getByLabel('Quantity').fill(String(quantity));
@@ -131,6 +133,7 @@ async function buy(page: Page, item: string, quantity = 1, toHold = false): Prom
  */
 async function sell(page: Page, item: string): Promise<void> {
   await page.getByRole('button', { name: 'Market', exact: true }).click();
+  await marketMode(page, 'Sell');
   const offer = page.getByRole('button', { name: `Sell ${item}` });
   await expect(offer.first()).toBeVisible();
   while ((await offer.count()) > 0) {

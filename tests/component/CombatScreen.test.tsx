@@ -507,7 +507,10 @@ describe('returning to a reopened campaign', () => {
     await harness.user.click(screen.getByRole('button', { name: /^Pause/ }));
 
     await harness.user.click(screen.getByRole('button', { name: 'Market' }));
-    expect(await screen.findByRole('button', { name: 'Sell Fusion S' })).not.toBeUnavailable();
+    await harness.user.click(await screen.findByRole('radio', { name: 'Sell' }));
+    const offers = await screen.findAllByRole('button', { name: /^Sell Fusion S \((Hangar|Hold)\)$/ });
+    expect(offers.length).toBeGreaterThan(0);
+    for (const offer of offers) expect(offer).not.toBeUnavailable();
 
     harness.gateway.dispose();
   }, 30_000);

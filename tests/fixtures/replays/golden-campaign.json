@@ -1,7 +1,7 @@
 {
   "format": "galactic-soup/replay",
   "formatVersion": 1,
-  "protocolVersion": 15,
+  "protocolVersion": 16,
   "engineVersion": "0.1.0",
   "saveFormatVersion": 10,
   "contentVersion": "0.1.0+296facab3d13",

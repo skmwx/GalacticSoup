@@ -173,12 +173,12 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 15 exposes the guidance and notification contracts (`onboarding.state` and its
+Protocol version 16 exposes the guidance and notification contracts (`onboarding.state` and its
 three commands, `notifications.list`, `audio.cues`), `loss.report`, `navigation.selectBookmark` and
 `navigation.warpToBookmark`, `encounter.state`, `loot.contents` and `loot.take` alongside
 `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`, `weapon.deactivate`,
 `weapon.reload`, `weapon.changeAmmunition`, `module.activate`, `module.deactivate`, `ship.get`,
-`ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market, repair,
+`ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market (with module slots, ammunition suitability and local owned stacks), repair,
 resupply and insurance contracts, the navigation queries and orders, and the authored content
 catalogue.
 
@@ -187,7 +187,7 @@ capacitor recharge and endurance, active-module cycles and a bounded significant
 All combat actors use the same deterministic lifecycle for damage, repair, propulsion and support
 effects, so headless opponents and the player follow the same rules.
 
-Campaign state and save format are version 10, and the protocol is version 14. These are the
+Campaign state and save format are version 10, and the protocol is version 16. These are the
 versions the MVP closes on; see Closed contracts below. Previous development saves are rejected
 without modification; start a new campaign after upgrading. No pre-release migration is required by
 the MVP plan. The migration runner remains covered by fixture registries, and the older format

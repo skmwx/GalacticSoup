@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { gameMenuButton, openSettings } from '../support/cockpit.ts';
+import { marketMode } from '../support/market.ts';
 
 /**
  * Presentation settings, input and accessibility across the MVP surfaces
@@ -338,6 +339,7 @@ test.describe('presentation settings and accessibility', () => {
 
     await surface(page, 'Market').click();
     await checkDialogFocus(page, page.getByRole('button', { name: 'Buy Fusion S' }), 'Confirm purchase');
+    await marketMode(page, 'Sell');
     await checkDialogFocus(page, page.getByRole('button', { name: 'Sell Fusion S' }), 'Confirm sale');
     await checkDialogFocus(page, page.getByRole('button', { name: 'Inspect Fusion S' }).first(), 'Item details');
 

@@ -1,6 +1,6 @@
 # MVP UI review 01 implementation plan
 
-Status: in progress; UIR1-01 and UIR1-02 complete.
+Status: in progress; UIR1-01 to UIR1-03 complete.
 
 Source review: `human-input/MVP-review-01.md`. Context: `00_GameDesignBrief.md`, `01_FunctionalSpecification.md`, `02_TechnicalSpecification.md`, `human-input/CurrentState.md`, and the implemented MVP.
 
@@ -14,7 +14,7 @@ Phase IDs use **UIR1** to distinguish this work from the completed original MVP 
 |---|---|---|---|
 | UIR1-01 | Compact action controls and accessible disabled-reason tooltips | — | Complete (`agent-comm/status/uir1-01-completion.md`) |
 | UIR1-02 | One campaign header, icon game menu, consolidated settings | 01 | Complete (`agent-comm/status/uir1-02-completion.md`) |
-| UIR1-03 | Buy/sell market modes, slot labels, ammunition compatibility | 01 | Pending |
+| UIR1-03 | Buy/sell market modes, slot labels, ammunition compatibility | 01 | Complete (`agent-comm/status/uir1-03-completion.md`) |
 | UIR1-04 | Hangar/hold columns and one/all/custom transfers | 01 | Pending |
 | UIR1-05 | One compact fitting surface with inline editing | 01 | Pending |
 | UIR1-06 | Station overview cleanup and inline priced services | 01, 02 | Pending |

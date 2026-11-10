@@ -173,14 +173,17 @@ type ProjectionName = keyof PlayProjections;
 /** Which projection each invalidation topic makes stale. */
 const TOPIC_TARGETS: Readonly<Record<string, readonly ProjectionName[]>> = {
   // Whether the ship may undock is a site command, and it moves with the active
-  // ship - a pilot who buys a hull after a loss may leave at once.
-  assets: ['assets', 'ship', 'undock', 'site'],
+  // ship - a pilot who buys a hull after a loss may leave at once. The market's
+  // sell side and its ammunition matches follow the active ship too.
+  assets: ['assets', 'ship', 'undock', 'site', 'market'],
   wallet: ['assets'],
   // What the hold carries decides which charges a weapon may change to and
-  // how much of a wreck's contents would still fit.
-  inventory: ['assets', 'fitting', 'combat', 'wreck'],
+  // how much of a wreck's contents would still fit. The market lists the
+  // stacks held locally for sale.
+  inventory: ['assets', 'fitting', 'combat', 'wreck', 'market'],
   ship: ['ship', 'undock', 'assets', 'fitting', 'combat'],
-  fitting: ['fitting', 'ship', 'undock'],
+  // The market marks charges that suit the committed fit.
+  fitting: ['fitting', 'ship', 'undock', 'market'],
   // Docking and undocking invalidate the station. Nothing station-only is read
   // while the ship is away - including after a campaign reopened in space - so
   // arriving refreshes every surface a docked ship can use.

@@ -23,6 +23,8 @@ import { shippedContent } from '../support/content.ts';
 
 const PILOT = 'Vela Trask';
 const FUSION = 'ammo.projectile.small.fusion';
+const RAILGUN = 'module.turret.railgun.small';
+const IRON_NAME = 'Iron Charge S';
 
 /** Rounds the grant leaves in the hold once the starting fit is loaded. */
 const spareRounds = (() => {
@@ -135,19 +137,107 @@ describe('station hub', () => {
   });
 });
 
+/** Buys from the market's Buy mode into the station hangar, confirming the total. */
+async function buyThroughMarket(harness: Harness, item: string, quantity: number): Promise<void> {
+  await openPanel(harness, 'Market');
+  await harness.user.click(screen.getByRole('radio', { name: 'Buy' }));
+  await harness.user.click(screen.getByRole('button', { name: `Buy ${item}` }));
+  const dialog = await screen.findByRole('dialog', { name: 'Confirm purchase' });
+  await harness.user.clear(within(dialog).getByLabelText('Quantity'));
+  await harness.user.type(within(dialog).getByLabelText('Quantity'), String(quantity));
+  await within(dialog).findByText(`${String(quantity)} × ${item}`);
+  const confirm = within(dialog).getByRole('button', { name: 'Confirm' });
+  await waitFor(() => {
+    expect(confirm).not.toBeUnavailable();
+  });
+  await harness.user.click(confirm);
+  await waitFor(() => {
+    expect(screen.queryByRole('dialog', { name: 'Confirm purchase' })).not.toBeInTheDocument();
+  });
+}
+
 describe('market', () => {
-  it('shows both quote sides and the stock the engine holds [FUNC-11.1, MVP-AC-02]', async () => {
+  it('buys at one price, and sells what the player owns here at the other [FUNC-11.1, FUNC-11.3, MVP-AC-02]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
     await openPanel(harness, 'Market');
 
+    // Buy is the default: the player's purchase price and the stock, only.
+    expect(screen.getByRole('radio', { name: 'Buy' })).toBeChecked();
     const quotes = await screen.findByRole('table', { name: /items quoted here/ });
-    const row = within(quotes).getByRole('rowheader', { name: 'Fusion S' }).closest('tr');
-    expect(row).not.toBeNull();
+    const row = within(quotes).getByRole('rowheader', { name: 'Fusion S' }).closest('tr') as HTMLElement;
     // Base price 8, spread 8%: the station sells at 9 and buys at 7.
-    expect(within(row as HTMLElement).getByText('9 ISK')).toBeInTheDocument();
-    expect(within(row as HTMLElement).getByText('7 ISK')).toBeInTheDocument();
-    expect(within(row as HTMLElement).getByText('Always stocked')).toBeInTheDocument();
+    expect(within(row).getByText('9 ISK')).toBeInTheDocument();
+    expect(within(row).queryByText('7 ISK')).not.toBeInTheDocument();
+    expect(within(row).getByText('Always stocked')).toBeInTheDocument();
+    expect(within(quotes).queryByRole('columnheader', { name: 'You receive' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Sell / })).not.toBeInTheDocument();
+
+    // Sell lists what is held locally, where it is, and what the station pays.
+    await harness.user.click(screen.getByRole('radio', { name: 'Sell' }));
+    const owned = await screen.findByRole('table', { name: /Stacks you own here/ });
+    expect(within(owned).queryByRole('columnheader', { name: 'You pay' })).not.toBeInTheDocument();
+    const rounds = within(owned).getByRole('rowheader', { name: 'Fusion S' }).closest('tr') as HTMLElement;
+    expect(within(rounds).getByText('Hold')).toBeInTheDocument();
+    expect(within(rounds).getByText('7 ISK')).toBeInTheDocument();
+    expect(within(rounds).getByText(String(spareRounds))).toBeInTheDocument();
+    // The fitted autocannon and its loaded magazine are not offered.
+    expect(within(owned).queryByRole('rowheader', { name: '200mm Autocannon' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Buy / })).not.toBeInTheDocument();
+
+    // The search applies to the active mode, and the choice survives it.
+    await harness.user.type(screen.getByLabelText('Find an item'), 'zzz');
+    expect(within(owned).queryByRole('rowheader', { name: 'Fusion S' })).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Sell' })).toBeChecked();
+
+    harness.gateway.dispose();
+  });
+
+  it('shows the slot a module fits and which charges suit the current fit [FUNC-8.3, FUNC-8.4, FUNC-19.5]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await openPanel(harness, 'Market');
+
+    await screen.findByRole('table', { name: /items quoted here/ });
+    const rowOf = (name: string): HTMLElement =>
+      within(screen.getByRole('table', { name: /items quoted here/ }))
+        .getByRole('rowheader', { name }).closest('tr') as HTMLElement;
+    expect(within(rowOf('200mm Autocannon')).getByText('Weapon slot, turret hardpoint')).toBeInTheDocument();
+    expect(within(rowOf('Small Armour Plating')).getByText('Engineering slot')).toBeInTheDocument();
+    expect(within(rowOf('Fusion S')).getByText('For 200mm Autocannon')).toBeInTheDocument();
+    expect(within(rowOf('Fusion S')).getByText('Fits a weapon you have fitted')).toBeInTheDocument();
+    expect(within(rowOf(IRON_NAME)).getByText('For 75mm Railgun')).toBeInTheDocument();
+    expect(within(rowOf(IRON_NAME)).getByText('No fitted weapon uses it')).toBeInTheDocument();
+
+    // Refit the weapon slot with a railgun: the marks follow the applied fit.
+    await buyThroughMarket(harness, '75mm Railgun', 1);
+    await openPanel(harness, 'Fitting');
+    await harness.user.click(screen.getByRole('button', { name: 'Change fit' }));
+    const weapon = await screen.findByLabelText('Module in Weapon 1');
+    await harness.user.selectOptions(weapon, within(weapon).getByRole('option', { name: /75mm Railgun/ }));
+    const apply = await screen.findByRole('button', { name: 'Apply fit' });
+    await waitFor(() => {
+      expect(apply).not.toBeUnavailable();
+    });
+    await harness.user.click(apply);
+    await waitFor(async () => {
+      const ship = await harness.gateway.request('ship.get', { shipId: (await assets(harness)).activeShipId! });
+      expect(ship.ok && ship.data.slots.some((entry) => entry.module?.definitionId === RAILGUN)).toBe(true);
+    });
+    await openPanel(harness, 'Market');
+
+    await waitFor(() => {
+      expect(within(rowOf(IRON_NAME)).getByText('Fits a weapon you have fitted')).toBeInTheDocument();
+    });
+    expect(within(rowOf('Fusion S')).getByText('No fitted weapon uses it')).toBeInTheDocument();
+
+    // Inspection repeats it, with the one price of the mode it was opened from.
+    await harness.user.click(screen.getByRole('button', { name: `Inspect ${IRON_NAME}` }));
+    const detail = await screen.findByRole('dialog', { name: 'Item details' });
+    expect(within(detail).getByText('You pay')).toBeInTheDocument();
+    expect(within(detail).queryByText('You receive')).not.toBeInTheDocument();
+    expect(within(detail).getByText('For 75mm Railgun')).toBeInTheDocument();
+    expect(within(detail).getByText('Fits a weapon you have fitted')).toBeInTheDocument();
 
     harness.gateway.dispose();
   });
@@ -302,30 +392,46 @@ describe('market', () => {
     harness.gateway.dispose();
   });
 
-  it('sells what the hangar holds and credits the wallet [MVP-AC-06]', async () => {
+  it('sells from the hangar and from the hold, and credits the wallet [MVP-AC-06, FUNC-11.3]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
+    // Rounds in the hangar as well as the spares in the hold.
     await openPanel(harness, 'Market');
+    await buyThroughMarket(harness, 'Fusion S', 5);
+    await harness.user.click(screen.getByRole('radio', { name: 'Sell' }));
 
-    const before = (await assets(harness)).credits;
-    await harness.user.click(screen.getByRole('button', { name: 'Sell Fusion S' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Confirm sale' });
+    for (const source of ['Hangar', 'Hold']) {
+      const before = (await assets(harness)).credits;
+      await harness.user.click(await screen.findByRole('button', { name: `Sell Fusion S (${source})` }));
+      const dialog = await screen.findByRole('dialog', { name: 'Confirm sale' });
+      // Sell one unit rather than the whole stack.
+      await harness.user.clear(within(dialog).getByLabelText('Quantity'));
+      await harness.user.type(within(dialog).getByLabelText('Quantity'), '1');
+      await within(dialog).findByText('1 × Fusion S');
 
-    // The dialog names the total it is about to pay; the committed sale must
-    // move the wallet by exactly that (Functional Specification 22.4).
-    const total = await waitFor(() => {
-      const label = [...dialog.querySelectorAll('dt')].find((node) => node.textContent === 'Total');
-      const parsed = Number((label?.nextElementSibling?.textContent ?? '').replace(/[^0-9]/g, ''));
-      expect(parsed).toBeGreaterThan(0);
-      return parsed;
-    });
+      // The dialog names the total it is about to pay; the committed sale must
+      // move the wallet by exactly that (Functional Specification 22.4).
+      const total = await waitFor(() => {
+        const label = [...dialog.querySelectorAll('dt')].find((node) => node.textContent === 'Total');
+        const parsed = Number((label?.nextElementSibling?.textContent ?? '').replace(/[^0-9]/g, ''));
+        expect(parsed).toBe(7);
+        return parsed;
+      });
 
-    await harness.user.click(within(dialog).getByRole('button', { name: 'Confirm' }));
+      await harness.user.click(within(dialog).getByRole('button', { name: 'Confirm' }));
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: 'Confirm sale' })).not.toBeInTheDocument();
+      });
+      expect((await assets(harness)).credits).toBe(before + total);
+    }
 
     await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: 'Confirm sale' })).not.toBeInTheDocument();
+      const owned = screen.getByRole('table', { name: /Stacks you own here/ });
+      const quantities = [...owned.querySelectorAll('tbody tr')]
+        .filter((row) => within(row as HTMLElement).queryByRole('rowheader', { name: 'Fusion S' }) !== null)
+        .map((row) => [row.getAttribute('data-source'), row.querySelectorAll('td')[2]?.textContent]);
+      expect(quantities).toEqual([['hangar', '4'], ['cargo', String(spareRounds - 1)]]);
     });
-    expect((await assets(harness)).credits).toBe(before + total);
 
     harness.gateway.dispose();
   });

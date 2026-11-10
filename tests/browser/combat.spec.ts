@@ -2,6 +2,7 @@ import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { marketMode } from '../support/market.ts';
 
 /**
  * The first end-to-end vertical slice in a real browser
@@ -221,12 +222,14 @@ test.describe('the first vertical slice', () => {
 
     // Sell the loot, buy a second gun and fit it.
     await page.getByRole('button', { name: 'Market', exact: true }).click();
+    await marketMode(page, 'Sell');
     await page.getByRole('button', { name: 'Sell Burned Alloy Plate' }).click();
     const sale = page.getByRole('dialog', { name: 'Confirm sale' });
     await sale.getByRole('button', { name: 'Confirm' }).click();
     await expect(sale).toBeHidden();
     await expect(page.getByText('23,000 ISK', { exact: true })).toBeHidden();
 
+    await marketMode(page, 'Buy');
     await page.getByRole('button', { name: 'Buy 200mm Autocannon' }).click();
     const purchase = page.getByRole('dialog', { name: 'Confirm purchase' });
     await purchase.getByRole('button', { name: 'Confirm' }).click();
