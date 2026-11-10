@@ -179,7 +179,7 @@ export function StationScreen({
         <ShipReadiness data={data} onInspect={() => { setOpen('station.ship'); }} />
       </div>
       <div className={styles['stationContent']}>
-      <div>
+      <div className={styles['visuallyHidden']}>
         <h2 id="station-heading" className={styles['heading']}>
           {data.services === null
             ? translate('station.loading')

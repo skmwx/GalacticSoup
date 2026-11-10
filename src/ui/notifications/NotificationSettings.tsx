@@ -2,10 +2,14 @@ import { useId, type JSX } from 'react';
 
 import { NOTIFICATION_CATEGORY_NAMES, type NotificationCategoryName } from '@protocol';
 
-import { ActionButton, type ActionRunner } from '../actions';
 import { formatPercent } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
-import { AUDIO_CHANNEL_NAMES, usePreferences, type AudioChannelName } from '../preferences';
+import {
+  AUDIO_CHANNEL_NAMES,
+  DEFAULT_PREFERENCES,
+  usePreferences,
+  type AudioChannelName,
+} from '../preferences';
 import styles from './Notifications.module.css';
 
 /**
@@ -16,12 +20,21 @@ import styles from './Notifications.module.css';
  * switched off altogether and each channel has its own volume. Ship
  * destruction and save failures stay visible whatever is chosen here.
  *
+ * It is one group of the Settings panel, so the player has one place for every
+ * preference. Its restore action returns only alerts and sound to their
+ * defaults, as each other settings group restores only its own.
+ *
  * @implements FUNC-19.7, FUNC-20, TECH-12.3
  */
-export function NotificationSettings({ runner }: { readonly runner: ActionRunner }): JSX.Element {
+export interface NotificationSettingsProps {
+  /** The settings group styling it is shown with. */
+  readonly className?: string | undefined;
+}
+
+export function NotificationSettings({ className }: NotificationSettingsProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
-  const { preferences, update, restoreDefaults } = usePreferences();
+  const { preferences, update } = usePreferences();
   const headingId = useId();
 
   const setCategory = (category: NotificationCategoryName, field: 'visible' | 'sound', value: boolean): void => {
@@ -41,7 +54,11 @@ export function NotificationSettings({ runner }: { readonly runner: ActionRunner
   };
 
   return (
-    <section className={styles['panel']} aria-labelledby={headingId} data-notification-settings>
+    <section
+      className={className ?? styles['panel']}
+      aria-labelledby={headingId}
+      data-notification-settings
+    >
       <h3 id={headingId} className={styles['heading']}>{translate('notifications.settings.heading')}</h3>
       <p className={styles['muted']}>{translate('notifications.settings.detail')}</p>
       <table className={styles['table']}>
@@ -120,7 +137,19 @@ export function NotificationSettings({ runner }: { readonly runner: ActionRunner
         ))}
       </fieldset>
 
-      <ActionButton actionId="preferences.restoreDefaults" runner={runner} onRun={restoreDefaults} />
+      <button
+        type="button"
+        className={styles['restore']}
+        onClick={() => {
+          update((current) => ({
+            ...current,
+            notifications: DEFAULT_PREFERENCES.notifications,
+            audio: DEFAULT_PREFERENCES.audio,
+          }));
+        }}
+      >
+        {translate('notifications.settings.restore')}
+      </button>
     </section>
   );
 }

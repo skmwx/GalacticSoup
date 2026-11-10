@@ -64,6 +64,7 @@ export function stationServicesProjection(
 ): StationServicesData {
   const station = content.station(stationId);
   if (station === undefined) throw new EconomyError('stationNotFound');
+  const system = content.requireSystem(station.systemId);
   const economy = requireStationEconomy(state.economy, stationId);
   const docked = state.assets.location.kind === 'station' && state.assets.location.stationId === stationId;
   const names = ['market', 'fitting', 'repair', 'resupply', 'insurance'] as const;
@@ -71,6 +72,8 @@ export function stationServicesProjection(
     revision: state.revision,
     stationId,
     nameKey: station.nameKey,
+    systemNameKey: system.nameKey,
+    dangerRating: system.dangerRating,
     docked,
     serviceModifier: station.serviceModifier,
     services: names.map((service) => {

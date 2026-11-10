@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openGameMenu } from '../support/cockpit.ts';
+import { gameMenuButton, openGameMenu } from '../support/cockpit.ts';
 
 async function start(page: Page): Promise<void> {
   await page.goto('/');
@@ -14,13 +14,13 @@ test('keeps campaign management separate and allows briefing inspection without 
   await openGameMenu(page);
   await page.getByRole('button', { name: 'Reset campaign', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Delete this campaign', exact: true })).toBeVisible();
-  await page.getByText('Game menu', { exact: true }).click();
+  await gameMenuButton(page).click();
   await openGameMenu(page);
   await expect(page.getByRole('button', { name: 'Delete this campaign', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Reset campaign', exact: true }).click();
   await page.getByRole('button', { name: 'Keep playing', exact: true }).click();
   await page.keyboard.press('Escape');
-  await expect(page.getByText('Game menu', { exact: true })).toBeFocused();
+  await expect(gameMenuButton(page)).toBeFocused();
   await expect(page.getByRole('button', { name: 'Reset campaign', exact: true })).toHaveCount(0);
 
   await page.locator('[data-action="station.departure"]').click();

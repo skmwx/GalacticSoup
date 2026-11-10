@@ -1,15 +1,17 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { gameMenuButton, openSettings } from '../support/cockpit.ts';
+
 /**
  * The shipped build must boot, start the dedicated engine worker and reach it
  * through the gateway, without any gameplay network request
  * (Technical Specification 2, 3.1, 3.2, 4.2).
  */
 
-/** Diagnostics are available through Settings, outside the gameplay layout. */
+/** Diagnostics are a section of Settings, reached from the game menu, outside the gameplay layout. */
 async function openBuildDetails(page: Page): Promise<void> {
   await expect(page.getByLabel('Pilot name')).toBeVisible();
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await openSettings(page);
   await page.getByText('Build and engine details').click();
 }
 
@@ -27,8 +29,13 @@ test.describe('application boot', () => {
 
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Galactic Soup' })).toBeVisible();
+    // The document keeps its title for assistive technology, but no title band
+    // or routine readiness text takes screen space: only the game menu shows.
+    await expect(page.getByRole('heading', { level: 1, name: 'Galactic Soup' })).toHaveCount(1);
     await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready over a dedicated worker\./);
+    await expect(page.getByRole('status', { name: 'Engine status' }).locator('..')).toHaveCSS('position', 'absolute');
+    await expect(page.getByText('A single-player space trading, exploration and combat game.')).toHaveCount(0);
+    await expect(gameMenuButton(page)).toBeVisible();
 
     // The build identity is a diagnostics surface, not the main screen.
     await openBuildDetails(page);

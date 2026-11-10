@@ -60,6 +60,8 @@ describe.each(['direct', 'channel'] as const)('station economy through %s transp
 
     const services = await ask(gateway, 'station.services', { stationId });
     expect(services.services.every((service) => service.available)).toBe(true);
+    // The header names the docked system from this projection, not from content [FUNC-19.1].
+    expect(services).toMatchObject({ systemNameKey: 'content.system.borrell.name', dangerRating: 1 });
     const beforeListings = await ask(gateway, 'market.listings', { stationId });
     const itemId = 'ammo.projectile.small.phased';
     const beforeListing = beforeListings.listings.find((listing) => listing.item.definitionId === itemId)!;

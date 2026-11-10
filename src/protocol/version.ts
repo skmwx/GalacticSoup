@@ -1,6 +1,9 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
+ * Version 15 adds the station's system name and danger rating to the station
+ * services view, so the campaign header can say which system a docked pilot is
+ * in without the interface reading content.
  * Version 14 adds the capacitor to the repair preview: the station recharges
  * it as part of the free shield repair, so the preview states the charge it
  * found and the capacity it restores.
@@ -22,7 +25,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 14;
+export const PROTOCOL_VERSION = 15;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

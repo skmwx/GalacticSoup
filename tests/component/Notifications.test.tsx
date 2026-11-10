@@ -269,18 +269,10 @@ describe('notifications', () => {
     expect(within(log).getByRole('listitem')).toHaveTextContent('Bounty paid: 3,000 ISK.');
   });
 
-  it('stores the settings in the browser, not the campaign, and restores the defaults [FUNC-19.7, TECH-3.1]', async () => {
-    const storage = memoryStorage();
-    const centre = renderCentre({ storage });
+  it('leaves alert and sound settings to Settings, keeping only the event log here [FUNC-19.7, FUNC-20]', async () => {
+    const centre = renderCentre();
     await centre.show(history());
-    await centre.user.click(screen.getByRole('button', { name: 'Alerts and sound' }));
-
-    await centre.user.click(screen.getByRole('checkbox', { name: 'Show Combat alerts' }));
-    expect(JSON.parse(storage.values.get(PREFERENCES_STORAGE_KEY) ?? '{}')).toMatchObject({
-      version: 2, notifications: { combat: { visible: false, sound: true } },
-    });
-
-    await centre.user.click(screen.getByRole('button', { name: /^Restore defaults/ }));
-    expect(screen.getByRole('checkbox', { name: 'Show Combat alerts' })).toBeChecked();
+    expect(screen.queryByRole('button', { name: /Alerts and sound/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Event log/ })).toBeInTheDocument();
   });
 });

@@ -1,7 +1,8 @@
-import { useId, type JSX } from 'react';
+import { useEffect, useId, useRef, type JSX, type ReactNode } from 'react';
 
 import { formatPercent } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
+import { NotificationSettings } from '../notifications/NotificationSettings';
 import {
   CONFIRMATION_NAMES,
   CONTRAST_MODES,
@@ -22,7 +23,12 @@ import styles from './Settings.module.css';
  * Interface size and text size are independent. Contrast and motion either
  * follow the browser or override it. The optional confirmations can be
  * switched off - those the rules require are listed as always asked - and the
- * keyboard shortcuts can be remapped. Each group restores its own defaults.
+ * keyboard shortcuts can be remapped. Which notification categories show and
+ * sound, and every volume, are here too, so there is one settings destination.
+ * Each group restores its own defaults.
+ *
+ * It is reached from the game menu, before a campaign is open as well as
+ * during play, and focus moves to its heading when it opens.
  *
  * Every change applies at once and belongs to this browser, not to the
  * campaign: it is kept in local storage and never saved in a snapshot. The
@@ -35,10 +41,18 @@ export interface SettingsPanelProps {
   /** Closes the panel; focus goes back to what opened it. */
   readonly onClose: () => void;
   readonly id?: string;
+  /** Moves focus to the heading when the panel opens. */
+  readonly focusOnOpen?: boolean;
+  /** Further, less frequently needed sections, such as build diagnostics. */
+  readonly children?: ReactNode;
 }
 
-export function SettingsPanel({ onClose, id }: SettingsPanelProps): JSX.Element {
+export function SettingsPanel({ onClose, id, focusOnOpen = false, children }: SettingsPanelProps): JSX.Element {
   const translate = useTranslate();
+  const heading = useRef<HTMLHeadingElement | null>(null);
+  useEffect(() => {
+    if (focusOnOpen) heading.current?.focus();
+  }, [focusOnOpen]);
   const { locale } = useLocalizer();
   const { preferences, update } = usePreferences();
   const display = preferences.display;
@@ -61,7 +75,9 @@ export function SettingsPanel({ onClose, id }: SettingsPanelProps): JSX.Element 
       }}
     >
       <div className={styles['header']}>
-        <h2 id="settings-heading" className={styles['heading']}>{translate('settings.heading')}</h2>
+        <h2 id="settings-heading" className={styles['heading']} ref={heading} tabIndex={-1}>
+          {translate('settings.heading')}
+        </h2>
         <button type="button" className={styles['button']} onClick={onClose}>
           {translate('settings.close')}
         </button>
@@ -148,9 +164,12 @@ export function SettingsPanel({ onClose, id }: SettingsPanelProps): JSX.Element 
             {translate('settings.confirmations.restore')}
           </button>
         </section>
+
+        <NotificationSettings className={styles['group']} />
       </div>
 
       <KeyBindings />
+      {children}
     </section>
   );
 }

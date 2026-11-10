@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { useCallback, useState, type JSX, type RefObject } from 'react';
 
 import type { CampaignSession, CampaignSessionState } from '@gateway';
 import type { SaveSlotData } from '@protocol';
@@ -7,7 +7,9 @@ import { ActionButton, useActionShortcuts, type ActionRunner } from '../actions'
 import { formatSimulationDuration } from '../format/duration';
 import { formatCredits } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
+import { EngineMark } from '../shell/EngineMark';
 import styles from './CampaignFrame.module.css';
+import { GameMenu } from './GameMenu';
 import type { PlayData } from './usePlayData';
 
 /**
@@ -20,10 +22,15 @@ import type { PlayData } from './usePlayData';
  * projection, the clock from the engine's answer to an advance, the balance
  * from the wallet.
  *
- * Flight instruments live in the ship rail; this compact header keeps the
- * clock and pause available. Guidance and save controls are in the game menu,
- * with Close, Reset and campaign metadata behind a separate disclosure.
- * Reset always asks for confirmation before deleting the campaign.
+ * It is the one header of the play layout: the game's mark, the pilot and
+ * where they are - station or site, system and danger, docked or not - then
+ * the wallet, the clock with its pause control, the save status and the game
+ * menu. It wraps rather than overflowing at narrow widths and larger text.
+ *
+ * Flight instruments live in the ship rail. Guidance and save controls are in
+ * the game menu behind the settings icon, with Close, Reset and campaign
+ * metadata behind a separate disclosure, and Settings last. Reset always asks
+ * for confirmation before deleting the campaign.
  *
  * @implements FUNC-19.1, FUNC-3.3, FUNC-3.2, TECH-12.1, MVP-AC-03, MVP-AC-10
  */
@@ -34,6 +41,10 @@ export interface CampaignFrameProps {
   readonly data: PlayData;
   readonly runner: ActionRunner;
   readonly simulationTimeMs: number;
+  readonly settingsOpen: boolean;
+  readonly onToggleSettings: () => void;
+  /** The game-menu trigger, which focus returns to when Settings closes. */
+  readonly menuTrigger: RefObject<HTMLButtonElement | null>;
 }
 
 export function CampaignFrame({
@@ -42,31 +53,15 @@ export function CampaignFrame({
   data,
   runner,
   simulationTimeMs,
+  settingsOpen,
+  onToggleSettings,
+  menuTrigger,
 }: CampaignFrameProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const [confirmingReset, setConfirmingReset] = useState(false);
-  const menu = useRef<HTMLDetailsElement>(null);
-  useEffect(() => {
-    const dismiss = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && menu.current?.open) {
-        menu.current.open = false;
-        setConfirmingReset(false);
-        menu.current.querySelector('summary')?.focus();
-      }
-    };
-    const outside = (event: PointerEvent): void => {
-      if (menu.current?.open && !menu.current.contains(event.target as Node)) {
-        menu.current.open = false;
-        setConfirmingReset(false);
-      }
-    };
-    document.addEventListener('keydown', dismiss);
-    document.addEventListener('pointerdown', outside);
-    return () => {
-      document.removeEventListener('keydown', dismiss);
-      document.removeEventListener('pointerdown', outside);
-    };
+  const dropReset = useCallback(() => {
+    setConfirmingReset(false);
   }, []);
 
   const campaign = sessionState.session?.campaign ?? null;
@@ -100,9 +95,10 @@ export function CampaignFrame({
 
   return (
     <header className={styles['frame']}>
+      <EngineMark className={styles['mark']} />
       <div className={styles['identity']}>
         <p className={styles['pilot']}>{campaign?.displayName ?? ''}</p>
-        <p className={styles['location']}>{describeLocation(data, translate)}</p>
+        <Location data={data} translate={translate} />
       </div>
 
       <dl className={styles['readouts']}>
@@ -126,7 +122,6 @@ export function CampaignFrame({
               : translate('frame.running', { rate: time?.rate ?? 1 })}
           </dd>
         </div>
-
       </dl>
 
       <div className={styles['controls']}>
@@ -138,11 +133,23 @@ export function CampaignFrame({
           onRun={toggleTime}
         />
       </div>
-      <details className={styles['menu']} ref={menu} onToggle={(event) => {
-        if (!event.currentTarget.open) setConfirmingReset(false);
-      }}>
-        <summary>{translate('frame.menu')}</summary>
-        <div className={styles['menuBody']}>
+
+      <p
+        className={styles['saveStatus']}
+        role="status"
+        aria-live="polite"
+        aria-label={translate('campaign.save.label')}
+      >
+        {describeSave(sessionState.slot, translate)}
+      </p>
+
+      <GameMenu
+        runner={runner}
+        triggerRef={menuTrigger}
+        settingsOpen={settingsOpen}
+        onToggleSettings={onToggleSettings}
+        onClose={dropReset}
+      >
         <ActionButton
           actionId="guidance.toggle"
           runner={runner}
@@ -160,74 +167,60 @@ export function CampaignFrame({
         />
         <details className={styles['management']}>
           <summary>{translate('frame.management')}</summary>
-        <ActionButton
-          actionId="campaign.close"
-          runner={runner}
-          onRun={async () => {
-            await session.close();
-          }}
-        />
-        {confirmingReset ? (
-          <>
+          <ActionButton
+            actionId="campaign.close"
+            runner={runner}
+            onRun={async () => {
+              await session.close();
+            }}
+          />
+          {confirmingReset ? (
+            <>
+              <ActionButton
+                actionId="campaign.reset"
+                runner={runner}
+                variant="danger"
+                label={translate('campaign.resetConfirm')}
+                onRun={async () => {
+                  setConfirmingReset(false);
+                  await session.reset();
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmingReset(false);
+                }}
+              >
+                {translate('campaign.resetCancel')}
+              </button>
+              <p className={styles['warning']}>{translate('campaign.resetDetail')}</p>
+            </>
+          ) : (
             <ActionButton
               actionId="campaign.reset"
               runner={runner}
-              variant="danger"
-              label={translate('campaign.resetConfirm')}
-              onRun={async () => {
-                setConfirmingReset(false);
-                await session.reset();
+              onRun={() => {
+                setConfirmingReset(true);
               }}
             />
-            <button
-              type="button"
-              onClick={() => {
-                setConfirmingReset(false);
-              }}
-            >
-              {translate('campaign.resetCancel')}
-            </button>
-          </>
-        ) : (
-          <ActionButton
-            actionId="campaign.reset"
-            runner={runner}
-            onRun={() => {
-              setConfirmingReset(true);
-            }}
-          />
-        )}
+          )}
 
-      {confirmingReset ? (
-        <p className={styles['warning']}>{translate('campaign.resetDetail')}</p>
-      ) : null}
-
-      <details className={styles['details']}>
-        <summary>{translate('frame.campaignDetails')}</summary>
-        <dl className={styles['readouts']}>
-          <div className={styles['readout']}>
-            <dt>{translate('campaign.identity')}</dt>
-            <dd>{campaign?.campaignId ?? ''}</dd>
-          </div>
-          <div className={styles['readout']}>
-            <dt>{translate('frame.stateVersion')}</dt>
-            <dd>{campaign?.stateVersion ?? ''}</dd>
-          </div>
-        </dl>
-      </details>
-
+          <details className={styles['details']}>
+            <summary>{translate('frame.campaignDetails')}</summary>
+            <dl className={styles['detailFacts']}>
+              <div>
+                <dt>{translate('campaign.identity')}</dt>
+                <dd>{campaign?.campaignId ?? ''}</dd>
+              </div>
+              <div>
+                <dt>{translate('frame.stateVersion')}</dt>
+                <dd>{campaign?.stateVersion ?? ''}</dd>
+              </div>
+            </dl>
+          </details>
         </details>
-        </div>
-      </details>
-
-      <p
-        className={styles['saveStatus']}
-        role="status"
-        aria-live="polite"
-        aria-label={translate('campaign.save.label')}
-      >
-        {describeSave(sessionState.slot, translate)}
-      </p>
+      </GameMenu>
 
       {sessionState.error === null ? null : (
         <p className={styles['error']} role="alert">
@@ -238,12 +231,31 @@ export function CampaignFrame({
   );
 }
 
+
 type Translate = ReturnType<typeof useTranslate>;
 
 /**
- * Where the player is. Docked, that is the station; undocked, the site and the
- * system's danger rating, which is what tells them what they have flown into.
+ * Where the player is. Docked, that is the station and the system it is in;
+ * undocked, the site and the system's danger rating, which is what tells them
+ * what they have flown into. Both come from projections.
  */
+function Location({ data, translate }: { readonly data: PlayData; readonly translate: Translate }): JSX.Element {
+  const services = data.docked ? data.services : null;
+  return (
+    <p className={styles['location']}>
+      <span>{describeLocation(data, translate)}</span>
+      {services === null ? null : (
+        <span className={styles['system']}>
+          {translate('frame.locationSystem', {
+            system: translate(services.systemNameKey),
+            danger: services.dangerRating,
+          })}
+        </span>
+      )}
+    </p>
+  );
+}
+
 function describeLocation(data: PlayData, translate: Translate): string {
   if (data.docked) {
     return data.services === null

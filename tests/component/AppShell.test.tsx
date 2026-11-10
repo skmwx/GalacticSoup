@@ -35,10 +35,12 @@ function renderShell(options: { onIssue?: (issue: LocalizationIssue) => void } =
   return { ...result, gateway };
 }
 
+/** The build details are a section of Settings, which the game menu opens. */
 async function openDiagnostics(): Promise<void> {
   await screen.findByText(/Engine ready/);
   const user = userEvent.setup();
-  await user.click(screen.getByRole('button', { name: 'Settings' }));
+  await user.click(await screen.findByRole('button', { name: 'Game menu' }));
+  await user.click(screen.getByRole('button', { name: /^Settings/ }));
   await user.click(screen.getByText('Build and engine details'));
 }
 
@@ -48,6 +50,18 @@ describe('application shell', () => {
 
     expect(await screen.findByText(/Engine ready over the in-process host\./)).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Galactic Soup' })).toBeInTheDocument();
+
+    gateway.dispose();
+  });
+
+  it('draws no header band of its own: no tagline, and the game menu is the only control [FUNC-19.1, TECH-12.1]', async () => {
+    const { gateway } = renderShell();
+
+    await screen.findByText(/Engine ready/);
+    expect(screen.queryByText('A single-player space trading, exploration and combat game.')).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Settings/ })).toBeNull();
+    const menu = await screen.findByRole('button', { name: 'Game menu' });
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
 
     gateway.dispose();
   });

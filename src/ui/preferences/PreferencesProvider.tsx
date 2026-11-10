@@ -28,11 +28,13 @@ import {
  * Nothing here reaches the engine: a preference changes what the interface
  * shows, plays or listens for, never what happens.
  *
- * The outermost provider owns the preferences and applies the display ones to
- * the document. A provider nested inside it passes the outer one through,
- * unless it is given storage of its own - which a test does to keep its
- * preferences apart - in which case it owns that set and leaves the document
- * to the outer one.
+ * There is one effective set of preferences. The outermost provider owns it,
+ * reads and writes its storage and applies the display preferences to the
+ * document; a provider nested inside it always passes the outer one through,
+ * whatever storage it was given. That way a change made in Settings - before a
+ * campaign is open or during play - reaches every surface at once, including
+ * the audio and notification visibility the play screen applies. A test that
+ * wants its own storage gives it to the outermost provider it renders.
  */
 
 export interface PreferencesValue {
@@ -57,11 +59,11 @@ export interface PreferencesProviderProps {
 
 export function PreferencesProvider({ children, storage }: PreferencesProviderProps): JSX.Element {
   const outer = useContext(PreferencesContext);
-  if (outer !== null && storage === undefined) {
+  if (outer !== null) {
     return <>{children}</>;
   }
   return (
-    <OwnPreferences storage={storage === undefined ? browserStorage() : storage} applyToDocument={outer === null}>
+    <OwnPreferences storage={storage === undefined ? browserStorage() : storage}>
       {children}
     </OwnPreferences>
   );
@@ -70,11 +72,9 @@ export function PreferencesProvider({ children, storage }: PreferencesProviderPr
 function OwnPreferences({
   children,
   storage,
-  applyToDocument,
 }: {
   readonly children: ReactNode;
   readonly storage: PreferenceStorage | null;
-  readonly applyToDocument: boolean;
 }): JSX.Element {
   const [preferences, setPreferences] = useState<Preferences>(() => loadPreferences(storage));
 
@@ -95,10 +95,10 @@ function OwnPreferences({
   // flashes at its defaults.
   const useApply = typeof document === 'undefined' ? useEffect : useLayoutEffect;
   useApply(() => {
-    if (applyToDocument && typeof document !== 'undefined') {
+    if (typeof document !== 'undefined') {
       applyDisplayPreferences(document.documentElement, preferences.display);
     }
-  }, [applyToDocument, preferences.display]);
+  }, [preferences.display]);
 
   const value = useMemo(() => ({ preferences, update, restoreDefaults }), [preferences, update, restoreDefaults]);
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;

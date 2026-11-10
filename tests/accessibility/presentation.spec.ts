@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { gameMenuButton, openSettings } from '../support/cockpit.ts';
+
 /**
  * Presentation settings, input and accessibility across the MVP surfaces
  * (Functional Specification 19.1-19.7, 20; Technical Specification 12.2-12.3,
@@ -161,7 +163,7 @@ test.describe('presentation settings and accessibility', () => {
       await audit(page);
       await purchase.getByRole('button', { name: 'Cancel' }).click();
 
-      await page.getByRole('button', { name: /^Settings/ }).click();
+      await openSettings(page);
       await expect(region(page, 'Settings')).toBeVisible();
       await audit(page);
       await expectNoSidewaysScroll(page);
@@ -179,11 +181,12 @@ test.describe('presentation settings and accessibility', () => {
     await page.goto('/');
     await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
 
-    const opener = page.getByRole('button', { name: /^Settings/ });
-    await opener.focus();
-    await page.keyboard.press('Enter');
+    // Settings is reached through the game menu, by keyboard as well.
+    const opener = gameMenuButton(page);
+    await openSettings(page, true);
     const settings = region(page, 'Settings');
     await expect(settings).toBeVisible();
+    await expect(settings.getByRole('heading', { name: 'Settings' })).toBeFocused();
 
     // Arrow keys step a list box; each change applies at once.
     await settings.getByLabel('Text size').focus();
@@ -205,7 +208,7 @@ test.describe('presentation settings and accessibility', () => {
     expect(await root.evaluate((element) => element.style.getPropertyValue('--gs-text-scale'))).toBe('1.5');
     await audit(page);
 
-    // Escape closes the non-modal panel and returns focus to its control.
+    // Escape closes the non-modal panel and returns focus to the game menu.
     await page.keyboard.press('Escape');
     await expect(settings).toBeHidden();
     await expect(opener).toBeFocused();
@@ -222,7 +225,7 @@ test.describe('presentation settings and accessibility', () => {
     });
 
     // Restoring the defaults hands contrast and motion back to the browser.
-    await page.getByRole('button', { name: /^Settings/ }).click();
+    await openSettings(page);
     await page.getByRole('button', { name: 'Restore display defaults' }).click();
     await expect(page.locator('html')).not.toHaveAttribute('data-contrast', /.+/);
   });
@@ -231,7 +234,7 @@ test.describe('presentation settings and accessibility', () => {
     await clearProfile(page);
     await startCampaign(page);
 
-    await page.getByRole('button', { name: /^Settings/ }).click();
+    await openSettings(page);
     const settings = region(page, 'Settings');
     await settings.getByLabel('Interface size').selectOption('1.5');
     await expect(page.locator('html')).toHaveCSS('--gs-ui-scale', '1.5');
@@ -256,7 +259,7 @@ test.describe('presentation settings and accessibility', () => {
     await expect(page.getByRole('heading', { level: 3, name: 'Departure' })).toBeVisible();
 
     // Switched off in the settings, the question is not asked.
-    await page.getByRole('button', { name: /^Settings/ }).click();
+    await openSettings(page);
     await settings.getByRole('checkbox', { name: 'Ask before undocking with a warning' }).click();
     await settings.getByRole('button', { name: 'Close settings' }).click();
     await page.getByRole('button', { name: /^Undock/ }).click();
@@ -269,9 +272,9 @@ test.describe('presentation settings and accessibility', () => {
     await clearProfile(page);
     await startCampaign(page);
 
-    const opener = page.getByRole('button', { name: /^Settings/ });
-    await opener.focus();
-    await page.keyboard.press('Enter');
+    // Settings through the game menu, by keyboard; closing returns focus to the menu.
+    const opener = gameMenuButton(page);
+    await openSettings(page, true);
     const keys = region(page, 'Keyboard shortcuts');
     const change = keys.getByRole('button', { name: 'Change key for Lock target' });
     await change.focus();

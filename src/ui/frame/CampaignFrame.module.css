@@ -1,36 +1,60 @@
+/*
+ * The one campaign header: a single compact row that wraps at narrow widths
+ * and larger text rather than overflowing.
+ */
 .frame {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--gs-space-2) var(--gs-space-3);
+  gap: var(--gs-space-1) var(--gs-space-3);
   background: var(--gs-color-surface-raised);
   border: var(--gs-border);
   border-radius: var(--gs-radius);
-  padding: var(--gs-space-3);
+  padding: var(--gs-space-1) var(--gs-space-3);
+}
+
+.mark {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  color: var(--gs-color-accent);
 }
 
 .identity {
-  flex: 1 1 12rem;
+  flex: 1 1 14rem;
+  min-width: 0;
 }
 
 .pilot {
   margin: 0;
   font-size: var(--gs-font-body);
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .location {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--gs-space-2);
   margin: 0;
   font-size: var(--gs-font-small);
   color: var(--gs-color-text-muted);
 }
 
+.system::before {
+  content: '·';
+  margin-inline-end: var(--gs-space-2);
+}
+
 .readouts {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--gs-space-3);
+  gap: var(--gs-space-1) var(--gs-space-3);
   margin: 0;
-  flex: 2 1 20rem;
+  flex: 0 1 auto;
 }
 
 .readout dt {
@@ -51,16 +75,6 @@
   flex: 0 1 auto;
 }
 
-.controls button {
-  background: var(--gs-color-surface);
-  border: var(--gs-border);
-  border-radius: var(--gs-radius);
-  color: inherit;
-  font: inherit;
-  padding: var(--gs-space-2) var(--gs-space-3);
-  cursor: pointer;
-}
-
 .saveStatus {
   flex: 0 1 auto;
   margin: 0;
@@ -69,7 +83,6 @@
 }
 
 .warning {
-  flex: 1 1 100%;
   margin: 0;
   color: var(--gs-color-warn);
   font-size: var(--gs-font-small);
@@ -81,67 +94,6 @@
   color: var(--gs-color-danger);
 }
 
-.details {
-  flex: 1 1 100%;
-  font-size: var(--gs-font-small);
-  color: var(--gs-color-text-muted);
-}
-
-.details summary {
-  cursor: pointer;
-}
-
-.details dd {
-  overflow-wrap: anywhere;
-}
-
-.alert {
-  color: var(--gs-color-danger);
-  font-weight: 600;
-}
-
-.frame {
-  position: relative;
-}
-.identity {
-  flex: 1 1 14rem;
-}
-.readouts {
-  flex: 0 1 auto;
-}
-.controls {
-  flex: 0 1 auto;
-}
-.saveStatus {
-  flex: 0 1 auto;
-  font-size: var(--gs-font-small);
-}
-.menu {
-  position: relative;
-}
-.menu > summary {
-  cursor: pointer;
-  border: var(--gs-border);
-  border-radius: var(--gs-radius);
-  padding: var(--gs-space-2) var(--gs-space-3);
-  background: var(--gs-color-surface);
-}
-.menuBody {
-  position: absolute;
-  inset-inline-end: 0;
-  inset-block-start: calc(100% + var(--gs-space-2));
-  z-index: 10;
-  width: min(23rem, calc(100vw - 3rem));
-  padding: var(--gs-space-3);
-  background: var(--gs-color-surface-raised);
-  border: var(--gs-border);
-  border-radius: var(--gs-radius);
-  box-shadow: 0 12px 40px #0008;
-  display: grid;
-  gap: var(--gs-space-2);
-  max-height: 70vh;
-  overflow-y: auto;
-}
 .management {
   display: block;
 }
@@ -154,14 +106,29 @@
   flex-direction: column;
   gap: var(--gs-space-2);
 }
-.menuBody button {
-  font: inherit;
-  color: inherit;
-  background: var(--gs-color-surface);
-  border: var(--gs-border);
-  border-radius: var(--gs-radius);
-  padding: var(--gs-space-2);
+
+.details {
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
 }
+.details summary {
+  cursor: pointer;
+}
+.detailFacts {
+  display: grid;
+  gap: var(--gs-space-1);
+  margin: var(--gs-space-2) 0 0;
+}
+.detailFacts dt {
+  font-size: var(--gs-font-small);
+}
+.detailFacts dd {
+  margin: 0;
+  font-family: var(--gs-font-mono);
+  overflow-wrap: anywhere;
+}
+
+/* Flight readouts in the ship rail share this stylesheet. */
 .flightReadouts {
   display: grid;
   gap: var(--gs-space-2);
@@ -177,22 +144,33 @@
   font-size: var(--gs-font-small);
   overflow-wrap: anywhere;
 }
-@media (max-width: 45rem) {
-  .frame {
-    gap: var(--gs-space-2);
-  }
-  .identity {
-    flex-basis: 100%;
-  }
+
+.alert {
+  color: var(--gs-color-danger);
+  font-weight: 600;
 }
 
-.frame {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-}
 @media (max-width: 60rem) {
   .frame {
     position: relative;
+  }
+}
+
+/* Narrow: mark, pilot and the game menu share the first row; the rest wraps below. */
+@media (max-width: 45rem) {
+  .identity {
+    flex: 1 1 0;
+  }
+  .frame > [data-game-menu] {
+    order: 1;
+  }
+  .readouts {
+    order: 2;
+    flex-basis: 100%;
+  }
+  .controls,
+  .saveStatus,
+  .error {
+    order: 3;
   }
 }

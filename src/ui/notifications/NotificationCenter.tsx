@@ -8,7 +8,6 @@ import { useLocalizer, useTranslate } from '../localization';
 import { usePreferences } from '../preferences';
 import { EventLog } from './EventLog';
 import styles from './Notifications.module.css';
-import { NotificationSettings } from './NotificationSettings';
 import { SeverityIcon } from './SeverityIcon';
 import { notificationText, SEVERITY_RANK } from './text';
 
@@ -34,6 +33,10 @@ import { notificationText, SEVERITY_RANK } from './text';
  * nobody loses a notification while reading it; the event log keeps every one
  * in any case. Dismissing the focused toast hands the focus to the event log
  * control rather than dropping it onto the page.
+ *
+ * Which categories show and sound, and how loud, is chosen in Settings
+ * (`NotificationSettings`); this applies the choice from the shared
+ * preferences the moment it changes.
  *
  * @implements FUNC-19.7, FUNC-20, TECH-12.4, TECH-12.3, MVP-AC-10
  */
@@ -70,7 +73,7 @@ export function NotificationCenter({ notifications, slot, runner }: Notification
   const seen = useRef<number | null>(null);
   const lastCue = useRef<{ atMs: number; rank: number }>({ atMs: -Infinity, rank: -1 });
   const [toasts, setToasts] = useState<readonly Toast[]>([]);
-  const [panel, setPanel] = useState<'log' | 'settings' | null>(null);
+  const [logOpen, setLogOpen] = useState(false);
   const [held, setHeld] = useState<number | null>(null);
   const controls = useRef<HTMLDivElement | null>(null);
   const saveFailed = slot?.status.state === 'failed';
@@ -144,7 +147,7 @@ export function NotificationCenter({ notifications, slot, runner }: Notification
 
   useActionShortcuts({
     'notifications.log': () => {
-      setPanel((current) => (current === 'log' ? null : 'log'));
+      setLogOpen((open) => !open);
     },
   });
 
@@ -197,17 +200,9 @@ export function NotificationCenter({ notifications, slot, runner }: Notification
         <ActionButton
           actionId="notifications.log"
           runner={runner}
-          pressed={panel === 'log'}
+          pressed={logOpen}
           onRun={() => {
-            setPanel((current) => (current === 'log' ? null : 'log'));
-          }}
-        />
-        <ActionButton
-          actionId="notifications.settings"
-          runner={runner}
-          pressed={panel === 'settings'}
-          onRun={() => {
-            setPanel((current) => (current === 'settings' ? null : 'settings'));
+            setLogOpen((open) => !open);
           }}
         />
         {audio.player.available ? null : (
@@ -215,8 +210,7 @@ export function NotificationCenter({ notifications, slot, runner }: Notification
         )}
       </div>
 
-      {panel === 'log' ? <EventLog notifications={notifications} locale={locale} /> : null}
-      {panel === 'settings' ? <NotificationSettings runner={runner} /> : null}
+      {logOpen ? <EventLog notifications={notifications} locale={locale} /> : null}
     </section>
   );
 }

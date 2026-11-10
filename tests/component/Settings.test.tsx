@@ -115,6 +115,26 @@ describe('display settings', () => {
     expect(question).toBeChecked();
   });
 
+  it('holds the alert and sound settings, stores them in the browser and restores only them [FUNC-19.7, FUNC-20, TECH-3.1]', async () => {
+    const { user, storage } = renderSettings();
+    const alerts = screen.getByRole('region', { name: 'Alerts and sound' });
+
+    await user.selectOptions(screen.getByLabelText('Contrast'), 'high');
+    await user.click(within(alerts).getByRole('checkbox', { name: 'Show Combat alerts' }));
+    await user.click(within(alerts).getByRole('checkbox', { name: 'Play sounds' }));
+    expect(JSON.parse(storage.values.get(PREFERENCES_STORAGE_KEY) ?? '{}')).toMatchObject({
+      version: 2,
+      notifications: { combat: { visible: false, sound: true } },
+      audio: { enabled: false },
+    });
+
+    await user.click(within(alerts).getByRole('button', { name: 'Restore alert and sound defaults' }));
+    expect(within(alerts).getByRole('checkbox', { name: 'Show Combat alerts' })).toBeChecked();
+    expect(within(alerts).getByRole('checkbox', { name: 'Play sounds' })).toBeChecked();
+    // Each group restores its own defaults: the display choice stays.
+    expect(document.documentElement).toHaveAttribute('data-contrast', 'high');
+  });
+
   it('closes on Escape, as a non-modal panel [TECH-12.3]', async () => {
     const { user, onClose } = renderSettings();
     screen.getByLabelText('Contrast').focus();

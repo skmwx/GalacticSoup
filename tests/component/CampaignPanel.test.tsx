@@ -1,14 +1,23 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import type { JSX } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createMemorySaveStore, type MemorySaveStore } from '@adapters/persistence';
 import { createEngineHost } from '@engine';
 import { createDirectGateway } from '@gateway/direct';
 import type { LocalizationIssue } from '@shared';
-import { GameRoot, LocalizationProvider } from '@ui';
+import {
+  GameRoot,
+  LocalizationProvider,
+  PREFERENCES_STORAGE_KEY,
+  PreferencesProvider,
+  usePreferences,
+  type PreferenceStorage,
+} from '@ui';
 
 import { shippedContent } from '../support/content.ts';
+import { openGameMenu, openSettings } from '../support/gameMenu.ts';
 
 /**
  * The campaign surface (Functional Specification 3.1, 3.4; MVP-AC-01).
@@ -85,6 +94,7 @@ describe('campaign surface', () => {
     const harness = renderGame();
     await startCampaign(harness);
 
+    await openGameMenu(harness.user, true);
     await harness.user.click(screen.getByRole('button', { name: /Close campaign/ }));
 
     const resume = await screen.findByRole('button', { name: 'Resume campaign' });
@@ -102,6 +112,7 @@ describe('campaign surface', () => {
     const harness = renderGame();
     await startCampaign(harness);
 
+    await openGameMenu(harness.user, true);
     await harness.user.click(screen.getByRole('button', { name: /Reset campaign/ }));
     expect(
       screen.getByText(/Resetting deletes this campaign and every save of it/),
@@ -124,6 +135,7 @@ describe('campaign surface', () => {
     const harness = renderGame();
     await startCampaign(harness);
 
+    await openGameMenu(harness.user, true);
     await harness.user.click(screen.getByRole('button', { name: /Save now/ }));
 
     await waitFor(() => {
@@ -198,6 +210,7 @@ describe('campaign surface', () => {
     const onIssue = vi.fn();
     const harness = renderGame({ onIssue });
     await startCampaign(harness);
+    await openGameMenu(harness.user, true);
     await harness.user.click(screen.getByRole('button', { name: /Reset campaign/ }));
 
     expect(onIssue).not.toHaveBeenCalled();
@@ -217,5 +230,185 @@ describe('campaign surface', () => {
     expect(await screen.findByText('Keyboard Pilot')).toBeInTheDocument();
 
     harness.gateway.dispose();
+  });
+});
+
+/**
+ * One header, the game menu behind the settings icon, and one Settings
+ * destination with one effective set of preferences (MVP UI review 01,
+ * phase UIR1-02; Functional Specification 19.1, 20; Technical Specification 12.3).
+ */
+describe('game menu and settings', () => {
+  function memoryStorage(): PreferenceStorage & { values: Map<string, string> } {
+    const values = new Map<string, string>();
+    return {
+      values,
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => {
+        values.set(key, value);
+      },
+    };
+  }
+
+  function renderWithStorage(storage: PreferenceStorage) {
+    const gateway = createDirectGateway({
+      host: createEngineHost({ content: shippedContent(), saves: createMemorySaveStore() }),
+      defaultTimeoutMs: 5_000,
+    });
+    const result = render(
+      <LocalizationProvider>
+        <GameRoot gateway={gateway} preferenceStorage={storage} />
+      </LocalizationProvider>,
+    );
+    return { ...result, gateway, user: userEvent.setup() };
+  }
+
+  afterEach(() => {
+    const root = document.documentElement;
+    root.removeAttribute('data-contrast');
+    root.removeAttribute('data-motion');
+    root.style.removeProperty('--gs-ui-scale');
+    root.style.removeProperty('--gs-text-scale');
+  });
+
+  it('offers Settings from an icon-only game menu before a campaign is open [FUNC-20, TECH-12.3]', async () => {
+    const harness = renderWithStorage(memoryStorage());
+    const trigger = await screen.findByRole('button', { name: 'Game menu' });
+    // Icon only: the name is the accessible label and the tooltip, not visible text.
+    expect(trigger).toHaveAttribute('aria-label', 'Game menu');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(trigger).not.toHaveTextContent('Game menu');
+
+    await harness.user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await harness.user.click(screen.getByRole('button', { name: /^Settings/ }));
+
+    const settings = screen.getByRole('region', { name: 'Settings' });
+    expect(within(settings).getByRole('heading', { name: 'Settings' })).toHaveFocus();
+    // Alerts and sound are one group of Settings.
+    expect(within(settings).getByRole('region', { name: 'Alerts and sound' })).toBeInTheDocument();
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await harness.user.keyboard('{Escape}');
+    expect(screen.queryByRole('region', { name: 'Settings' })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+
+    harness.gateway.dispose();
+  });
+
+  it('keeps every previous menu entry, closes on Escape and outside presses, and drops a pending reset [FUNC-19.1, FUNC-3.4, TECH-12.3]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    expect(screen.queryByRole('button', { name: /Save now/ })).not.toBeInTheDocument();
+
+    await openGameMenu(harness.user, true);
+    const menu = screen.getByRole('group', { name: 'Game menu' });
+    for (const name of [/^Hide guidance/, /Save now/, /Close campaign/, /Reset campaign/, /^Settings/]) {
+      expect(within(menu).getByRole('button', { name })).toBeInTheDocument();
+    }
+    expect(screen.getByText('Campaign details')).toBeInTheDocument();
+
+    await harness.user.click(screen.getByRole('button', { name: /Reset campaign/ }));
+    expect(screen.getByRole('button', { name: /Delete this campaign/ })).toBeInTheDocument();
+    await harness.user.keyboard('{Escape}');
+    const trigger = screen.getByRole('button', { name: 'Game menu' });
+    expect(trigger).toHaveFocus();
+    expect(screen.queryByRole('button', { name: /Save now/ })).not.toBeInTheDocument();
+
+    // Reopened, the half-finished reset is gone and nothing was deleted.
+    await openGameMenu(harness.user, true);
+    expect(screen.queryByRole('button', { name: /Delete this campaign/ })).not.toBeInTheDocument();
+    expect(harness.store.saveIds().length).toBeGreaterThan(0);
+
+    await harness.user.click(screen.getByText('Borrell Harbour', { selector: 'h2' }));
+    expect(screen.queryByRole('button', { name: /Save now/ })).not.toBeInTheDocument();
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    harness.gateway.dispose();
+  });
+
+  it('names the system and its danger while docked, from the station projection [FUNC-19.1, MVP-AC-03]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+
+    expect(await screen.findByText('Docked at Borrell Harbour')).toBeInTheDocument();
+    expect(screen.getByText('Borrell — danger 1')).toBeInTheDocument();
+
+    harness.gateway.dispose();
+  });
+
+  it('applies a change made in Settings during play at once, through the one preference state [FUNC-20, TECH-12.3, TECH-3.1]', async () => {
+    const storage = memoryStorage();
+    const harness = renderWithStorage(storage);
+    const field = await screen.findByLabelText('Pilot name');
+    await harness.user.type(field, 'Vela Trask');
+    await harness.user.click(screen.getByRole('button', { name: 'Start campaign' }));
+    await screen.findByRole('heading', { level: 2, name: 'Borrell Harbour' });
+
+    await openSettings(harness.user);
+    const settings = screen.getByRole('region', { name: 'Settings' });
+    await harness.user.selectOptions(within(settings).getByLabelText('Text size'), '1.5');
+    expect(document.documentElement.style.getPropertyValue('--gs-text-scale')).toBe('1.5');
+
+    // A binding changed in Settings is the one the play screen dispatches.
+    const keys = within(settings).getByRole('region', { name: 'Keyboard shortcuts' });
+    await harness.user.click(within(keys).getByRole('button', { name: 'Change key for Market' }));
+    await harness.user.keyboard('z');
+    await harness.user.click(within(settings).getByRole('button', { name: 'Close settings' }));
+    expect(screen.getByRole('button', { name: 'Game menu' })).toHaveFocus();
+
+    const market = within(screen.getByRole('navigation', { name: 'Station services' }))
+      .getByRole('button', { name: /^Market/ });
+    expect(market).not.toHaveAttribute('aria-current', 'page');
+    await harness.user.keyboard('z');
+    expect(market).toHaveAttribute('aria-current', 'page');
+
+    // Notification visibility and sound live in the same stored set.
+    await openSettings(harness.user);
+    await harness.user.click(screen.getByRole('checkbox', { name: 'Play sounds' }));
+    expect(JSON.parse(storage.values.get(PREFERENCES_STORAGE_KEY) ?? '{}')).toMatchObject({
+      display: { textScale: 1.5 },
+      audio: { enabled: false },
+      bindings: { 'station.market': 'z' },
+    });
+    harness.unmount();
+    harness.gateway.dispose();
+
+    // Reopened, the game reads the same choices back.
+    const again = renderWithStorage(storage);
+    await screen.findByLabelText('Pilot name');
+    expect(document.documentElement.style.getPropertyValue('--gs-text-scale')).toBe('1.5');
+    again.gateway.dispose();
+  });
+
+  it('keeps one effective preference state when providers are nested [TECH-12.3]', async () => {
+    const outer = memoryStorage();
+    const inner = memoryStorage();
+    function Probe(): JSX.Element {
+      const { preferences, update } = usePreferences();
+      return (
+        <button type="button" onClick={() => {
+          update((current) => ({ ...current, audio: { ...current.audio, enabled: false } }));
+        }}
+        >
+          {preferences.audio.enabled ? 'sound on' : 'sound off'}
+        </button>
+      );
+    }
+    render(
+      <PreferencesProvider storage={outer}>
+        <Probe />
+        <PreferencesProvider storage={inner}>
+          <Probe />
+        </PreferencesProvider>
+      </PreferencesProvider>,
+    );
+    const user = userEvent.setup();
+    const [first, second] = screen.getAllByRole('button');
+    await user.click(second!);
+    expect(first).toHaveTextContent('sound off');
+    expect(second).toHaveTextContent('sound off');
+    expect(outer.values.size).toBe(1);
+    expect(inner.values.size).toBe(0);
   });
 });

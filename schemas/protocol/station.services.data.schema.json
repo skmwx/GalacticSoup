@@ -4,11 +4,13 @@
   "title": "StationServicesData",
   "type": "object",
   "additionalProperties": false,
-  "required": ["revision", "stationId", "nameKey", "docked", "serviceModifier", "services"],
+  "required": ["revision", "stationId", "nameKey", "systemNameKey", "dangerRating", "docked", "serviceModifier", "services"],
   "properties": {
     "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "stationId": { "type": "string", "pattern": "^station\\." },
     "nameKey": { "type": "string", "minLength": 1 },
+    "systemNameKey": { "type": "string", "minLength": 1 },
+    "dangerRating": { "type": "integer", "minimum": 1, "maximum": 5 },
     "docked": { "type": "boolean" },
     "serviceModifier": { "type": "number", "exclusiveMinimum": 0 },
     "services": {

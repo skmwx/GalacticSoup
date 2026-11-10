@@ -148,6 +148,10 @@ export interface StationServicesData {
   readonly revision: number;
   readonly stationId: string;
   readonly nameKey: string;
+  /** The system the station is in, so a docked pilot can see where they are. */
+  readonly systemNameKey: string;
+  /** The system danger rating, as the site view reports it in space. */
+  readonly dangerRating: number;
   readonly docked: boolean;
   readonly serviceModifier: number;
   readonly services: readonly StationServiceData[];

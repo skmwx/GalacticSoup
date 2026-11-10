@@ -9,6 +9,7 @@ import type { ShipData } from '@protocol';
 import { DeparturePanel, GameRoot, LocalizationProvider, useActionRunner, type PlayData } from '@ui';
 
 import { shippedContent } from '../support/content.ts';
+import { openGameMenu } from '../support/gameMenu.ts';
 
 /**
  * Contextual guidance in the real interface (Functional Specification 3.2,
@@ -105,6 +106,8 @@ describe('contextual guidance', () => {
     await waitFor(() => {
       expect(screen.queryByRole('region', { name: 'Flight school' })).toBeNull();
     });
+    // The frame offers it again from the game menu.
+    await openGameMenu(harness.user);
     expect(screen.getByRole('button', { name: /^Show guidance/ })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByRole('button', { name: 'Departure' })).not.toHaveAccessibleDescription();
 

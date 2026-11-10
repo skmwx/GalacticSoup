@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+import { openSettings } from '../support/cockpit.ts';
+
 /**
  * Guidance and notifications under the accessibility baseline
  * (Functional Specification 3.2, 19.7, 20; Technical Specification 12.3-12.4;
@@ -58,7 +60,8 @@ test.describe('guidance and notification accessibility', () => {
     await expect(page.getByRole('region', { name: 'Event log', exact: true })).toBeVisible();
     await audit(page);
 
-    await page.getByRole('button', { name: /^Alerts and sound/ }).click();
+    // Alerts and sound are one group of Settings, reached from the game menu.
+    await openSettings(page);
     await expect(page.getByRole('region', { name: 'Alerts and sound', exact: true })).toBeVisible();
     await audit(page);
   });
@@ -111,7 +114,7 @@ test.describe('guidance and notification accessibility', () => {
     await page.addStyleTag({ content: ':root { --gs-ui-scale: 2; --gs-text-scale: 2; }' });
     const guidance = page.getByRole('region', { name: 'Flight school', exact: true });
     await expect(guidance.getByRole('button', { name: 'Skip step' })).toBeVisible();
-    await page.getByRole('button', { name: /^Alerts and sound/ }).click();
+    await openSettings(page);
     await expect(page.getByRole('checkbox', { name: 'Show Combat alerts' })).toBeVisible();
     await audit(page);
   });

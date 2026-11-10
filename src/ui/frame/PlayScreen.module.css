@@ -77,3 +77,8 @@
     grid-row: 6;
   }
 }
+
+/* Settings opens above the working surface without unmounting it. */
+.activity > [data-settings] {
+  margin-block-end: var(--gs-space-3);
+}

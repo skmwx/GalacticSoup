@@ -1,4 +1,4 @@
-import type { JSX, ReactNode } from 'react';
+import type { JSX, ReactNode, Ref } from 'react';
 
 import type { MessageKey } from '@shared';
 
@@ -48,6 +48,11 @@ export interface ActionButtonProps {
   /** `icon` draws the icon only; the label becomes the name and the tooltip. */
   readonly display?: 'full' | 'icon';
   readonly pressed?: boolean;
+  /** For a control that shows and hides a panel: whether it is shown. */
+  readonly expanded?: boolean;
+  /** The id of the panel an `expanded` control shows. */
+  readonly controls?: string;
+  readonly buttonRef?: Ref<HTMLButtonElement>;
   readonly children?: ReactNode;
 }
 
@@ -61,6 +66,9 @@ export function ActionButton({
   variant = 'quiet',
   display = 'full',
   pressed,
+  expanded,
+  controls,
+  buttonRef,
   children,
 }: ActionButtonProps): JSX.Element {
   const translate = useTranslate();
@@ -91,12 +99,15 @@ export function ActionButton({
     <span className={styles['wrapper']} {...tooltip.anchorProps}>
       <button
         type="button"
+        ref={buttonRef}
         className={`${styles['button']} ${styles[variant] ?? ''} ${iconOnly ? (styles['iconOnly'] ?? '') : ''}`}
         data-action={action.id}
         aria-disabled={disabled ? true : undefined}
         aria-describedby={describedBy(tooltip.describedBy)}
         {...(iconOnly ? { 'aria-label': name } : {})}
         {...(pressed === undefined ? {} : { 'aria-pressed': pressed })}
+        {...(expanded === undefined ? {} : { 'aria-expanded': expanded })}
+        {...(controls === undefined ? {} : { 'aria-controls': controls })}
         {...(key === null ? {} : { 'aria-keyshortcuts': keyLabel(key) })}
         onClick={(event) => {
           if (disabled) {

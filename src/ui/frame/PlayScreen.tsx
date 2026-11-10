@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type JSX } from 'react';
+import { useCallback, useEffect, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react';
 
 import type { CampaignSession, CampaignSessionState, ClientGateway } from '@gateway';
 
@@ -7,7 +7,6 @@ import { AudioCuesProvider, type CuePlayer } from '../audio';
 import { GuidancePanel, guidedSurface } from '../guidance';
 import { ContentTextProvider, useTranslate } from '../localization';
 import { NotificationCenter } from '../notifications';
-import { PreferencesProvider, type PreferenceStorage } from '../preferences';
 import { SpaceScreen } from '../space/SpaceScreen';
 import { StationScreen, type StationPanelId } from '../station/StationScreen';
 import { CampaignFrame } from './CampaignFrame';
@@ -41,6 +40,12 @@ import { useSimulationClock } from './useSimulationClock';
  * bindings, and a key that cannot act right now says why on the notice line
  * beside the notifications (Functional Specification 20).
  *
+ * The preferences it reads - audio, notification visibility, bindings,
+ * display - are the one set the campaign root provides, so a change made in
+ * Settings applies here immediately. Settings opens at the top of the working
+ * area without unmounting the screen beneath it, so no station selection or
+ * draft is lost by looking at them.
+ *
  * @implements FUNC-19.1, FUNC-19.2, FUNC-19.5, FUNC-19.7, FUNC-3.2, FUNC-3.4, TECH-11.3, TECH-12.1, MVP-AC-10
  */
 
@@ -50,17 +55,27 @@ export interface PlayScreenProps {
   readonly sessionState: CampaignSessionState;
   /** Overrides the audio output, for tests and diagnostics. */
   readonly cuePlayer?: CuePlayer;
-  /** Overrides where preferences are kept; `null` keeps them in memory. */
-  readonly preferenceStorage?: PreferenceStorage | null;
+  /** The Settings panel while it is open. */
+  readonly settings?: ReactNode;
+  readonly settingsOpen?: boolean;
+  readonly onToggleSettings?: () => void;
+  /** The game-menu trigger, which focus returns to when Settings closes. */
+  readonly menuTrigger?: RefObject<HTMLButtonElement | null>;
 }
+
+const NO_SETTINGS = (): void => undefined;
 
 export function PlayScreen({
   gateway,
   session,
   sessionState,
   cuePlayer,
-  preferenceStorage,
+  settings = null,
+  settingsOpen = false,
+  onToggleSettings = NO_SETTINGS,
+  menuTrigger,
 }: PlayScreenProps): JSX.Element {
+  const ownTrigger = useRef<HTMLButtonElement | null>(null);
   const translate = useTranslate();
   const runner = useActionRunner();
   const [tacticalSidebar, setTacticalSidebar] = useState<HTMLDivElement | null>(null);
@@ -103,62 +118,64 @@ export function PlayScreen({
 
   return (
     <ContentTextProvider gateway={gateway}>
-      <PreferencesProvider {...(preferenceStorage === undefined ? {} : { storage: preferenceStorage })}>
-        <AudioCuesProvider gateway={gateway} {...(cuePlayer === undefined ? {} : { player: cuePlayer })}>
-          <ShortcutProvider>
-            <div className={styles['play']} data-cockpit>
-              <CampaignFrame
-                session={session}
-                sessionState={sessionState}
+      <AudioCuesProvider gateway={gateway} {...(cuePlayer === undefined ? {} : { player: cuePlayer })}>
+        <ShortcutProvider>
+          <div className={styles['play']} data-cockpit>
+            <CampaignFrame
+              session={session}
+              sessionState={sessionState}
+              data={data}
+              runner={runner}
+              simulationTimeMs={clock.simulationTimeMs}
+              settingsOpen={settingsOpen}
+              onToggleSettings={onToggleSettings}
+              menuTrigger={menuTrigger ?? ownTrigger}
+            />
+            <ShortcutNotice className={styles['shortcutNotice']} />
+            <aside className={styles['context']} aria-label={translate('play.context')}>
+              <NotificationCenter
+                notifications={data.notifications}
+                slot={sessionState.slot}
+                runner={runner}
+              />
+              <div className={styles['tacticalSlot']} ref={setTacticalSidebar} />
+              <GuidancePanel
                 data={data}
                 runner={runner}
-                simulationTimeMs={clock.simulationTimeMs}
+                onGoTo={data.docked ? (surface) => {
+                  setStationPanel(surface as StationPanelId);
+                } : null}
+                openSurface={data.docked ? stationPanel : 'space'}
               />
-              <ShortcutNotice className={styles['shortcutNotice']} />
-              <aside className={styles['context']} aria-label={translate('play.context')}>
-                <NotificationCenter
-                  notifications={data.notifications}
-                  slot={sessionState.slot}
-                  runner={runner}
-                />
-                <div className={styles['tacticalSlot']} ref={setTacticalSidebar} />
-                <GuidancePanel
+            </aside>
+            <div className={styles['activity']}>
+              {settings}
+              {data.location === null ? (
+                <p role="status">{translate('play.loading')}</p>
+              ) : data.docked ? (
+                <StationScreen
+                  gateway={gateway}
                   data={data}
                   runner={runner}
-                  onGoTo={data.docked ? (surface) => {
-                    setStationPanel(surface as StationPanelId);
-                  } : null}
-                  openSurface={data.docked ? stationPanel : 'space'}
+                  simulationTimeMs={clock.simulationTimeMs}
+                  panel={stationPanel}
+                  onPanelChange={setStationPanel}
+                  guidedSurface={guidedSurface(data.onboarding)}
                 />
-              </aside>
-              <div className={styles['activity']}>
-                {data.location === null ? (
-                  <p role="status">{translate('play.loading')}</p>
-                ) : data.docked ? (
-                  <StationScreen
-                    gateway={gateway}
-                    data={data}
-                    runner={runner}
-                    simulationTimeMs={clock.simulationTimeMs}
-                    panel={stationPanel}
-                    onPanelChange={setStationPanel}
-                    guidedSurface={guidedSurface(data.onboarding)}
-                  />
-                ) : (
-                  <SpaceScreen
-                    data={data}
-                    runner={runner}
-                    gateway={gateway}
-                    simulationTimeMs={clock.simulationTimeMs}
-                    paused={paused}
-                    sidebar={tacticalSidebar}
-                  />
-                )}
-              </div>
+              ) : (
+                <SpaceScreen
+                  data={data}
+                  runner={runner}
+                  gateway={gateway}
+                  simulationTimeMs={clock.simulationTimeMs}
+                  paused={paused}
+                  sidebar={tacticalSidebar}
+                />
+              )}
             </div>
-          </ShortcutProvider>
-        </AudioCuesProvider>
-      </PreferencesProvider>
+          </div>
+        </ShortcutProvider>
+      </AudioCuesProvider>
     </ContentTextProvider>
   );
 }

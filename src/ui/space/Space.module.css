@@ -791,3 +791,29 @@
   border-style: dashed;
   color: var(--gs-color-text-muted);
 }
+
+/*
+ * The campaign header already names where the player is, so the screen's own
+ * heading stays for assistive technology and heading navigation without
+ * drawing a second header band.
+ */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* With its title for assistive technology only, the heading row holds just the travel status. */
+.heading:not(:has(> :not(.visuallyHidden))) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

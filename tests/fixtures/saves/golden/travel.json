@@ -1,7 +1,7 @@
 {
  "format": "galactic-soup/save",
  "formatVersion": 10,
- "protocolVersion": 14,
+ "protocolVersion": 15,
  "engineVersion": "0.1.0",
  "contentVersion": "0.1.0+296facab3d13",
  "contentHash": "296facab3d13fb5e260b6f3c3ccbe670c1674b0f453e885b96d6bb29ac8ad1d2",
@@ -618,5 +618,5 @@
    "nextInsertionOrdinal": 4
   }
  },
- "checksum": "e49c084642baa33eb29abbfd231ebbbde6f39323e9ce8f0c9031e01146b519b1"
+ "checksum": "81e3d1d106772af71bf33ca6769d83c6117a14ecadbf549adcfdc3da9c4ae2ed"
 }

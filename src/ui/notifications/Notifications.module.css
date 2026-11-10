@@ -168,6 +168,8 @@
 }
 
 .fieldset {
+  align-self: stretch;
+  min-width: 0;
   border: var(--gs-border);
   border-radius: var(--gs-radius);
   display: flex;
@@ -183,7 +185,7 @@
 
 .slider {
   display: grid;
-  grid-template-columns: minmax(8rem, auto) minmax(8rem, 16rem) auto;
+  grid-template-columns: minmax(6rem, auto) minmax(5rem, 16rem) auto;
   align-items: center;
   gap: var(--gs-space-2);
 }
@@ -207,4 +209,15 @@
     border: 2px solid var(--gs-color-danger);
     padding: var(--gs-space-2);
   }
+}
+
+.restore {
+  background: var(--gs-color-surface-raised);
+  color: inherit;
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  font: inherit;
+  padding: var(--gs-space-1) var(--gs-space-2);
+  min-height: var(--gs-target-min);
+  cursor: pointer;
 }

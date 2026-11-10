@@ -1,0 +1,30 @@
+.menu {
+  position: relative;
+  flex: none;
+}
+
+.body {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + var(--gs-space-2));
+  z-index: 10;
+  width: min(23rem, calc(100vw - 4rem));
+  padding: var(--gs-space-3);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  box-shadow: 0 12px 40px #0008;
+  display: grid;
+  gap: var(--gs-space-2);
+  max-height: 70vh; /* Refined to the room below the trigger when opened. */
+  overflow-y: auto;
+}
+
+.body button {
+  font: inherit;
+  color: inherit;
+  background: var(--gs-color-surface);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-2);
+}

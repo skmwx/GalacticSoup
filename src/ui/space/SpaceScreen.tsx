@@ -270,11 +270,11 @@ export function SpaceScreen({
   return (
     <section className={styles['space']} aria-labelledby="space-heading" data-external-context={sidebar !== null}>
       <div className={styles['heading']}>
-        <h2 id="space-heading" className={styles['title']}>
+        <h2 id="space-heading" className={styles['visuallyHidden']}>
           {runtime === null ? translate('space.inTransit') : translate(runtime.siteNameKey)}
         </h2>
         {runtime === null ? null : (
-          <p className={styles['subheading']}>
+          <p className={styles['visuallyHidden']}>
             {translate('space.systemDanger', {
               system: translate(runtime.systemNameKey),
               danger: runtime.dangerRating,

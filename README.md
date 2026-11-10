@@ -173,7 +173,7 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 14 exposes the guidance and notification contracts (`onboarding.state` and its
+Protocol version 15 exposes the guidance and notification contracts (`onboarding.state` and its
 three commands, `notifications.list`, `audio.cues`), `loss.report`, `navigation.selectBookmark` and
 `navigation.warpToBookmark`, `encounter.state`, `loot.contents` and `loot.take` alongside
 `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`, `weapon.deactivate`,
