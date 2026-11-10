@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 
 /**
  * Losing a ship and coming back from it, in a real browser
@@ -200,12 +201,11 @@ test.describe('losing a ship', () => {
       page.getByRole('table', { name: 'Ship cargo hold' }).getByRole('rowheader', { name: 'Small Shield Booster' }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-    await page.getByRole('button', { name: 'Change fit' }).click();
-    await page.getByLabel('Module in Weapon 2').selectOption({ value: 'module.turret.autocannon.small' });
-    await page.getByLabel('Ammunition in Weapon 2').selectOption({ value: 'ammo.projectile.small.fusion' });
+    await chooseModule(page, 'Weapon 2', 'module.turret.autocannon.small');
+    await chooseAmmunition(page, 'Weapon 2', 'ammo.projectile.small.fusion');
     await page.getByRole('button', { name: 'Apply fit' }).click();
     await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
-    await expect(page.getByRole('cell', { name: '200mm Autocannon' })).toHaveCount(2);
+    await expect(fittingSlots(page).filter({ hasText: '200mm Autocannon' })).toHaveCount(2);
 
     await page.getByRole('button', { name: 'Hangar', exact: true }).click();
     // The spare rounds went down with the ship and came back out of its

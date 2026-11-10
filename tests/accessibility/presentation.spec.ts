@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { gameMenuButton, openSettings } from '../support/cockpit.ts';
 import { marketMode } from '../support/market.ts';
+import { chooseAmmunition, chooseModule } from '../support/fitting.ts';
 
 /**
  * Presentation settings, input and accessibility across the MVP surfaces
@@ -243,8 +244,7 @@ test.describe('presentation settings and accessibility', () => {
 
     // Take the gun off: the ship may still undock, but it asks first.
     await surface(page, 'Fitting').click();
-    await page.getByRole('button', { name: 'Change fit' }).click();
-    await page.getByLabel('Module in Weapon 1').selectOption({ value: '' });
+    await chooseModule(page, 'Weapon 1', '');
     await page.getByRole('button', { name: 'Apply fit' }).click();
     await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
 
@@ -357,8 +357,7 @@ test.describe('presentation settings and accessibility', () => {
 
     // The undock question needs a warning: a ship with no gun.
     await surface(page, 'Fitting').click();
-    await page.getByRole('button', { name: 'Change fit' }).click();
-    await page.getByLabel('Module in Weapon 1').selectOption({ value: '' });
+    await chooseModule(page, 'Weapon 1', '');
     await page.getByRole('button', { name: 'Apply fit' }).click();
     await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
     await surface(page, 'Departure').click();
@@ -380,15 +379,13 @@ test.describe('presentation settings and accessibility', () => {
     await surface(page, 'Ship').click();
     await expect(page.getByRole('status', { name: 'Undock readiness' }).locator('[data-status-mark="ok"]')).toBeVisible();
     await surface(page, 'Fitting').click();
-    await page.getByRole('button', { name: 'Change fit' }).click();
-    await page.getByLabel('Module in Weapon 1').selectOption({ value: '' });
+    await chooseModule(page, 'Weapon 1', '');
     await page.getByRole('button', { name: 'Apply fit' }).click();
     await surface(page, 'Departure').click();
     await expect(page.getByRole('list', { name: 'Before you undock' }).first().locator('[data-status-mark="warning"]').first()).toBeVisible();
     await surface(page, 'Fitting').click();
-    await page.getByRole('button', { name: 'Change fit' }).click();
-    await page.getByLabel('Module in Weapon 1').selectOption({ value: 'module.turret.autocannon.small' });
-    await page.getByLabel('Ammunition in Weapon 1').selectOption({ value: 'ammo.projectile.small.fusion' });
+    await chooseModule(page, 'Weapon 1', 'module.turret.autocannon.small');
+    await chooseAmmunition(page, 'Weapon 1', 'ammo.projectile.small.fusion');
     await page.getByRole('button', { name: 'Apply fit' }).click();
     await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
 

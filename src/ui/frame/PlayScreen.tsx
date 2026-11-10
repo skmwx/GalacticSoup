@@ -9,6 +9,7 @@ import { ContentTextProvider, useTranslate } from '../localization';
 import { NotificationCenter } from '../notifications';
 import { SpaceScreen } from '../space/SpaceScreen';
 import { StationScreen, type StationPanelId } from '../station/StationScreen';
+import { useStationNavigation } from '../station/useStationNavigation';
 import { CampaignFrame } from './CampaignFrame';
 import styles from './PlayScreen.module.css';
 import { usePlayData } from './usePlayData';
@@ -82,6 +83,15 @@ export function PlayScreen({
   const [stationPanel, setStationPanel] = useState<StationPanelId>('station.hub');
   const campaignId = sessionState.session?.campaign?.campaignId ?? null;
   const data = usePlayData({ gateway, session, campaignId });
+  // Every way of changing the station surface - the rail, the hub, the
+  // guidance - leaves the fitting screen through one guard, so an open
+  // fitting draft is applied, discarded or kept in view, never stranded.
+  const stationNavigation = useStationNavigation({
+    data,
+    runner,
+    panel: stationPanel,
+    setPanel: setStationPanel,
+  });
 
   // Arriving at a station always opens its hub, where the last sortie and any
   // loss are reported, whatever surface was open when the ship left.
@@ -143,7 +153,7 @@ export function PlayScreen({
                 data={data}
                 runner={runner}
                 onGoTo={data.docked ? (surface) => {
-                  setStationPanel(surface as StationPanelId);
+                  stationNavigation.request(surface as StationPanelId);
                 } : null}
                 openSurface={data.docked ? stationPanel : 'space'}
               />
@@ -159,7 +169,7 @@ export function PlayScreen({
                   runner={runner}
                   simulationTimeMs={clock.simulationTimeMs}
                   panel={stationPanel}
-                  onPanelChange={setStationPanel}
+                  onPanelChange={stationNavigation.request}
                   guidedSurface={guidedSurface(data.onboarding)}
                 />
               ) : (
@@ -172,6 +182,7 @@ export function PlayScreen({
                   sidebar={tacticalSidebar}
                 />
               )}
+              {data.docked ? stationNavigation.dialog : null}
             </div>
           </div>
         </ShortcutProvider>

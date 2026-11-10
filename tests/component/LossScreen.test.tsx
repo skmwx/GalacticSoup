@@ -335,7 +335,7 @@ describe('a pilot with no ship', () => {
 
     await harness.user.click(screen.getByRole('button', { name: 'Fitting' }));
     expect(screen.getByText('You have no ship to fit. Buy a hull at the market first.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Change fit/ })).toBeUnavailable();
+    expect(screen.queryByRole('button', { name: /^Change module/ })).not.toBeInTheDocument();
 
     await harness.user.click(screen.getByRole('button', { name: 'Services' }));
     for (const name of ['Repair the ship', 'Resupply ammunition', 'Improve insurance']) {

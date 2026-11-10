@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
 import { marketMode } from '../support/market.ts';
+import { applyFit, chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 
 /**
  * From the starting fit to the mastery site, in a real browser
@@ -149,12 +150,13 @@ async function sell(page: Page, item: string): Promise<void> {
 
 async function refit(page: Page, choices: readonly (readonly [string, string])[]): Promise<void> {
   await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-  await page.getByRole('button', { name: 'Change fit' }).click();
   for (const [label, value] of choices) {
-    await page.getByLabel(label).selectOption({ value });
+    const [, kind, slot] = /^(Module|Ammunition) in (.+)$/.exec(label) ?? [];
+    if (slot === undefined) throw new Error(`Unknown fitting control: ${label}`);
+    if (kind === 'Module') await chooseModule(page, slot, value);
+    else await chooseAmmunition(page, slot, value);
   }
-  await page.getByRole('button', { name: 'Apply fit' }).click();
-  await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
+  await applyFit(page);
 }
 
 async function resupply(page: Page): Promise<void> {
@@ -416,7 +418,7 @@ test.describe('progression to the mastery site', () => {
     await reopen(page, 'Borrell Harbour');
     await expect(wallet(page)).toHaveText(prepared);
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-    await expect(page.getByRole('cell', { name: '200mm Autocannon' })).toHaveCount(2);
+    await expect(fittingSlots(page).filter({ hasText: '200mm Autocannon' })).toHaveCount(2);
 
     // The Pirate Patrol: cutters first, then the marksman that will not close.
     await depart(page, 'Pirate Patrol');
@@ -463,8 +465,8 @@ test.describe('progression to the mastery site', () => {
       ['Module in Engineering 1', 'module.plating.armor.small'],
       ['Module in Engineering 2', 'module.capacitor.battery.small'],
     ]);
-    await expect(page.getByRole('cell', { name: '1MN Afterburner' })).toBeVisible();
-    await expect(page.getByRole('cell', { name: 'Small Armour Plating' })).toBeVisible();
+    await expect(fittingSlots(page).filter({ hasText: '1MN Afterburner' })).toBeVisible();
+    await expect(fittingSlots(page).filter({ hasText: 'Small Armour Plating' })).toBeVisible();
     await resupply(page);
     // The booster ran through the looting, and the battery added charge to
     // fill: the repair recharges it, so the ship leaves with a full capacitor.
@@ -476,8 +478,8 @@ test.describe('progression to the mastery site', () => {
     await reopen(page, 'Borrell Harbour');
     await expect(wallet(page)).toHaveText(converted);
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-    await expect(page.getByRole('cell', { name: '1MN Afterburner' })).toBeVisible();
-    await expect(page.getByRole('cell', { name: 'Small Armour Plating' })).toBeVisible();
+    await expect(fittingSlots(page).filter({ hasText: '1MN Afterburner' })).toBeVisible();
+    await expect(fittingSlots(page).filter({ hasText: 'Small Armour Plating' })).toBeVisible();
 
     // The Pirate Base: arrive far off, burn and keep 10 km from whichever
     // brawler is nearest, and boost the shield when it runs low.

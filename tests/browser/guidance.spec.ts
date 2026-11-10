@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
 import { marketMode } from '../support/market.ts';
+import { chooseModule } from '../support/fitting.ts';
 
 /**
  * A first-time player follows the in-game guidance through the easiest
@@ -224,8 +225,7 @@ test.describe('guided first loop', () => {
     await page.getByRole('button', { name: 'Buy 200mm Autocannon' }).click();
     await confirmDialog(page, 'Confirm purchase');
     await showMe(page);
-    await page.getByRole('button', { name: 'Change fit' }).click();
-    await page.getByLabel('Module in Weapon 2').selectOption({ value: 'module.turret.autocannon.small' });
+    await chooseModule(page, 'Weapon 2', 'module.turret.autocannon.small');
     await page.getByRole('button', { name: 'Apply fit' }).click();
 
     // A harder site: the guidance names the Pirate Patrol and its tactics.

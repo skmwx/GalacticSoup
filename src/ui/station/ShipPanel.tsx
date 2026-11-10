@@ -61,11 +61,23 @@ export function ShipPanel({ data }: ShipPanelProps): JSX.Element {
 
 /**
  * The compact picture of a ship: identity, layered defences, capacitor,
- * weapons and the resources its fit commits. The fitting screen renders the
- * same component for the ship a draft would produce, so a preview and the real
- * thing are described identically.
+ * weapons and the resources its fit commits, followed by what is wrong with
+ * the fit. The Ship surface shows it whole; the fitting screen uses its parts
+ * around the slot rows, for the committed ship or the one a draft would
+ * produce, so a preview and the real thing are described identically.
  */
 export function ShipSummary({ ship }: { readonly ship: ShipData }): JSX.Element {
+  return (
+    <div className={styles['detail']}>
+      <ShipOverview ship={ship} />
+      <WeaponStats ship={ship} />
+      <FitIssues ship={ship} />
+    </div>
+  );
+}
+
+/** Identity, insurance, fitting resources, capacitor and the layered defences. */
+export function ShipOverview({ ship }: { readonly ship: ShipData }): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
 
@@ -163,6 +175,17 @@ export function ShipSummary({ ship }: { readonly ship: ShipData }): JSX.Element 
         </table>
       </div>
 
+    </div>
+  );
+}
+
+/** The weapons' derived statistics, one row per fitted weapon. */
+export function WeaponStats({ ship }: { readonly ship: ShipData }): JSX.Element {
+  const translate = useTranslate();
+  const { locale } = useLocalizer();
+
+  return (
+    <>
       {ship.weapons.length === 0 ? (
         <p className={styles['muted']}>{translate('ship.noWeapons')}</p>
       ) : (
@@ -214,6 +237,19 @@ export function ShipSummary({ ship }: { readonly ship: ShipData }): JSX.Element 
         </div>
       )}
 
+    </>
+  );
+}
+
+/** The fit's violations and warnings, each with the constraint it breaks. */
+export function FitIssues({ ship }: { readonly ship: ShipData }): JSX.Element | null {
+  const translate = useTranslate();
+  if (ship.violations.length === 0 && ship.warnings.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
       {ship.violations.length === 0 ? null : (
         <ul className={styles['issues']} aria-label={translate('ship.violations')} data-fit-violations>
           {ship.violations.map((issue) => (
@@ -235,7 +271,7 @@ export function ShipSummary({ ship }: { readonly ship: ShipData }): JSX.Element 
           ))}
         </ul>
       )}
-    </div>
+    </>
   );
 }
 
@@ -256,7 +292,8 @@ function UndockStatus({ validity }: { readonly validity: UndockValidityData }): 
   );
 }
 
-function ShipAttributes({ ship }: { readonly ship: ShipData }): JSX.Element {
+/** Every derived attribute with the steps that produced it (Functional Specification 19.6). */
+export function ShipAttributes({ ship }: { readonly ship: ShipData }): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
 

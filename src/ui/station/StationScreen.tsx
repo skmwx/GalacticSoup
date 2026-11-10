@@ -17,6 +17,8 @@ import { ShipReadiness } from './ShipReadiness';
 import { ShipPanel } from './ShipPanel';
 import { SortieSummary } from './SortieSummary';
 import styles from './Station.module.css';
+import { STATION_PANELS, type StationPanelId } from './panels';
+import { useStationNavigation } from './useStationNavigation';
 import type { PlayData } from '../frame/usePlayData';
 
 /**
@@ -28,8 +30,9 @@ import type { PlayData } from '../frame/usePlayData';
  * the player learns what the station is rather than what is missing from the
  * screen, without the refusal reflowing the rail.
  *
- * Which surface is open is presentation state and lives here; everything the
- * surfaces show arrived from the engine.
+ * Which surface is open is presentation state and lives here (or with the
+ * caller); everything the surfaces show arrived from the engine. Leaving the
+ * fitting screen with an open draft goes through `useStationNavigation`.
  *
  * After a loss the hub leads with what the player most needs: a notice when
  * they have no ship and how to get one, then the loss report while the loss
@@ -53,26 +56,11 @@ export interface StationScreenProps {
   readonly guidedSurface?: string | null;
 }
 
-export type StationPanelId = PanelId;
+export type { StationPanelId } from './panels';
 
-type PanelId =
-  | 'station.hub'
-  | 'station.market'
-  | 'station.hangar'
-  | 'station.fitting'
-  | 'station.services'
-  | 'station.ship'
-  | 'station.departure';
+type PanelId = StationPanelId;
 
-const PANELS: readonly PanelId[] = [
-  'station.hub',
-  'station.market',
-  'station.hangar',
-  'station.fitting',
-  'station.services',
-  'station.ship',
-  'station.departure',
-];
+const PANELS: readonly PanelId[] = STATION_PANELS;
 
 /**
  * Which station service a surface needs before it is worth opening, or `null`
@@ -100,8 +88,12 @@ export function StationScreen({
 }: StationScreenProps): JSX.Element {
   const translate = useTranslate();
   const [ownPanel, setOwnPanel] = useState<PanelId>('station.hub');
+  // Leaving the fitting screen may first ask about unapplied changes. A caller
+  // that holds the open surface guards its own changes (it also hears the
+  // guidance), so the station's guard is used only when it holds it itself.
+  const ownNavigation = useStationNavigation({ data, runner, panel: ownPanel, setPanel: setOwnPanel });
   const open = controlledPanel ?? ownPanel;
-  const setOpen = onPanelChange ?? setOwnPanel;
+  const setOpen = onPanelChange ?? ownNavigation.request;
   const guidedHintId = useId();
 
   const shipless = data.assets !== null && data.assets.activeShipId === null;
@@ -272,6 +264,7 @@ export function StationScreen({
       {open === 'station.departure' ? (
         <DeparturePanel data={data} runner={runner} simulationTimeMs={simulationTimeMs} />
       ) : null}
+      {ownNavigation.dialog}
       </div>
     </section>
   );

@@ -213,9 +213,7 @@ describe('market', () => {
     // Refit the weapon slot with a railgun: the marks follow the applied fit.
     await buyThroughMarket(harness, '75mm Railgun', 1);
     await openPanel(harness, 'Fitting');
-    await harness.user.click(screen.getByRole('button', { name: 'Change fit' }));
-    const weapon = await screen.findByLabelText('Module in Weapon 1');
-    await harness.user.selectOptions(weapon, within(weapon).getByRole('option', { name: /75mm Railgun/ }));
+    await chooseModule(harness, 'Weapon 1', /75mm Railgun/);
     const apply = await screen.findByRole('button', { name: 'Apply fit' });
     await waitFor(() => {
       expect(apply).not.toBeUnavailable();
@@ -611,50 +609,204 @@ describe('hangar', () => {
   });
 });
 
+/** Opens a slot's module list, starting the draft, and picks one choice. */
+async function chooseModule(harness: Harness, slot: string, choice: string | RegExp): Promise<void> {
+  await harness.user.click(screen.getByRole('button', { name: `Change module in ${slot}` }));
+  const list = await screen.findByRole('group', { name: `Modules for ${slot}` });
+  await harness.user.click(await within(list).findByRole('button', { name: choice }));
+}
+
+async function draftOf(harness: Harness) {
+  const response = await harness.gateway.request('fitting.draft', EMPTY_PAYLOAD);
+  if (!response.ok) throw new Error('The engine refused fitting.draft.');
+  return response.data.draft;
+}
+
+async function shipOf(harness: Harness) {
+  const response = await harness.gateway.request('ship.get', { shipId: (await assets(harness)).activeShipId! });
+  if (!response.ok) throw new Error('The engine refused ship.get.');
+  return response.data;
+}
+
+const slotRow = (slot: string): HTMLElement =>
+  screen.getByRole('list', { name: 'Modules' }).querySelector(`[data-slot-name="${slot}"]`) as HTMLElement;
+
+const weaponOneOnline = async (harness: Harness): Promise<boolean | undefined> =>
+  (await shipOf(harness)).slots.find((entry) => entry.slot.kind === 'weapon' && entry.slot.index === 0)?.online;
+
 describe('fitting', () => {
-  it('opens a draft, changes a slot and applies it [FUNC-8.4, MVP-AC-02]', async () => {
+  it('edits the fit in place, previews it and applies it [FUNC-8.4, MVP-AC-02]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
+    await buyThroughMarket(harness, 'Small Armour Plating', 1);
 
-    // A second module has to be owned before a slot has anything to offer.
-    await openPanel(harness, 'Market');
-    await harness.user.click(screen.getByRole('button', { name: 'Buy Small Armour Plating' }));
-    const purchase = await screen.findByRole('dialog', { name: 'Confirm purchase' });
-    await harness.user.click(within(purchase).getByRole('button', { name: 'Confirm' }));
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: 'Confirm purchase' })).not.toBeInTheDocument();
-    });
-
+    // One compact surface: the ship, every slot (empty ones too) and the
+    // weapons, with no draft open and nothing to apply yet.
     await openPanel(harness, 'Fitting');
-    await harness.user.click(screen.getByRole('button', { name: 'Change fit' }));
+    expect(screen.getByText(/^This is the fit your ship is wearing\./)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ship' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Weapons' })).toBeInTheDocument();
+    expect(within(slotRow('Engineering 1')).getByText('Empty')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Apply fit' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Change fit' })).not.toBeInTheDocument();
+    expect(await draftOf(harness)).toBeNull();
 
-    const slot = await screen.findByLabelText('Module in Engineering 1');
-    await harness.user.selectOptions(
-      slot,
-      within(slot).getByRole('option', { name: /Small Armour Plating/ }),
-    );
+    // The empty slot's picker opens the draft and lists what may go there,
+    // with local availability and fitting cost.
+    await harness.user.click(screen.getByRole('button', { name: 'Change module in Engineering 1' }));
+    const list = await screen.findByRole('group', { name: 'Modules for Engineering 1' });
+    const plating = await within(list).findByRole('button', { name: /Small Armour Plating/ });
+    expect(plating).toHaveTextContent(/1 available · .* power · .* processing/);
+    expect(within(list).queryByRole('button', { name: 'Empty the slot' })).not.toBeInTheDocument();
+    expect(await draftOf(harness)).not.toBeNull();
+    await harness.user.click(plating);
 
-    const apply = await screen.findByRole('button', { name: 'Apply fit' });
+    // The figures become the preview, the row says it changed, the ship has not.
+    await screen.findByRole('heading', { name: 'The ship this draft would produce' });
+    expect(within(slotRow('Engineering 1')).getByText('Small Armour Plating')).toBeInTheDocument();
+    expect(within(slotRow('Engineering 1')).getByText('(changed)')).toBeInTheDocument();
+    expect((await shipOf(harness)).slots.some((entry) => entry.module?.definitionId === 'module.plating.armor.small')).toBe(false);
+
+    const apply = screen.getByRole('button', { name: 'Apply fit' });
     await waitFor(() => {
       expect(apply).not.toBeUnavailable();
     });
     await harness.user.click(apply);
 
     await waitFor(async () => {
-      const response = await harness.gateway.request('ship.get', {
-        shipId: (await assets(harness)).activeShipId!,
-      });
-      expect(response.ok).toBe(true);
-      if (response.ok) {
-        const fitted = response.data.slots
-          .filter((entry) => entry.module !== null)
-          .map((entry) => entry.module?.definitionId);
-        expect(fitted).toContain('module.plating.armor.small');
-      }
+      expect((await shipOf(harness)).slots.some((entry) => entry.module?.definitionId === 'module.plating.armor.small')).toBe(true);
     });
+    expect(await draftOf(harness)).toBeNull();
+    await screen.findByText(/^This is the fit your ship is wearing\./);
 
     harness.gateway.dispose();
-  });
+  }, 30_000);
+
+  it('unloads a weapon, takes it offline and empties its slot, then reverts without moving anything [FUNC-8.4, FUNC-8.5]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    const before = await assets(harness);
+    await openPanel(harness, 'Fitting');
+
+    // Weapon 1 carries the autocannon and its rounds; its ammunition is a drop-down.
+    expect(within(slotRow('Weapon 1')).getByText('200mm Autocannon')).toBeInTheDocument();
+    expect(within(slotRow('Weapon 1')).getByText(/Fusion S \(\d+ loaded\)/)).toBeInTheDocument();
+    await harness.user.click(screen.getByRole('button', { name: 'Change ammunition in Weapon 1' }));
+    const charges = await screen.findByRole('group', { name: 'Ammunition for Weapon 1' });
+    expect(await within(charges).findByRole('button', { name: /Fusion S/ })).toHaveAttribute('aria-pressed', 'true');
+    await harness.user.click(within(charges).getByRole('button', { name: 'No ammunition' }));
+    await waitFor(() => {
+      expect(slotRow('Weapon 1')).toHaveAttribute('data-charge', '');
+    });
+    expect(await screen.findByText('This weapon has no ammunition loaded.')).toBeInTheDocument();
+
+    // Offline: the preview warns that the module does nothing.
+    await harness.user.click(screen.getByLabelText('Weapon 1 online'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Weapon 1 online')).not.toBeChecked();
+    });
+    expect(await screen.findByText('This module is offline and does nothing.')).toBeInTheDocument();
+
+    // Empty the slot: the preview has nothing that can shoot.
+    await chooseModule(harness, 'Weapon 1', 'Empty the slot');
+    await waitFor(() => {
+      expect(within(slotRow('Weapon 1')).getByText('Empty')).toBeInTheDocument();
+    });
+    expect(await screen.findByText('Nothing on this ship can shoot.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Change ammunition in Weapon 1' })).not.toBeInTheDocument();
+
+    // Discard: the committed ship and every store are exactly as they were.
+    await harness.user.click(screen.getByRole('button', { name: 'Discard changes' }));
+    await screen.findByText(/^This is the fit your ship is wearing\./);
+    expect(await draftOf(harness)).toBeNull();
+    expect(within(slotRow('Weapon 1')).getByText('200mm Autocannon')).toBeInTheDocument();
+    expect(screen.getByLabelText('Weapon 1 online')).toBeChecked();
+    const after = await assets(harness);
+    const contents = (data: AssetsData) => data.inventories.map(({ revision: _revision, ...inventory }) => inventory);
+    expect(contents(after)).toEqual(contents(before));
+    expect(after.credits).toBe(before.credits);
+
+    harness.gateway.dispose();
+  }, 30_000);
+
+  it('loads a new weapon with a charge it accepts, and reports a fit it cannot supply [FUNC-8.4, FUNC-22.10]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await openPanel(harness, 'Fitting');
+
+    // One autocannon is owned and it is already fitted: a second one in
+    // Weapon 2 is offered, but the draft cannot be applied.
+    await chooseModule(harness, 'Weapon 2', /200mm Autocannon/);
+    await waitFor(() => {
+      expect(slotRow('Weapon 2')).toHaveAttribute('data-module', 'module.turret.autocannon.small');
+    });
+    expect(slotRow('Weapon 2')).toHaveAttribute('data-charge', FUSION);
+    expect(await screen.findByText('200mm Autocannon: 1 needed, 0 available.')).toBeInTheDocument();
+    const apply = screen.getByRole('button', { name: 'Apply fit' });
+    expect(apply).toBeUnavailable();
+    expect(apply).toHaveAccessibleDescription('Something this draft needs is missing, or the result would not fit.');
+
+    harness.gateway.dispose();
+  }, 30_000);
+
+  it('asks to apply, discard or stay before leaving with unapplied changes [FUNC-8.4]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await openPanel(harness, 'Fitting');
+
+    // An opened but unchanged draft closes quietly on leaving, so it never
+    // blocks undocking unseen.
+    await harness.user.click(screen.getByRole('button', { name: 'Change module in Weapon 2' }));
+    await screen.findByRole('group', { name: 'Modules for Weapon 2' });
+    await harness.user.keyboard('{Escape}');
+    expect(screen.queryByRole('group', { name: 'Modules for Weapon 2' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change module in Weapon 2' })).toHaveFocus();
+    expect(await draftOf(harness)).not.toBeNull();
+    await openPanel(harness, 'Hangar');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await waitFor(async () => {
+      expect(await draftOf(harness)).toBeNull();
+    });
+
+    // A changed draft asks first. Stay keeps the screen and the draft.
+    await openPanel(harness, 'Fitting');
+    await harness.user.click(screen.getByLabelText('Weapon 1 online'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Weapon 1 online')).not.toBeChecked();
+    });
+    await openPanel(harness, 'Market');
+    let dialog = await screen.findByRole('dialog', { name: 'Apply fitting changes?' });
+    await harness.user.click(within(dialog).getByRole('button', { name: 'Stay' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Fitting' })).toBeInTheDocument();
+    expect((await draftOf(harness))?.changed).toBe(true);
+
+    // Discard leaves for the chosen surface with the ship untouched.
+    await openPanel(harness, 'Market');
+    dialog = await screen.findByRole('dialog', { name: 'Apply fitting changes?' });
+    await harness.user.click(within(dialog).getByRole('button', { name: 'Discard changes' }));
+    await screen.findByRole('heading', { name: 'Local market' });
+    expect(await draftOf(harness)).toBeNull();
+    expect(await weaponOneOnline(harness)).toBe(true);
+
+    // Apply commits and then leaves.
+    await openPanel(harness, 'Fitting');
+    await harness.user.click(screen.getByLabelText('Weapon 1 online'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Weapon 1 online')).not.toBeChecked();
+    });
+    await openPanel(harness, 'Hangar');
+    dialog = await screen.findByRole('dialog', { name: 'Apply fitting changes?' });
+    await harness.user.click(within(dialog).getByRole('button', { name: 'Apply fit' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(screen.queryByRole('heading', { name: 'Fitting' })).not.toBeInTheDocument();
+    expect(await draftOf(harness)).toBeNull();
+    expect(await weaponOneOnline(harness)).toBe(false);
+
+    harness.gateway.dispose();
+  }, 30_000);
 });
 
 describe('services', () => {

@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
 import { marketMode } from '../support/market.ts';
+import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 
 /**
  * The first end-to-end vertical slice in a real browser
@@ -246,13 +247,12 @@ test.describe('the first vertical slice', () => {
     await expect(rounds).toBeHidden();
 
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-    await page.getByRole('button', { name: 'Change fit' }).click();
-    await page.getByLabel('Module in Weapon 2').selectOption({ value: 'module.turret.autocannon.small' });
-    await page.getByLabel('Ammunition in Weapon 2').selectOption({ value: 'ammo.projectile.small.fusion' });
-    await page.getByLabel('Ammunition in Weapon 1').selectOption({ value: 'ammo.projectile.small.fusion' });
+    await chooseModule(page, 'Weapon 2', 'module.turret.autocannon.small');
+    await chooseAmmunition(page, 'Weapon 2', 'ammo.projectile.small.fusion');
+    await chooseAmmunition(page, 'Weapon 1', 'ammo.projectile.small.fusion');
     await page.getByRole('button', { name: 'Apply fit' }).click();
     await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
-    await expect(page.getByRole('cell', { name: '200mm Autocannon' })).toHaveCount(2);
+    await expect(fittingSlots(page).filter({ hasText: '200mm Autocannon' })).toHaveCount(2);
 
     // Top the magazines up, if the fight left any short.
     await page.getByRole('button', { name: 'Services', exact: true }).click();
@@ -273,7 +273,7 @@ test.describe('the first vertical slice', () => {
     await reopen(page, 'Borrell Harbour');
     await expect(page.locator('dd').filter({ hasText: /ISK$/ }).first()).toHaveText(wallet);
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-    await expect(page.getByRole('cell', { name: '200mm Autocannon' })).toHaveCount(2);
+    await expect(fittingSlots(page).filter({ hasText: '200mm Autocannon' })).toHaveCount(2);
 
     // The site is still offered, says it has been cleared, and is fought again
     // with both guns.

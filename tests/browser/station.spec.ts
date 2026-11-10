@@ -1,5 +1,6 @@
 import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Page } from '@playwright/test';
+import { chooseModule, fittingSlots } from '../support/fitting.ts';
 
 /**
  * The station loop in a real browser
@@ -62,11 +63,9 @@ test.describe('station interface', () => {
 
     // Fit it, and see the ship the draft would produce.
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-    await page.getByRole('button', { name: 'Change fit' }).click();
-    await page
-      .getByLabel('Module in Engineering 1')
-      .selectOption({ value: 'module.plating.armor.small' });
-    await expect(page.getByText('This draft differs from the fit the ship is wearing.')).toBeVisible();
+    await chooseModule(page, 'Engineering 1', 'module.plating.armor.small');
+    await expect(page.getByText('Previewing changes that are not applied yet.', { exact: false })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The ship this draft would produce' })).toBeVisible();
     await page.getByRole('button', { name: 'Apply fit' }).click();
     await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
 
@@ -95,7 +94,7 @@ test.describe('station interface', () => {
 
     await expect(page.getByText(wallet, { exact: true }).first()).toBeVisible();
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-    await expect(page.getByRole('cell', { name: 'Small Armour Plating' })).toBeVisible();
+    await expect(fittingSlots(page).filter({ hasText: 'Small Armour Plating' })).toBeVisible();
     await page.getByRole('button', { name: 'Services', exact: true }).click();
     await page.getByRole('button', { name: 'Improve insurance' }).click();
     await expect(

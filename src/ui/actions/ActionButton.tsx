@@ -102,9 +102,11 @@ export function ActionButton({
     : pending && compact
       ? translate('action.pending')
       : null;
+  // While a compact control's panel is open its name tooltip would cover
+  // the panel, so only a reason is shown then.
   const tooltip = useTooltip({
     description: reason,
-    heading: compact ? (
+    heading: compact && expanded !== true ? (
       <>
         <span>{name}</span>
         {key === null ? null : <kbd>{keyLabel(key)}</kbd>}

@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
 import { marketMode } from '../support/market.ts';
+import { chooseModule } from '../support/fitting.ts';
 
 /**
  * The loss report and the shipless station under automated audit
@@ -73,8 +74,7 @@ test.describe('loss accessibility', () => {
 
     // Take the autocannon off and sell it.
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-    await page.getByRole('button', { name: 'Change fit' }).click();
-    await page.getByLabel('Module in Weapon 1').selectOption({ value: '' });
+    await chooseModule(page, 'Weapon 1', '');
     await page.getByRole('button', { name: 'Apply fit' }).click();
     await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
     await page.getByRole('button', { name: 'Market', exact: true }).click();

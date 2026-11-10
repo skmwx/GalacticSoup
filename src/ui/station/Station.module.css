@@ -272,28 +272,149 @@
   font-family: var(--gs-font-mono);
 }
 
-.slots {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-  gap: var(--gs-space-2);
-}
-
-.slot {
+/*
+ * The fitting screen's slot rows (UIR1-05): slot, module with its change
+ * control, ammunition with its change control, online switch. The row wraps
+ * at narrow widths or large text scales instead of overflowing the page.
+ */
+.slotList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--gs-space-2);
+  gap: var(--gs-space-1);
+}
+
+.slotRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gs-space-1) var(--gs-space-3);
   background: var(--gs-color-surface-raised);
   border: var(--gs-border);
   border-radius: var(--gs-radius);
-  padding: var(--gs-space-2);
+  padding: var(--gs-space-1) var(--gs-space-2);
+}
+
+.slotRow > .slotName {
+  flex: 0 0 7rem;
+}
+
+.slotRow > .slotModule,
+.slotRow > .slotCharge {
+  flex: 1 1 14rem;
+}
+
+.slotRow > .slotOnline {
+  flex: 0 0 9rem;
 }
 
 .slotName {
+  font-size: var(--gs-font-small);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gs-color-text-muted);
+}
+
+.slotModule,
+.slotCharge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gs-space-2);
+  min-width: 0;
+}
+
+.slotModule > span:first-child,
+.slotCharge > span:first-child {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.slotOnline {
+  margin: 0;
+}
+
+.changedMark {
+  font-size: var(--gs-font-small);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--gs-color-warn);
+  font-style: italic;
+}
+
+.subHeading {
   margin: 0;
   font-size: var(--gs-font-small);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--gs-color-text-muted);
+}
+
+.breakdown summary {
+  cursor: pointer;
+}
+
+/* The drop-down list of a slot's module or ammunition choices. */
+.pickerAnchor {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.picker {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + var(--gs-space-1));
+  z-index: 10;
+  width: max-content;
+  min-width: 14rem;
+  max-width: min(24rem, calc(100vw - 2rem));
+  max-height: 20rem;
+  overflow-y: auto;
+  padding: var(--gs-space-1);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  box-shadow: 0 12px 40px #0008;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+
+.picker p {
+  margin: var(--gs-space-1);
+}
+
+.pickerChoice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: var(--gs-color-surface);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-1) var(--gs-space-2);
+  min-height: var(--gs-target-min);
+  cursor: pointer;
+}
+
+.pickerChoice:hover {
+  border-color: var(--gs-color-accent);
+}
+
+/* The current choice is marked by a check and a heavier border, not colour alone. */
+.pickerChoice[aria-pressed='true'] {
+  border-color: var(--gs-color-accent);
+  border-width: 2px;
+}
+
+.pickerChoice[aria-pressed='true'] > span::before {
+  content: '✓ ' / '';
 }
 
 .dialogSubject {
