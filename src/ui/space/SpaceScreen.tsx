@@ -21,8 +21,8 @@ import { CommandBar } from './CommandBar';
 import { CourseCommands } from './CourseCommands';
 import { EncounterPanel } from './EncounterPanel';
 import { LocksPanel } from './LocksPanel';
+import { EquipmentPanel } from './EquipmentPanel';
 import { LootPanel, takeEverything } from './LootPanel';
-import { ModulesPanel } from './ModulesPanel';
 import { ObjectCommands } from './ObjectCommands';
 import { ObjectContextMenu } from './ObjectContextMenu';
 import { ObjectList } from './ObjectList';
@@ -31,7 +31,6 @@ import { ShipStatusPanel } from './ShipStatusPanel';
 import { SiteView } from './SiteView';
 import styles from './Space.module.css';
 import { TravelStatus } from './TravelStatus';
-import { WeaponsPanel } from './WeaponsPanel';
 import { worldToScreen, type Point, type Viewport } from './camera';
 import { fireAvailability, weaponTargetId } from './tactical';
 import { useCamera } from './useCamera';
@@ -52,6 +51,10 @@ import { useSiteMotion } from './useSiteMotion';
  * the first completed lock; selecting a lock is how the player chooses what
  * to shoot. Selecting a wreck opens it, which is what lets the loot panel
  * show - or explain why it cannot show - what the wreck holds.
+ *
+ * The radar sits on top; beneath it Navigation and the combined weapons and
+ * equipment panel share one row as two columns, each scrolling on its own
+ * when it is longer than the space left, and stacking on a narrow screen.
  *
  * @implements FUNC-19.2, FUNC-19.3, TECH-12.1, TECH-12.2, TECH-12.3, MVP-AC-03, MVP-AC-04, MVP-AC-06, MVP-AC-08
  */
@@ -541,18 +544,18 @@ export function SpaceScreen({
         </p>
       )}
 
-      <CommandBar
-        data={data}
-        site={site}
-        selected={selected}
-        runner={runner}
-        simulationTimeMs={simulationTimeMs}
-        rangeKm={rangeKm}
-        onRangeChange={setRangeKm}
-      />
-
-      <div className={styles['tactical']}>
-        <WeaponsPanel
+      {/* Navigation and equipment share the row beneath the radar, side by side. */}
+      <div className={styles['work']}>
+        <CommandBar
+          data={data}
+          site={site}
+          selected={selected}
+          runner={runner}
+          simulationTimeMs={simulationTimeMs}
+          rangeKm={rangeKm}
+          onRangeChange={setRangeKm}
+        />
+        <EquipmentPanel
           data={data}
           runner={runner}
           combat={combat}
@@ -562,13 +565,12 @@ export function SpaceScreen({
           fire={fire}
           onFire={fireAtTarget}
         />
-        <ModulesPanel data={data} runner={runner} modules={combat?.modules ?? []} />
-
-        <details className={styles['panelDisclosure']}>
-          <summary>{translate('tactical.log.heading')}</summary>
-          <CombatLog combat={combat} site={site} encounter={encounter} />
-        </details>
       </div>
+
+      <details className={`${styles['panelDisclosure']} ${styles['logDisclosure']}`}>
+        <summary>{translate('tactical.log.heading')}</summary>
+        <CombatLog combat={combat} site={site} encounter={encounter} />
+      </details>
     </section>
   );
 }

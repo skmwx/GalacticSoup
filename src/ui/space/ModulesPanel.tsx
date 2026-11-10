@@ -19,6 +19,9 @@ import styles from './Space.module.css';
 /**
  * Active and passive modules (Functional Specification 9.7-9.8, 19.1).
  *
+ * The second half of the equipment panel: each active module's toggle sits on
+ * its name line, so the shield booster stays one glance from the weapons.
+ *
  * An active module is one toggle: it activates when the engine says it may,
  * and deactivates when it is repeating. Its row says what it is doing, what a
  * cycle costs and what it gives back, so active tanking reads as a trade of
@@ -71,10 +74,10 @@ export function ModulesPanel({ data, runner, modules }: ModulesPanelProps): JSX.
   );
 
   return (
-    <section className={styles['panel']} aria-labelledby="modules-heading" data-panel="modules">
-      <h3 id="modules-heading" className={styles['panelHeading']}>
+    <section className={styles['equipmentGroup']} aria-labelledby="modules-heading" data-panel="modules">
+      <h4 id="modules-heading" className={styles['panelHeading']}>
         {translate('tactical.modules.heading')}
-      </h3>
+      </h4>
       {modules.length === 0 ? (
         <p className={styles['muted']}>{translate('tactical.modules.none')}</p>
       ) : null}
@@ -96,12 +99,12 @@ export function ModulesPanel({ data, runner, modules }: ModulesPanelProps): JSX.
               data-module={module.moduleId}
               data-module-status={module.status}
             >
-              <p className={styles['weaponStatus']}>
-                <span className={styles['layerName']}>{translate(module.nameKey)}</span>{' '}
-                <span>{describeStatus(module, translate)}</span>
-              </p>
-              <ModuleEffect module={module} />
-              <ActionButton
+              <div className={styles['moduleHead']}>
+                <p className={styles['weaponStatus']}>
+                  <span className={styles['layerName']}>{translate(module.nameKey)}</span>{' '}
+                  <span>{describeStatus(module, translate)}</span>
+                </p>
+                <ActionButton
                 actionId={actionId}
                 runner={runner}
                 pressed={module.repeating}
@@ -111,7 +114,9 @@ export function ModulesPanel({ data, runner, modules }: ModulesPanelProps): JSX.
                   name: translate(module.nameKey),
                 })}
                 onRun={() => toggle(module)}
-              />
+                />
+              </div>
+              <ModuleEffect module={module} />
             </li>
           );
         })}

@@ -36,7 +36,7 @@ async function freshCampaign(page: Page): Promise<void> {
 async function undock(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
   await page.getByRole('button', { name: /^Undock/ }).click();
-  await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
 }
 
 test.describe('traversal', () => {
@@ -116,7 +116,7 @@ test.describe('traversal', () => {
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
 
-    await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
     await expect(page.getByText('Approaching')).toBeVisible();
   });
 

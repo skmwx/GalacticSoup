@@ -480,7 +480,7 @@ describe('going back for the wreck', () => {
     await sortie.data('navigation.selectBookmark', { bookmarkId: wreckId });
     await sortie.data('ship.undock');
     const harness = await resume(sortie, 'Borrell Harbour');
-    await screen.findByRole('heading', { name: 'Commands' });
+    await screen.findByRole('heading', { name: 'Navigation' });
 
     const chooser = screen.getByRole('region', { name: 'Destinations' });
     expect(within(chooser).getByRole('button', { name: /^Your wreck at Outpost Cradle/ }))

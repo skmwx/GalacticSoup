@@ -109,7 +109,7 @@ async function prepareAndUndock(page: Page): Promise<void> {
   }
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
   await undock(page);
-  await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
   await chooseDestination(page, 'Pirate Scout');
 }
 

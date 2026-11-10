@@ -16,8 +16,8 @@ import { DestinationChooser } from './DestinationChooser';
 import styles from './Space.module.css';
 
 /**
- * The contextual command bar (Functional Specification 7.1, 19.2;
- * Technical Specification 12.3).
+ * The Navigation column beneath the radar (Functional Specification 7.1,
+ * 19.2; Technical Specification 12.3).
  *
  * Every control pairs a registry entry with the availability the engine
  * projected for it, so nothing here decides whether an order is legal. An
@@ -101,7 +101,12 @@ export function CommandBar({
   });
 
   return (
-    <section className={styles['commands']} aria-labelledby="commands-heading">
+    <section
+      className={styles['commands']}
+      aria-labelledby="commands-heading"
+      data-panel="navigation"
+      tabIndex={0}
+    >
       <h3 id="commands-heading" className={styles['panelHeading']}>
         {translate('space.commands.heading')}
       </h3>

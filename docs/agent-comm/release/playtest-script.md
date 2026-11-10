@@ -100,7 +100,7 @@ anything that surprised you.
 
 - [ ] In the Market, compare two weapons or two kinds of ammunition. Can you tell which you want and
       why?
-- [ ] In a fight, open the hit-chance explanation in the Weapons panel. Does it explain a miss?
+- [ ] In a fight, open the hit-chance explanation in the Weapons section of the Equipment panel (beside Navigation, beneath the radar). Does it explain a miss?
 - [ ] Find a disabled button anywhere. Does it say why it is disabled?
 
 ## Known before you start

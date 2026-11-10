@@ -58,7 +58,7 @@ async function startCampaign(harness: Harness): Promise<void> {
 async function undock(harness: Harness): Promise<void> {
   await harness.user.click(screen.getByRole('button', { name: 'Departure' }));
   await harness.user.click(await screen.findByRole('button', { name: /^Undock/ }));
-  await screen.findByRole('heading', { name: 'Commands' });
+  await screen.findByRole('heading', { name: 'Navigation' });
 }
 
 /** The station's entry in the list of objects in the site. */
@@ -188,7 +188,7 @@ describe('space view', () => {
     harness.gateway.dispose();
   });
 
-  it('names every object and its range in the list beside the view [FUNC-19.2, FUNC-20]', async () => {
+  it('names every other object and its range in the list beside the view [FUNC-19.2, FUNC-20]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
@@ -197,11 +197,16 @@ describe('space view', () => {
     if (list === null) throw new Error('The object list did not render.');
     const entries = within(list).getAllByRole('button');
 
-    expect(entries).toHaveLength(2);
-    expect(entries.map((entry) => entry.textContent)).toEqual(
+    // The player's own ship is not listed, but it is still in the site and drawn on the radar.
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.textContent).toContain('Borrell Harbour');
+    expect(entries.map((entry) => entry.textContent)).not.toEqual(
       expect.arrayContaining([expect.stringContaining('Your ship')]),
     );
     expect(within(list).getByText('2 km')).toBeInTheDocument();
+    const state = await site(harness);
+    expect(state.site?.objects.some((object) => object.player)).toBe(true);
+    expect(document.querySelectorAll('[data-layer="objects"] [data-player="true"]')).toHaveLength(1);
 
     harness.gateway.dispose();
   });
@@ -445,7 +450,7 @@ describe('command bar', () => {
 
     // Docking completes on the simulation clock, so it finishes only once
     // time is running: the interface never moves the ship itself.
-    expect(await screen.findByRole('heading', { name: 'Commands' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Navigation' })).toBeInTheDocument();
 
     harness.gateway.dispose();
   });

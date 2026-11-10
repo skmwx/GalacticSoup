@@ -53,7 +53,7 @@ test.describe('guidance and notification accessibility', () => {
     await guidance.getByText('All steps').click();
     await guidance.getByRole('button', { name: 'Show me' }).click();
     await page.getByRole('button', { name: /^Undock/ }).click();
-    await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
     const notices = page.getByRole('region', { name: 'Notifications', exact: true });
     await expect(notices.getByText('Done: Undock.')).toBeVisible();
     // The next step is carried out in space, among the destinations.

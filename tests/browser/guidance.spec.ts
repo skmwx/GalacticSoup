@@ -118,7 +118,7 @@ test.describe('guided first loop', () => {
     expect(await step(page, 'Undock')).toContain('choose where to fly once you are in space');
     await showMe(page);
     await undock(page);
-    await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
 
     // Choose a site in space: the guidance names the Pirate Scout.
     expect(await step(page, 'Choose a site')).toContain('Pirate Scout');
@@ -237,7 +237,7 @@ test.describe('guided first loop', () => {
     expect(await step(page, 'Try a harder site')).toContain('cutters first');
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await undock(page);
-    await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
     await chooseDestination(page, 'Pirate Patrol');
     await page.keyboard.press('w');
     await ensureRunning(page);

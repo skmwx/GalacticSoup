@@ -28,7 +28,7 @@ test('keeps campaign management separate, undocks without a destination and read
   await expect(page.getByText('No destination needed: you choose one in space.', { exact: true })).toBeVisible();
   await expect(page.locator('[data-selection="none"]')).toBeVisible();
   await page.getByRole('button', { name: /^Undock/ }).click();
-  await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
 
   await chooseDestination(page, 'Pirate Base');
   await expect(destinationBriefing(page)).toContainText('A starter fit will not survive this one.');
@@ -49,6 +49,20 @@ test('keeps frequent flight controls in the desktop working view and reflows wit
   await undock.click();
   await expect(page.getByRole('heading', { name: 'In this site' })).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
+
+  // One equipment panel holds the weapons and modules, beside Navigation and beneath the radar.
+  await expect(page.locator('[data-panel="equipment"]')).toHaveCount(1);
+  await expect(page.locator('[data-panel="equipment"] [data-panel="weapons"]')).toBeVisible();
+  await expect(page.locator('[data-panel="equipment"] [data-panel="modules"]')).toBeVisible();
+  const radar = (await page.locator('svg[data-course]').boundingBox())!;
+  const navigation = (await page.locator('[data-panel="navigation"]').boundingBox())!;
+  const equipment = (await page.locator('[data-panel="equipment"]').boundingBox())!;
+  expect(navigation.y).toBeGreaterThanOrEqual(radar.y + radar.height);
+  expect(Math.abs(equipment.y - navigation.y)).toBeLessThan(1);
+  expect(equipment.x).toBeGreaterThanOrEqual(navigation.x + navigation.width);
+  // The player's ship is drawn on the radar but not listed among the site's objects.
+  await expect(page.locator('[data-layer="objects"] [data-player="true"]')).toHaveCount(1);
+  await expect(page.getByRole('region', { name: 'In this site', exact: true }).getByRole('button', { name: /Your ship/ })).toHaveCount(0);
   for (const action of ['time.toggle', 'movement.stop', 'weapons.fire', 'module.toggle.1']) {
     const box = await page.locator(`button[data-action="${action}"]`).first().boundingBox();
     expect(box, action).not.toBeNull();
@@ -60,5 +74,10 @@ test('keeps frequent flight controls in the desktop working view and reflows wit
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), `overflow at ${width}px`).toBe(true);
     await expect(page.locator('[data-panel="status"]')).toBeVisible();
     await expect(page.locator('[data-panel="weapons"]')).toBeVisible();
+    await expect(page.locator('[data-panel="navigation"]')).toBeVisible();
   }
+  // At 390 pixels the columns stack in reading order: Navigation, then the equipment.
+  const stackedNavigation = (await page.locator('[data-panel="navigation"]').boundingBox())!;
+  const stackedEquipment = (await page.locator('[data-panel="equipment"]').boundingBox())!;
+  expect(stackedEquipment.y).toBeGreaterThanOrEqual(stackedNavigation.y + stackedNavigation.height);
 });

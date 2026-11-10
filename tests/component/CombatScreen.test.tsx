@@ -425,7 +425,7 @@ describe('home again', () => {
     await harness.user.click(await screen.findByRole('button', { name: /^Undock/ }));
     const anyway = screen.queryByRole('button', { name: /^Undock anyway/ });
     if (anyway !== null) await harness.user.click(anyway);
-    await screen.findByRole('heading', { name: 'Commands' });
+    await screen.findByRole('heading', { name: 'Navigation' });
     const scout = document.querySelector('[data-disclosure="encounter.borrell.pirate-scout"]');
     if (!(scout instanceof HTMLElement)) throw new Error('The scout site discloses nothing.');
     expect(within(scout).getByText('1 x Pirate Scout (Skirmisher), 3,000 ISK each')).toBeInTheDocument();
@@ -504,7 +504,7 @@ describe('returning to a reopened campaign', () => {
     await sortie.data('ship.undock');
     await closeSortie(sortie);
     const harness = await resume(sortie, 'Borrell Harbour');
-    await screen.findByRole('heading', { name: 'Commands' });
+    await screen.findByRole('heading', { name: 'Navigation' });
 
     // Docking takes simulation time, so the clock runs through the frame.
     await harness.user.click(screen.getByRole('button', { name: /^Resume/ }));

@@ -13,7 +13,7 @@ import { expect, type Page } from '@playwright/test';
 export async function undock(page: Page): Promise<void> {
   await page.getByRole('button', { name: /^Undock/ }).click();
   const confirm = page.getByRole('dialog', { name: 'Undock with warnings?' });
-  const commands = page.getByRole('heading', { name: 'Commands' });
+  const commands = page.getByRole('heading', { name: 'Navigation' });
   await expect(confirm.or(commands)).toBeVisible();
   if (await confirm.isVisible()) {
     await confirm.getByRole('button', { name: /^Undock anyway/ }).click();

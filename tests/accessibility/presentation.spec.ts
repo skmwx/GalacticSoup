@@ -264,7 +264,7 @@ test.describe('presentation settings and accessibility', () => {
     await settings.getByRole('checkbox', { name: 'Ask before undocking with a warning' }).click();
     await settings.getByRole('button', { name: 'Close settings' }).click();
     await page.getByRole('button', { name: /^Undock/ }).click();
-    await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
     await expect(confirm).toBeHidden();
   });
 

@@ -10,7 +10,9 @@ import styles from './Space.module.css';
  * Everything in the site, as a list (Functional Specification 19.2, 20;
  * Technical Specification 12.3).
  *
- * The drawing answers "where", and this answers "what". It is also how
+ * The drawing answers "where", and this answers "what": everything in the
+ * site except the player's own ship, which keeps its marker on the radar and
+ * its status in the ship rail. It is also how
  * selection works without a pointer: each entry is an ordinary button, so the
  * site is reachable by tab and space alone, and the current selection is
  * announced rather than implied by a highlight. Hostility, locks and ships
@@ -40,17 +42,20 @@ export function ObjectList({
 }: ObjectListProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
+  // The player's own ship is drawn on the radar and described in the ship
+  // rail; listing it among what is in the site only adds a row to skip.
+  const others = objects.filter((object) => !object.player);
 
   return (
     <section className={styles['panel']} aria-labelledby="objects-heading">
       <h3 id="objects-heading" className={styles['panelHeading']}>
         {translate('space.objects.heading')}
       </h3>
-      {objects.length === 0 ? (
+      {others.length === 0 ? (
         <p className={styles['muted']}>{translate('space.objects.none')}</p>
       ) : (
         <ul className={styles['objectList']}>
-          {objects.map((object) => {
+          {others.map((object) => {
             const lock = combat?.locks.find((entry) => entry.targetId === object.id) ?? null;
             const targetingYou = combat?.hostileLocks.some((entry) => entry.shipId === object.id) ?? false;
             const tags = [
@@ -71,7 +76,7 @@ export function ObjectList({
                     onSelect(object.id);
                   }}
                   onContextMenu={(event) => {
-                    if (onContextMenu !== undefined && !object.player) {
+                    if (onContextMenu !== undefined) {
                       event.preventDefault();
                       onSelect(object.id);
                       onContextMenu(object.id, event.currentTarget);
@@ -80,7 +85,7 @@ export function ObjectList({
                   onKeyDown={(event) => {
                     const opens =
                       event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey);
-                    if (opens && onContextMenu !== undefined && !object.player) {
+                    if (opens && onContextMenu !== undefined) {
                       event.preventDefault();
                       onSelect(object.id);
                       onContextMenu(object.id, event.currentTarget);
@@ -88,7 +93,7 @@ export function ObjectList({
                   }}
                 >
                   <span>
-                    {object.player ? translate('space.object.you') : translate(object.nameKey)}
+                    {translate(object.nameKey)}
                     <span className={styles['objectKind']}>
                       {' '}
                       {translate(`space.kind.${object.kind}`)}

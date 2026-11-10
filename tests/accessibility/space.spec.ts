@@ -42,7 +42,7 @@ async function audit(page: Page): Promise<void> {
 async function undock(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
   await page.getByRole('button', { name: /^Undock/ }).click();
-  await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
 }
 
 test.describe('space accessibility', () => {
@@ -57,7 +57,7 @@ test.describe('space accessibility', () => {
     await audit(page);
 
     await page.getByRole('button', { name: /^Undock/ }).click();
-    await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
     await audit(page);
 
     // The destinations and a briefing pass too.
@@ -171,7 +171,7 @@ test.describe('space accessibility', () => {
       document.documentElement.style.setProperty('--gs-text-scale', '2');
     });
 
-    await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
     const overflows = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     );

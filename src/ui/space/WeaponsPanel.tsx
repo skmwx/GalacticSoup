@@ -27,6 +27,9 @@ import {
  * Turrets, their charges and what they would do right now
  * (Functional Specification 9.4-9.5, 19.3, 19.6).
  *
+ * This is the first half of the equipment panel beside Navigation; its
+ * subsection keeps its own heading, so it stays a named region.
+ *
  * Weapons that fire the same turret with the same charge are one group and
  * share one hit chance, shown against the target the weapons are aimed at
  * with the half of the formula that limits it and the formula itself. Each
@@ -106,15 +109,17 @@ export function WeaponsPanel({
   });
 
   return (
-    <section className={styles['panel']} aria-labelledby="weapons-heading" data-panel="weapons">
-      <h3 id="weapons-heading" className={styles['panelHeading']}>
-        {translate('tactical.weapons.heading')}
-      </h3>
-      <p className={styles['muted']} data-weapon-target={targetId ?? ''}>
-        {targetName === null
-          ? translate('tactical.weapons.noTarget')
-          : translate('tactical.weapons.aimedAt', { target: targetName })}
-      </p>
+    <section className={styles['equipmentGroup']} aria-labelledby="weapons-heading" data-panel="weapons">
+      <div className={styles['equipmentGroupHead']}>
+        <h4 id="weapons-heading" className={styles['panelHeading']}>
+          {translate('tactical.weapons.heading')}
+        </h4>
+        <p className={styles['muted']} data-weapon-target={targetId ?? ''}>
+          {targetName === null
+            ? translate('tactical.weapons.noTarget')
+            : translate('tactical.weapons.aimedAt', { target: targetName })}
+        </p>
+      </div>
 
       <div className={styles['commandRow']}>
         <ActionButton
@@ -187,7 +192,7 @@ function WeaponGroupView({
 
   return (
     <article className={styles['group']} data-weapon-group={group.key}>
-      <h4 className={styles['groupHeading']}>
+      <h5 className={styles['groupHeading']}>
         {translate('tactical.weapons.group', {
           count: group.weapons.length,
           name: translate(group.nameKey),
@@ -196,7 +201,7 @@ function WeaponGroupView({
               ? translate('tactical.weapons.empty')
               : translate(group.ammunitionNameKey),
         })}
-      </h4>
+      </h5>
 
       <ul className={styles['plainList']}>
         {group.weapons.map((weapon) => (
@@ -302,13 +307,14 @@ function WeaponRow({
             describeSubject(subjectName(id, site, encounter, shipId), translate),
           )}
         </span>
-      </p>
-      <p className={styles['muted']}>
-        {translate('tactical.weapons.magazine', {
-          loaded: formatQuantity(weapon.loadedRounds, locale),
-          size: formatQuantity(weapon.magazineSize, locale),
-          hold: formatQuantity(loaded?.cargoRounds ?? 0, locale),
-        })}
+        {' '}
+        <span className={styles['muted']}>
+          {translate('tactical.weapons.magazine', {
+            loaded: formatQuantity(weapon.loadedRounds, locale),
+            size: formatQuantity(weapon.magazineSize, locale),
+            hold: formatQuantity(loaded?.cargoRounds ?? 0, locale),
+          })}
+        </span>
       </p>
       <details className={styles['disclosure']}>
         <summary>{translate('cockpit.weaponControls', { slot: weapon.slot.index + 1 })}</summary>
@@ -380,8 +386,8 @@ function WeaponRow({
           />
           {choice === null ? null : <ChargeSummary option={choice} />}
         </div>
-      )}      </details>
-
+      )}
+      </details>
     </li>
   );
 }

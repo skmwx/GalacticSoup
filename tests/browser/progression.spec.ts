@@ -176,7 +176,7 @@ async function moveToHold(page: Page, item: string): Promise<void> {
 async function depart(page: Page, encounter: string): Promise<void> {
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
   await undock(page);
-  await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Navigation' })).toBeVisible();
   await chooseDestination(page, encounter);
 }
 

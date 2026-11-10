@@ -7,9 +7,16 @@
  */
 
 .space {
+  /*
+   * The radar's height, and what is left beneath it for the Navigation and
+   * equipment columns: the viewport less the campaign header, the radar and
+   * the gaps, but never so little that a column shows only a line or two.
+   */
+  --space-view-height: clamp(13rem, 28vh, 22rem);
+  --space-work-height: max(16rem, calc(100dvh - var(--space-view-height) - 10rem));
   display: grid;
   grid-template-columns: 13rem minmax(0, 1fr) minmax(12rem, 15rem);
-  grid-template-areas: 'heading heading heading' 'ship view aside' 'ship commands aside' 'ship tactical tactical';
+  grid-template-areas: 'heading heading heading' 'ship view aside' 'ship work aside' 'ship log aside';
   gap: var(--gs-space-2) var(--gs-space-3);
   align-items: start;
 }
@@ -71,7 +78,7 @@
 .view {
   display: block;
   width: 100%;
-  height: clamp(15rem, 34vh, 24rem);
+  height: var(--space-view-height);
   touch-action: none;
 }
 
@@ -263,7 +270,6 @@
 }
 
 .commands {
-  grid-area: commands;
   display: flex;
   flex-direction: column;
   gap: var(--gs-space-2);
@@ -417,14 +423,89 @@
   fill: var(--gs-color-danger);
 }
 
-/* Combat panels (Functional Specification 19.1, 19.3). */
-
-.tactical {
-  grid-area: tactical;
+/*
+ * Beneath the radar: Navigation and the combined weapons and equipment panel,
+ * two columns sharing one height (Functional Specification 19.1-19.3). Each
+ * scrolls inside itself when it is longer than that height, so the frequent
+ * controls at their tops stay in the working view.
+ */
+.work {
+  grid-area: work;
+  min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   gap: var(--gs-space-3);
-  align-items: start;
+  align-items: stretch;
+}
+.work > .commands,
+.work > .equipment {
+  min-width: 0;
+  max-height: var(--space-work-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.work > :focus-visible {
+  outline-offset: -2px;
+}
+.equipment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+  padding: var(--gs-space-2);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface);
+}
+.equipmentGroup {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+.equipmentGroup + .equipmentGroup {
+  padding-top: var(--gs-space-2);
+  border-top: var(--gs-border);
+}
+.equipmentGroupHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--gs-space-2);
+}
+.equipment .panelHeading {
+  font-size: var(--gs-font-small);
+}
+/* A module's toggle on its name line. */
+.moduleHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gs-space-1) var(--gs-space-2);
+}
+.logDisclosure {
+  grid-area: log;
+}
+/* The Navigation column is narrower than the screen, so its chooser follows the column's width. */
+.work > .commands {
+  container-type: inline-size;
+}
+@container (max-width: 30rem) {
+  .work .destinations {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'heading' 'list' 'briefing';
+  }
+}
+/* On a narrow screen the columns stack in reading order and the page scrolls instead. */
+@media (max-width: 60rem) {
+  .work {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .work > .commands,
+  .work > .equipment {
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 .defenses {
@@ -682,7 +763,7 @@
 @media (max-width: 85rem) {
   .space {
     grid-template-columns: 12rem minmax(0, 1fr);
-    grid-template-areas: 'heading heading' 'ship view' 'ship commands' 'ship tactical' 'ship aside';
+    grid-template-areas: 'heading heading' 'ship view' 'ship work' 'ship log' 'ship aside';
   }
   .aside {
     display: grid;
@@ -694,7 +775,7 @@
 @media (max-width: 78rem) and (min-width: 60rem) {
   .space {
     grid-template-columns: 12rem minmax(0, 1fr) 15rem;
-    grid-template-areas: 'heading heading heading' 'ship view aside' 'ship commands aside' 'ship tactical tactical';
+    grid-template-areas: 'heading heading heading' 'ship view aside' 'ship work aside' 'ship log aside';
   }
   .aside {
     display: flex;
@@ -705,14 +786,14 @@
 @media (max-width: 60rem) {
   .space {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: 'heading' 'ship' 'view' 'commands' 'aside' 'tactical';
+    grid-template-areas: 'heading' 'ship' 'view' 'work' 'log' 'aside';
   }
   .shipRail {
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   }
 }
 @media (max-width: 40rem) {
-  .shipRail, .tactical {
+  .shipRail {
     grid-template-columns: minmax(0, 1fr);
   }
   .readouts {
@@ -803,28 +884,16 @@
 .commands .destinationBriefing .commandRow > span {
   max-width: none;
 }
-.commands button, .tactical button {
+.commands button, .equipment button {
   font-size: var(--gs-font-small);
   padding: var(--gs-space-1) var(--gs-space-2);
 }
 .commands .field select {
   min-width: 4.5rem;
 }
-.tactical > [data-panel='weapons'] > .commandRow {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: start;
-}
-.tactical > [data-panel='weapons'] > .commandRow > span {
-  min-width: 0;
-}
-.view {
-  height: clamp(14rem, 30vh, 22rem);
-}
-@media (max-width: 40rem) {
-  .tactical > [data-panel='weapons'] > .commandRow {
-    display: flex;
-  }
+.equipment .commandRow {
+  align-items: center;
+  gap: var(--gs-space-1);
 }
 
 /* The command heading remains available to assistive technology; the strip's
@@ -839,16 +908,13 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.view {
-  height: clamp(13rem, 25vh, 20rem);
-}
 .shipRail .panel, .shipRail .layers {
   gap: var(--gs-space-1);
 }
 
 .space[data-external-context='true'] {
   grid-template-columns: 13rem minmax(0, 1fr);
-  grid-template-areas: 'heading heading' 'ship view' 'ship commands' 'ship tactical';
+  grid-template-areas: 'heading heading' 'ship view' 'ship work' 'ship log';
 }
 .externalAside {
   display: flex;
@@ -858,7 +924,7 @@
 @media (max-width: 60rem) {
   .space[data-external-context='true'] {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: 'heading' 'ship' 'view' 'commands' 'tactical';
+    grid-template-areas: 'heading' 'ship' 'view' 'work' 'log';
   }
   .externalAside {
     max-height: none;

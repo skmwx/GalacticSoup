@@ -324,7 +324,11 @@ ring - as well as written beside the object in the list. The effects layer draws
 fire, every ship that has locked the player, and recent damage and repairs beside the ship they
 happened to. Weapon and lock ranges are drawn on demand.
 
-The panels beneath the view read the tactical projection. Status shows layers, resistances,
+Beneath the radar, Navigation (orders, range and destinations) and one Equipment panel (weapons,
+then modules) share a row as two columns; each scrolls inside itself when it is longer than the
+space left, and they stack on a narrow screen. The ship's status sits in the rail beside the radar,
+and the site's object list beside it names everything except the player's own ship, which stays
+on the radar. The panels read the tactical projection. Status shows layers, resistances,
 capacitor with its endurance calculation, and who has locked the ship. Weapons are grouped by
 turret and charge; each group shows its hit chance against the aimed target, which half of the
 turret formula limits it (`limitingFactor`), and the formula with the engine's operands written
