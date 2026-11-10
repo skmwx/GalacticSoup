@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { chooseDestination } from '../support/destinations.ts';
 import { marketMode } from '../support/market.ts';
 import { chooseModule } from '../support/fitting.ts';
 import { serviceButton, servicesRegion } from '../support/services.ts';
@@ -112,18 +113,17 @@ test.describe('guided first loop', () => {
     await expect(guidance(page)).toBeVisible();
     const notices = region(page, 'Notifications');
 
-    // Choose a site: the guidance names the Pirate Scout.
-    expect(await step(page, 'Choose a site')).toContain('Pirate Scout');
-    await showMe(page);
-    await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
-    await expect(notices.getByText('Done: Choose a site.')).toBeVisible();
-
-    // Undock from Departure. The ship already carries its spare rounds, so
-    // the station has nothing to warn about.
-    expect(await step(page, 'Undock')).toContain('Undock');
+    // Undock from Departure, with no destination yet. The ship already
+    // carries its spare rounds, so the station has nothing to warn about.
+    expect(await step(page, 'Undock')).toContain('choose where to fly once you are in space');
     await showMe(page);
     await undock(page);
     await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+
+    // Choose a site in space: the guidance names the Pirate Scout.
+    expect(await step(page, 'Choose a site')).toContain('Pirate Scout');
+    await chooseDestination(page, 'Pirate Scout');
+    await expect(notices.getByText('Done: Choose a site.')).toBeVisible();
 
     // Warp (W), with the clock running (P).
     expect(await step(page, 'Warp to the site')).toMatch(/Arrive at to 10 km.*Warp \(W\).*Resume \(P\)/);
@@ -176,8 +176,9 @@ test.describe('guided first loop', () => {
     await expect(region(page, 'Wreck').getByRole('button', { name: /^Take all/ })).toBeEnabled({ timeout: 90_000 });
     await page.keyboard.press('t');
 
-    // Home: Retreat (X), then Dock (D).
-    expect(await step(page, 'Return and dock')).toMatch(/Retreat \(X\).*Dock \(D\)/);
+    // Home: Borrell Harbour is a destination; the return key (X) warps
+    // there, then Dock (D).
+    expect(await step(page, 'Return and dock')).toMatch(/Borrell Harbour under Destinations.*Dock \(D\).*Return to station \(X\)/);
     await page.keyboard.press('x');
     await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({ timeout: 90_000 });
     await page.keyboard.press('d');
@@ -232,11 +233,12 @@ test.describe('guided first loop', () => {
     await page.getByRole('button', { name: 'Apply fit' }).click();
 
     // A harder site: the guidance names the Pirate Patrol and its tactics.
+    // It is chosen in space, after undocking.
     expect(await step(page, 'Try a harder site')).toContain('cutters first');
-    await showMe(page);
-    await page.getByRole('button', { name: 'Choose Pirate Patrol' }).click();
+    await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await undock(page);
     await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+    await chooseDestination(page, 'Pirate Patrol');
     await page.keyboard.press('w');
     await ensureRunning(page);
 

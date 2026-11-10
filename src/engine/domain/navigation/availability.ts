@@ -154,11 +154,15 @@ export function retreatRefusal(input: NavigationRuleInput): CommandRefusal {
   return warpRefusal(input, station.siteId);
 }
 
-/** Refuses choosing a bookmark as the destination at the station (Functional Specification 7.1). */
+/**
+ * Refuses choosing a bookmark as the destination (Functional Specification
+ * 7.1). A destination is chosen wherever the player is in the system - docked,
+ * in a site or in warp - because choosing only marks it; it never moves the
+ * ship. Space navigation is where the choice is normally made.
+ */
 export function selectBookmarkRefusal(input: NavigationRuleInput, bookmarkId: string): CommandRefusal {
   const { state } = input;
   const location = state.assets.location;
-  if (location.kind !== 'station') return 'destinationSelectionUnavailable';
   const bookmark = bookmarkOf(state, bookmarkId);
   return bookmark === null || bookmark.systemId !== location.systemId ? 'bookmarkUnknown' : null;
 }
@@ -231,13 +235,16 @@ export function dockRefusal(input: NavigationRuleInput, stationId: string): Comm
     : null;
 }
 
-/** Refuses choosing an encounter as the current destination (Functional Specification 7.1). */
+/**
+ * Refuses choosing an encounter as the current destination (Functional
+ * Specification 7.1). Like a bookmark, it may be chosen docked or in space:
+ * the choice marks a destination and never moves the ship.
+ */
 export function selectDestinationRefusal(
   input: NavigationRuleInput,
   encounterId: string,
 ): CommandRefusal {
   const { state, content } = input;
-  if (state.assets.location.kind !== 'station') return 'destinationSelectionUnavailable';
   const encounter = content.encounter(encounterId as EncounterId);
   if (
     encounter === undefined ||

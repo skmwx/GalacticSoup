@@ -137,8 +137,8 @@ export async function flySortie(
   options: RunOptions = {},
 ): Promise<SortieRecord> {
   const encounter = content.requireEncounter(scenario.encounterId as never);
-  await session.data('navigation.selectDestination', { encounterId: encounter.id });
   await session.data('ship.undock');
+  await session.data('navigation.selectDestination', { encounterId: encounter.id });
   await session.data('navigation.warp', {
     destinationSiteId: encounter.siteId,
     arrivalDistanceKm: scenario.tactics.arrivalDistanceKm,

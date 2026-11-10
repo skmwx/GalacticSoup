@@ -25,7 +25,7 @@ The MVP must answer:
 
 The required playable loop is:
 
-> Station -> choose encounter -> fit and resupply -> enter site -> fight or retreat -> collect loot and bounties -> return to station -> sell, repair, and upgrade -> attempt a harder encounter.
+> Station -> fit and resupply -> undock -> choose encounter -> enter site -> fight or retreat -> collect loot and bounties -> return to station -> sell, repair, and upgrade -> attempt a harder encounter.
 
 The MVP is a small combat-progression slice, not a demonstration of the complete universe or every career. It must nevertheless use the target architecture and the authoritative rules for the systems it includes; it is not a disposable prototype.
 
@@ -38,7 +38,7 @@ The following table is the scope boundary. The cited sections are authoritative;
 | Campaign | One local campaign can be created, reset, closed, and reopened. Only the portions of the full starting state needed by included systems are supplied. | Functional §§3.1, 3.3-3.4; Technical §11 |
 | Simulation time | Pause and 1x play are required. Additional time rates are deferred, but simulation advances only from the authoritative simulation clock and never while closed. | Functional §3.3; Technical §9.1 |
 | World | One low-danger system containing one non-hostile independent station site and three authored combat sites. Galaxy travel, gates, and system-map navigation are deferred. | Functional §§5.2-5.3, 9; Technical §§8-10 |
-| Station | The station exposes the local hangar, active ship, fitting, local market, repair, resupply, insurance, encounter selection, and undock/return flow needed by the loop. | Functional §§6, 8, 10-11, 19.5 |
+| Station | The station exposes the local hangar, active ship, fitting, local market, repair, resupply, insurance, and the undock/return flow needed by the loop. Encounter selection happens in space (see below). | Functional §§6, 8, 10-11, 19.5 |
 | Market | Only local buying and selling of MVP items are exposed. Included listings use the authoritative quote, stock, transaction, and inventory rules. Remote markets, market history UI, routes, and trade progression are deferred. | Functional §§11.1-11.3; Technical §10.4 |
 | Ship and fitting | One player-usable starter hull. Included modules use the full slot, hardpoint, power, processing, compatibility, preview, and undock-validity rules. Included items have no skill gate above rank 0. | Functional §§8.2-8.5; Technical §10.2 |
 | Movement | Normal-space Approach, Orbit, Keep range, Move to point, and Stop, plus same-system Warp and Dock for entering, retreating from, and returning after encounters. Jump is deferred with gates. | Functional §§7.1-7.4; Technical §§9.3, 10.1 |
@@ -49,7 +49,7 @@ The following table is the scope boundary. The cited sections are authoritative;
 
 Shared numerical rules and applicable invariants in Functional §§4 and 22 apply throughout. The foundational delivery rules in Technical §18 apply from the first phase.
 
-Choosing a combat site while docked marks it as the current known destination; it does not teleport the ship. The player undocks at the station site, warps to the encounter, and later warps back and docks under Functional §§7.3-7.4. This supplies the authoritative retreat and player-wreck-recovery path without requiring a system map.
+Undocking requires no chosen destination: the ship arrives at the station site. Destinations are chosen in space, from the navigation panel, which lists the station by its authored name, every encounter site with its tier and reward disclosure, and the player's own wreck bookmarks. Choosing a destination marks it as the current known destination; it does not move or teleport the ship. The player warps to the encounter, and later warps back to the station site and docks under Functional §§7.3-7.4. Returning is an ordinary warp to the station destination followed by Dock; a remappable return shortcut performs the same warp, or the dock once the ship is at the station site, so no separate retreat control is needed. This supplies the authoritative retreat and player-wreck-recovery path without requiring a system map.
 
 ## 4. MVP content floor
 
@@ -70,7 +70,7 @@ Catalog entries may have upgraded variants when each variant has a visible benef
 
 ### 4.2 Encounters
 
-The station offers these three repeatable authored sites:
+The system offers these three repeatable authored sites, chosen from space navigation:
 
 | Site | Tier label | Required purpose |
 |---|---|---|
@@ -102,8 +102,8 @@ Player destruction follows Functional §9.12, including wreck creation, insuranc
 The MVP includes only the following gameplay surfaces:
 
 - the applicable subset of the persistent campaign frame;
-- a station hub with encounter selection, local market and hangar, fitting, repair, resupply, and insurance;
-- the schematic space view, selected-object and combat information, contextual commands, and notifications;
+- a station hub with local market and hangar, fitting, repair, resupply, insurance, and departure;
+- the schematic space view, destination selection with encounter and wreck disclosure, selected-object and combat information, contextual commands, and notifications;
 - the player-destruction loss report and recovery feedback; and
 - contextual onboarding for the selected loop.
 

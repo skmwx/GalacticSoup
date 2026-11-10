@@ -1,6 +1,10 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
+ * Version 18 adds the system's stations to `navigation.destinations`, each
+ * with the warp to its site and the dock with it, so space navigation can
+ * offer the way home beside the encounters and wrecks. Choosing an encounter
+ * or a wreck is now accepted in space as well as docked.
  * Version 17 adds repair scopes: `repair.preview` takes an optional `scope`
  * (armour, hull or all; omitted is all) and the repair preview states the scope
  * it priced, so the station can offer armour-only and hull-only repairs beside
@@ -34,7 +38,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 17;
+export const PROTOCOL_VERSION = 18;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

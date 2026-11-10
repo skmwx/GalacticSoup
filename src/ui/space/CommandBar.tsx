@@ -15,6 +15,7 @@ import { TooltipButton } from '../common/TooltipButton';
 import { formatDistanceKm } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
+import { DestinationChooser } from './DestinationChooser';
 import styles from './Space.module.css';
 
 /**
@@ -27,11 +28,9 @@ import styles from './Space.module.css';
  * and arrival distances it offers are the authored ones the projection
  * carries rather than numbers chosen by the interface.
  *
- * The warp chooser offers the player's own wreck beside the encounter sites
- * (Functional Specification 5.4, 9.12). Its arrival distance is measured from
- * the wreck rather than from the site's centre, so the closest one puts the
- * ship beside what survived; a wreck chosen at the station is offered first,
- * as a chosen encounter is.
+ * Where to go is chosen below the orders, in the destination chooser: the
+ * system's station, its encounter sites and the player's own wrecks, each
+ * with its briefing, and the warp or dock that reaches it.
  *
  * @implements FUNC-7.1, FUNC-7.2, FUNC-7.3, FUNC-7.4, FUNC-19.2, FUNC-5.4, FUNC-9.12, TECH-12.3, MVP-AC-03, MVP-AC-08
  */
@@ -41,6 +40,8 @@ export interface CommandBarProps {
   readonly site: SiteData;
   readonly selected: SiteObjectData | null;
   readonly runner: ActionRunner;
+  /** The clock the engine last answered with, for a wreck's countdown. */
+  readonly simulationTimeMs: number;
   /** True while a click on the view will set the destination point. */
   readonly choosingPoint: boolean;
   onChoosingPointChange(choosing: boolean): void;
@@ -56,27 +57,12 @@ export interface CommandBarProps {
 
 const NO_SELECTION: Availability = { available: false, unavailableReason: 'shortcut.noSelection' };
 
-/** A prefix that keeps a bookmark's option value apart from a site id. */
-const BOOKMARK_VALUE = 'bookmark:';
-
-/**
- * One place the warp control can aim at: an encounter's site, or a bookmark
- * with its own command and availability.
- */
-interface WarpChoice {
-  /** The option value: a site id, or a bookmark id behind a prefix. */
-  readonly value: string;
-  readonly label: string;
-  readonly selected: boolean;
-  readonly availability: Availability;
-  readonly warp: (arrivalDistanceKm: number) => Promise<unknown>;
-}
-
 export function CommandBar({
   data,
   site,
   selected,
   runner,
+  simulationTimeMs,
   choosingPoint,
   onChoosingPointChange,
   point,
@@ -86,42 +72,6 @@ export function CommandBar({
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const presets = site.rangePresetsKm;
-  const [arrivalKm, setArrivalKm] = useState<number>(
-    site.arrivalDistancesKm[site.arrivalDistancesKm.length - 1] ?? 0,
-  );
-  const destinations = data.destinations?.destinations ?? [];
-  const bookmarks = data.destinations?.bookmarks ?? [];
-  const warpable: readonly WarpChoice[] = [
-    // A wreck chosen at the station comes first, as the chosen encounter does.
-    ...bookmarks
-      .filter((entry) => availability(entry.commands, 'navigation.warpToBookmark').available)
-      .map(
-        (entry): WarpChoice => ({
-          value: `${BOOKMARK_VALUE}${entry.bookmarkId}`,
-          label: translate('space.commands.bookmark', { site: translate(entry.siteNameKey) }),
-          selected: entry.selected,
-          availability: availability(entry.commands, 'navigation.warpToBookmark'),
-          warp: (arrivalDistanceKm) =>
-            data.send('navigation.warpToBookmark', {
-              bookmarkId: entry.bookmarkId,
-              arrivalDistanceKm,
-            }),
-        }),
-      ),
-    ...destinations
-      .filter((entry) => availability(entry.commands, 'navigation.warp').available)
-      .map(
-        (entry): WarpChoice => ({
-          value: entry.siteId,
-          label: translate(entry.nameKey),
-          selected: entry.selected,
-          availability: availability(entry.commands, 'navigation.warp'),
-          warp: (arrivalDistanceKm) =>
-            data.send('navigation.warp', { destinationSiteId: entry.siteId, arrivalDistanceKm }),
-        }),
-      ),
-  ];
-  const [destinationValue, setDestinationValue] = useState<string>('');
   // The coordinate fields are edited as text so a partial entry such as "-"
   // is not turned into a number before the player has finished typing.
   const [pointText, setPointText] = useState(() => asText(point));
@@ -132,41 +82,9 @@ export function CommandBar({
   const pointUsable =
     Number.isFinite(destinationPoint.x) && Number.isFinite(destinationPoint.y);
 
-  // Choosing a site or the player's wreck at the station marks it as the
-  // destination (MVP Scope 3), so the warp control offers it until the player
-  // picks another.
-  const chosenDestination =
-    warpable.find((entry) => entry.value === destinationValue) ??
-    warpable.find((entry) => entry.selected) ??
-    warpable.find((entry) => !entry.value.startsWith(BOOKMARK_VALUE)) ??
-    warpable[0] ??
-    null;
-
   const siteCommand = (command: string): Availability => availability(site.commands, command);
   const targetCommand = (command: string): Availability =>
     selected === null ? NO_SELECTION : availability(selected.commands, command);
-
-  const dockTarget =
-    selected !== null && availability(selected.commands, 'navigation.dock').available
-      ? selected
-      : (site.site?.objects.find((object) =>
-          availability(object.commands, 'navigation.dock').available,
-        ) ?? null);
-  const dock: Availability =
-    dockTarget === null
-      ? { available: false, unavailableReason: 'error.ruleViolation.dockUnavailable' }
-      : availability(dockTarget.commands, 'navigation.dock');
-
-  const warp: Availability =
-    chosenDestination === null
-      ? {
-          available: false,
-          unavailableReason:
-            destinations[0] === undefined
-              ? 'error.ruleViolation.destinationUnknown'
-              : availability(destinations[0].commands, 'navigation.warp').unavailableReason,
-        }
-      : chosenDestination.availability;
 
   const order = async (
     command: 'movement.approach' | 'movement.orbit' | 'movement.keepRange',
@@ -189,8 +107,8 @@ export function CommandBar({
   };
 
   // A movement order needs a selected object; without one the key says so.
-  // Stop and retreat are emergency controls and always go to the engine,
-  // whose answer is shown like any other refusal.
+  // Stop is an emergency control and always goes to the engine, whose
+  // answer is shown like any other refusal.
   const orderShortcut = (
     command: 'movement.approach' | 'movement.orbit' | 'movement.keepRange',
   ): string | undefined => {
@@ -209,29 +127,6 @@ export function CommandBar({
       runner.run('movement.stop', async () => {
         await data.send('movement.stop', {});
       });
-    },
-    'navigation.retreat': () => {
-      runner.run('navigation.retreat', async () => {
-        await data.send('navigation.retreat', {});
-      });
-    },
-    'navigation.warp': () => {
-      if (chosenDestination === null || !warp.available) {
-        return warp.unavailableReason ?? 'shortcut.unavailable';
-      }
-      runner.run('navigation.warp', async () => {
-        await chosenDestination.warp(arrivalKm);
-      });
-      return undefined;
-    },
-    'navigation.dock': () => {
-      if (dockTarget === null || !dock.available) {
-        return dock.unavailableReason ?? 'shortcut.unavailable';
-      }
-      runner.run('navigation.dock', async () => {
-        await data.send('navigation.dock', { stationId: dockTarget.id });
-      });
-      return undefined;
     },
   });
 
@@ -343,74 +238,7 @@ export function CommandBar({
       </div>
       </details>
 
-      <div className={styles['commandRow']}>
-        <label className={styles['field']}>
-          {translate('space.commands.destination')}
-          <select
-            value={chosenDestination?.value ?? ''}
-            disabled={warpable.length === 0}
-            onChange={(event) => {
-              setDestinationValue(event.target.value);
-            }}
-          >
-            {warpable.length === 0 ? (
-              <option value="">{translate('space.commands.noDestination')}</option>
-            ) : null}
-            {warpable.map((entry) => (
-              <option key={entry.value} value={entry.value}>
-                {entry.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={styles['field']}>
-          {translate('space.commands.arrival')}
-          <select
-            value={String(arrivalKm)}
-            onChange={(event) => {
-              setArrivalKm(Number(event.target.value));
-            }}
-          >
-            {site.arrivalDistancesKm.map((distance) => (
-              <option key={distance} value={String(distance)}>
-                {translate('space.distance', { distance: formatDistanceKm(distance, locale) })}
-              </option>
-            ))}
-          </select>
-        </label>
-        <ActionButton
-          actionId="navigation.warp"
-          runner={runner}
-          available={warp.available}
-          unavailableReason={warp.unavailableReason}
-          onRun={async () => {
-            if (chosenDestination !== null) {
-              await chosenDestination.warp(arrivalKm);
-            }
-          }}
-        />
-        <ActionButton
-          actionId="navigation.dock"
-          runner={runner}
-          available={dock.available}
-          unavailableReason={dock.unavailableReason}
-          onRun={async () => {
-            if (dockTarget !== null) {
-              await data.send('navigation.dock', { stationId: dockTarget.id });
-            }
-          }}
-        />
-        <ActionButton
-          actionId="navigation.retreat"
-          runner={runner}
-          variant="danger"
-          available={siteCommand('navigation.retreat').available}
-          unavailableReason={siteCommand('navigation.retreat').unavailableReason}
-          onRun={async () => {
-            await data.send('navigation.retreat', {});
-          }}
-        />
-      </div>
+      <DestinationChooser data={data} site={site} runner={runner} simulationTimeMs={simulationTimeMs} />
 
       {choosingPoint ? (
         <p className={styles['muted']} role="status">

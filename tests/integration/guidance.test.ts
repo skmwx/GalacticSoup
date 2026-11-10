@@ -142,8 +142,8 @@ async function fitSecondGun(sortie: Sortie): Promise<void> {
 }
 
 async function enterPatrol(sortie: Sortie): Promise<void> {
-  await sortie.data('navigation.selectDestination', { encounterId: PATROL });
   await sortie.data('ship.undock');
+  await sortie.data('navigation.selectDestination', { encounterId: PATROL });
   await sortie.data('navigation.warp', { destinationSiteId: PATROL_SITE, arrivalDistanceKm: 30 });
   const arrived = await sortie.until(async () => {
     const site = await sortie.data<SiteData>('navigation.site');
@@ -158,7 +158,7 @@ describe('guidance through the complete loop', () => {
 
     const first = await sortie.data<OnboardingData>('onboarding.state');
     expect(first.hidden).toBe(false);
-    expect(first.currentStepId).toBe('guide.loop.choose-site');
+    expect(first.currentStepId).toBe('guide.loop.undock');
 
     const opponent = await arriveAtScout(sortie);
     expect(await statuses(sortie)).toMatchObject({

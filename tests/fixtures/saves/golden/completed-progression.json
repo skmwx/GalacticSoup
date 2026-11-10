@@ -1,10 +1,10 @@
 {
  "format": "galactic-soup/save",
  "formatVersion": 10,
- "protocolVersion": 17,
+ "protocolVersion": 18,
  "engineVersion": "0.1.0",
- "contentVersion": "0.1.0+296facab3d13",
- "contentHash": "296facab3d13fb5e260b6f3c3ccbe670c1674b0f453e885b96d6bb29ac8ad1d2",
+ "contentVersion": "0.1.0+8f13b5394f04",
+ "contentHash": "8f13b5394f048a0f4d295f2d155394a7c68d6e5f483b985dfc4338028315cea2",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
@@ -4756,11 +4756,11 @@
      "outcome": "completed",
      "atMs": 0
     },
-    "guide.loop.choose-site": {
+    "guide.loop.undock": {
      "outcome": "completed",
      "atMs": 0
     },
-    "guide.loop.undock": {
+    "guide.loop.choose-site": {
      "outcome": "completed",
      "atMs": 0
     },
@@ -5174,5 +5174,5 @@
    "nextInsertionOrdinal": 3379
   }
  },
- "checksum": "3e470bd7faef723ac3aa46b54b5c2493d08bb6046b84dba09d40387613b48c62"
+ "checksum": "124e9b1e4f8315df91abdd7c2ae56a9170b20f397dec23cef626f31a90c3414a"
 }

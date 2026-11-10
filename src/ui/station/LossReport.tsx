@@ -379,7 +379,7 @@ function Recovery({
   );
 }
 
-/** Chooses the wreck as the destination, as the departure panel does. */
+/** Chooses the wreck as the destination, which space navigation then offers first. */
 function ChooseWreck({
   bookmark,
   data,
@@ -397,7 +397,7 @@ function ChooseWreck({
       actionId="navigation.selectBookmark"
       runner={runner}
       available={choose.available && !selected}
-      unavailableReason={selected ? 'departure.bookmark.alreadySelected' : choose.unavailableReason}
+      unavailableReason={selected ? 'loss.wreck.chosen' : choose.unavailableReason}
       label={selected ? translate('loss.wreck.chosen') : translate('loss.wreck.choose')}
       onRun={async () => {
         if (bookmark !== null) {

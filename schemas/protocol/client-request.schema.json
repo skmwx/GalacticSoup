@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 17
+      "const": 18
     },
     "requestId": {
       "type": "string",

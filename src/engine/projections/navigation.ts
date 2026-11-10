@@ -29,6 +29,7 @@ import type {
   DestinationsData,
   SiteData,
   SiteObjectData,
+  StationDestinationData,
   TravelStatusData,
 } from '@protocol';
 import { ruleViolationMessageKey } from '@protocol';
@@ -153,14 +154,42 @@ export function destinationsProjection(
     revision: state.revision,
     selectedEncounterId: state.navigation.selectedEncounterId,
     selectedBookmarkId: state.navigation.selectedBookmarkId,
+    stations: stationDestinations(rules),
     destinations,
     bookmarks: bookmarkDestinations(rules),
   });
 }
 
 /**
+ * The stations of the current system as destinations (Functional
+ * Specification 7.3, 7.4). A station is offered as itself, never as an
+ * encounter: it carries the warp to its site and the dock with it, each with
+ * the refusal the command would give. Returning home is therefore an ordinary
+ * warp followed by an ordinary dock, under the same rules as any other.
+ */
+function stationDestinations(rules: NavigationRuleInput): readonly StationDestinationData[] {
+  const { state, content } = rules;
+  const location = state.assets.location;
+  return content.stations()
+    .filter((station) => station.systemId === location.systemId)
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((station): StationDestinationData => ({
+      stationId: station.id,
+      siteId: station.siteId,
+      nameKey: station.nameKey,
+      descriptionKey: station.descriptionKey,
+      home: station.id === state.assets.lastDockedStationId,
+      current: location.kind === 'site' && location.siteId === station.siteId,
+      commands: [
+        availability('navigation.warp', warpRefusal(rules, station.siteId)),
+        availability('navigation.dock', dockRefusal(rules, station.id)),
+      ],
+    }));
+}
+
+/**
  * The player's own wrecks as destinations (Functional Specification 5.4, 7.3,
- * 9.12). Each is chosen at the station and warped to from space through the
+ * 9.12). Each is chosen at the station or in space and warped to through the
  * same flow as an encounter, so recovering a wreck needs no system map. What
  * waits at its site is disclosed alongside, because the wreck lies where the
  * ship was lost.

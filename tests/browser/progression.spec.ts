@@ -2,6 +2,7 @@ import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { chooseDestination, destinationBriefing, destinationEntry, destinations, dockHome, warpHome } from '../support/destinations.ts';
 import { marketMode } from '../support/market.ts';
 import { applyFit, chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 import { takeService } from '../support/services.ts';
@@ -171,21 +172,22 @@ async function moveToHold(page: Page, item: string): Promise<void> {
   await expect(page.getByRole('table', { name: 'Ship cargo hold' }).getByRole('rowheader', { name: item })).toBeVisible();
 }
 
+/** Undocks, then chooses the encounter in space, where destinations are chosen. */
 async function depart(page: Page, encounter: string): Promise<void> {
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
-  await page.getByRole('button', { name: `Choose ${encounter}` }).click();
-  await expect(page.getByText(`Destination: ${encounter}`)).toBeVisible();
   await undock(page);
   await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+  await chooseDestination(page, encounter);
 }
 
 /* -------------------------------------------------------------------------- */
 /* Space                                                                       */
 /* -------------------------------------------------------------------------- */
 
+/** Warps to the destination chosen in space. */
 async function warp(page: Page, arriveAtKm: string, site: string): Promise<void> {
-  await page.getByLabel('Arrive at').selectOption(arriveAtKm);
-  await page.getByRole('button', { name: /^Warp/ }).click();
+  await destinations(page).getByLabel('Arrive at').selectOption(arriveAtKm);
+  await destinations(page).getByRole('button', { name: /^Warp to/ }).click();
   await ensureRunning(page);
   await expect(page.getByRole('heading', { level: 2, name: site })).toBeVisible({ timeout: 90_000 });
 }
@@ -355,11 +357,12 @@ async function lootWrecks(page: Page): Promise<void> {
   }
 }
 
+/** Warps home through the station destination and docks there. */
 async function returnAndDock(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Retreat/ }).click();
+  await warpHome(page);
   await ensureRunning(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({ timeout: 90_000 });
-  await page.getByRole('button', { name: /^Dock/ }).click();
+  await dockHome(page);
   await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible({ timeout: 60_000 });
   await ensurePaused(page);
 }
@@ -377,11 +380,10 @@ test.describe('progression to the mastery site', () => {
     // docking cycle, plus the wrecks of the first and four reopenings.
     test.setTimeout(30 * 60_000);
 
-    // Every site is offered from the start; tier is guidance, not a gate.
+    // Undocking needs no destination: every site is chosen in space, where
+    // all three are offered (see the end of this flow).
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    for (const site of ['Pirate Scout', 'Pirate Patrol', 'Pirate Base']) {
-      await expect(page.getByRole('button', { name: `Choose ${site}` })).toBeEnabled();
-    }
+    await expect(page.getByText('No destination needed: you choose one in space.')).toBeVisible();
 
     // The starting credits buy the intermediate fit: a second autocannon and
     // phased rounds for the cutters' shields.
@@ -490,15 +492,17 @@ test.describe('progression to the mastery site', () => {
       region(page, 'Last sortie').getByText('Pirate Base cleared: 4 of 4 opponents destroyed, 26,000 ISK in bounties.'),
     ).toBeVisible();
 
-    // Nothing ends here: the mastery site counts its completion and is still
-    // the chosen destination, and the other sites can be chosen instead.
+    // Nothing ends here: the mastery site is still the chosen destination,
+    // offered first in space with its completion counted, and every site -
+    // tier is guidance, not a gate - can be chosen instead.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await expect(
-      page.locator('[data-disclosure="encounter.borrell.pirate-base"]').getByText('Cleared 1 times'),
-    ).toBeVisible();
-    await expect(page.getByText('Destination: Pirate Base')).toBeVisible();
+    await expect(page.getByText('Chosen destination: Pirate Base. Space navigation offers it first.')).toBeVisible();
+    await undock(page);
+    await expect(destinationEntry(page, 'Pirate Base')).toHaveAttribute('aria-pressed', 'true');
+    await expect(destinationBriefing(page).getByText('Cleared 1 times')).toBeVisible();
     for (const site of ['Pirate Scout', 'Pirate Patrol']) {
-      await expect(page.getByRole('button', { name: `Choose ${site}` })).toBeEnabled();
+      await chooseDestination(page, site);
+      await expect(destinations(page).getByRole('button', { name: new RegExp(`^Warp to ${site}`) })).toBeEnabled();
     }
   });
 });

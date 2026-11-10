@@ -1,42 +1,37 @@
-import { useEffect, useState, type JSX } from 'react';
+import { useState, type JSX } from 'react';
 
-import type { BookmarkDestinationData, DestinationData, ShipData } from '@protocol';
+import type { ShipData } from '@protocol';
 
 import { ActionButton, commandAvailability, type ActionRunner } from '../actions';
 import { Dialog } from '../common/Dialog';
 import { StatusMark } from '../common/StatusMark';
 import { SubstitutedExplanation } from '../common/Explanation';
 import { formatSimulationDuration } from '../format/duration';
-import { formatCredits, formatPercent, formatStat } from '../format/numbers';
+import { formatPercent, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { usePreferences } from '../preferences';
 import type { PlayData } from '../frame/usePlayData';
-import { wreckRemainingMs } from './LossReport';
 import styles from './Station.module.css';
 
 /**
- * Choosing an encounter and leaving the station
- * (MVP Scope 3; Functional Specification 19.5).
+ * Leaving the station (Functional Specification 8.4, 10, 19.5; MVP Scope 3).
  *
- * Choosing a site marks it as the current destination; it does not move the
- * ship. The player undocks at the station site and warps from there, which is
- * the path the scope requires and the one that makes retreat and return mean
- * something.
- *
- * Tier and the reward summary are guidance shown before entry, not a gate:
- * every site stays visible, and whether it can be chosen comes from the
- * engine's projected availability. The summary names the opponents the site
- * is authored to hold, with their roles and bounties, the total bounty, the
- * loot they can drop and how often the site has been cleared, so the choice
- * of site - and of fit - is made knowing what waits there.
+ * Departure is only about leaving safely. Undocking needs no destination: the
+ * ship arrives at the station's own site, and where to fly next - an
+ * encounter, the player's own wreck or the station again - is chosen in space,
+ * in the navigation panel, where each destination's briefing is read. A
+ * destination chosen earlier, such as the wreck the loss report offers, is
+ * named here because space navigation offers it first.
  *
  * Before the undock control it warns about what the player would regret in a
  * fight: a weapon with no ammunition loaded, a weapon with no spare rounds in
  * the hold to reload from, a ship with nothing that can shoot, and armour or
- * hull that has not been repaired (Functional Specification 10). The warnings are the fit's own and the layers are the
- * ship's; a warning never blocks undocking. Undocking while one stands asks
- * first, in a confirmation that lists them again - one the player may switch
- * off in the settings (Functional Specification 20).
+ * hull that has not been repaired (Functional Specification 10). The warnings
+ * are the fit's own and the layers are the ship's; a warning never blocks
+ * undocking. Undocking while one stands asks first, in a confirmation that
+ * lists them again - one the player may switch off in the settings
+ * (Functional Specification 20). What does block it - no ship, an invalid fit
+ * or an open fitting draft - is the engine's refusal, shown on the control.
  *
  * Beside them it reports the capacitor: how full it is and, when it is not,
  * that the repair service recharges it for free and how much running time
@@ -45,28 +40,15 @@ import styles from './Station.module.css';
  * simulations found to be the likeliest unexplained loss. This is an
  * explanation, not an undock rule (Functional Specification 9.8, 10, 19.6).
  *
- * The player's own wreck carries an automatic bookmark (Functional
- * Specification 5.4, 9.12), and it is chosen here exactly as an encounter is:
- * each row names the hull it was, the site it lies in and what waits there,
- * how many stacks are left in it and how long it has before it expires.
- * Choosing it replaces a chosen encounter, and the reverse; the undock control
- * says why a pilot with no ship cannot leave.
- *
- * @implements FUNC-19.5, FUNC-18, FUNC-5.4, FUNC-9.12, MVP-AC-02, MVP-AC-03, MVP-AC-07, MVP-AC-08, MVP-AC-09
+ * @implements FUNC-19.5, FUNC-18, FUNC-8.4, MVP-AC-02, MVP-AC-03, MVP-AC-07
  */
 
 export interface DeparturePanelProps {
   readonly data: PlayData;
   readonly runner: ActionRunner;
-  /** The clock the engine last answered with, for a wreck's countdown. */
-  readonly simulationTimeMs: number;
 }
 
-export function DeparturePanel({
-  data,
-  runner,
-  simulationTimeMs,
-}: DeparturePanelProps): JSX.Element {
+export function DeparturePanel({ data, runner }: DeparturePanelProps): JSX.Element {
   const translate = useTranslate();
   const destinations = data.destinations?.destinations ?? [];
   const bookmarks = data.destinations?.bookmarks ?? [];
@@ -75,12 +57,6 @@ export function DeparturePanel({
   const selectedBookmark = bookmarks.find((entry) => entry.selected) ?? null;
   const { preferences } = usePreferences();
   const [confirming, setConfirming] = useState(false);
-  const [previewId, setPreviewId] = useState<string | null>(null);
-  const briefing = destinations.find((entry) => entry.encounterId === previewId) ?? selected ?? [...destinations].sort((a, b) => a.tier - b.tier)[0] ?? null;
-  const { locale } = useLocalizer();
-  useEffect(() => {
-    if (selected !== null) setPreviewId(selected.encounterId);
-  }, [selected?.encounterId]);
   const warnings = undockWarnings(data.ship, translate);
   const undockNow = async (): Promise<void> => {
     await data.send('ship.undock', {});
@@ -93,82 +69,40 @@ export function DeparturePanel({
       </h3>
       <p className={styles['muted']}>{translate('departure.detail')}</p>
 
-      <div className={styles['departureGrid']}>
-        <div className={styles['destinationList']} role="group" aria-label={translate('departure.table')}>
-          {[...destinations].sort((a, b) => a.tier - b.tier).map((entry) => {
-            const choose = commandAvailability(entry.commands, 'navigation.selectDestination');
-            return <article key={entry.encounterId} data-destination={entry.encounterId} className={styles['briefing']}>
-              <button type="button" className={styles['destinationCard']}
-                aria-pressed={briefing?.encounterId === entry.encounterId}
-                onClick={() => { setPreviewId(entry.encounterId); }}>
-                <strong>{translate(entry.nameKey)}</strong>
-                <small>{translate('departure.tierValue', { tier: entry.tier })}</small>
-                <small>{translate('departure.totalBounty', { bounty: formatCredits(entry.totalBountyCredits, locale) })}</small>
-              </button>
-              <ActionButton actionId="navigation.selectDestination" runner={runner}
-                available={choose.available && !entry.selected}
-                unavailableReason={entry.selected ? 'departure.alreadySelected' : choose.unavailableReason}
-                label={entry.selected ? translate('departure.selected') : translate('departure.select', { site: translate(entry.nameKey) })}
-                onRun={async () => {
-                  setPreviewId(entry.encounterId);
-                  await data.send('navigation.selectDestination', { encounterId: entry.encounterId });
-                }} />
-            </article>;
-          })}
-        </div>
-        {briefing === null ? null : <section className={styles['briefing']} aria-label={translate('departure.briefing')}>
-          <h4>{translate(briefing.nameKey)}</h4>
-          <p className={styles['muted']}>{translate('departure.tierValue', { tier: briefing.tier })}</p>
-          <p>{translate(briefing.descriptionKey)}</p>
-          <p>{translate(briefing.rewardSummaryKey)}</p>
-          <Disclosure entry={briefing} />
-        </section>}
-      </div>
-
-      {bookmarks.length === 0 ? null : (
-        <BookmarkTable
-          bookmarks={bookmarks}
-          data={data}
-          runner={runner}
-          simulationTimeMs={simulationTimeMs}
-        />
-      )}
-
       <div className={styles['departureAction']}>
-      <p
-        className={styles['muted']}
-        role="status"
-        data-selection={selectedBookmark === null ? 'encounter' : 'bookmark'}
-      >
-        {selectedBookmark !== null
-          ? translate('departure.currentBookmark', {
-              site: translate(selectedBookmark.siteNameKey),
-            })
-          : selected === null
-            ? translate('departure.noneSelected')
-            : translate('departure.currentSelection', { site: translate(selected.nameKey) })}
-      </p>
+        <p
+          className={styles['muted']}
+          role="status"
+          data-selection={selectedBookmark !== null ? 'bookmark' : selected !== null ? 'encounter' : 'none'}
+        >
+          {selectedBookmark !== null
+            ? translate('departure.currentBookmark', {
+                site: translate(selectedBookmark.siteNameKey),
+              })
+            : selected === null
+              ? translate('departure.noneSelected')
+              : translate('departure.currentSelection', { site: translate(selected.nameKey) })}
+        </p>
 
-      <UndockWarnings warnings={warnings} />
-      <CapacitorReadiness ship={data.ship} />
+        <UndockWarnings warnings={warnings} />
+        <CapacitorReadiness ship={data.ship} />
 
-      <div className={styles['toolbar']}>
-        <ActionButton
-          actionId="ship.undock"
-          runner={runner}
-          variant="primary"
-          available={undock.available}
-          unavailableReason={undock.unavailableReason}
-          onRun={async () => {
-            if (warnings.length > 0 && preferences.confirmations.undockWithWarnings) {
-              setConfirming(true);
-              return;
-            }
-            await undockNow();
-          }}
-        />
-      </div>
-
+        <div className={styles['toolbar']}>
+          <ActionButton
+            actionId="ship.undock"
+            runner={runner}
+            variant="primary"
+            available={undock.available}
+            unavailableReason={undock.unavailableReason}
+            onRun={async () => {
+              if (warnings.length > 0 && preferences.confirmations.undockWithWarnings) {
+                setConfirming(true);
+                return;
+              }
+              await undockNow();
+            }}
+          />
+        </div>
       </div>
       <Dialog
         open={confirming}
@@ -206,101 +140,6 @@ export function DeparturePanel({
         <p className={styles['muted']}>{translate('departure.confirm.setting')}</p>
       </Dialog>
     </section>
-  );
-}
-
-/**
- * The player's own wrecks as destinations (Functional Specification 5.4,
- * 9.12). What waits at the site is disclosed beside each, because the wreck
- * lies where the ship was lost.
- */
-function BookmarkTable({
-  bookmarks,
-  data,
-  runner,
-  simulationTimeMs,
-}: {
-  readonly bookmarks: readonly BookmarkDestinationData[];
-  readonly data: PlayData;
-  readonly runner: ActionRunner;
-  readonly simulationTimeMs: number;
-}): JSX.Element {
-  const translate = useTranslate();
-  return (
-    <>
-      <h4 className={styles['panelHeading']}>{translate('departure.bookmarks.heading')}</h4>
-      <p className={styles['muted']}>{translate('departure.bookmarks.detail')}</p>
-      <div className={styles['tableWrapper']} tabIndex={0}>
-        <table className={styles['table']} aria-label={translate('departure.bookmarks.table')}>
-          <thead>
-            <tr>
-              <th scope="col">{translate('departure.bookmarks.wreck')}</th>
-              <th scope="col">{translate('departure.bookmarks.waiting')}</th>
-              <th scope="col">{translate('departure.bookmarks.contents')}</th>
-              <th scope="col">{translate('departure.choose')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bookmarks.map((bookmark) => {
-              const choose = commandAvailability(bookmark.commands, 'navigation.selectBookmark');
-              const site = translate(bookmark.siteNameKey);
-              return (
-                <tr key={bookmark.bookmarkId} data-bookmark={bookmark.bookmarkId}>
-                  <th scope="row">
-                    {translate('departure.bookmarks.name', {
-                      hull: translate(bookmark.hullNameKey),
-                      site,
-                    })}
-                  </th>
-                  <td>
-                    {bookmark.encounterNameKey === null
-                      ? translate('departure.bookmarks.nothingWaiting')
-                      : translate('departure.bookmarks.encounter', {
-                          encounter: translate(bookmark.encounterNameKey),
-                          tier: bookmark.tier ?? 0,
-                        })}
-                  </td>
-                  <td>
-                    {translate('departure.bookmarks.remaining', {
-                      count: bookmark.itemCount,
-                      remaining: formatSimulationDuration(
-                        wreckRemainingMs(
-                          bookmark.expiresAtMs,
-                          bookmark.remainingSeconds,
-                          simulationTimeMs,
-                        ),
-                      ),
-                    })}
-                  </td>
-                  <td>
-                    <ActionButton
-                      actionId="navigation.selectBookmark"
-                      runner={runner}
-                      available={choose.available && !bookmark.selected}
-                      unavailableReason={
-                        bookmark.selected
-                          ? 'departure.bookmark.alreadySelected'
-                          : choose.unavailableReason
-                      }
-                      label={
-                        bookmark.selected
-                          ? translate('departure.selected')
-                          : translate('departure.bookmarks.select', { site })
-                      }
-                      onRun={async () => {
-                        await data.send('navigation.selectBookmark', {
-                          bookmarkId: bookmark.bookmarkId,
-                        });
-                      }}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </>
   );
 }
 
@@ -389,38 +228,5 @@ function CapacitorReadiness({ ship }: { readonly ship: ShipData | null }): JSX.E
         />
       )}
     </div>
-  );
-}
-
-/** What a site discloses before entry (MVP Scope 4.2). */
-function Disclosure({ entry }: { readonly entry: DestinationData }): JSX.Element {
-  const translate = useTranslate();
-  const { locale } = useLocalizer();
-  return (
-    <ul className={styles['disclosureList']} data-disclosure={entry.encounterId}>
-      {entry.spawns.map((spawn) => (
-        <li key={spawn.npcProfileId}>
-          {translate('departure.spawn', {
-            count: spawn.count,
-            name: translate(spawn.nameKey),
-            role: translate(`role.${spawn.role}`),
-            bounty: formatCredits(spawn.bountyCredits, locale),
-          })}
-        </li>
-      ))}
-      <li>
-        {translate('departure.totalBounty', {
-          bounty: formatCredits(entry.totalBountyCredits, locale),
-        })}
-      </li>
-      <li>
-        {entry.possibleLoot.length === 0
-          ? translate('departure.noLoot')
-          : translate('departure.loot', {
-              items: entry.possibleLoot.map((item) => translate(item.nameKey)).join(', '),
-            })}
-      </li>
-      <li>{translate('departure.completions', { count: entry.completionCount })}</li>
-    </ul>
   );
 }

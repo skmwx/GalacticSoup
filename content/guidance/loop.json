@@ -1,6 +1,6 @@
 {
   "kind": "guidance",
-  "$comment": "Contextual guidance for the MVP loop (MVP Scope 3; Functional Specification 3.2 as selected: the full multi-activity introduction is deferred). Steps are shown in this order, but most can be completed whenever the player happens to do the thing, so doing it early is never punished. 'requires' names only true prerequisites: the ready-check and the spare-rounds check make sense only after a sortie. Every step may be skipped and the whole guidance hidden and resumed. The closing steps teach what the phase 17 balance simulations found decides the harder sites: kill the patrol's cutters before its marksman, fight the base's nearest brawler while holding range, and never undock on an empty capacitor, which the free repair now refills. The carry-rounds step exists because a starter magazine holds 20 rounds and the scout takes about 60, and a gun reloads only from the hold. A new campaign starts with its spare rounds already there, so the step waits for the first return: it completes when the hold still carries two magazines' worth, and otherwise teaches buying or moving more.",
+  "$comment": "Contextual guidance for the MVP loop (MVP Scope 3; Functional Specification 3.2 as selected: the full multi-activity introduction is deferred). Steps are shown in this order: the ship undocks first and the site is chosen in space, where the destinations are listed; but most can be completed whenever the player happens to do the thing, so doing it early is never punished. 'requires' names only true prerequisites: the ready-check and the spare-rounds check make sense only after a sortie. Every step may be skipped and the whole guidance hidden and resumed. The closing steps teach what the phase 17 balance simulations found decides the harder sites: kill the patrol's cutters before its marksman, fight the base's nearest brawler while holding range, and never undock on an empty capacitor, which the free repair now refills. The carry-rounds step exists because a starter magazine holds 20 rounds and the scout takes about 60, and a gun reloads only from the hold. A new campaign starts with its spare rounds already there, so the step waits for the first return: it completes when the hold still carries two magazines' worth, and otherwise teaches buying or moving more.",
   "definitions": [
     {
       "id": "guide.loop",
@@ -8,17 +8,6 @@
       "introKey": "content.guide.loop.intro",
       "completedKey": "content.guide.loop.completed",
       "steps": [
-        {
-          "id": "guide.loop.choose-site",
-          "titleKey": "content.guide.loop.choose-site.title",
-          "bodyKey": "content.guide.loop.choose-site.body",
-          "surface": "station.departure",
-          "requires": [],
-          "skippable": true,
-          "predicate": {
-            "kind": "destinationSelected"
-          }
-        },
         {
           "id": "guide.loop.undock",
           "titleKey": "content.guide.loop.undock.title",
@@ -28,6 +17,17 @@
           "skippable": true,
           "predicate": {
             "kind": "undocked"
+          }
+        },
+        {
+          "id": "guide.loop.choose-site",
+          "titleKey": "content.guide.loop.choose-site.title",
+          "bodyKey": "content.guide.loop.choose-site.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "destinationSelected"
           }
         },
         {
@@ -143,7 +143,7 @@
           "id": "guide.loop.ready",
           "titleKey": "content.guide.loop.ready.title",
           "bodyKey": "content.guide.loop.ready.body",
-          "surface": "station.services",
+          "surface": "station.hub",
           "requires": [
             "guide.loop.return"
           ],
@@ -182,7 +182,7 @@
           "id": "guide.loop.harder",
           "titleKey": "content.guide.loop.harder.title",
           "bodyKey": "content.guide.loop.harder.body",
-          "surface": "station.departure",
+          "surface": "space",
           "requires": [],
           "skippable": true,
           "predicate": {

@@ -34,7 +34,7 @@ describe('guidance progress', () => {
     const view = onboardingProjection(testCampaign(), content);
 
     expect(view.hidden).toBe(false);
-    expect(view.currentStepId).toBe('guide.loop.choose-site');
+    expect(view.currentStepId).toBe('guide.loop.undock');
     expect(view.chains[0]?.completedCount).toBe(0);
     expect(view.chains[0]?.steps.every((step) => step.recordedAtMs === null)).toBe(true);
   });

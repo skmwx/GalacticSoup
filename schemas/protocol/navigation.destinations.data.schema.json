@@ -8,6 +8,7 @@
     "revision",
     "selectedEncounterId",
     "selectedBookmarkId",
+    "stations",
     "destinations",
     "bookmarks"
   ],
@@ -30,7 +31,7 @@
       ]
     },
     "selectedBookmarkId": {
-      "description": "The bookmark chosen at the station instead of an encounter; at most one of the two is set.",
+      "description": "The bookmark chosen instead of an encounter, docked or in space; at most one of the two is set.",
       "anyOf": [
         {
           "type": "null"
@@ -39,6 +40,13 @@
           "$ref": "#/$defs/entityId"
         }
       ]
+    },
+    "stations": {
+      "description": "The stations in the current system, in stable order (Functional Specification 7.3, 7.4).",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stationDestination"
+      }
     },
     "destinations": {
       "type": "array",
@@ -195,8 +203,52 @@
       "type": "string",
       "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
     },
+    "stationDestination": {
+      "description": "A station offered as a destination: warped to through its site and docked with there. It is a station, not an encounter, so it carries no tier or rewards.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stationId",
+        "siteId",
+        "nameKey",
+        "descriptionKey",
+        "home",
+        "current",
+        "commands"
+      ],
+      "properties": {
+        "stationId": {
+          "type": "string",
+          "pattern": "^station(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "siteId": {
+          "type": "string",
+          "pattern": "^site(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "descriptionKey": {
+          "type": "string"
+        },
+        "home": {
+          "type": "boolean"
+        },
+        "current": {
+          "type": "boolean"
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/commandAvailability"
+          }
+        }
+      }
+    },
     "bookmarkDestination": {
-      "description": "A bookmark offered as a destination: in the MVP, the automatic one on the player's own wreck, chosen at the station and warped to without a system map.",
+      "description": "A bookmark offered as a destination: in the MVP, the automatic one on the player's own wreck, chosen docked or in space and warped to without a system map.",
       "type": "object",
       "additionalProperties": false,
       "required": [

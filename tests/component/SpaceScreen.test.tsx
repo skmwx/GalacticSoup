@@ -54,17 +54,37 @@ async function startCampaign(harness: Harness): Promise<void> {
   await screen.findByRole('heading', { level: 2, name: 'Borrell Harbour' });
 }
 
-/** Chooses the easy site at the station and leaves the dock. */
+/** Leaves the dock. No destination is needed: it is chosen in space. */
 async function undock(harness: Harness): Promise<void> {
   await harness.user.click(screen.getByRole('button', { name: 'Departure' }));
-  await harness.user.click(await screen.findByRole('button', { name: 'Choose Pirate Scout' }));
-  await screen.findByText('Destination: Pirate Scout');
-  await harness.user.click(screen.getByRole('button', { name: /^Undock/ }));
+  await harness.user.click(await screen.findByRole('button', { name: /^Undock/ }));
   await screen.findByRole('heading', { name: 'Commands' });
 }
 
+/** The station's entry in the list of objects in the site. */
+function stationObject(): HTMLElement {
+  const list = screen.getByRole('heading', { name: 'In this site' }).closest('section');
+  if (list === null) throw new Error('The object list did not render.');
+  return within(list).getByRole('button', { name: /Borrell Harbour/ });
+}
+
+/** The destination chooser in the navigation panel. */
+function destinations(): HTMLElement {
+  return screen.getByRole('region', { name: 'Destinations' });
+}
+
+function destination(name: RegExp): HTMLElement {
+  return within(destinations()).getByRole('button', { name });
+}
+
+async function selectedEncounter(harness: Harness): Promise<string | null> {
+  const response = await harness.gateway.request('navigation.destinations', EMPTY_PAYLOAD);
+  if (!response.ok) throw new Error('The engine refused navigation.destinations.');
+  return response.data.selectedEncounterId;
+}
+
 describe('leaving the station', () => {
-  it('chooses a destination and undocks into the space view [MVP-AC-03, FUNC-19.5]', async () => {
+  it('undocks with no destination into the space view [MVP-AC-03, FUNC-19.5]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
@@ -72,7 +92,8 @@ describe('leaving the station', () => {
     const current = await site(harness);
     expect(current.location.kind).toBe('site');
     expect(screen.getByRole('heading', { name: 'In this site' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Borrell Harbour/ })).toBeInTheDocument();
+    expect(stationObject()).toBeInTheDocument();
+    expect(await selectedEncounter(harness)).toBeNull();
 
     harness.gateway.dispose();
   });
@@ -127,7 +148,7 @@ describe('space view', () => {
     expect(station?.querySelector('rect')).not.toBeNull();
     expect(view.querySelector('[data-selection="true"]')).toBeNull();
 
-    await harness.user.click(screen.getByRole('button', { name: /Borrell Harbour/ }));
+    await harness.user.click(stationObject());
 
     expect(view.querySelector('[data-object="station"][data-selected="true"]')).not.toBeNull();
     expect(view.querySelector('[data-selection="true"]')).not.toBeNull();
@@ -185,7 +206,7 @@ describe('selected object', () => {
 
     expect(screen.getByText(/Nothing is selected/)).toBeInTheDocument();
 
-    await harness.user.click(screen.getByRole('button', { name: /Borrell Harbour/ }));
+    await harness.user.click(stationObject());
     const panel = screen.getByRole('heading', { name: 'Selected' }).closest('section');
     if (panel === null) throw new Error('The selection panel did not render.');
 
@@ -206,15 +227,12 @@ describe('command bar', () => {
     // Nothing is selected, so the orders that need a target are refused.
     expect(screen.getByRole('button', { name: /^Approach/ })).toBeUnavailable();
     expect(screen.getByRole('button', { name: /^Stop/ })).not.toBeUnavailable();
-    expect(screen.getByRole('button', { name: /^Retreat/ })).toBeUnavailable();
-    expect(
-      screen.getByText('There is no combat site to retreat from.'),
-    ).toBeInTheDocument();
+    // There is no separate retreat control: the station is a destination.
+    expect(screen.queryByRole('button', { name: /^Retreat/ })).toBeNull();
 
-    await harness.user.click(screen.getByRole('button', { name: /Borrell Harbour/ }));
+    await harness.user.click(stationObject());
 
     expect(screen.getByRole('button', { name: /^Approach/ })).not.toBeUnavailable();
-    expect(screen.getByRole('button', { name: /^Dock/ })).not.toBeUnavailable();
 
     harness.gateway.dispose();
   });
@@ -223,7 +241,7 @@ describe('command bar', () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
-    await harness.user.click(screen.getByRole('button', { name: /Borrell Harbour/ }));
+    await harness.user.click(stationObject());
 
     await harness.user.selectOptions(screen.getByLabelText('Range'), '5');
     await harness.user.click(screen.getByRole('button', { name: /^Orbit/ }));
@@ -257,8 +275,8 @@ describe('command bar', () => {
     await startCampaign(harness);
     await undock(harness);
 
-    await harness.user.selectOptions(screen.getByLabelText('Destination'), 'site.borrell.verge');
-    await harness.user.click(screen.getByRole('button', { name: /^Warp/ }));
+    await harness.user.click(destination(/^Pirate Scout/));
+    await harness.user.click(within(destinations()).getByRole('button', { name: /^Warp to Pirate Scout/ }));
 
     await waitFor(async () => {
       const current = await site(harness);
@@ -273,13 +291,13 @@ describe('command bar', () => {
     harness.gateway.dispose();
   });
 
-  it('warps to the destination chosen at the station with the w shortcut [MVP-AC-03, FUNC-20, TECH-12.3]', async () => {
+  it('warps to the destination offered first with the w shortcut [MVP-AC-03, FUNC-20, TECH-12.3]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
 
-    // Pirate Scout was chosen at the station, so it is the warp destination.
-    expect(screen.getByLabelText('Destination')).toHaveValue('site.borrell.verge');
+    // At the station's site the easiest encounter is offered first.
+    expect(destination(/^Pirate Scout/)).toHaveAttribute('aria-pressed', 'true');
     await harness.user.keyboard('w');
 
     await waitFor(async () => {
@@ -317,7 +335,10 @@ describe('command bar', () => {
     await startCampaign(harness);
     await undock(harness);
 
-    await harness.user.click(screen.getByRole('button', { name: /^Dock/ }));
+    // The station is a destination; from its own site it is docked with.
+    await harness.user.click(destination(/^Borrell Harbour/));
+    expect(within(destinations()).queryByRole('button', { name: /^Warp to/ })).toBeNull();
+    await harness.user.click(within(destinations()).getByRole('button', { name: /^Dock at Borrell Harbour/ }));
     await waitFor(async () => {
       expect((await site(harness)).travelStatus).toMatchObject({ kind: 'dock' });
     });
@@ -330,13 +351,79 @@ describe('command bar', () => {
   });
 });
 
+describe('destinations in space', () => {
+  it('lists the station, every encounter with its briefing, and chooses one without moving [MVP-AC-02, MVP-AC-03, FUNC-7.3]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await undock(harness);
+
+    // The station is listed as a station by its authored name, not as an encounter.
+    expect(destination(/^Borrell Harbour Station · you are here/)).toBeInTheDocument();
+    for (const name of [/^Pirate Scout Tier 1/, /^Pirate Patrol Tier 2/, /^Pirate Base Tier 3/]) {
+      expect(destination(name)).toBeInTheDocument();
+    }
+
+    const before = await site(harness);
+    await harness.user.click(destination(/^Pirate Patrol/));
+    const briefing = within(destinations()).getByRole('group', { name: 'Destination briefing' });
+    expect(briefing).toHaveTextContent('Pirate Patrol');
+    expect(briefing).toHaveTextContent(/Total bounty .* ISK/);
+    expect(briefing).toHaveTextContent('Cleared 0 times');
+    expect(within(destinations()).getByRole('button', { name: /^Warp to Pirate Patrol/ })).not.toBeUnavailable();
+
+    // Choosing records the destination and moves nothing.
+    await waitFor(async () => {
+      expect(await selectedEncounter(harness)).toBe('encounter.borrell.pirate-patrol');
+    });
+    const after = await site(harness);
+    expect(after.travelStatus).toBeNull();
+    expect(after.movementOrder).toEqual(before.movementOrder);
+
+    // The station's briefing has no tier or reward.
+    await harness.user.click(destination(/^Borrell Harbour/));
+    expect(within(destinations()).getByRole('group', { name: 'Destination briefing' })).not.toHaveTextContent(/Tier|bounty/);
+
+    harness.gateway.dispose();
+  });
+
+  it('returns home with the return key: a warp from a site [MVP-AC-08, FUNC-7.3, FUNC-20]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await undock(harness);
+
+    await harness.user.click(destination(/^Pirate Scout/));
+    await harness.user.selectOptions(within(destinations()).getByLabelText('Arrive at'), '100');
+    await harness.user.click(within(destinations()).getByRole('button', { name: /^Warp to Pirate Scout/ }));
+    await harness.user.click(screen.getByRole('button', { name: /^Resume/ }));
+    await waitFor(async () => {
+      const current = await site(harness);
+      expect(current.location).toMatchObject({ kind: 'site', siteId: 'site.borrell.verge' });
+    }, { timeout: 60_000 });
+
+    // Once the site is current it cannot be warped to; the station can.
+    await harness.user.click(destination(/^Pirate Scout/));
+    expect(within(destinations()).getByRole('button', { name: /^Warp to Pirate Scout/ })).toBeUnavailable();
+    expect(destination(/^Borrell Harbour Station$/)).toBeInTheDocument();
+
+    await harness.user.keyboard('x');
+    await waitFor(async () => {
+      expect((await site(harness)).travelStatus).toMatchObject({
+        kind: 'warp',
+        destinationSiteId: 'site.borrell.station',
+      });
+    });
+
+    harness.gateway.dispose();
+  }, 90_000);
+});
+
 describe('text', () => {
   it('resolves every key the surfaces ask for [TECH-12.5]', async () => {
     const onIssue = vi.fn();
     const harness = renderGame({ onIssue });
     await startCampaign(harness);
     await undock(harness);
-    await harness.user.click(screen.getByRole('button', { name: /Borrell Harbour/ }));
+    await harness.user.click(stationObject());
     await harness.user.click(screen.getByRole('button', { name: 'Pick a point' }));
 
     expect(onIssue.mock.calls.map(([issue]) => issue)).toEqual([]);

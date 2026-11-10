@@ -511,12 +511,6 @@
   margin: 0;
 }
 
-.disclosureList {
-  margin: 0;
-  padding-inline-start: var(--gs-space-3);
-  font-size: var(--gs-font-small);
-}
-
 /*
  * The loss report and the no-ship notice (Functional Specification 9.12).
  * Each is headed in words; the border is a second cue, never the only one.
@@ -560,47 +554,6 @@
   color: var(--gs-color-text-muted);
 }
 
-.departureGrid {
-  display: grid;
-  grid-template-columns: minmax(11rem, .8fr) minmax(0, 1.2fr);
-  gap: var(--gs-space-3);
-  align-items: start;
-}
-.destinationList {
-  display: grid;
-  gap: var(--gs-space-2);
-}
-.destinationCard {
-  padding: var(--gs-space-3);
-  background: var(--gs-color-surface-raised);
-  border: var(--gs-border);
-  border-radius: var(--gs-radius);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  text-align: start;
-  display: grid;
-  gap: var(--gs-space-1);
-}
-.destinationCard[aria-pressed='true'] {
-  border-color: var(--gs-color-accent);
-  background: var(--gs-color-surface-raised);
-  outline: 1px solid var(--gs-color-accent);
-}
-.destinationCard small {
-  color: var(--gs-color-text-muted);
-  font-size: var(--gs-font-small);
-}
-.briefing {
-  border: var(--gs-border);
-  padding: var(--gs-space-3);
-  border-radius: var(--gs-radius);
-  display: grid;
-  gap: var(--gs-space-2);
-}
-.briefing h4, .briefing p {
-  margin: 0;
-}
 .departureAction {
   display: flex;
   align-items: center;
@@ -629,9 +582,7 @@
   }
 }
 @media (max-width: 40rem) {
-  .departureGrid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+
   .slots, .figures, .tiles {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -641,21 +592,6 @@
   }
 }
 
-.destinationList > .briefing {
-  padding: var(--gs-space-2);
-  gap: var(--gs-space-1);
-}
-.destinationCard {
-  padding: var(--gs-space-2);
-  grid-template-columns: minmax(0, 1fr) auto;
-  border-color: transparent;
-}
-.destinationCard strong {
-  grid-column: 1 / -1;
-}
-.destinationCard small:last-child {
-  grid-column: 1 / -1;
-}
 .readiness dl > div {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -663,13 +599,6 @@
 }
 .readiness .bar {
   grid-column: 1 / -1;
-}
-.destinationList > .briefing {
-  padding: var(--gs-space-1);
-}
-.destinationCard {
-  padding: var(--gs-space-1);
-  gap: 0;
 }
 
 /*

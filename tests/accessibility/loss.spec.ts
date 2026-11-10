@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { warpTo } from '../support/destinations.ts';
 import { marketMode } from '../support/market.ts';
 import { chooseModule } from '../support/fitting.ts';
 
@@ -86,10 +87,8 @@ test.describe('loss accessibility', () => {
     await expect(sale).toBeHidden();
 
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await page.getByRole('button', { name: 'Choose Pirate Base' }).click();
     await undock(page);
-    await page.getByLabel('Arrive at').selectOption('10');
-    await page.getByRole('button', { name: /^Warp/ }).click();
+    await warpTo(page, 'Pirate Base', 10);
     await page.getByRole('button', { name: /^Resume/ }).click();
 
     const report = page.getByRole('region', { name: 'Ship lost', exact: true });

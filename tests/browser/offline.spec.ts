@@ -2,6 +2,7 @@ import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { dockHome, warpHome, warpTo } from '../support/destinations.ts';
 import { marketMode } from '../support/market.ts';
 
 /**
@@ -103,11 +104,8 @@ test.describe('playing without a network', () => {
 
     // Out to the easiest site.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
-    await expect(page.getByText('Destination: Pirate Scout')).toBeVisible();
     await undock(page);
-    await page.getByLabel('Arrive at').selectOption('10');
-    await page.getByRole('button', { name: /^Warp/ }).click();
+    await warpTo(page, 'Pirate Scout', 10);
     await ensureRunning(page);
     await expect(page.getByRole('heading', { level: 2, name: 'Verge Belt' })).toBeVisible({
       timeout: 60_000,
@@ -142,11 +140,11 @@ test.describe('playing without a network', () => {
     await takeAll.click();
     await expect(wreck.getByText('The wreck is empty.')).toBeVisible();
 
-    await page.getByRole('button', { name: /^Retreat/ }).click();
+    await warpHome(page);
     await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({
       timeout: 60_000,
     });
-    await page.getByRole('button', { name: /^Dock/ }).click();
+    await dockHome(page);
     await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible({ timeout: 60_000 });
     await ensurePaused(page);
     await expect(page.getByText('23,000 ISK', { exact: true })).toBeVisible();
@@ -173,7 +171,10 @@ test.describe('playing without a network', () => {
     await page.getByRole('button', { name: 'Resume campaign' }).click();
     await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
     await expect(page.locator('dd').filter({ hasText: /ISK$/ }).first()).toHaveText(wallet);
+    // The site chosen in space is remembered, and its briefing counts the clear.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
+    await expect(page.getByText('Chosen destination: Pirate Scout. Space navigation offers it first.')).toBeVisible();
+    await undock(page);
     await expect(
       page.locator('[data-disclosure="encounter.borrell.pirate-scout"]').getByText('Cleared 1 times'),
     ).toBeVisible();

@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+import { chooseDestination, destinationEntry, destinations, siteObject } from '../support/destinations.ts';
+
 /**
  * The space view under keyboard-only operation
  * (Technical Specification 12.2, 12.3; Functional Specification 20).
@@ -39,7 +41,6 @@ async function audit(page: Page): Promise<void> {
 
 async function undock(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
-  await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
   await page.getByRole('button', { name: /^Undock/ }).click();
   await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
 }
@@ -55,9 +56,12 @@ test.describe('space accessibility', () => {
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await audit(page);
 
-    await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
     await page.getByRole('button', { name: /^Undock/ }).click();
     await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+    await audit(page);
+
+    // The destinations and a briefing pass too.
+    await chooseDestination(page, 'Pirate Patrol');
     await audit(page);
   });
 
@@ -74,7 +78,7 @@ test.describe('space accessibility', () => {
   }) => {
     await undock(page);
 
-    const station = page.getByRole('button', { name: /Borrell Harbour/ }).last();
+    const station = siteObject(page, /Borrell Harbour/);
     await station.focus();
     await page.keyboard.press('Enter');
     await expect(station).toHaveAttribute('aria-pressed', 'true');
@@ -89,10 +93,38 @@ test.describe('space accessibility', () => {
   }) => {
     await undock(page);
 
-    const retreat = page.getByRole('button', { name: /^Retreat/ });
-    await expect(retreat).toBeVisible();
-    await expect(retreat).toBeDisabled();
-    await expect(page.getByText('There is no combat site to retreat from.')).toBeVisible();
+    // There is no separate retreat button any more: the station is one of
+    // the destinations.
+    await expect(page.getByRole('button', { name: /^Retreat/ })).toHaveCount(0);
+
+    const approach = page.getByRole('button', { name: /^Approach/ });
+    await expect(approach).toBeVisible();
+    await expect(approach).toBeDisabled();
+    await expect(approach).toHaveAccessibleDescription(/Select something in the view or the list first\./);
+  });
+
+  test('chooses a destination and warps with the keyboard alone [MVP-AC-03, FUNC-20]', async ({ page }) => {
+    await undock(page);
+
+    const patrol = destinationEntry(page, 'Pirate Patrol');
+    await patrol.focus();
+    await page.keyboard.press('Enter');
+    await expect(patrol).toHaveAttribute('aria-pressed', 'true');
+    await expect(destinations(page).getByRole('group', { name: 'Destination briefing' })).toContainText('Pirate Patrol');
+
+    // The station's own site offers docking, not a warp to where the ship is.
+    const home = destinationEntry(page, 'Borrell Harbour');
+    await home.focus();
+    await page.keyboard.press('Enter');
+    await expect(destinations(page).getByRole('button', { name: /^Dock at Borrell Harbour/ })).toBeEnabled();
+    await expect(destinations(page).getByRole('button', { name: /^Warp to/ })).toHaveCount(0);
+
+    // The warp key sends the chosen warp; nothing moved before it.
+    await patrol.focus();
+    await page.keyboard.press('Enter');
+    await page.locator('body').click({ position: { x: 1, y: 1 } });
+    await page.keyboard.press('w');
+    await expect(page.getByText(/Aligning for warp/).first()).toBeVisible();
   });
 
   test('stays readable at a doubled interface scale [TECH-12.3]', async ({ page }) => {

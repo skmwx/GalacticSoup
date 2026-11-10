@@ -444,27 +444,32 @@ describe('recovery-grant equipment', () => {
 });
 
 describe('going back for the wreck', () => {
-  it('lists the wreck in the departure panel and chooses it [FUNC-5.4, FUNC-9.12, MVP-AC-08]', async () => {
+  it('lists the wreck among the destinations in space and chooses it [FUNC-5.4, FUNC-9.12, MVP-AC-08]', async () => {
     const harness = await resume(await lostWithGrant(), 'Borrell Harbour');
     const report = await lossReport(harness);
 
+    // Undocking needs no destination; the wreck is chosen in space.
     await harness.user.click(screen.getByRole('button', { name: 'Departure' }));
-    const table = screen.getByRole('table', { name: 'Your wrecks in this system' });
-    const row = table.querySelector(`[data-bookmark="${report.wreck.wreckId}"]`);
-    if (!(row instanceof HTMLElement)) throw new Error('The wreck is not offered as a destination.');
-    expect(within(row).getByRole('rowheader')).toHaveTextContent('Your Wayfarer wreck at Outpost Cradle');
-    expect(within(row).getByText('Pirate Base, tier 3')).toBeInTheDocument();
-    expect(within(row).getByText(/^Stacks left: 2\. Expires in 1h 59m\.$/)).toBeInTheDocument();
+    expect(screen.getByText('No destination needed: you choose one in space.')).toBeInTheDocument();
+    await harness.user.click(screen.getByRole('button', { name: /^Undock/ }));
+    const anyway = screen.queryByRole('button', { name: /^Undock anyway/ });
+    if (anyway !== null) await harness.user.click(anyway);
+    const destinations = await screen.findByRole('region', { name: 'Destinations' });
 
-    await harness.user.click(within(row).getByRole('button', { name: 'Choose your wreck at Outpost Cradle' }));
+    const wreck = within(destinations).getByRole('button', { name: /^Your wreck at Outpost Cradle Wreck · expires in 1h 59m/ });
+    await harness.user.click(wreck);
+    expect(wreck).toHaveAttribute('aria-pressed', 'true');
+    const briefing = within(destinations).getByRole('group', { name: 'Destination briefing' });
+    expect(briefing).toHaveTextContent('Your Wayfarer wreck at Outpost Cradle');
+    expect(within(briefing).getByText('Waiting there: Pirate Base, tier 3')).toBeInTheDocument();
+    expect(within(briefing).getByText(/^Stacks left: 2\. Expires in 1h 59m\.$/)).toBeInTheDocument();
+
     await waitFor(async () => {
-      const destinations = await ask<DestinationsData>(harness, 'navigation.destinations');
-      expect(destinations.selectedBookmarkId).toBe(report.wreck.wreckId);
-      expect(destinations.selectedEncounterId).toBeNull();
+      const chosen = await ask<DestinationsData>(harness, 'navigation.destinations');
+      expect(chosen.selectedBookmarkId).toBe(report.wreck.wreckId);
+      expect(chosen.selectedEncounterId).toBeNull();
     });
-    expect(await screen.findByText('Destination: your wreck at Outpost Cradle')).toBeInTheDocument();
-    expect(within(row).getByRole('button', { name: 'Chosen' })).toBeUnavailable();
-    expect(screen.getByRole('button', { name: /^Undock/ })).not.toBeUnavailable();
+    expect(within(destinations).getByRole('button', { name: /^Warp to your wreck at Outpost Cradle/ })).not.toBeUnavailable();
 
     harness.gateway.dispose();
   }, 60_000);
@@ -477,14 +482,15 @@ describe('going back for the wreck', () => {
     const harness = await resume(sortie, 'Borrell Harbour');
     await screen.findByRole('heading', { name: 'Commands' });
 
-    const chooser = screen.getByLabelText('Destination');
-    expect(chooser).toHaveValue(`bookmark:${wreckId}`);
-    expect(within(chooser).getByRole('option', { name: 'Your wreck at Outpost Cradle' })).toBeInTheDocument();
-    // The encounter sites are still offered beside it.
-    expect(within(chooser).getByRole('option', { name: 'Pirate Scout' })).toBeInTheDocument();
+    const chooser = screen.getByRole('region', { name: 'Destinations' });
+    expect(within(chooser).getByRole('button', { name: /^Your wreck at Outpost Cradle/ }))
+      .toHaveAttribute('aria-pressed', 'true');
+    // The station and the encounter sites are still offered beside it.
+    expect(within(chooser).getByRole('button', { name: /^Pirate Scout/ })).toBeInTheDocument();
+    expect(within(chooser).getByRole('button', { name: /^Borrell Harbour/ })).toBeInTheDocument();
 
-    await harness.user.selectOptions(screen.getByLabelText('Arrive at'), '0');
-    await harness.user.click(screen.getByRole('button', { name: /^Warp/ }));
+    await harness.user.selectOptions(within(chooser).getByLabelText('Arrive at'), '0');
+    await harness.user.click(within(chooser).getByRole('button', { name: /^Warp to your wreck/ }));
 
     await waitFor(async () => {
       const site = await ask<SiteData>(harness, 'navigation.site');

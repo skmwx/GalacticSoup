@@ -1,10 +1,10 @@
 {
  "format": "galactic-soup/save",
  "formatVersion": 10,
- "protocolVersion": 17,
+ "protocolVersion": 18,
  "engineVersion": "0.1.0",
- "contentVersion": "0.1.0+296facab3d13",
- "contentHash": "296facab3d13fb5e260b6f3c3ccbe670c1674b0f453e885b96d6bb29ac8ad1d2",
+ "contentVersion": "0.1.0+8f13b5394f04",
+ "contentHash": "8f13b5394f048a0f4d295f2d155394a7c68d6e5f483b985dfc4338028315cea2",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
@@ -3606,19 +3606,6 @@
     {
      "id": 5,
      "sequence": 5,
-     "definitionId": "notify.guidance.step",
-     "groupKey": "notify.guidance.step|guide.loop.choose-site",
-     "subjectIds": [],
-     "params": {
-      "stepKey": "content.guide.loop.choose-site.title"
-     },
-     "firstAtMs": 0,
-     "lastAtMs": 0,
-     "count": 1
-    },
-    {
-     "id": 6,
-     "sequence": 6,
      "definitionId": "notify.navigation.undocked",
      "groupKey": "notify.navigation.undocked",
      "subjectIds": [],
@@ -3628,13 +3615,26 @@
      "count": 1
     },
     {
-     "id": 7,
-     "sequence": 7,
+     "id": 6,
+     "sequence": 6,
      "definitionId": "notify.guidance.step",
      "groupKey": "notify.guidance.step|guide.loop.undock",
      "subjectIds": [],
      "params": {
       "stepKey": "content.guide.loop.undock.title"
+     },
+     "firstAtMs": 0,
+     "lastAtMs": 0,
+     "count": 1
+    },
+    {
+     "id": 7,
+     "sequence": 7,
+     "definitionId": "notify.guidance.step",
+     "groupKey": "notify.guidance.step|guide.loop.choose-site",
+     "subjectIds": [],
+     "params": {
+      "stepKey": "content.guide.loop.choose-site.title"
      },
      "firstAtMs": 0,
      "lastAtMs": 0,
@@ -3865,11 +3865,11 @@
      "outcome": "completed",
      "atMs": 0
     },
-    "guide.loop.choose-site": {
+    "guide.loop.undock": {
      "outcome": "completed",
      "atMs": 0
     },
-    "guide.loop.undock": {
+    "guide.loop.choose-site": {
      "outcome": "completed",
      "atMs": 0
     },
@@ -4179,5 +4179,5 @@
    "nextInsertionOrdinal": 500
   }
  },
- "checksum": "50a1b2fd441af09df6896133a5e6d1ba61a80bfd371d746e4c97601c5336d642"
+ "checksum": "836b26a9c95d4ac7361f4fdd887b710c42fc6b948d5acada84c020d246c8e643"
 }

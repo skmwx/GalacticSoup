@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { warpTo } from '../support/destinations.ts';
 
 /**
  * The combat surfaces under automated audit
@@ -46,10 +47,8 @@ async function audit(page: Page): Promise<void> {
  */
 async function inAFight(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
-  await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
   await undock(page);
-  await page.getByLabel('Arrive at').selectOption('10');
-  await page.getByRole('button', { name: /^Warp/ }).click();
+  await warpTo(page, 'Pirate Scout', 10);
   await page.getByRole('button', { name: /^Resume/ }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Verge Belt' })).toBeVisible({ timeout: 60_000 });
 

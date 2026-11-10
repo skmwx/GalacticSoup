@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { gameMenuButton, openGameMenu } from '../support/cockpit.ts';
+import { chooseDestination, destinationBriefing } from '../support/destinations.ts';
 
 async function start(page: Page): Promise<void> {
   await page.goto('/');
@@ -8,7 +9,7 @@ async function start(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Borrell Harbour', exact: true })).toBeVisible();
 }
 
-test('keeps campaign management separate and allows briefing inspection without choosing a destination', async ({ page }) => {
+test('keeps campaign management separate, undocks without a destination and reads briefings in space without moving', async ({ page }) => {
   await start(page);
   await expect(page.getByRole('button', { name: 'Reset campaign', exact: true })).toHaveCount(0);
   await openGameMenu(page);
@@ -24,12 +25,17 @@ test('keeps campaign management separate and allows briefing inspection without 
   await expect(page.getByRole('button', { name: 'Reset campaign', exact: true })).toHaveCount(0);
 
   await page.locator('[data-action="station.departure"]').click();
-  await page.locator('[data-destination="encounter.borrell.pirate-base"] button[aria-pressed]').click();
-  await expect(page.getByRole('region', { name: 'Site briefing' })).toContainText('A starter fit will not survive this one.');
-  await expect(page.getByText('No destination chosen yet.', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Choose Pirate Scout', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Site briefing' })).toContainText('Pirate Scout');
-  await expect(page.locator('[data-selection="encounter"]')).toContainText('Pirate Scout');
+  await expect(page.getByText('No destination needed: you choose one in space.', { exact: true })).toBeVisible();
+  await expect(page.locator('[data-selection="none"]')).toBeVisible();
+  await page.getByRole('button', { name: /^Undock/ }).click();
+  await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+
+  await chooseDestination(page, 'Pirate Base');
+  await expect(destinationBriefing(page)).toContainText('A starter fit will not survive this one.');
+  await chooseDestination(page, 'Pirate Scout');
+  await expect(destinationBriefing(page)).toContainText('Pirate Scout');
+  // Reading briefings never moves the ship.
+  await expect(page.locator('[data-readout="order"]')).toHaveText('Holding position');
 });
 
 test('keeps frequent flight controls in the desktop working view and reflows without horizontal overflow', async ({ page }) => {
@@ -40,7 +46,6 @@ test('keeps frequent flight controls in the desktop working view and reflows wit
   const departureBox = await undock.boundingBox();
   expect(departureBox).not.toBeNull();
   expect(departureBox!.y + departureBox!.height).toBeLessThanOrEqual(900);
-  await page.getByRole('button', { name: 'Choose Pirate Scout', exact: true }).click();
   await undock.click();
   await expect(page.getByRole('heading', { name: 'In this site' })).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));

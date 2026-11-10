@@ -54,7 +54,8 @@ describe('contextual guidance', () => {
     const harness = renderGame();
     const guidance = await startCampaign(harness);
 
-    expect(within(guidance).getByRole('heading', { name: 'Choose a site' })).toBeInTheDocument();
+    // The ship undocks first; the site is chosen in space.
+    expect(within(guidance).getByRole('heading', { name: 'Undock' })).toBeInTheDocument();
     expect(guidance).toHaveTextContent('0 of 15 steps done');
     expect(guidance).toHaveTextContent('Where: Departure');
     // The surface it points at is marked in words, and keeps its own name.
@@ -72,14 +73,24 @@ describe('contextual guidance', () => {
     const harness = renderGame();
     const guidance = await startCampaign(harness);
     await harness.user.click(within(guidance).getByRole('button', { name: 'Show me' }));
-    await harness.user.click(await screen.findByRole('button', { name: 'Choose Pirate Scout' }));
+    await harness.user.click(await screen.findByRole('button', { name: /^Undock/ }));
 
+    // The guidance column follows the pilot into space.
+    const flight = await screen.findByRole('region', { name: 'Flight school' });
     await waitFor(() => {
-      expect(within(guidance).getByRole('heading', { level: 3 })).toHaveTextContent('Undock');
+      expect(within(flight).getByRole('heading', { level: 3 })).toHaveTextContent('Choose a site');
     });
-    expect(guidance).toHaveTextContent('1 of 15 steps done');
-    expect(guidance).toHaveTextContent('Where: Departure');
+    expect(flight).toHaveTextContent('1 of 15 steps done');
+    expect(flight).toHaveTextContent('Where: in space');
     const notices = screen.getByRole('region', { name: 'Notifications' });
+    expect(await within(notices).findByText('Done: Undock.')).toBeInTheDocument();
+
+    // Choosing the site in space completes the next step, and moves nothing.
+    const destinations = screen.getByRole('region', { name: 'Destinations' });
+    await harness.user.click(within(destinations).getByRole('button', { name: /^Pirate Patrol/ }));
+    await waitFor(() => {
+      expect(within(flight).getByRole('heading', { level: 3 })).toHaveTextContent('Warp to the site');
+    });
     expect(await within(notices).findByText('Done: Choose a site.')).toBeInTheDocument();
   });
 
@@ -89,11 +100,11 @@ describe('contextual guidance', () => {
     await harness.user.click(within(guidance).getByRole('button', { name: 'Skip step' }));
 
     await waitFor(() => {
-      expect(within(guidance).getByRole('heading', { level: 3 })).toHaveTextContent('Undock');
+      expect(within(guidance).getByRole('heading', { level: 3 })).toHaveTextContent('Choose a site');
     });
     await harness.user.click(within(guidance).getByText('All steps'));
-    const skipped = guidance.querySelector('[data-step="guide.loop.choose-site"]');
-    expect(skipped).toHaveTextContent('Choose a site');
+    const skipped = guidance.querySelector('[data-step="guide.loop.undock"]');
+    expect(skipped).toHaveTextContent('Undock');
     expect(skipped).toHaveTextContent('skipped');
     expect(guidance.querySelector('[data-step="guide.loop.ready"]')).toHaveTextContent('after an earlier step');
   });
@@ -150,7 +161,7 @@ describe('the capacitor before undocking', () => {
   function Departure({ charge }: { readonly charge: number }) {
     const runner = useActionRunner();
     const data = { destinations: null, site: null, ship: ship(charge), send: () => Promise.resolve() } as unknown as PlayData;
-    return <DeparturePanel data={data} runner={runner} simulationTimeMs={0} />;
+    return <DeparturePanel data={data} runner={runner} />;
   }
 
   it('explains how long an empty capacitor takes to fill, with the values substituted [FUNC-9.8, FUNC-19.6, MVP-AC-04]', async () => {

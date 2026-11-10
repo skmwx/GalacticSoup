@@ -312,10 +312,22 @@ describe('projected command availability', () => {
     const undocked = await ask(client, 'navigation.destinations', {});
     const reachable = undocked.destinations.find((candidate) => candidate.siteId === target.siteId);
     expect(entry(reachable?.commands ?? [], 'navigation.warp').available).toBe(true);
+    // Destinations are chosen in space (MVP UI review 01): choosing marks one
+    // and moves nothing, so it is offered here as it is docked.
     expect(entry(reachable?.commands ?? [], 'navigation.selectDestination')).toEqual({
-      available: false,
-      unavailableReason: 'error.ruleViolation.destinationSelectionUnavailable',
+      available: true,
+      unavailableReason: null,
     });
+
+    // The station is offered as itself: from its own site it is docked with,
+    // never warped to.
+    const home = undocked.stations.find((candidate) => candidate.stationId === station.id);
+    expect(home).toMatchObject({ home: true, current: true, siteId: site.location.kind === 'site' ? site.location.siteId : '' });
+    expect(entry(home?.commands ?? [], 'navigation.warp')).toEqual({
+      available: false,
+      unavailableReason: 'error.ruleViolation.destinationCurrent',
+    });
+    expect(entry(home?.commands ?? [], 'navigation.dock').available).toBe(true);
   });
 
   it('refuses a projected-unavailable command with the reason it projected [TECH-12.3, FUNC-22.10]', async () => {
@@ -367,5 +379,79 @@ describe('projected command availability', () => {
     // Retreat stays available while opponents are present; leaving is a legal
     // outcome (Functional Specification 9.11).
     expect(site.site?.objects.some((object) => !object.player)).toBe(true);
+  });
+});
+
+describe('choosing destinations in space and returning through the station', () => {
+  function entry(
+    commands: readonly { command: string; available: boolean; unavailableReason: string | null }[],
+    command: string,
+  ): { available: boolean; unavailableReason: string | null } {
+    const found = commands.find((candidate) => candidate.command === command);
+    if (found === undefined) throw new Error(`No projected availability for ${command}.`);
+    return { available: found.available, unavailableReason: found.unavailableReason };
+  }
+
+  it('undocks with no destination, chooses one in space without moving, and returns by ordinary warp and dock [MVP-AC-03, MVP-AC-08, FUNC-7.1, FUNC-7.3, FUNC-7.4]', async () => {
+    const client = gateway('direct', createMemorySaveStore());
+    await create(client);
+
+    // Docked, the station is listed but neither warped to nor docked with.
+    const docked = await ask(client, 'navigation.destinations', {});
+    expect(docked.selectedEncounterId).toBeNull();
+    const home = docked.stations[0];
+    if (home === undefined) throw new Error('No station destination.');
+    expect(home).toMatchObject({ home: true, current: false, nameKey: 'content.station.borrell.harbour.name' });
+    expect(entry(home.commands, 'navigation.warp').unavailableReason).toBe('error.ruleViolation.warpUnavailable');
+    expect(entry(home.commands, 'navigation.dock').unavailableReason).toBe('error.ruleViolation.dockUnavailable');
+
+    // Undocking needs no destination.
+    await ask(client, 'ship.undock', {});
+    const before = await ask(client, 'navigation.site', {});
+    expect(before.location.kind).toBe('site');
+
+    // Choosing in space marks a destination and moves nothing.
+    const scout = docked.destinations.find((candidate) => candidate.tier === 1);
+    if (scout === undefined) throw new Error('No tier-one destination.');
+    await ask(client, 'navigation.selectDestination', { encounterId: scout.encounterId });
+    const chosen = await ask(client, 'navigation.destinations', {});
+    expect(chosen.selectedEncounterId).toBe(scout.encounterId);
+    const after = await ask(client, 'navigation.site', {});
+    expect(after.travelStatus).toBeNull();
+    expect(after.movementOrder).toEqual(before.movementOrder);
+    expect(after.location).toEqual(before.location);
+
+    await ask(client, 'navigation.warp', { destinationSiteId: scout.siteId, arrivalDistanceKm: 100 });
+    await ask(client, 'time.set', { paused: false, rate: 1 });
+    await advanceUntil(client, async () => {
+      const current = await ask(client, 'navigation.site', {});
+      return current.location.kind === 'site' && current.location.siteId === scout.siteId;
+    });
+
+    // Away from it, the station is reached by an ordinary warp, and its own
+    // site is where it may be docked with.
+    const away = (await ask(client, 'navigation.destinations', {})).stations[0]!;
+    expect(away.current).toBe(false);
+    expect(entry(away.commands, 'navigation.warp').available).toBe(true);
+    expect(entry(away.commands, 'navigation.dock').available).toBe(false);
+    const currentScout = (await ask(client, 'navigation.destinations', {})).destinations
+      .find((candidate) => candidate.encounterId === scout.encounterId)!;
+    expect(entry(currentScout.commands, 'navigation.warp').unavailableReason)
+      .toBe('error.ruleViolation.destinationCurrent');
+
+    await ask(client, 'navigation.warp', { destinationSiteId: away.siteId, arrivalDistanceKm: 0 });
+    await advanceUntil(client, async () => {
+      const current = await ask(client, 'navigation.site', {});
+      return current.location.kind === 'site' && current.location.siteId === away.siteId;
+    });
+    const arrived = (await ask(client, 'navigation.destinations', {})).stations[0]!;
+    expect(arrived.current).toBe(true);
+    expect(entry(arrived.commands, 'navigation.warp').unavailableReason).toBe('error.ruleViolation.destinationCurrent');
+    expect(entry(arrived.commands, 'navigation.dock').available).toBe(true);
+
+    await ask(client, 'navigation.dock', { stationId: arrived.stationId });
+    await advanceUntil(client, async () => (await ask(client, 'navigation.site', {})).location.kind === 'station');
+    // The chosen encounter stays chosen for the next sortie.
+    expect((await ask(client, 'navigation.destinations', {})).selectedEncounterId).toBe(scout.encounterId);
   });
 });

@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { destinationEntry, dockHome, warpHome, warpTo } from '../support/destinations.ts';
 import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 
 /**
@@ -94,20 +95,30 @@ async function buy(page: Page, item: string): Promise<void> {
   await expect(purchase).toBeHidden();
 }
 
-async function warp(page: Page, arriveAtKm: string, site: string): Promise<void> {
-  await page.getByLabel('Arrive at').selectOption(arriveAtKm);
-  await page.getByRole('button', { name: /^Warp/ }).click();
+/**
+ * Chooses a destination in space and warps to it. `label` names the warp
+ * control when it differs from the destination's name, as for a wreck.
+ */
+async function warp(
+  page: Page,
+  arriveAtKm: string,
+  site: string,
+  destination: string | RegExp,
+  label?: RegExp,
+): Promise<void> {
+  await warpTo(page, destination, Number(arriveAtKm), ...(label === undefined ? [] : [label]));
   await ensureRunning(page);
   await expect(page.getByRole('heading', { level: 2, name: site })).toBeVisible({ timeout: 60_000 });
 }
 
+/** Warps home through the station destination and docks there. */
 async function returnAndDock(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Retreat/ }).click();
+  await warpHome(page);
   await ensureRunning(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({
     timeout: 60_000,
   });
-  await page.getByRole('button', { name: /^Dock/ }).click();
+  await dockHome(page);
   await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible({ timeout: 60_000 });
   await ensurePaused(page);
 }
@@ -131,11 +142,8 @@ test.describe('losing a ship', () => {
 
     // Fly the starter ship to the hard site and do nothing there.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await page.getByRole('button', { name: 'Choose Pirate Base' }).click();
-    await expect(page.getByText('Destination: Pirate Base')).toBeVisible();
     await undock(page);
-    await expect(page.getByLabel('Destination')).toHaveValue('site.borrell.outpost-cradle');
-    await warp(page, '10', 'Outpost Cradle');
+    await warp(page, '10', 'Outpost Cradle', 'Pirate Base');
 
     // The destruction is one transaction: the station comes back with the report.
     const report = region(page, 'Ship lost');
@@ -180,10 +188,11 @@ test.describe('losing a ship', () => {
       region(page, 'Ship lost').getByRole('button', { name: /^Your wreck is the destination/ }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await expect(page.getByText('Destination: your wreck at Outpost Cradle')).toBeVisible();
+    await expect(page.getByText('Chosen destination: your wreck at Outpost Cradle. Space navigation offers it first.')).toBeVisible();
     await undock(page);
-    await expect(page.getByLabel('Destination')).toHaveValue(/^bookmark:/);
-    await warp(page, '0', 'Outpost Cradle');
+    // Space navigation offers the chosen wreck first.
+    await expect(destinationEntry(page, 'Your wreck at Outpost Cradle')).toHaveAttribute('aria-pressed', 'true');
+    await warp(page, '0', 'Outpost Cradle', 'Your wreck at Outpost Cradle', /^Warp to your wreck at Outpost Cradle/);
     await ensurePaused(page);
 
     // The warp arrived beside the wreck: take what survived while paused.
@@ -218,11 +227,8 @@ test.describe('losing a ship', () => {
 
     // The easiest site, again, with the recovered ship.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
-    await expect(page.getByText('Destination: Pirate Scout')).toBeVisible();
     await undock(page);
-    await expect(page.getByLabel('Destination')).toHaveValue('site.borrell.verge');
-    await warp(page, '10', 'Verge Belt');
+    await warp(page, '10', 'Verge Belt', 'Pirate Scout');
 
     await region(page, 'In this site').getByRole('button', { name: /Pirate Scout/ }).click();
     await page.getByLabel('Range').selectOption('1');

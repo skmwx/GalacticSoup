@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 import { openSettings } from '../support/cockpit.ts';
+import { chooseDestination } from '../support/destinations.ts';
 
 /**
  * Guidance and notifications under the accessibility baseline
@@ -51,8 +52,12 @@ test.describe('guidance and notification accessibility', () => {
     await expect(guidance).toBeVisible();
     await guidance.getByText('All steps').click();
     await guidance.getByRole('button', { name: 'Show me' }).click();
-    await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
+    await page.getByRole('button', { name: /^Undock/ }).click();
+    await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
     const notices = page.getByRole('region', { name: 'Notifications', exact: true });
+    await expect(notices.getByText('Done: Undock.')).toBeVisible();
+    // The next step is carried out in space, among the destinations.
+    await chooseDestination(page, 'Pirate Scout');
     await expect(notices.getByText('Done: Choose a site.')).toBeVisible();
     await audit(page);
 
@@ -74,7 +79,8 @@ test.describe('guidance and notification accessibility', () => {
 
     await guidance.getByRole('button', { name: 'Skip step' }).focus();
     await page.keyboard.press('Enter');
-    await expect(guidance.getByRole('heading', { level: 3 })).toHaveText('Undock');
+    // Undock is skipped; the next step, choosing a site, is done in space.
+    await expect(guidance.getByRole('heading', { level: 3 })).toHaveText('Choose a site');
 
     // J hides and shows the guidance; I opens the event log.
     await page.locator('body').click({ position: { x: 1, y: 1 } });
@@ -96,9 +102,9 @@ test.describe('guidance and notification accessibility', () => {
     await expect(page.getByRole('button', { name: 'Departure', exact: true }))
       .toHaveAccessibleDescription('The guidance says your next step is here.');
 
-    // Choosing the site completes the step the guidance pointed at.
-    await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
-    await expect(guidance.getByRole('heading', { level: 3 })).toHaveText('Undock');
+    // Undocking completes the step the guidance pointed at.
+    await page.getByRole('button', { name: /^Undock/ }).click();
+    await expect(guidance.getByRole('heading', { level: 3 })).toHaveText('Choose a site');
 
     await guidance.getByRole('button', { name: 'Skip step' }).click();
     await guidance.getByText('All steps').click();

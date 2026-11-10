@@ -1,13 +1,14 @@
 import { openGameMenu } from '../support/cockpit.ts';
+import { chooseDestination, destinationBriefing, dockHome, siteObject, warpHome, warpTo } from '../support/destinations.ts';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
  * The traversal loop in a real browser
  * (MVP-AC-01, MVP-AC-03, MVP-AC-08).
  *
- * One flow does what a player does between two visits to the station: choose
- * a site, undock, give orders in the schematic view, warp out, retreat, warp
- * back and dock. Everything runs against the shipped build, so the engine is
+ * One flow does what a player does between two visits to the station:
+ * undock, choose a site in space, give orders in the schematic view, warp
+ * out, warp back to the station and dock. Everything runs against the shipped build, so the engine is
  * in the worker, the saves are in IndexedDB, and every order crosses the
  * gateway exactly as it does in play.
  */
@@ -34,8 +35,6 @@ async function freshCampaign(page: Page): Promise<void> {
 
 async function undock(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
-  await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
-  await expect(page.getByText('Destination: Pirate Scout')).toBeVisible();
   await page.getByRole('button', { name: /^Undock/ }).click();
   await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
 }
@@ -45,7 +44,7 @@ test.describe('traversal', () => {
     await freshCampaign(page);
   });
 
-  test('undocks, flies, warps, retreats, docks and resumes [MVP-AC-03, MVP-AC-08, MVP-AC-01]', async ({
+  test('undocks, chooses in space, flies, warps, returns home, docks and resumes [MVP-AC-03, MVP-AC-08, MVP-AC-01]', async ({
     page,
   }) => {
     // Two warps across the system and a docking cycle all run on the
@@ -60,10 +59,7 @@ test.describe('traversal', () => {
 
     // Selecting the station enables the orders that need a target.
     await expect(page.getByRole('button', { name: /^Orbit/ })).toBeDisabled();
-    await page
-      .getByRole('button', { name: /Borrell Harbour/ })
-      .last()
-      .click();
+    await siteObject(page, /Borrell Harbour/).click();
     await page.getByLabel('Range').selectOption('5');
     await page.getByRole('button', { name: /^Orbit/ }).click();
     await expect(page.getByText('Orbiting')).toBeVisible();
@@ -76,21 +72,25 @@ test.describe('traversal', () => {
     await page.getByRole('button', { name: /^Stop/ }).click();
     await expect(page.getByText('Holding position')).toBeVisible();
 
+    // Choosing a site in space shows its briefing and moves nothing.
+    await chooseDestination(page, 'Pirate Patrol');
+    await expect(destinationBriefing(page)).toContainText('Pirate Patrol');
+    await expect(destinationBriefing(page)).toContainText('Cleared 0 times');
+    await expect(page.getByText('Holding position')).toBeVisible();
+
     // Warp to the chosen encounter, and arrive in a site of its own.
-    await page.getByLabel('Destination').selectOption('site.borrell.verge');
-    await page.getByLabel('Arrive at').selectOption('30');
-    await page.getByRole('button', { name: /^Warp/ }).click();
+    await warpTo(page, 'Pirate Scout', 30);
     await expect(page.getByRole('heading', { level: 2, name: 'Verge Belt' })).toBeVisible({
       timeout: 30_000,
     });
 
-    // Retreat brings the ship home, where the station can be docked with.
-    await expect(page.getByRole('button', { name: /^Retreat/ })).toBeEnabled();
-    await page.getByRole('button', { name: /^Retreat/ }).click();
+    // The station is a destination of its own: warp home, then dock there.
+    await expect(page.getByRole('button', { name: /^Retreat/ })).toHaveCount(0);
+    await warpHome(page);
     await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({
       timeout: 30_000,
     });
-    await page.getByRole('button', { name: /^Dock/ }).click();
+    await dockHome(page);
     await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible({ timeout: 30_000 });
     await page.getByRole('button', { name: /Pause/ }).click();
 
@@ -100,13 +100,14 @@ test.describe('traversal', () => {
     await page.reload();
     await page.getByRole('button', { name: 'Resume campaign' }).click();
     await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible();
+    // The site chosen in space is still the chosen destination.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await expect(page.getByText('Destination: Pirate Scout')).toBeVisible();
+    await expect(page.getByText('Chosen destination: Pirate Scout. Space navigation offers it first.')).toBeVisible();
   });
 
   test('resumes in the site it was closed in [MVP-AC-01, FUNC-3.4]', async ({ page }) => {
     await undock(page);
-    await page.getByRole('button', { name: /Borrell Harbour/ }).last().click();
+    await siteObject(page, /Borrell Harbour/).click();
     await page.getByRole('button', { name: /^Approach/ }).click();
     await expect(page.getByText('Approaching')).toBeVisible();
 

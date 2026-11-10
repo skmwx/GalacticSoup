@@ -265,7 +265,7 @@ describe('shortcut dispatch', () => {
 });
 
 describe('emergency controls while a command is pending', () => {
-  it('keeps pause, stop and retreat usable while another command is in flight [TECH-12.1, FUNC-20]', async () => {
+  it('keeps pause, stop and return usable while another command is in flight [TECH-12.1, FUNC-20]', async () => {
     const user = userEvent.setup();
     const ran: string[] = [];
     function Controls(): JSX.Element {
@@ -288,7 +288,7 @@ describe('emergency controls while a command is pending', () => {
     await user.click(screen.getByRole('button', { name: /^Warp/ }));
     expect(screen.getByRole('button', { name: /^Warp/ })).toBeUnavailable();
 
-    for (const name of [/^Pause|^Resume|^Time/, /^Stop/, /^Retreat/]) {
+    for (const name of [/^Pause|^Resume|^Time/, /^Stop/, /^Return to station/]) {
       const button = screen.getAllByRole('button', { name }).at(0);
       expect(button).not.toBeUnavailable();
       await user.click(button as HTMLElement);

@@ -151,9 +151,14 @@ describe('choosing the wreck at the station', () => {
     expect(reasonOf(refusal(state, 'navigation.selectBookmark', { bookmarkId: npcWreck?.id ?? '' }))).toBe('bookmarkUnknown');
     expect(destinationsProjection(state, content).bookmarks.map((entry) => entry.bookmarkId)).toEqual([wreckOf(state).id]);
 
+    // Destinations are chosen in space now (MVP UI review 01): choosing only
+    // marks the wreck, so it is accepted there and moves nothing.
     const inSpace = command(state, 'ship.undock', {}).state;
-    expect(reasonOf(refusal(inSpace, 'navigation.selectBookmark', { bookmarkId: wreckOf(state).id })))
-      .toBe('destinationSelectionUnavailable');
+    const chosen = command(inSpace, 'navigation.selectBookmark', { bookmarkId: wreckOf(state).id }).state;
+    expect(chosen.navigation.selectedBookmarkId).toBe(wreckOf(state).id);
+    expect(chosen.assets.location).toEqual(inSpace.assets.location);
+    expect(chosen.navigation.travel).toBeNull();
+    expect(destinationsProjection(chosen, content).bookmarks[0]?.selected).toBe(true);
   });
 });
 

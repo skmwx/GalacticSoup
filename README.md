@@ -173,13 +173,14 @@ modifiers; it never declares an expression, and the three reviewed operators (`a
 `resistance`) are the only arithmetic a modifier can ask for. Each derived value travels with the
 trace that produced it, so the interface can explain a number instead of asserting it.
 
-Protocol version 17 exposes the guidance and notification contracts (`onboarding.state` and its
+Protocol version 18 exposes the guidance and notification contracts (`onboarding.state` and its
 three commands, `notifications.list`, `audio.cues`), `loss.report`, `navigation.selectBookmark` and
 `navigation.warpToBookmark`, `encounter.state`, `loot.contents` and `loot.take` alongside
 `combat.state`, `targeting.lock`, `targeting.unlock`, `weapon.activate`, `weapon.deactivate`,
 `weapon.reload`, `weapon.changeAmmunition`, `module.activate`, `module.deactivate`, `ship.get`,
 `ship.undockValidity`, the fitting draft commands, `item.compare`, the inventory, market (with module slots, ammunition suitability and local owned stacks), repair
-(armour, hull or all), resupply and insurance contracts, the navigation queries and orders, and the authored content
+(armour, hull or all), resupply and insurance contracts, the navigation queries and orders (with the
+system's stations offered as destinations beside the encounters and wrecks), and the authored content
 catalogue.
 
 The tactical state includes layered shield, armour and hull condition, damage resistances,
@@ -187,7 +188,7 @@ capacitor recharge and endurance, active-module cycles and a bounded significant
 All combat actors use the same deterministic lifecycle for damage, repair, propulsion and support
 effects, so headless opponents and the player follow the same rules.
 
-Campaign state and save format are version 10, and the protocol is version 17. These are the
+Campaign state and save format are version 10, and the protocol is version 18. These are the
 versions the MVP closes on; see Closed contracts below. Previous development saves are rejected
 without modification; start a new campaign after upgrading. No pre-release migration is required by
 the MVP plan. The migration runner remains covered by fixture registries, and the older format
@@ -222,9 +223,12 @@ and sends it; the clock the frame shows is the one the engine answered with.
 
 ## Leaving the station
 
-Choosing a combat site marks it as the destination; it does not move the ship. The player undocks at
-the station site, gives the ship orders, warps to the encounter, and warps back and docks - which is
-what makes retreat mean something.
+Departure only checks that the ship is fit to leave; undocking needs no destination. In space the
+navigation panel lists the destinations - the station by its own name, each encounter site with its
+tier, opponents, bounties, possible loot and completion count, and the player's own wrecks - and
+choosing one marks it as the destination without moving the ship. The player warps to the encounter,
+then warps back to the station and docks: returning is an ordinary warp and dock, and the return key
+(`x`) does whichever is next. That is what makes retreat mean something.
 
 The schematic view is two-dimensional and deliberately plain. The engine publishes world coordinates
 in kilometres and the renderer applies the camera; zoom changes display scale and nothing else. The
@@ -330,8 +334,7 @@ entry with a shortcut: `l` lock, `n` unlock, `e` fire, `q` cease fire, `v` reloa
 active modules, `t` take all, `]` and `[` step the selection, `b` draw ranges.
 
 Back at the station the hub summarises the last sortie and what the hold carries, and the
-departure panel discloses each site's opponents, bounties, possible loot and completion count, and
-warns - without blocking - about an unloaded weapon, a weapon with no spare rounds in the hold, or
+departure panel warns - without blocking - about an unloaded weapon, a weapon with no spare rounds in the hold, or
 unrepaired armour and hull before undocking. The repair service restores armour, hull or both, for
 the price of the chosen layers, and always restores the shield and recharges the capacitor for free.
 Docking refreshes every station surface, so a campaign reopened in space finds the market current
@@ -361,8 +364,8 @@ than that owns no ship at all until they buy one - the active ship may be absent
 docked - and a content check keeps the recovery station's starter hull within reach of exactly
 that pilot. A shipless pilot who spends below the threshold is granted the ship then.
 
-The wreck is an automatic bookmark. The station's departure panel offers it beside the encounters,
-and the space view's warp control offers it beside the sites, so it can be recovered without a
+The wreck is an automatic bookmark. The loss report can choose it at the station, and the space
+view's destinations offer it beside the station and the sites, so it can be recovered without a
 system map: a warp to it arrives relative to the wreck rather than to the site's centre. The
 authored opponents at that site are there again, because every visit instantiates a fresh
 encounter.

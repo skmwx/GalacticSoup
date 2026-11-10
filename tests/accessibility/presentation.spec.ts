@@ -5,6 +5,7 @@ import { gameMenuButton, openSettings } from '../support/cockpit.ts';
 import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule } from '../support/fitting.ts';
 import { serviceButton } from '../support/services.ts';
+import { warpTo } from '../support/destinations.ts';
 
 /**
  * Presentation settings, input and accessibility across the MVP surfaces
@@ -96,13 +97,11 @@ function surface(page: Page, name: string): Locator {
   return page.getByRole('navigation', { name: 'Station services' }).getByRole('button', { name, exact: true });
 }
 
-/** Chooses the scout, undocks and arrives at 10 km. The ship already carries its spare rounds. */
+/** Undocks, chooses the scout in space and arrives at 10 km. The ship already carries its spare rounds. */
 async function flyToScout(page: Page): Promise<void> {
   await surface(page, 'Departure').click();
-  await page.getByRole('button', { name: 'Choose Pirate Scout' }).click();
   await page.getByRole('button', { name: /^Undock/ }).click();
-  await page.getByLabel('Arrive at').selectOption('10');
-  await page.getByRole('button', { name: /^Warp/ }).click();
+  await warpTo(page, 'Pirate Scout', 10);
   await page.getByRole('button', { name: /^Resume/ }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Verge Belt' })).toBeVisible({ timeout: 60_000 });
 }
@@ -304,7 +303,7 @@ test.describe('presentation settings and accessibility', () => {
     await expect(keys.locator('[data-binding="station.departure"] kbd')).toHaveText('0');
     await page.keyboard.press('Escape');
     await expect(opener).toBeFocused();
-    await expect(page.getByRole('region', { name: 'Flight school', exact: true })).toContainText('Open Departure (0).');
+    await expect(page.getByRole('region', { name: 'Flight school', exact: true })).toContainText('Open Departure (0) and press Undock');
     await page.keyboard.press('0');
     await expect(page.getByRole('heading', { level: 3, name: 'Departure' })).toBeVisible();
 

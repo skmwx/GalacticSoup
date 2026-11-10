@@ -427,6 +427,7 @@ export function SpaceScreen({
         site={site}
         selected={selected}
         runner={runner}
+        simulationTimeMs={simulationTimeMs}
         choosingPoint={choosingPoint}
         onChoosingPointChange={setChoosingPoint}
         point={point}

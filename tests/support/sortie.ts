@@ -99,11 +99,14 @@ export async function loadAmmunition(sortie: Sortie): Promise<void> {
   }
 }
 
-/** Chooses the scout site, undocks, warps in and waits for arrival. */
+/**
+ * Undocks, chooses the scout site in space, warps in and waits for arrival -
+ * the order the interface offers (MVP UI review 01).
+ */
 export async function arriveAtScout(sortie: Sortie): Promise<string> {
-  await sortie.data('navigation.selectDestination', { encounterId: SCOUT });
   await loadAmmunition(sortie);
   await sortie.data('ship.undock');
+  await sortie.data('navigation.selectDestination', { encounterId: SCOUT });
   await sortie.data('navigation.warp', { destinationSiteId: SCOUT_SITE, arrivalDistanceKm: 10 });
   await sortie.data('time.set', { paused: false, rate: 1 });
   const arrived = await sortie.until(async () => {

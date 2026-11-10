@@ -2,6 +2,7 @@ import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
+import { chooseDestination, dockHome, warpHome, warpTo } from '../support/destinations.ts';
 import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 import { takeService } from '../support/services.ts';
@@ -92,8 +93,9 @@ async function reopen(page: Page, heading: string): Promise<void> {
 }
 
 /**
- * Chooses the scout site and undocks, first moving to the hold any rounds a
- * refit left in the hangar. A new ship already carries its spare rounds.
+ * Undocks and chooses the scout site in space, first moving to the hold any
+ * rounds a refit left in the hangar. A new ship already carries its spare
+ * rounds.
  */
 async function prepareAndUndock(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Hangar', exact: true }).click();
@@ -106,20 +108,13 @@ async function prepareAndUndock(page: Page): Promise<void> {
     ).toBeVisible();
   }
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
-  const choose = page.getByRole('button', { name: 'Choose Pirate Scout' });
-  if ((await choose.count()) > 0 && (await choose.isEnabled())) {
-    await choose.click();
-  }
-  await expect(page.getByText('Destination: Pirate Scout')).toBeVisible();
   await undock(page);
   await expect(page.getByRole('heading', { name: 'Commands' })).toBeVisible();
+  await chooseDestination(page, 'Pirate Scout');
 }
 
 async function flyToScout(page: Page): Promise<void> {
-  // The destination chosen at the station is already the warp destination.
-  await expect(page.getByLabel('Destination')).toHaveValue('site.borrell.verge');
-  await page.getByLabel('Arrive at').selectOption('10');
-  await page.getByRole('button', { name: /^Warp/ }).click();
+  await warpTo(page, 'Pirate Scout', 10);
   await ensureRunning(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Verge Belt' })).toBeVisible({
     timeout: 60_000,
@@ -170,12 +165,13 @@ async function lootWreck(page: Page): Promise<void> {
   await expect(wreck.getByText('The wreck is empty.')).toBeVisible();
 }
 
+/** Warps home through the station destination and docks there. */
 async function returnAndDock(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Retreat/ }).click();
+  await warpHome(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({
     timeout: 60_000,
   });
-  await page.getByRole('button', { name: /^Dock/ }).click();
+  await dockHome(page);
   await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible({ timeout: 60_000 });
   await ensurePaused(page);
 }
@@ -266,13 +262,12 @@ test.describe('the first vertical slice', () => {
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
     await expect(fittingSlots(page).filter({ hasText: '200mm Autocannon' })).toHaveCount(2);
 
-    // The site is still offered, says it has been cleared, and is fought again
-    // with both guns.
-    await page.getByRole('button', { name: 'Departure', exact: true }).click();
+    // The site is still offered in space, says it has been cleared, and is
+    // fought again with both guns.
+    await prepareAndUndock(page);
     await expect(
       page.locator('[data-disclosure="encounter.borrell.pirate-scout"]').getByText('Cleared 1 times'),
     ).toBeVisible();
-    await prepareAndUndock(page);
     await flyToScout(page);
     await engageScout(page);
     await expect(
@@ -282,7 +277,9 @@ test.describe('the first vertical slice', () => {
     await waitForClearedSite(page);
     await returnAndDock(page);
 
+    // The next sortie's briefing, read in space, counts both clears.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
+    await undock(page);
     await expect(
       page.locator('[data-disclosure="encounter.borrell.pirate-scout"]').getByText('Cleared 2 times'),
     ).toBeVisible();
@@ -346,7 +343,8 @@ test.describe('combat commands', () => {
     await region(page, 'Locks').getByRole('button', { name: /^Unlock Pirate Scout/ }).click();
     await expect(region(page, 'Locks').getByText(/^No target is locked/)).toBeVisible();
 
-    await page.getByRole('button', { name: /^Retreat/ }).click();
+    // Leaving mid-sortie is an ordinary warp to the station destination.
+    await warpHome(page);
     await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({
       timeout: 60_000,
     });
@@ -413,7 +411,7 @@ test.describe('combat commands', () => {
     await expect(menu).toBeHidden();
     await expect(scoutEntry(page)).toBeFocused();
 
-    // n drops the lock, x retreats.
+    // n drops the lock; x, the return key, warps home.
     await page.keyboard.press('n');
     await expect(region(page, 'Locks').getByText(/^No target is locked/)).toBeVisible();
     await page.keyboard.press('x');

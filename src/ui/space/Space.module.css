@@ -716,8 +716,80 @@
   }
 }
 
+/*
+ * The destination chooser: the destinations beside the chosen one's briefing
+ * and the warp or dock that reaches it, stacked on a narrow screen.
+ */
+.destinations {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+  grid-template-areas: 'heading heading' 'list briefing';
+  gap: var(--gs-space-1) var(--gs-space-3);
+  align-items: start;
+}
+.destinations > h4 {
+  grid-area: heading;
+}
+.destinationList {
+  grid-area: list;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+.destinationList .objectButton {
+  flex-wrap: wrap;
+  gap: 0 var(--gs-space-2);
+  padding: 2px var(--gs-space-2);
+  font-size: var(--gs-font-small);
+}
+.destinationBriefing {
+  grid-area: briefing;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--gs-font-small);
+}
+.destinationBriefing p {
+  margin: 0;
+}
+/* The disclosed facts run on as one paragraph, each separated by a dot. */
+.factList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.factList > li {
+  display: inline;
+}
+.factList > li + li::before {
+  content: ' · ';
+  color: var(--gs-color-text-muted);
+}
+.destinationBriefing .commandRow {
+  align-items: center;
+  margin-top: var(--gs-space-1);
+}
+.destinationBriefing .field {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--gs-space-1);
+}
+@media (max-width: 40rem) {
+  .destinations {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'heading' 'list' 'briefing';
+  }
+}
+
 .commands .commandRow > span {
   max-width: 10rem;
+}
+.commands .destinationBriefing .commandRow > span {
+  max-width: none;
 }
 .commands button, .tactical button {
   font-size: var(--gs-font-small);

@@ -174,10 +174,32 @@ export interface BookmarkDestinationData {
   readonly commands: readonly CommandAvailabilityData[];
 }
 
+/**
+ * A station offered as a destination (Functional Specification 7.3, 7.4).
+ * It is a real station, not an encounter: it has no tier, opponents or
+ * rewards. The player warps to its site and docks there; from inside its site
+ * the station is docked with rather than warped to.
+ */
+export interface StationDestinationData {
+  readonly stationId: string;
+  readonly siteId: string;
+  /** The station's authored, localized name. */
+  readonly nameKey: string;
+  readonly descriptionKey: string;
+  /** The station the player last docked at, where the return shortcut heads. */
+  readonly home: boolean;
+  /** The player is in the station's site now. */
+  readonly current: boolean;
+  /** Warping to the station's site, and docking with the station. */
+  readonly commands: readonly CommandAvailabilityData[];
+}
+
 export interface DestinationsData {
   readonly revision: number;
   readonly selectedEncounterId: string | null;
   readonly selectedBookmarkId: string | null;
+  /** The stations in the current system, in stable order. */
+  readonly stations: readonly StationDestinationData[];
   readonly destinations: readonly DestinationData[];
   /** The player's own wrecks, oldest first. */
   readonly bookmarks: readonly BookmarkDestinationData[];

@@ -253,7 +253,7 @@ export function StationScreen({
       {open === 'station.fitting' ? <FittingPanel data={data} runner={runner} /> : null}
       {open === 'station.ship' ? <ShipPanel data={data} /> : null}
       {open === 'station.departure' ? (
-        <DeparturePanel data={data} runner={runner} simulationTimeMs={simulationTimeMs} />
+        <DeparturePanel data={data} runner={runner} />
       ) : null}
       {ownNavigation.dialog}
       </div>
