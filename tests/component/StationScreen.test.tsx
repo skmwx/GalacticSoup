@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createMemorySaveStore } from '@adapters/persistence';
-import { createEngineHost } from '@engine';
+import { createEngineHost, type ContentRepository } from '@engine';
 import { createDirectGateway } from '@gateway/direct';
 import { EMPTY_PAYLOAD, type AssetsData } from '@protocol';
-import type { LocalizationIssue } from '@shared';
+import { cubicDecimetres, type LocalizationIssue } from '@shared';
 import { GameRoot, LocalizationProvider } from '@ui';
 
 import { shippedContent } from '../support/content.ts';
@@ -39,10 +39,11 @@ const spareRounds = (() => {
 function renderGame(options: {
   onIssue?: (issue: LocalizationIssue) => void;
   strict?: boolean;
+  content?: ContentRepository;
 } = {}) {
   const store = createMemorySaveStore();
   const gateway = createDirectGateway({
-    host: createEngineHost({ content: shippedContent(), saves: store }),
+    host: createEngineHost({ content: options.content ?? shippedContent(), saves: store }),
     defaultTimeoutMs: 5_000,
   });
 
@@ -438,33 +439,173 @@ describe('market', () => {
 });
 
 describe('hangar', () => {
-  it('moves a stack between the hangar and the hold [FUNC-6.2, MVP-AC-02]', async () => {
+  /** The quantities of the plain stacks in the hangar or the active hold. */
+  async function quantitiesIn(harness: Harness, kind: 'cargo' | 'hangar'): Promise<number[]> {
+    const snapshot = await assets(harness);
+    return snapshot.inventories
+      .filter((inventory) =>
+        kind === 'cargo'
+          ? inventory.location.kind === 'cargo' && inventory.location.shipId === snapshot.activeShipId
+          : inventory.location.kind === 'hangar')
+      .flatMap((inventory) => inventory.stacks)
+      .filter((stack) => stack.state.kind === 'plain')
+      .map((stack) => stack.quantity);
+  }
+
+  const table = (name: 'Station hangar' | 'Ship cargo hold') => screen.getByRole('table', { name });
+
+  /**
+   * The shipped content with a starter hold of 250 dm³ (0.25 m³): room for the
+   * 100 spare rounds and 25 more. The compiled bundle is digest-checked, so the
+   * one hull is replaced on the repository rather than in the bundle.
+   */
+  function smallHold(): ContentRepository {
+    const base = shippedContent();
+    const starter = base.hulls().find((hull) => hull.id === base.rules.economy.starterHullId);
+    if (starter === undefined) throw new Error('No starter hull.');
+    const small = { ...starter, cargoCapacityCubicDecimetres: cubicDecimetres(250) };
+    const swap = <T extends { readonly id: string }>(hull: T): T =>
+      (hull.id === starter.id ? (small as unknown as T) : hull);
+    return {
+      ...base,
+      hull: (id) => (id === starter.id ? small : base.hull(id)),
+      requireHull: (id) => (id === starter.id ? small : base.requireHull(id)),
+      hulls: () => base.hulls().map(swap),
+    };
+  }
+
+  it('moves one, all and a typed quantity in both directions [FUNC-6.2, MVP-AC-02]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
     await openPanel(harness, 'Hangar');
 
-    const before = await assets(harness);
-    const cargoId = before.inventories.find(
-      (inventory) =>
-        inventory.location.kind === 'cargo' && inventory.location.shipId === before.activeShipId,
-    )?.id;
-    const stacksIn = async (kind: 'cargo' | 'hangar') => (await assets(harness)).inventories
-      .filter((inventory) => (kind === 'cargo' ? inventory.id === cargoId : inventory.location.kind === 'hangar'))
-      .flatMap((inventory) => inventory.stacks);
+    // Two columns, each with its own stacks: the spare rounds start in the hold.
+    expect(screen.getByRole('heading', { name: 'Station hangar' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ship cargo hold' })).toBeInTheDocument();
+    expect(within(table('Ship cargo hold')).getByRole('rowheader', { name: 'Fusion S' })).toBeInTheDocument();
+    expect(screen.getByText(/m³ free/)).toBeInTheDocument();
 
-    // The spare rounds start in the hold; the whole stack moves each way. How
-    // many rounds the grant left is a tuning value.
-    await harness.user.click((await screen.findAllByRole('button', { name: 'Move to hangar' }))[0] as HTMLElement);
+    await harness.user.click(screen.getByRole('button', { name: 'Move one Fusion S to the hangar' }));
     await waitFor(async () => {
-      expect(await stacksIn('cargo')).toHaveLength(0);
-      expect((await stacksIn('hangar')).map((stack) => stack.quantity)).toEqual([spareRounds]);
+      expect(await quantitiesIn(harness, 'hangar')).toEqual([1]);
+      expect(await quantitiesIn(harness, 'cargo')).toEqual([spareRounds - 1]);
     });
 
-    await harness.user.click((await screen.findAllByRole('button', { name: 'Move to hold' }))[0] as HTMLElement);
+    const typed = await within(table('Ship cargo hold')).findByLabelText('Units of Fusion S to move');
+    await harness.user.type(typed, '30');
+    await harness.user.click(screen.getByRole('button', { name: 'Move the typed number of Fusion S to the hangar' }));
     await waitFor(async () => {
-      expect(await stacksIn('hangar')).toHaveLength(0);
-      expect((await stacksIn('cargo')).map((stack) => stack.quantity)).toEqual([spareRounds]);
+      expect(await quantitiesIn(harness, 'hangar')).toEqual([31]);
+      expect(await quantitiesIn(harness, 'cargo')).toEqual([spareRounds - 31]);
     });
+    // The typed number belonged to the old stack; it is not offered again.
+    await waitFor(() => {
+      expect(within(table('Ship cargo hold')).getByLabelText('Units of Fusion S to move')).toHaveValue(null);
+    });
+
+    await harness.user.click(screen.getByRole('button', { name: 'Move all Fusion S to the hold' }));
+    await waitFor(async () => {
+      expect(await quantitiesIn(harness, 'hangar')).toEqual([]);
+      expect(await quantitiesIn(harness, 'cargo')).toEqual([spareRounds]);
+    });
+
+    await harness.user.click(screen.getByRole('button', { name: 'Move all Fusion S to the hangar' }));
+    await waitFor(async () => {
+      expect(await quantitiesIn(harness, 'hangar')).toEqual([spareRounds]);
+      expect(await quantitiesIn(harness, 'cargo')).toEqual([]);
+    });
+    expect(await screen.findByText('Nothing stored here.')).toBeInTheDocument();
+
+    harness.gateway.dispose();
+  });
+
+  it('refuses a typed quantity that is blank, not whole or too many, and moves nothing [FUNC-6.2]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await openPanel(harness, 'Hangar');
+
+    const field = within(table('Ship cargo hold')).getByLabelText('Units of Fusion S to move');
+    const move = screen.getByRole('button', { name: 'Move the typed number of Fusion S to the hangar' });
+    expect(move).toBeUnavailable();
+    expect(move).toHaveAccessibleDescription('Type how many units to move.');
+
+    const cases: readonly (readonly [string, string])[] = [
+      ['2.5', 'Type a whole number of units, 1 or more.'],
+      ['-3', 'Type a whole number of units, 1 or more.'],
+      ['0', 'Type a whole number of units, 1 or more.'],
+      [String(spareRounds + 1), 'The stack does not have that many units.'],
+    ];
+    for (const [text, reason] of cases) {
+      await harness.user.clear(field);
+      await harness.user.type(field, text);
+      expect(move).toBeUnavailable();
+      expect(move).toHaveAccessibleDescription(reason);
+      expect(field).toHaveAttribute('aria-invalid', 'true');
+      await harness.user.click(move);
+    }
+
+    expect(await quantitiesIn(harness, 'cargo')).toEqual([spareRounds]);
+    expect(await quantitiesIn(harness, 'hangar')).toEqual([]);
+
+    harness.gateway.dispose();
+  });
+
+  it('never shrinks All to fit, and Max moves what the engine says fits [FUNC-6.2]', async () => {
+    const harness = renderGame({ content: smallHold() });
+    await startCampaign(harness);
+    // 100 spare rounds fill 0.2 of the 0.25 m³ hold; 25 more fit, 40 do not.
+    await buyThroughMarket(harness, 'Fusion S', 40);
+    await openPanel(harness, 'Hangar');
+
+    const all = screen.getByRole('button', { name: 'Move all Fusion S to the hold' });
+    await waitFor(() => {
+      expect(all).toBeUnavailable();
+    });
+    expect(all).toHaveAccessibleDescription(
+      'The hold cannot take the whole stack. Max moves as many as fit.',
+    );
+    await harness.user.click(all);
+
+    const field = within(table('Station hangar')).getByLabelText('Units of Fusion S to move');
+    const typed = screen.getByRole('button', { name: 'Move the typed number of Fusion S to the hold' });
+    await harness.user.type(field, '30');
+    expect(typed).toBeUnavailable();
+    expect(typed).toHaveAccessibleDescription('The hold cannot take that many. Max moves as many as fit.');
+    await harness.user.clear(field);
+    await harness.user.type(field, '20');
+    expect(typed).not.toBeUnavailable();
+
+    // Nothing moved: not the refused All, not a partial version of it.
+    expect(await quantitiesIn(harness, 'hangar')).toEqual([40]);
+    expect(await quantitiesIn(harness, 'cargo')).toEqual([spareRounds]);
+
+    // The engine refuses the whole stack too, atomically.
+    const snapshot = await assets(harness);
+    const stack = snapshot.inventories
+      .find((inventory) => inventory.location.kind === 'hangar')
+      ?.stacks[0];
+    const hold = snapshot.inventories.find((inventory) =>
+      inventory.location.kind === 'cargo' && inventory.location.shipId === snapshot.activeShipId);
+    const refused = await harness.gateway.request('inventory.transfer', {
+      stackId: stack?.id ?? '', destinationInventoryId: hold?.id ?? '', quantity: 40,
+    });
+    expect(refused.ok).toBe(false);
+    expect(await quantitiesIn(harness, 'hangar')).toEqual([40]);
+
+    await harness.user.click(screen.getByRole('button', { name: 'Move the max of Fusion S that fits to the hold' }));
+    await waitFor(async () => {
+      expect(await quantitiesIn(harness, 'hangar')).toEqual([15]);
+      expect(await quantitiesIn(harness, 'cargo')).toEqual([spareRounds + 25]);
+    });
+
+    // A full hold: nothing more fits, and each control says so.
+    const one = screen.getByRole('button', { name: 'Move one Fusion S to the hold' });
+    await waitFor(() => {
+      expect(one).toBeUnavailable();
+    });
+    expect(one).toHaveAccessibleDescription('The hold has no room for even one unit.');
+    expect(screen.getByRole('button', { name: 'Move the max of Fusion S that fits to the hold' })).toBeUnavailable();
+    expect(screen.getByText('0 m³ free')).toBeInTheDocument();
 
     harness.gateway.dispose();
   });

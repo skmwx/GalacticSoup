@@ -32,6 +32,13 @@ import type { ActionRunner } from './useActionRunner';
  * name is still the full label (including any item it names), and its name and
  * shortcut appear in the tooltip instead of on the button.
  *
+ * The `short` presentation draws a brief word (`shortLabel`) without the
+ * icon, for a row of related controls that would otherwise share one icon,
+ * such as the One, All and Max transfers. The short word must appear in the
+ * full label, so the visible text is part of the accessible name (WCAG 2.5.3);
+ * the full label is the name and the tooltip heading, as for an icon-only
+ * control.
+ *
  * @implements TECH-12.3, FUNC-22.10
  */
 
@@ -45,8 +52,13 @@ export interface ActionButtonProps {
   /** Overrides the registry label, for a control that names its subject. */
   readonly label?: string;
   readonly variant?: 'primary' | 'quiet' | 'danger';
-  /** `icon` draws the icon only; the label becomes the name and the tooltip. */
-  readonly display?: 'full' | 'icon';
+  /**
+   * `icon` draws the icon only and `short` draws `shortLabel` only; in both
+   * the label becomes the accessible name and the tooltip heading.
+   */
+  readonly display?: 'full' | 'icon' | 'short';
+  /** The visible word of the `short` presentation; it must appear in `label`. */
+  readonly shortLabel?: string;
   readonly pressed?: boolean;
   /** For a control that shows and hides a panel: whether it is shown. */
   readonly expanded?: boolean;
@@ -65,6 +77,7 @@ export function ActionButton({
   label,
   variant = 'quiet',
   display = 'full',
+  shortLabel,
   pressed,
   expanded,
   controls,
@@ -77,17 +90,21 @@ export function ActionButton({
   const pending = runner.isPending(actionId);
   const disabled = !available || pending;
   const iconOnly = display === 'icon';
+  const shortOnly = display === 'short';
+  // Both compact presentations give their full name only through the
+  // accessible name and the tooltip.
+  const compact = iconOnly || shortOnly;
   const name = label ?? translate(action.labelKey);
-  // A full button shows its pending state as text; an icon-only one says it
-  // in the tooltip instead.
+  // A full button shows its pending state as text; a compact one says it in
+  // the tooltip instead.
   const reason = !available
     ? translate(unavailableReason ?? 'shortcut.unavailable')
-    : pending && iconOnly
+    : pending && compact
       ? translate('action.pending')
       : null;
   const tooltip = useTooltip({
     description: reason,
-    heading: iconOnly ? (
+    heading: compact ? (
       <>
         <span>{name}</span>
         {key === null ? null : <kbd>{keyLabel(key)}</kbd>}
@@ -100,11 +117,11 @@ export function ActionButton({
       <button
         type="button"
         ref={buttonRef}
-        className={`${styles['button']} ${styles[variant] ?? ''} ${iconOnly ? (styles['iconOnly'] ?? '') : ''}`}
+        className={`${styles['button']} ${styles[variant] ?? ''} ${iconOnly ? (styles['iconOnly'] ?? '') : ''} ${shortOnly ? (styles['shortOnly'] ?? '') : ''}`}
         data-action={action.id}
         aria-disabled={disabled ? true : undefined}
         aria-describedby={describedBy(tooltip.describedBy)}
-        {...(iconOnly ? { 'aria-label': name } : {})}
+        {...(compact ? { 'aria-label': name } : {})}
         {...(pressed === undefined ? {} : { 'aria-pressed': pressed })}
         {...(expanded === undefined ? {} : { 'aria-expanded': expanded })}
         {...(controls === undefined ? {} : { 'aria-controls': controls })}
@@ -119,12 +136,14 @@ export function ActionButton({
           });
         }}
       >
-        <ActionIcon icon={action.icon} className={styles['icon']} />
-        {iconOnly ? null : <span className={styles['label']}>{name}</span>}
-        {key === null || iconOnly ? null : (
+        {shortOnly ? null : <ActionIcon icon={action.icon} className={styles['icon']} />}
+        {iconOnly ? null : (
+          <span className={styles['label']}>{shortOnly ? (shortLabel ?? name) : name}</span>
+        )}
+        {key === null || compact ? null : (
           <kbd className={styles['shortcut']}>{keyLabel(key)}</kbd>
         )}
-        {pending && !iconOnly ? (
+        {pending && !compact ? (
           <span className={styles['pending']}>{translate('action.pending')}</span>
         ) : null}
       </button>

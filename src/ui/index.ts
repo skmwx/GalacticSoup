@@ -58,6 +58,8 @@ export {
   formatStat,
   formatVolume,
 } from './format/numbers';
+export { readWholeQuantity } from './format/quantity';
+export type { QuantityReading } from './format/quantity';
 export { CampaignFrame } from './frame/CampaignFrame';
 export type { CampaignFrameProps } from './frame/CampaignFrame';
 export { PlayScreen } from './frame/PlayScreen';

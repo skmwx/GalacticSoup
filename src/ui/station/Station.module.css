@@ -607,6 +607,86 @@
   outline-offset: -2px;
 }
 
+/*
+ * The hangar and the hold side by side; one column each, stacked in reading
+ * order (hangar first) when there is no room for two.
+ */
+.inventoryColumns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--gs-space-3);
+  align-items: start;
+}
+
+.inventoryColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+  min-width: 0;
+  padding: var(--gs-space-2);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  background: var(--gs-color-surface-raised);
+}
+
+.capacity {
+  display: grid;
+  gap: var(--gs-space-1);
+}
+
+.free {
+  color: var(--gs-color-text);
+  font-weight: 600;
+}
+
+/* Numbers in station tables line up on the right, headers with them. */
+.table th.numeric,
+.table td.numeric {
+  text-align: right;
+}
+
+/* A figure and its unit stay on one line; item names keep a readable width. */
+.inventoryColumn .table td.numeric {
+  white-space: nowrap;
+}
+
+.inventoryColumn .table th[scope='row'] {
+  min-width: 6rem;
+}
+
+@media (max-width: 40rem) {
+  .inventoryColumn .table th[scope='row'] {
+    min-width: 0;
+  }
+}
+
+.transferControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gs-space-1);
+}
+
+.transferQuantity {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gs-space-1);
+}
+
+.quantityInput {
+  composes: input;
+  width: 4.5rem;
+  min-width: 0;
+  padding: var(--gs-space-1);
+  min-height: var(--gs-target-min);
+}
+
+.quantityInput[aria-invalid='true'] {
+  border-color: var(--gs-color-danger);
+  border-style: dashed;
+}
+
 .suitabilityCell {
   min-width: 10rem;
 }

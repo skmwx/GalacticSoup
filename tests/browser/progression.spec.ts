@@ -174,7 +174,7 @@ async function resupply(page: Page): Promise<void> {
 async function moveToHold(page: Page, item: string): Promise<void> {
   await page.getByRole('button', { name: 'Hangar', exact: true }).click();
   const row = page.getByRole('table', { name: 'Station hangar' }).getByRole('row', { name: new RegExp(item) });
-  await row.getByRole('button', { name: 'Move to hold' }).click();
+  await row.getByRole('button', { name: `Move all ${item} to the hold` }).click();
   await expect(page.getByRole('table', { name: 'Ship cargo hold' }).getByRole('rowheader', { name: item })).toBeVisible();
 }
 

@@ -113,11 +113,11 @@ test.describe('station interface', () => {
     const hangar = page.getByRole('table', { name: 'Station hangar' });
     const hold = page.getByRole('table', { name: 'Ship cargo hold' });
     await expect(hold.getByRole('rowheader', { name: 'Fusion S' })).toBeVisible();
-    await page.getByRole('button', { name: 'Move to hangar' }).first().click();
+    await page.getByRole('button', { name: 'Move all Fusion S to the hangar' }).click();
     await expect(hangar.getByRole('rowheader', { name: 'Fusion S' })).toBeVisible();
     await expect(hold.getByRole('rowheader', { name: 'Fusion S' })).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Move to hold' }).first().click();
+    await page.getByRole('button', { name: 'Move all Fusion S to the hold' }).click();
     await expect(hold.getByRole('rowheader', { name: 'Fusion S' })).toBeVisible();
     await expect(hangar.getByRole('rowheader', { name: 'Fusion S' })).toHaveCount(0);
   });

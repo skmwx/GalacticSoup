@@ -14,6 +14,7 @@ import { Dialog } from '../common/Dialog';
 import { FormulaExplanation } from '../common/Explanation';
 import { ItemComparison, ItemSummary } from '../common/ItemDetail';
 import { formatCredits, formatQuantity } from '../format/numbers';
+import { readWholeQuantity } from '../format/quantity';
 import { useLocalizer, useTranslate } from '../localization';
 import { RecoveryGrantLabel } from './HangarPanel';
 import styles from './Station.module.css';
@@ -595,14 +596,9 @@ function QuantityField({
         value={text}
         onChange={(event) => {
           setText(event.target.value);
-          const next = Number(event.target.value);
-          if (
-            /^\d+$/.test(event.target.value.trim()) &&
-            Number.isSafeInteger(next) &&
-            next > 0 &&
-            (maximum === undefined || next <= maximum)
-          ) {
-            onChange(next);
+          const reading = readWholeQuantity(event.target.value, maximum);
+          if (reading.ok) {
+            onChange(reading.quantity);
           }
         }}
       />

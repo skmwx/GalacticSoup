@@ -211,7 +211,7 @@ test.describe('losing a ship', () => {
     // The spare rounds went down with the ship and came back out of its
     // wreck, so they are in the hold already; any in the hangar join them.
     const fusion = page.getByRole('table', { name: 'Station hangar' }).getByRole('row', { name: /Fusion S/ });
-    if ((await fusion.count()) > 0) await fusion.getByRole('button', { name: 'Move to hold' }).click();
+    if ((await fusion.count()) > 0) await fusion.getByRole('button', { name: 'Move all Fusion S to the hold' }).click();
     await expect(
       page.getByRole('table', { name: 'Ship cargo hold' }).getByRole('rowheader', { name: 'Fusion S' }),
     ).toBeVisible();

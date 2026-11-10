@@ -81,6 +81,35 @@ test.describe('station accessibility', () => {
     await audit(page);
   });
 
+  test('moves a typed quantity with the keyboard and explains a refused one [TECH-12.3, FUNC-6.2]', async ({ page }) => {
+    await page.getByRole('button', { name: 'Hangar', exact: true }).click();
+    const hold = page.getByRole('table', { name: 'Ship cargo hold' });
+    const hangar = page.getByRole('table', { name: 'Station hangar' });
+
+    // A short visible word, the full name for assistive technology and the
+    // tooltip, and the refusal in the tooltip rather than beside the control.
+    const typed = page.getByRole('button', { name: 'Move the typed number of Fusion S to the hangar' });
+    await expect(typed).toHaveText('Move');
+    await typed.focus();
+    await expect(page.locator('[data-tooltip]')).toContainText('Type how many units to move.');
+    await expect(typed).toHaveAttribute('aria-disabled', 'true');
+
+    const field = hold.getByLabel('Units of Fusion S to move');
+    await field.focus();
+    await page.keyboard.type('2.5');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await field.fill('');
+    await page.keyboard.type('5');
+    await page.keyboard.press('Tab');
+    await expect(typed).toBeFocused();
+    await expect(typed).not.toHaveAttribute('aria-disabled', 'true');
+    await page.keyboard.press('Enter');
+
+    await expect(hangar.getByRole('row', { name: /Fusion S/ }).getByRole('cell').first()).toHaveText('5');
+    await expect(hold.getByLabel('Units of Fusion S to move')).toHaveValue('');
+    await audit(page);
+  });
+
   test('passes an automated audit inside a confirmation [TECH-12.3]', async ({ page }) => {
     await page.getByRole('button', { name: 'Market', exact: true }).click();
     await page.getByRole('button', { name: 'Buy Fusion S' }).click();

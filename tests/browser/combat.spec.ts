@@ -98,7 +98,7 @@ async function prepareAndUndock(page: Page): Promise<void> {
   const hangar = page.getByRole('table', { name: 'Station hangar' });
   const fusion = hangar.getByRole('row', { name: /Fusion S/ });
   if (await fusion.count() > 0) {
-    await fusion.getByRole('button', { name: 'Move to hold' }).click();
+    await fusion.getByRole('button', { name: 'Move all Fusion S to the hold' }).click();
     await expect(
       page.getByRole('table', { name: 'Ship cargo hold' }).getByRole('rowheader', { name: 'Fusion S' }),
     ).toBeVisible();

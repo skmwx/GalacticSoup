@@ -73,6 +73,16 @@
   min-width: var(--gs-target-min);
 }
 
+/*
+ * The short-word presentation: a brief word without the icon, for a row of
+ * related controls. It keeps the minimum pointer target.
+ */
+.shortOnly {
+  justify-content: center;
+  padding: var(--gs-space-1) var(--gs-space-2);
+  min-width: var(--gs-target-min);
+}
+
 .primary {
   border-color: var(--gs-color-accent);
   color: var(--gs-color-accent);
