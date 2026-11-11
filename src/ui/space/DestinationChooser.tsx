@@ -97,6 +97,10 @@ export function DestinationChooser({
       : availability(chosen.entry.commands, chosen.kind === 'bookmark' ? 'navigation.warpToBookmark' : 'navigation.warp');
 
   const warpTo = async (choice: Choice): Promise<void> => {
+    // The list opens on a destination the player has not clicked; warping
+    // there chooses it, so record it first as a click would (UIR1-10: else
+    // the "Choose a site" step stayed open through the fight).
+    await record(choice);
     if (choice.kind === 'bookmark') {
       await data.send('navigation.warpToBookmark', { bookmarkId: choice.entry.bookmarkId, arrivalDistanceKm: arrivalKm });
       return;
@@ -107,20 +111,23 @@ export function DestinationChooser({
     if (station !== null) await data.send('navigation.dock', { stationId: station.stationId });
   };
 
-  const choose = (choice: Choice): void => {
-    setPickedKey(choice.key);
-    // Recording the choice marks a destination; it never moves the ship.
+  /** Records an encounter or wreck as the destination; it never moves the ship. */
+  const record = async (choice: Choice): Promise<void> => {
     if (choice.kind === 'encounter' && !choice.entry.selected &&
       availability(choice.entry.commands, 'navigation.selectDestination').available) {
-      runner.run('navigation.selectDestination', async () => {
-        await data.send('navigation.selectDestination', { encounterId: choice.entry.encounterId });
-      });
+      await data.send('navigation.selectDestination', { encounterId: choice.entry.encounterId });
     }
     if (choice.kind === 'bookmark' && !choice.entry.selected &&
       availability(choice.entry.commands, 'navigation.selectBookmark').available) {
-      runner.run('navigation.selectBookmark', async () => {
-        await data.send('navigation.selectBookmark', { bookmarkId: choice.entry.bookmarkId });
-      });
+      await data.send('navigation.selectBookmark', { bookmarkId: choice.entry.bookmarkId });
+    }
+  };
+
+  const choose = (choice: Choice): void => {
+    setPickedKey(choice.key);
+    if (choice.kind === 'encounter' || choice.kind === 'bookmark') {
+      runner.run(choice.kind === 'encounter' ? 'navigation.selectDestination' : 'navigation.selectBookmark', () =>
+        record(choice));
     }
   };
 

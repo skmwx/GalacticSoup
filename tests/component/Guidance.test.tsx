@@ -94,6 +94,26 @@ describe('contextual guidance', () => {
     expect(await within(notices).findByText('Done: Choose a site.')).toBeInTheDocument();
   });
 
+  it('counts warping to the destination offered first as choosing it [FUNC-3.2, FUNC-7.3]', async () => {
+    const harness = renderGame();
+    const guidance = await startCampaign(harness);
+    await harness.user.click(within(guidance).getByRole('button', { name: 'Show me' }));
+    await harness.user.click(await screen.findByRole('button', { name: /^Undock/ }));
+    const flight = await screen.findByRole('region', { name: 'Flight school' });
+    await waitFor(() => {
+      expect(within(flight).getByRole('heading', { level: 3 })).toHaveTextContent('Choose a site');
+    });
+
+    // The list opens on the Pirate Scout; the player warps without clicking it.
+    const destinations = screen.getByRole('region', { name: 'Destinations' });
+    await harness.user.click(within(destinations).getByRole('button', { name: /^Warp to Pirate Scout/ }));
+    const notices = screen.getByRole('region', { name: 'Notifications' });
+    expect(await within(notices).findByText('Done: Choose a site.')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(flight).getByRole('heading', { level: 3 })).not.toHaveTextContent('Choose a site');
+    });
+  });
+
   it('skips a step on request and lists every step with its state in words [FUNC-3.2, FUNC-20]', async () => {
     const harness = renderGame();
     const guidance = await startCampaign(harness);
@@ -171,7 +191,7 @@ describe('the capacitor before undocking', () => {
     const readiness = document.querySelector('[data-capacitor-readiness]');
     expect(readiness).toHaveAttribute('data-capacitor-readiness', 'charging');
     expect(readiness).toHaveTextContent(
-      'Capacitor 25%. Repair under Services recharges it for free; left alone it fills in 3m 45s of running time',
+      'Capacitor 25%. Repair on the Overview recharges it for free; left alone it fills in 3m 45s of running time',
     );
     await user.click(screen.getByText('How long until it is full'));
     expect(readiness).toHaveTextContent(

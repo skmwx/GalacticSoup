@@ -129,6 +129,7 @@ export function CampaignFrame({
           actionId="time.toggle"
           runner={runner}
           pressed={!paused}
+          icon={paused ? 'play' : 'pause'}
           label={paused ? translate('frame.resume') : translate('frame.pause')}
           onRun={toggleTime}
         />

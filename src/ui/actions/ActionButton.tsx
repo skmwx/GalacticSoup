@@ -7,7 +7,7 @@ import { useTranslate } from '../localization';
 import { ActionIcon } from './ActionIcon';
 import styles from './ActionButton.module.css';
 import { keyLabel } from './bindings';
-import { actionById } from './registry';
+import { actionById, type ActionIcon as ActionIconName } from './registry';
 import { useBinding } from './shortcuts';
 import type { ActionRunner } from './useActionRunner';
 
@@ -51,6 +51,8 @@ export interface ActionButtonProps {
   readonly unavailableReason?: MessageKey | null;
   /** Overrides the registry label, for a control that names its subject. */
   readonly label?: string;
+  /** Overrides the registry icon, for a toggle whose picture follows its state. */
+  readonly icon?: ActionIconName;
   readonly variant?: 'primary' | 'quiet' | 'danger';
   /**
    * `icon` draws the icon only and `short` draws `shortLabel` only; in both
@@ -75,6 +77,7 @@ export function ActionButton({
   available = true,
   unavailableReason = null,
   label,
+  icon,
   variant = 'quiet',
   display = 'full',
   shortLabel,
@@ -138,7 +141,7 @@ export function ActionButton({
           });
         }}
       >
-        {shortOnly ? null : <ActionIcon icon={action.icon} className={styles['icon']} />}
+        {shortOnly ? null : <ActionIcon icon={icon ?? action.icon} className={styles['icon']} />}
         {iconOnly ? null : (
           <span className={styles['label']}>{shortOnly ? (shortLabel ?? name) : name}</span>
         )}

@@ -1,6 +1,6 @@
 # MVP UI review 01 implementation plan
 
-Status: in progress; UIR1-01 to UIR1-09 complete.
+Status: implementation and automated verification complete (UIR1-01 to UIR1-10; candidate 0.1.0-rc.2). Human acceptance pending.
 
 Source review: `human-input/MVP-review-01.md`. Context: `00_GameDesignBrief.md`, `01_FunctionalSpecification.md`, `02_TechnicalSpecification.md`, `human-input/CurrentState.md`, and the implemented MVP.
 
@@ -21,7 +21,7 @@ Phase IDs use **UIR1** to distinguish this work from the completed original MVP 
 | UIR1-07 | Destination selection in space and Harbor return destination | 02, 06 | Complete (`agent-comm/status/uir1-07-completion.md`) |
 | UIR1-08 | Empty-radar context menu for setting a course | 01, 07 | Complete (`agent-comm/status/uir1-08-completion.md`) |
 | UIR1-09 | Compact combined equipment panel and navigation columns | 07, 08 | Complete (`agent-comm/status/uir1-09-completion.md`) |
-| UIR1-10 | Integrated UI acceptance, release checks, human review handoff | All preceding phases | Pending |
+| UIR1-10 | Integrated UI acceptance, release checks, human review handoff | All preceding phases | Complete (`agent-comm/status/uir1-10-completion.md`) |
 
 This order gives each session a working application to leave behind. Dependencies describe required foundations; they are not a request to run agents concurrently.
 

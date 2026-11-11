@@ -96,6 +96,26 @@ anything that surprised you.
       game still readable and usable at each?
 - [ ] Rebind one key in Settings and use it.
 
+**The reworked station and space screens (MVP UI review 01)**
+
+These are the screens changed after your first review. Check that each still does what you asked.
+
+- [ ] There is one header: icon, pilot, where you are, wallet, clock, pause and save state. The
+      icon at its right end is the game menu, and Settings (including alerts and sound) is in it.
+- [ ] On the Overview, Repair armour, Repair hull, Repair all, Resupply ammunition and Improve
+      insurance show their price on the button. After a fight, each one still asks you to confirm
+      the exact total.
+- [ ] In the Market, switch between Buy and Sell. Sell lists only what you have here, with where it
+      is. Ammunition says which weapon it is for, and whether one you have fitted can use it.
+      Modules name their slot.
+- [ ] In the Hangar, move one, all, and a typed number of rounds each way between hangar and hold.
+- [ ] In Fitting, use a slot's change control to swap a module and a weapon's ammunition, look at
+      the preview, then Apply or Revert.
+- [ ] Undock without choosing anything. In space, read two briefings under Destinations before
+      warping to one.
+- [ ] Hover over, or tab to, a disabled button. The reason should appear as a tooltip without
+      pushing anything else aside.
+
 **Explanations (MVP-AC-04, MVP-AC-10)**
 
 - [ ] In the Market, compare two weapons or two kinds of ammunition. Can you tell which you want and
@@ -114,6 +134,10 @@ full list.
 - There is one campaign slot and no manual save list; the game saves by itself.
 - There is no map. You undock without a destination; sites, your wrecks and the station are chosen
   under Destinations in space.
+- Back at the station's site, Destinations already offers the next sortie. To dock, choose Borrell
+  Harbour in the list or press the return key (X).
+- Cargo moves between hangar and hold are not autosave points. Reloading the page straight after
+  one can undo it. Close the campaign from the game menu instead.
 - Loading the page again needs the local server; the installable offline package is deferred.
 
 ## Result

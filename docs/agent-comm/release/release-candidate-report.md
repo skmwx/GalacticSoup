@@ -1,6 +1,8 @@
 # Release-candidate report - Galactic Soup MVP
 
-**Candidate 0.1.0-rc.1, 2026-10-08.**
+**Candidate 0.1.0-rc.2, 2026-11-11.** It replaces rc.1 (2026-10-08). The difference is the MVP UI
+review 01 rework, phases UIR1-01 to UIR1-10; `uir1-10-review-summary.md` in this folder maps each
+finding of the review to its evidence.
 
 - **Automated gate (MVP Scope 9.1 and 9.2): green.**
 - **Product acceptance (MVP Scope 9.3): not yet done.** It needs a human playtest. The script is
@@ -15,22 +17,21 @@ tracked; `npm run release:report` writes it again.
 | | |
 |---|---|
 | Application and engine version | 0.1.0 |
-| Protocol version | 14 |
-| Save format and campaign state version | 10 |
+| Protocol version | 18 (rc.1: 14) |
+| Save format and campaign state version | 10 (unchanged) |
 | Replay log version | 1 |
-| Content version | 0.1.0+296facab3d13 |
-| Tuning digest | `b17ca616a2922d4a` |
-| Source digest | `8b8606e34e62b859`... |
-| Build fingerprint | `bc6e15aae57300e9`... |
+| Content version | 0.1.0+8f13b5394f04 |
+| Tuning digest | `b17ca616a2922d4a` (unchanged) |
+| Source digest | `58c0fae5e2a29c70`... |
+| Build fingerprint | `7fe9069ea92abaeb`... |
 
 - The versions are frozen in `config/release-candidate.json`, which is written only from a green
-  gate. The protocol, save and state versions are the ones Phase 20 closed; nothing in Phase 21
-  changed a contract or the content.
+  gate. The protocol moved from 14 to 18 across the UI review: the market metadata (UIR1-03), the
+  repair scopes (UIR1-06), the station destination (UIR1-07) and the header's system name
+  (UIR1-02). Saves did not change format.
 - The source digest covers every file in the repository except documents. It does not depend on
-  git, so committing this phase leaves it as it is.
+  git, so committing leaves it as it is.
 - The build is reproducible: the gate builds twice and the two bundles are the same byte for byte.
-  To check a build of your own, run `npm ci` and `npm run release:gate -- --only=build`, then
-  compare the fingerprint in `reports/release-gate.md`.
 - Any change to the sources makes the candidate stale. The gate then says so, and must pass again
   before a new candidate is recorded.
 
@@ -38,28 +39,31 @@ tracked; `npm run release:report` writes it again.
 
 | Step | Result | Tests | Took |
 |---|---|---|---|
-| Type check, architecture check, content validation | passed | - | 3 s |
-| Unit suite | passed | 1,376 | 19 s |
-| Integration suite: headless loops, golden replay, property runs, balance careers | passed | 134 | 6.3 min |
+| Type check, architecture check, content validation | passed | - | 2 s |
+| Unit suite | passed | 1,404 | 14 s |
+| Integration suite: headless loops, golden replay, property runs, balance careers | passed | 135 | 2.7 min |
 | Balance report against its candidate | passed, nothing moved | - | 1 s |
-| Performance suite | passed | 5 | 14 s |
-| Component suite | passed | 114 | 39 s |
-| Traceability | passed | 117 of 117 included requirements covered | 1 s |
-| Production build, twice, and its audit | passed, reproducible, no audit finding | - | 6 s |
-| Browser suite, Chromium | passed | 28 | 15.4 min |
-| Accessibility suite, Chromium | passed | 34 | 1.4 min |
-| Browser suite, Firefox | passed, **one test on its retry** | 27 + 1 | 15.6 min |
-| Accessibility suite, Firefox | passed | 34 | 1.5 min |
+| Performance suite | passed | 5 | 9 s |
+| Component suite | passed | 143 | 36 s |
+| Traceability | passed | 117 of 117 included requirements covered | 0.4 s |
+| Production build, twice, and its audit | passed, reproducible, no audit finding | - | 4 s |
+| Browser suite, Chromium | passed | 31 | 15.4 min |
+| Accessibility suite, Chromium | passed | 38 | 1.5 min |
+| Browser suite, Firefox | passed, **one test on its retry** | 30 + 1 | 14.6 min |
+| Accessibility suite, Firefox | passed | 38 | 1.6 min |
 | Start, save and offline flows, Chrome | passed | 15 | 2.5 min |
-| Start, save and offline flows, Edge | passed | 15 | 2.5 min |
+| Start, save and offline flows, Edge | passed | 15 | 2.6 min |
 
-The whole gate took 47 minutes. Every step ran against the source digest and the bundle above.
+The whole gate took 42 minutes. Every step ran against the source digest and the bundle above.
 
-The retried test is the guidance flow in Firefox. Its first attempt failed at the repair
-confirmation, which stayed open; the second attempt passed. The cause is a defect in the game, not
-in the test: see the first known issue below.
+The retried test is the offline flow in Firefox. Its first attempt waited 30 seconds for the
+Pirate Scout to show as Locked after the lock was ordered, and failed; the second attempt passed.
+The failed attempt's trace was removed with its passing retry, so the cause is not confirmed. It
+happened after arrival, well after the one interface change made since UIR1-09 that touches this
+flow (warp records the offered destination; this test had already chosen it), and the same flow
+passed in Chromium, Chrome and Edge.
 
-Browsers: Chromium 153.0.8010.12 and Firefox 155.0 (the builds Playwright 1.63 pins), Chrome 155.0.8059.39 and Edge 154.0.4258.62 (installed on this machine).
+Browsers: Chromium 153.0.8010.12 and Firefox 155.0 (the builds Playwright 1.63 pins), Chrome 157.0.8103.39 and Edge 157.0.4341.46 (installed on this machine).
 
 ## MVP Scope 9.1 - the playable loop
 
@@ -75,7 +79,7 @@ and held headlessly as well.
 | AC-05 Varied pressure | Mastery flow: the multi-opponent Pirate Patrol | Encounter suite, careers |
 | AC-06 Earn and convert | First-slice, mastery and offline flows: bounty, loot, sale, refit | Economy, encounter, property runs |
 | AC-07 Progress | Mastery flow: starter fit to a cleared Pirate Base | Careers on three seeds each |
-| AC-08 Retreat and recover | Traversal flow (retreat); loss flow (destruction, insurance, report, wreck, grant) | Loss suite, loss-recovery career |
+| AC-08 Retreat and recover | Traversal flow (Harbour return); loss flow (destruction, insurance, report, wreck, grant) | Loss suite, loss-recovery career |
 | AC-09 Continue | Mastery flow: every site still offered after the Pirate Base | Careers, golden campaign |
 | AC-10 Learn in game | Guidance flow: a new player follows only the in-game guidance | Guidance suite |
 
@@ -115,13 +119,13 @@ Measured at the Pirate Base with every opponent alive, the largest authored enco
 
 | Target (Technical Specification 13) | Budget | Measured |
 |---|---|---|
-| One 50 ms quantum, 95th percentile, production checks | 4 ms | 3.1 ms (median 1.1 ms) |
-| A non-advancing command or query, 95th percentile | 100 ms | 2.1 ms |
-| Snapshot capture, 95th percentile | 16.7 ms | 10.5 ms |
-| Open a validated campaign, 95th percentile | 2 s | 9 ms |
+| One 50 ms quantum, 95th percentile, production checks | 4 ms | 1.7 ms (median 0.7 ms) |
+| A non-advancing command or query, 95th percentile | 100 ms | 1.3 ms |
+| Snapshot capture, 95th percentile | 16.7 ms | 6.4 ms |
+| Open a validated campaign, 95th percentile | 2 s | 5.1 ms |
 
-The quantum has about 1.3 times headroom. With the complete checks that tests and development
-builds run at every commit, the same quantum measured 4.1 ms; that depth is recorded, not
+The quantum has about 2.3 times headroom at rc.2 (1.3 at rc.1). With the complete checks that tests and development
+builds run at every commit, the same quantum measured 2.3 ms; that depth is recorded, not
 asserted (Q10).
 
 The gate times the engine, not the drawing. How smoothly the space view runs is a playtest
@@ -145,7 +149,15 @@ every figure deterministic. The full report is `reports/balance.md`.
 No fit dominates: the long-range fit takes less than half the damage of the mastery fit at the
 Pirate Base and cannot clear the Pirate Patrol, which the mastery fit clears 3/3.
 
-## Found and fixed in this phase
+## Found and fixed by UIR1-10, for rc.2
+
+- **Warping to the site Destinations offered first left "Choose a site" open** for the whole
+  sortie, because only a click recorded the choice. Warp now records it first.
+- **The header's Pause button drew a play icon** while the clock ran. It now shows pause.
+- **Three texts still sent the player to "Services"**, a screen the review removed. They now say
+  "on the Overview".
+
+## Found and fixed for rc.1 (Phase 21)
 
 - **Every start logged an error in Chrome and Edge.** The page declared no icon, so the browser
   asked for `/favicon.ico` and got a 404. The icon is now written into the page. The Chromium build
@@ -156,14 +168,15 @@ Pirate Base and cannot clear the Pirate Patrol, which the mastery fit clears 3/3
 
 ## Known issues, none blocking
 
-**Found by this gate and not fixed**
+**Found by the rc.1 gate and still not fixed**
 
-- **A confirmation can ask to be confirmed twice.** While the ship is docked, the clock is running
+- **A confirmation can ask to be confirmed twice.** Q12 is still unanswered; rc.2 inherits it, and
+  the Overview's live prices put the player in front of it more often. While the ship is docked, the clock is running
   and its shield or capacitor is still regenerating, a station confirmation (repair, purchase,
   sale, resupply, insurance) is sometimes answered with "Something changed while you were deciding"
   and must be pressed again. Nothing is charged wrongly and the second press works. Q12 in
   `docs/agent-comm/requests/questions-and-answes.md` has the cause and a proposed fix. It is why
-  the guidance flow needed its retry in Firefox. Pausing at the station avoids it.
+  the guidance flow needed its retry in Firefox at rc.1. Pausing at the station avoids it.
 
 **Against the specifications**
 
@@ -177,11 +190,11 @@ Pirate Base and cannot clear the Pirate Patrol, which the mastery fit clears 3/3
 
 - **Chrome and Edge run the short flows only:** start, save, save integrity and offline. The long
   fights run in Playwright's Chromium and Firefox builds.
-- **One retry in the browser suites.** Two things can make a passing flow fail once: the issue
-  above, and Firefox under Playwright now and then failing to close its own context after a test
-  has passed. A test that needed its retry is named in the evidence, as above.
+- **One retry in the browser suites.** Several things can make a passing flow fail once: the issue
+  above, Firefox under Playwright now and then failing to close its own context after a test has
+  passed, and, at rc.2, a lock that did not complete in time in the Firefox offline flow. A test that needed its retry is named in the evidence, as above.
 - **The candidate record counts the retried test out.** `config/release-candidate.json` says
-  "browser-firefox: passed: 27 tests" for a suite of 28. The evidence and this report say why.
+  "browser-firefox: passed: 30 tests" for a suite of 31. The evidence and this report say why.
 
 **Usability, noted in earlier phases and left for the playtest to judge**
 
@@ -192,6 +205,16 @@ Pirate Base and cannot clear the Pirate Patrol, which the mastery fit clears 3/3
 - While a list box has focus the browser keeps letter and digit keys for it, so shortcuts wait
   until focus leaves.
 
+**Usability, noted during UIR1-10 and left for the playtest to judge** (details in
+`uir1-10-review-summary.md`)
+
+- Back at the station's site, Destinations offers the next sortie first; docking needs Borrell
+  Harbour chosen in the list, or X.
+- Radar labels overlap when objects are close together.
+- The hangar's transfer controls wrap into a tall stack in the two columns.
+- A hangar/hold transfer is not an autosave trigger (Functional Specification 3), so a page reload
+  straight after one can undo it.
+
 **By scope**
 
 - Saves written by earlier development builds are refused; start a new campaign.
@@ -200,7 +223,7 @@ Pirate Base and cannot clear the Pirate Patrol, which the mastery fit clears 3/3
 ## What happens next
 
 1. Answer Q12: fix the stale confirmation before the playtest, which makes the playtest one of
-   rc.2, or playtest rc.1 as it is. I recommend fixing it first. Q11 can wait.
+   rc.3, or playtest rc.2 as it is. I still recommend fixing it first. Q11 can wait.
 2. Play `playtest-script.md` and record the result in it.
 3. If the result is "accepted", the MVP is complete.
 4. If not, each item becomes a session-sized tuning or usability phase. After it, the gate runs
