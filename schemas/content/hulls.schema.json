@@ -140,8 +140,7 @@
               "accelerationKmPerSecondSquared",
               "brakingKmPerSecondSquared",
               "maxSpeedKmPerSecond",
-              "turnRateRadiansPerSecond",
-              "warpSpeedKmPerSecond"
+              "turnRateRadiansPerSecond"
             ],
             "properties": {
               "maxSpeedKmPerSecond": {
@@ -154,9 +153,6 @@
                 "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
               },
               "turnRateRadiansPerSecond": {
-                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
-              },
-              "warpSpeedKmPerSecond": {
                 "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
               }
             }

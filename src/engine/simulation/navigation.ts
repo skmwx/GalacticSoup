@@ -145,17 +145,11 @@ export function resolveWarpPrepared(context: SimulationContext, entry: Scheduler
     fromSiteId: travel.originSiteId,
     toSiteId: travel.destinationSiteId,
   };
-  const warpSpeed = attributeValue(
-    deriveShipAttributes({
-      hull: context.content.requireHull(ship.hullId),
-      fit: shipFit(draft.assets, ship.id),
-      content: context.content,
-    }),
-    'warpSpeedKmPerSecond',
-  );
+  // Transit takes the same time whatever the distance: in a single-player
+  // game a long warp is only waiting (Functional Specification 7.3).
   const durationMs = Math.max(
     context.content.rules.time.simulationQuantumMs,
-    Math.ceil((travel.distanceKm / warpSpeed) * 1000),
+    context.content.rules.navigation.warpTransitMs,
   );
   // Leaving the site ends the instance it held (Functional Specification 9.11).
   abandonEncounter(context);

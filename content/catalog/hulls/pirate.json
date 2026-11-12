@@ -45,8 +45,7 @@
         "maxSpeedKmPerSecond": 0.41,
         "accelerationKmPerSecondSquared": 0.1025,
         "brakingKmPerSecondSquared": 0.205,
-        "turnRateRadiansPerSecond": 0.8,
-        "warpSpeedKmPerSecond": 4000
+        "turnRateRadiansPerSecond": 0.8
       },
       "signatureRadiusMetres": 33,
       "targeting": {
@@ -119,8 +118,7 @@
         "maxSpeedKmPerSecond": 0.36,
         "accelerationKmPerSecondSquared": 0.09,
         "brakingKmPerSecondSquared": 0.18,
-        "turnRateRadiansPerSecond": 0.8,
-        "warpSpeedKmPerSecond": 4000
+        "turnRateRadiansPerSecond": 0.8
       },
       "signatureRadiusMetres": 46,
       "targeting": {

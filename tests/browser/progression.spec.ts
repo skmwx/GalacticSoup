@@ -256,7 +256,7 @@ async function press(control: Locator): Promise<boolean> {
  * Modules are switched on at the first lock and left running.
  */
 async function fight(page: Page, engagement: Engagement): Promise<void> {
-  const cleared = region(page, 'Encounter').getByText(`Site cleared: ${engagement.bounty} ISK paid`, { exact: false });
+  const cleared = page.locator('[data-encounter-summary="complete"]', { hasText: `Cleared: ${engagement.bounty} ISK paid` });
   const fire = region(page, 'Weapons').getByRole('button', { name: /^Fire\s?E$/ });
   const deadline = Date.now() + 12 * 60_000;
   let current: string | null = null;
@@ -288,10 +288,10 @@ async function fight(page: Page, engagement: Engagement): Promise<void> {
     }
 
     const entry = page.locator(`[data-object-entry="${current}"]`);
-    const lock = region(page, 'Locks').locator(`[data-lock="${current}"]`);
+    const lock = region(page, 'In this site').locator(`[data-lock="${current}"]`);
     if ((await lock.count()) === 0) {
       if ((await entry.getAttribute('aria-pressed').catch(() => null)) !== 'true') await press(entry);
-      await press(region(page, 'Selected').getByRole('button', { name: /^Lock target/ }));
+      await press(region(page, 'Navigation').getByRole('button', { name: /^Lock target/ }));
     } else if ((await lock.getAttribute('data-lock-status').catch(() => null)) === 'locked') {
       await press(fire);
       if (!modulesRunning) {

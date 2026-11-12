@@ -115,17 +115,17 @@ test.describe('playing without a network', () => {
     await region(page, 'In this site').getByRole('button', { name: /Pirate Scout/ }).click();
     await page.getByLabel('Range').selectOption('1');
     await page.getByRole('button', { name: /^Orbit/ }).click();
-    const lock = region(page, 'Selected').getByRole('button', { name: /^Lock target/ });
+    const lock = region(page, 'Navigation').getByRole('button', { name: /^Lock target/ });
     await expect(lock).toBeEnabled({ timeout: 60_000 });
     await lock.click();
-    await expect(region(page, 'Locks').getByText('Locked', { exact: true })).toBeVisible({
+    await expect(region(page, 'In this site').getByText('Locked', { exact: true })).toBeVisible({
       timeout: 30_000,
     });
     await region(page, 'Weapons').getByRole('button', { name: /^Fire\s?E$/ }).click();
     await region(page, 'Modules')
       .getByRole('button', { name: /^Activate Small Shield Booster/ })
       .click();
-    await expect(region(page, 'Encounter').getByText(/^Site cleared: 3,000 ISK paid/)).toBeVisible({
+    await expect(page.locator('[data-encounter-summary="complete"]', { hasText: 'Cleared: 3,000 ISK paid' })).toBeVisible({
       timeout: 6 * 60_000,
     });
 

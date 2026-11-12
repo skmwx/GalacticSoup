@@ -44,6 +44,8 @@ export interface NavigationRules {
   readonly warpAlignmentRadians: number;
   readonly warpMinimumSpeedFraction: number;
   readonly warpPreparationMs: number;
+  /** Every warp transit takes this long, whatever the distance (Functional Specification 7.3). */
+  readonly warpTransitMs: number;
   readonly dockRangeKm: number;
   readonly dockDurationMs: number;
   readonly undockDistanceKm: number;

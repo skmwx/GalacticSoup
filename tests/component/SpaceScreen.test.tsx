@@ -61,6 +61,15 @@ async function undock(harness: Harness): Promise<void> {
   await screen.findByRole('heading', { name: 'Navigation' });
 }
 
+/**
+ * Shows one of the Navigation panel's two views. The panel opens on Warp at
+ * the station's site and on Local in any other site; the other view is hidden.
+ */
+async function showView(harness: Harness, name: 'Warp' | 'Local'): Promise<void> {
+  const tab = screen.getByRole('tab', { name });
+  if (tab.getAttribute('aria-selected') !== 'true') await harness.user.click(tab);
+}
+
 /** The station's entry in the list of objects in the site. */
 function stationObject(): HTMLElement {
   const list = screen.getByRole('heading', { name: 'In this site' }).closest('section');
@@ -97,6 +106,7 @@ describe('leaving the station', () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
+    await showView(harness, 'Local');
 
     const current = await site(harness);
     expect(current.location.kind).toBe('site');
@@ -148,6 +158,7 @@ describe('space view', () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
+    await showView(harness, 'Local');
 
     const view = screen.getByRole('img', { name: /Schematic view/ });
     const player = view.querySelector('[data-player="true"]');
@@ -192,6 +203,7 @@ describe('space view', () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
+    await showView(harness, 'Local');
 
     const list = screen.getByRole('heading', { name: 'In this site' }).closest('section');
     if (list === null) throw new Error('The object list did not render.');
@@ -217,6 +229,7 @@ describe('selected object', () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
+    await showView(harness, 'Local');
 
     expect(screen.getByText(/Nothing is selected/)).toBeInTheDocument();
 
@@ -237,6 +250,7 @@ describe('command bar', () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
+    await showView(harness, 'Local');
 
     // Nothing is selected, so the orders that need a target are refused.
     expect(screen.getByRole('button', { name: /^Approach/ })).toBeUnavailable();
@@ -255,6 +269,7 @@ describe('command bar', () => {
     const harness = renderGame();
     await startCampaign(harness);
     await undock(harness);
+    await showView(harness, 'Local');
     await harness.user.click(stationObject());
 
     await harness.user.selectOptions(screen.getByLabelText('Range'), '5');
@@ -274,8 +289,9 @@ describe('command bar', () => {
     await startCampaign(harness);
     await undock(harness);
 
-    const ranges = within(screen.getByLabelText('Range')).getAllByRole('option');
     const arrivals = within(screen.getByLabelText('Arrive at')).getAllByRole('option');
+    await showView(harness, 'Local');
+    const ranges = within(screen.getByLabelText('Range')).getAllByRole('option');
     const current = await site(harness);
 
     expect(ranges).toHaveLength(current.rangePresetsKm.length);
@@ -505,6 +521,11 @@ describe('destinations in space', () => {
       expect(current.location).toMatchObject({ kind: 'site', siteId: 'site.borrell.verge' });
     }, { timeout: 60_000 });
 
+    // Arriving at the encounter opens the local view; the destinations are a tab away.
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: 'Local' })).toHaveAttribute('aria-selected', 'true');
+    });
+    await showView(harness, 'Warp');
     // Once the site is current it cannot be warped to; the station can.
     await harness.user.click(destination(/^Pirate Scout/));
     expect(within(destinations()).getByRole('button', { name: /^Warp to Pirate Scout/ })).toBeUnavailable();
@@ -528,6 +549,7 @@ describe('text', () => {
     const harness = renderGame({ onIssue });
     await startCampaign(harness);
     await undock(harness);
+    await showView(harness, 'Local');
     // The point menu's own text resolves too.
     await harness.user.keyboard('.');
     await screen.findByRole('group', { name: 'Commands for empty space' });

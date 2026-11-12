@@ -56,7 +56,7 @@ async function inAFight(page: Page): Promise<void> {
     .getByRole('region', { name: 'In this site' })
     .getByRole('button', { name: /Pirate Scout/ })
     .click();
-  const lock = page.getByRole('region', { name: 'Selected' }).getByRole('button', { name: /^Lock target/ });
+  const lock = page.getByRole('region', { name: 'Navigation' }).getByRole('button', { name: /^Lock target/ });
   await expect(lock).toBeEnabled({ timeout: 60_000 });
   await lock.click();
   const weapons = page.getByRole('region', { name: 'Weapons' });

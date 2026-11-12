@@ -3,8 +3,8 @@
  "formatVersion": 10,
  "protocolVersion": 18,
  "engineVersion": "0.1.0",
- "contentVersion": "0.1.0+8f13b5394f04",
- "contentHash": "8f13b5394f048a0f4d295f2d155394a7c68d6e5f483b985dfc4338028315cea2",
+ "contentVersion": "0.1.0+d3b6fc450d60",
+ "contentHash": "d3b6fc450d60d01994a2c4e509e7c6f78a24b65fff307cc78c9cead3cbb3fbd1",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
@@ -493,5 +493,5 @@
    "nextInsertionOrdinal": 2
   }
  },
- "checksum": "007f37d07dbac28f8d841e9c3a1983d6d2da68a5aa7ebb307b28c4466e6590c3"
+ "checksum": "416808569f9dc5fec819c241c52fda67fbf7c3c06a1cf824e79af11852014c46"
 }

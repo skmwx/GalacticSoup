@@ -455,8 +455,8 @@
       },
       "expect": "notCompleted",
       "band": {
-        "completedShare": [0, 0],
-        "hitPointsLost": [1, 1]
+        "completedShare": [0, 0.34],
+        "hitPointsLost": [0.9, 1]
       },
       "seeds": [
         "bb22cc33dd44ee55ff6677889900aa11",

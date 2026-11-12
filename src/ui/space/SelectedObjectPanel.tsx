@@ -2,52 +2,35 @@ import type { JSX, ReactNode } from 'react';
 
 import type { CombatData, EncounterData, SiteObjectData } from '@protocol';
 
-import type { ActionRunner } from '../actions';
+import { SubstitutedExplanation } from '../common/Explanation';
 import { formatCredits, formatDistanceKm, formatSpeedKmPerSecond, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
-import type { PlayData } from '../frame/usePlayData';
 import { DefenseLayers } from './DefenseLayers';
-import { ObjectCommands } from './ObjectCommands';
 import styles from './Space.module.css';
 
 /**
  * What is selected, and what is known about it
- * (Functional Specification 9.3, 19.3).
+ * (Functional Specification 9.2, 9.3, 19.3; MVP review 02).
  *
- * Identity, attitude and range come first; for another ship, the relative
- * motion that decides whether a turret can track it, whether it is locked,
- * its defensive layers and the modules it is visibly running. Every value is
- * one the engine published. Anything it did not publish is marked unknown
- * rather than replaced with false precision.
+ * Ordered by what a fight needs first: the target's shield, armour and hull;
+ * its range; its speeds, which decide whether a turret can track it; what it
+ * is running; and then the rest - type, attitude, role, bounty and the lock
+ * time with its calculation. Locking, the orders and the list targets are
+ * chosen from live in the Navigation panel, so this panel only describes.
  *
- * @implements FUNC-9.3, FUNC-19.3, MVP-AC-04
+ * Every value is one the engine published. Anything it did not publish is
+ * marked unknown rather than replaced with false precision.
+ *
+ * @implements FUNC-9.2, FUNC-9.3, FUNC-19.3, FUNC-19.6, MVP-AC-04
  */
 
 export interface SelectedObjectPanelProps {
   readonly object: SiteObjectData | null;
   readonly combat: CombatData | null;
   readonly encounter: EncounterData | null;
-  readonly data: PlayData;
-  readonly runner: ActionRunner;
-  readonly rangeKm: number;
-  readonly closestKm: number;
-  readonly canFire: boolean;
-  readonly fireReason: string | null;
-  onFire(): Promise<void>;
 }
 
-export function SelectedObjectPanel({
-  object,
-  combat,
-  encounter,
-  data,
-  runner,
-  rangeKm,
-  closestKm,
-  canFire,
-  fireReason,
-  onFire,
-}: SelectedObjectPanelProps): JSX.Element {
+export function SelectedObjectPanel({ object, combat, encounter }: SelectedObjectPanelProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
 
@@ -66,8 +49,8 @@ export function SelectedObjectPanel({
   const motion = combat?.motion.find((entry) => entry.targetId === object.id) ?? null;
   const lock = combat?.locks.find((entry) => entry.targetId === object.id) ?? null;
   const defenses = combat?.targetDefenses.find((entry) => entry.shipId === object.id) ?? null;
-  const hostileLock = combat?.hostileLocks.find((entry) => entry.shipId === object.id) ?? null;
   const otherShip = object.kind === 'ship' && !object.player;
+  const name = object.player ? translate('space.object.you') : translate(object.nameKey);
 
   return (
     <section
@@ -80,44 +63,33 @@ export function SelectedObjectPanel({
         {translate('space.selected.heading')}
       </h3>
       <p className={styles['objectKind']} data-selected-name>
-        {object.player ? translate('space.object.you') : translate(object.nameKey)}
+        {name}
       </p>
-      <ObjectCommands
-        object={object}
-        data={data}
-        runner={runner}
-        variant="panel"
-        rangeKm={rangeKm}
-        closestKm={closestKm}
-        canFire={canFire}
-        fireReason={fireReason}
-        onFire={onFire}
-      />
-      <dl className={styles['readouts']}>
-        <dt>{translate('space.selected.kind')}</dt>
-        <dd>{translate(`space.kind.${object.kind}`)}</dd>
-        <dt>{translate('tactical.attitude')}</dt>
-        <dd data-attitude-label={object.attitude}>{translate(`tactical.attitude.${object.attitude}`)}</dd>
-        {npc === null ? null : (
-          <>
-            <dt>{translate('tactical.role')}</dt>
-            <dd>{translate(`role.${npc.role}`)}</dd>
-            <dt>{translate('tactical.bounty')}</dt>
-            <dd>{translate('credits.amount', { credits: formatCredits(npc.bountyCredits, locale) })}</dd>
-          </>
-        )}
-        <dt>{translate('space.selected.range')}</dt>
-        <dd>
-          {translate('space.distance', {
-            distance: formatDistanceKm(object.rangeFromPlayerKm, locale),
-          })}
-        </dd>
-        <dt>{translate('space.selected.speed')}</dt>
-        <dd>
+
+      {/* 1. Shield, armour and hull. */}
+      {defenses !== null ? (
+        <DefenseLayers
+          defenses={defenses}
+          label={translate('tactical.selected.resistances', { name })}
+        />
+      ) : !object.player ? (
+        <dl className={styles['readouts']}>
+          <Row label={translate('space.selected.defenses')}>{translate('space.selected.unknown')}</Row>
+        </dl>
+      ) : null}
+
+      <dl className={styles['readouts']} data-selected-readouts>
+        {/* 2. Range. */}
+        <Row label={translate('space.selected.range')} section="range">
+          {translate('space.distance', { distance: formatDistanceKm(object.rangeFromPlayerKm, locale) })}
+        </Row>
+
+        {/* 3. Speeds. */}
+        <Row label={translate('space.selected.speed')} section="speeds">
           {translate('space.speed', {
             speed: formatSpeedKmPerSecond(Math.hypot(object.velocity.x, object.velocity.y), locale),
           })}
-        </dd>
+        </Row>
         {motion === null ? null : (
           <>
             <Row label={translate('tactical.motion.closing')}>
@@ -140,59 +112,67 @@ export function SelectedObjectPanel({
             </Row>
           </>
         )}
+
+        {/* 4. What it is running. */}
         {otherShip ? (
-          <>
-            <dt>{translate('tactical.lockState')}</dt>
-            <dd data-lock-state={lock?.status ?? 'none'}>
-              {lock === null
-                ? motion !== null && !motion.withinLockRange
-                  ? translate('combat.lock.outOfRange')
-                  : translate('tactical.lockNone')
-                : lock.status === 'locked'
-                  ? translate('combat.lock.locked')
-                  : translate('tactical.locks.remaining', {
-                      seconds: formatStat(Math.round((lock.remainingSeconds ?? 0) * 10) / 10, locale),
-                    })}
-            </dd>
-            <dt>{translate('tactical.targetingYou')}</dt>
-            <dd data-targeting-you={hostileLock?.status ?? 'none'}>
-              {hostileLock === null
-                ? translate('tactical.targetingYou.no')
-                : translate(`tactical.targetingYou.${hostileLock.status}`)}
-            </dd>
-            <dt>{translate('tactical.running')}</dt>
-            <dd>
-              {defenses === null
-                ? translate('space.selected.unknown')
-                : defenses.activeEffects.length === 0
-                  ? translate('tactical.runningNothing')
-                  : defenses.activeEffects.map((effect) => translate(effect.nameKey)).join(', ')}
-            </dd>
-          </>
+          <Row label={translate('tactical.running')} section="running">
+            {defenses === null
+              ? translate('space.selected.unknown')
+              : defenses.activeEffects.length === 0
+                ? translate('tactical.runningNothing')
+                : defenses.activeEffects.map((effect) => translate(effect.nameKey)).join(', ')}
+          </Row>
         ) : null}
-        {defenses === null ? (
+
+        {/* 5. The rest. */}
+        <Row label={translate('space.selected.kind')} section="identity">
+          {translate(`space.kind.${object.kind}`)}
+        </Row>
+        <dt>{translate('tactical.attitude')}</dt>
+        <dd data-attitude-label={object.attitude}>{translate(`tactical.attitude.${object.attitude}`)}</dd>
+        {npc === null ? null : (
           <>
-            <dt>{translate('space.selected.defenses')}</dt>
-            <dd>{translate('space.selected.unknown')}</dd>
+            <Row label={translate('tactical.role')}>{translate(`role.${npc.role}`)}</Row>
+            <Row label={translate('tactical.bounty')}>
+              {translate('credits.amount', { credits: formatCredits(npc.bountyCredits, locale) })}
+            </Row>
           </>
-        ) : null}
+        )}
+        {lock === null ? null : (
+          <Row label={translate('tactical.lockTime')}>
+            {translate('tactical.seconds', {
+              seconds: formatStat(Math.round(lock.lockTimeSeconds * 100) / 100, locale),
+            })}
+          </Row>
+        )}
       </dl>
-      {defenses === null ? null : (
-        <DefenseLayers
-          defenses={defenses}
-          label={translate('tactical.selected.resistances', { name: translate(object.nameKey) })}
+      {lock === null ? null : (
+        <SubstitutedExplanation
+          trace={lock.trace}
+          label={translate('tactical.locks.explain')}
+          result={translate('tactical.seconds', {
+            seconds: formatStat(Math.round(lock.lockTimeSeconds * 100) / 100, locale),
+          })}
         />
       )}
-
     </section>
   );
 }
 
-function Row({ label, children }: { readonly label: string; readonly children: ReactNode }): JSX.Element {
+function Row({
+  label,
+  section,
+  children,
+}: {
+  readonly label: string;
+  /** Marks the first row of each group, for the space between groups. */
+  readonly section?: string;
+  readonly children: ReactNode;
+}): JSX.Element {
   return (
     <>
-      <dt>{label}</dt>
-      <dd>{children}</dd>
+      <dt data-readout-group={section}>{label}</dt>
+      <dd data-readout-group={section}>{children}</dd>
     </>
   );
 }

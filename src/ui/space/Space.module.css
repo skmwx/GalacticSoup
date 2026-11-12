@@ -967,3 +967,130 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
+
+/*
+ * The Navigation panel's two views, Warp and Local, as tabs (MVP review 02).
+ * Only the chosen view is shown; the other stays mounted, hidden.
+ */
+.navTabs {
+  display: flex;
+  gap: var(--gs-space-1);
+  border-bottom: var(--gs-border);
+}
+.commands .navTab {
+  padding: var(--gs-space-1) var(--gs-space-3);
+  border: var(--gs-border);
+  border-bottom: none;
+  border-radius: var(--gs-radius) var(--gs-radius) 0 0;
+  background: var(--gs-color-surface-raised);
+  color: var(--gs-color-text-muted);
+  font: inherit;
+  font-size: var(--gs-font-small);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.commands .navTab[aria-selected='true'] {
+  background: var(--gs-color-surface);
+  color: var(--gs-color-text);
+  border-color: var(--gs-color-accent);
+  box-shadow: inset 0 2px 0 var(--gs-color-accent);
+}
+.navView {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-2);
+  min-width: 0;
+}
+.navView[hidden] {
+  display: none;
+}
+
+/* The targets in the local view: name on the left, lock marks and range on the right. */
+.targets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+  min-width: 0;
+}
+.targets .panelHeading {
+  font-size: var(--gs-font-small);
+}
+.commands .objectList {
+  max-height: none;
+  overflow: visible;
+}
+.commands .objectList .objectButton {
+  padding: 2px var(--gs-space-2);
+  align-items: center;
+}
+.targetName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.targetMarks {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--gs-space-1) var(--gs-space-2);
+  flex-shrink: 0;
+}
+.lockMark,
+.targetingYouMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--gs-font-small);
+  white-space: nowrap;
+}
+.lockMark {
+  color: var(--gs-color-warn);
+}
+.targetingYouMark {
+  color: var(--gs-color-danger);
+}
+.markIcon {
+  width: calc(0.95rem * var(--gs-text-scale));
+  height: calc(0.95rem * var(--gs-text-scale));
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+.markIcon[data-dashed='true'] {
+  stroke-dasharray: 2 2;
+}
+
+/* How long the capacitor lasts, just under its bar. */
+.capacitorOutlook {
+  margin: 0;
+  margin-top: calc(-1 * var(--gs-space-1));
+  font-family: var(--gs-font-mono);
+  font-size: var(--gs-font-small);
+  width: max-content;
+  cursor: help;
+}
+.capacitorOutlook[data-capacitor-outlook='draining'] {
+  color: var(--gs-color-warn);
+}
+.capacitorOutlook[data-capacitor-outlook='stable'] {
+  color: var(--gs-color-ok);
+}
+
+/* The selected object's readouts fall into groups, with a little air between them. */
+.readouts > [data-readout-group]:not(:first-child) {
+  margin-top: var(--gs-space-1);
+}
+
+/* The encounter, collapsed at the foot of the target column. */
+.encounterDisclosure > summary .panelHeading {
+  display: inline;
+}
+.encounterProgress {
+  font-family: var(--gs-font-mono);
+}
+.encounterDisclosure > .panel {
+  border: none;
+  padding: var(--gs-space-2) 0 0;
+}

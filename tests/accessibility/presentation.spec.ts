@@ -113,7 +113,7 @@ function scoutEntry(page: Page): Locator {
 /** Selects the scout, locks it once in range and opens fire; then pauses. */
 async function engageScout(page: Page): Promise<void> {
   await scoutEntry(page).click();
-  const lock = region(page, 'Selected').getByRole('button', { name: /^Lock target/ });
+  const lock = region(page, 'Navigation').getByRole('button', { name: /^Lock target/ });
   await expect(lock).toBeEnabled({ timeout: 60_000 });
   await lock.click();
   const fire = region(page, 'Weapons').locator('[data-action="weapons.fire"]');
@@ -308,7 +308,7 @@ test.describe('presentation settings and accessibility', () => {
     await expect(page.getByRole('heading', { level: 3, name: 'Departure' })).toBeVisible();
 
     await flyToScout(page);
-    const lock = region(page, 'Selected');
+    const lock = region(page, 'Navigation');
     await scoutEntry(page).click();
     await expect(lock.getByRole('button', { name: /^Lock target/ })).toHaveAttribute('aria-keyshortcuts', 'Z');
     await expect(lock.getByRole('button', { name: /^Lock target/ }).locator('kbd')).toHaveText('Z');
@@ -322,7 +322,7 @@ test.describe('presentation settings and accessibility', () => {
     }
     await expect(async () => {
       await page.keyboard.press('z');
-      await expect(region(page, 'Locks').locator('[data-lock]')).toHaveCount(1, { timeout: 1_000 });
+      await expect(region(page, 'In this site').locator('[data-lock]')).toHaveCount(1, { timeout: 1_000 });
     }).toPass({ timeout: 90_000 });
 
     // A key with no handler on this surface says so rather than doing nothing.
@@ -397,8 +397,8 @@ test.describe('presentation settings and accessibility', () => {
     await expect(view.locator('[data-selected="true"] [data-selection="true"]')).toHaveCount(1);
     await expect(view.locator('[data-lock-marker="locked"]')).toHaveCount(1);
     await expect(view.locator('[data-player="true"]')).toHaveCount(1);
-    // ...and a word: threats, damage and notifications.
-    await expect(page.locator('[data-readout="threats"]')).toHaveText(/\d+ hostile/);
+    // ...and a word: who has locked the ship, damage and notifications.
+    await expect(page.locator('[data-targeting-you]').first()).toContainText(/Has you locked|Locking you/);
     await expect(page.locator('[data-readout="defenses"]')).toHaveText(/\d+%/);
     const danger = page.locator('[data-severity="danger"]').first();
     await expect(danger).toContainText('Danger');

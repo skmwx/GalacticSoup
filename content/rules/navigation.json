@@ -9,6 +9,7 @@
     "warpAlignmentRadians": 0.2617993877991494,
     "warpMinimumSpeedFraction": 0.75,
     "warpPreparationMs": 3000,
+    "warpTransitMs": 2000,
     "dockRangeKm": 1,
     "dockDurationMs": 3000,
     "undockDistanceKm": 2,

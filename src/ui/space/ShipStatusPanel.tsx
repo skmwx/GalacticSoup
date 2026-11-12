@@ -1,37 +1,36 @@
 import type { JSX } from 'react';
 
-import type { CombatData, EncounterData, SiteData } from '@protocol';
+import type { CombatData } from '@protocol';
 
 import { SubstitutedExplanation } from '../common/Explanation';
+import { useTooltip } from '../common/Tooltip';
 import { formatPercent, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { DefenseLayers } from './DefenseLayers';
 import styles from './Space.module.css';
-import { describeSubject, subjectName } from './tactical';
 
 /**
  * The player's own ship in a fight
- * (Functional Specification 9.7-9.8, 19.1, 19.7).
+ * (Functional Specification 9.7-9.8, 19.1, 19.7; MVP review 02).
  *
- * Layers, capacitor and who has locked the ship are the three things that
- * decide whether to stay. Capacitor shows its recent change, what the
- * repeating modules will draw and, when that is more than recharge, how long
- * it lasts - with the calculation, because "unstable" is not an explanation.
+ * Layers and capacitor decide whether to stay. Under the capacitor bar sits
+ * how many seconds it lasts at the current use, or that it is stable; the
+ * whole sentence is in a tooltip. The details add its recent change, what the
+ * repeating modules draw and the recharge, and the calculation, because
+ * "unstable" is not an explanation. Who has locked the ship is shown beside
+ * each target in the Navigation panel's local view, not here.
  *
  * @implements FUNC-9.7, FUNC-9.8, FUNC-19.1, FUNC-19.7, MVP-AC-04
  */
 
 export interface ShipStatusPanelProps {
   readonly combat: CombatData | null;
-  readonly site: SiteData | null;
-  readonly encounter: EncounterData | null;
 }
 
-export function ShipStatusPanel({ combat, site, encounter }: ShipStatusPanelProps): JSX.Element {
+export function ShipStatusPanel({ combat }: ShipStatusPanelProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const capacitor = combat?.capacitor ?? null;
-  const shipId = combat?.shipId ?? null;
 
   return (
     <section className={styles['panel']} aria-labelledby="status-heading" data-panel="status">
@@ -73,16 +72,10 @@ export function ShipStatusPanel({ combat, site, encounter }: ShipStatusPanelProp
               />
             </span>
           </p>
-          <dl className={styles['readouts']}>
-            <dt>{translate('tactical.capacitorOutlook')}</dt>
-            <dd data-capacitor-outlook={capacitor.stable ? 'stable' : 'draining'}>
-              {capacitor.stable || capacitor.enduranceSeconds === null
-                ? translate('tactical.capacitorStable')
-                : translate('tactical.capacitorEndurance', {
-                    seconds: formatStat(Math.round(capacitor.enduranceSeconds * 10) / 10, locale),
-                  })}
-            </dd>
-          </dl>
+          <CapacitorOutlook
+            stable={capacitor.stable || capacitor.enduranceSeconds === null}
+            seconds={capacitor.enduranceSeconds}
+          />
           <details className={styles['disclosure']}>
             <summary>{translate('cockpit.capacitorDetails')}</summary>
           <dl className={styles['readouts']}>
@@ -118,25 +111,35 @@ export function ShipStatusPanel({ combat, site, encounter }: ShipStatusPanelProp
         </div>
       )}
 
-      {combat === null || combat.shipId === null ? null : (
-        <div data-hostile-locks={String(combat.hostileLocks.length)}>
-          <p className={styles['subheadingSmall']}>{translate('tactical.targetedBy')}</p>
-          {combat.hostileLocks.length === 0 ? (
-            <p className={styles['muted']}>{translate('tactical.targetedByNone')}</p>
-          ) : (
-            <ul className={styles['plainList']}>
-              {combat.hostileLocks.map((lock) => (
-                <li key={lock.shipId} className={styles['warning']} data-hostile-lock={lock.status}>
-                  {translate(`tactical.hostileLock.${lock.status}`, {
-                    ship: describeSubject(subjectName(lock.shipId, site, encounter, shipId), translate),
-                  })}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
     </section>
+  );
+}
+
+/**
+ * How long the capacitor lasts, under its bar: the seconds alone, or Stable,
+ * with the whole sentence in a tooltip and for assistive technology.
+ */
+function CapacitorOutlook({ stable, seconds }: { readonly stable: boolean; readonly seconds: number | null }): JSX.Element {
+  const translate = useTranslate();
+  const { locale } = useLocalizer();
+  const rounded = formatStat(Math.round((seconds ?? 0) * 10) / 10, locale);
+  const tooltip = useTooltip({
+    description: stable
+      ? translate('tactical.capacitorStable')
+      : translate('tactical.capacitorEndurance', { seconds: rounded }),
+  });
+  return (
+    <p
+      {...tooltip.anchorProps}
+      className={styles['capacitorOutlook']}
+      data-capacitor-outlook={stable ? 'stable' : 'draining'}
+      tabIndex={0}
+    >
+      <span aria-hidden="true">
+        {stable ? translate('tactical.capacitorStableShort') : translate('tactical.seconds', { seconds: rounded })}
+      </span>
+      {tooltip.element}
+    </p>
   );
 }
 

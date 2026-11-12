@@ -4,7 +4,11 @@ import { formatSpeedKmPerSecond } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import styles from './CampaignFrame.module.css';
 
-/** Live movement, locks and module state beside the defensive instruments. */
+/**
+ * Live movement, locks and module state beside the defensive instruments.
+ * Who has locked the ship is marked in the Navigation panel's target list
+ * (MVP review 02), so it is not repeated here.
+ */
 export function FlightReadouts({ data }: { readonly data: PlayData }): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
@@ -17,7 +21,6 @@ export function FlightReadouts({ data }: { readonly data: PlayData }): JSX.Eleme
     rows.push(
       ['locks', translate('frame.locksValue', { held: combat.locks.filter((lock) => lock.status === 'locked').length, maximum: combat.maxLockedTargets })],
       ['modules', translate('frame.modulesValue', { active: combat.modules.filter((module) => module.cycle !== null).length, weapons: combat.weapons.filter((weapon) => weapon.repeating).length })],
-      ['threats', combat.hostileLocks.length === 0 ? translate('frame.threatsNone') : translate('frame.threatsValue', { count: combat.hostileLocks.length })],
     );
   }
   return (
@@ -25,7 +28,7 @@ export function FlightReadouts({ data }: { readonly data: PlayData }): JSX.Eleme
       {rows.map(([key, value]) => (
         <div key={key} className={styles['readout']}>
           <dt>{translate(`frame.${key}`)}</dt>
-          <dd data-readout={key} className={key === 'threats' && (combat?.hostileLocks.length ?? 0) > 0 ? styles['alert'] : undefined}>{value}</dd>
+          <dd data-readout={key}>{value}</dd>
         </div>
       ))}
     </dl>

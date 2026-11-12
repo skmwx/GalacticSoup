@@ -18,6 +18,7 @@
         "warpAlignmentRadians",
         "warpMinimumSpeedFraction",
         "warpPreparationMs",
+        "warpTransitMs",
         "dockRangeKm",
         "dockDurationMs",
         "undockDistanceKm",
@@ -34,6 +35,10 @@
         "warpAlignmentRadians": { "type": "number", "exclusiveMinimum": 0, "maximum": 3.141592653589793 },
         "warpMinimumSpeedFraction": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
         "warpPreparationMs": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount" },
+        "warpTransitMs": {
+          "description": "How long every warp transit takes, whatever the distance.",
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+        },
         "dockRangeKm": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },
         "dockDurationMs": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount" },
         "undockDistanceKm": { "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber" },

@@ -127,10 +127,10 @@ async function engageScout(page: Page): Promise<void> {
   await page.getByLabel('Range').selectOption('1');
   await page.getByRole('button', { name: /^Orbit/ }).click();
 
-  const lock = region(page, 'Selected').getByRole('button', { name: /^Lock target/ });
+  const lock = region(page, 'Navigation').getByRole('button', { name: /^Lock target/ });
   await expect(lock).toBeEnabled({ timeout: 60_000 });
   await lock.click();
-  await expect(region(page, 'Locks').getByText('Locked', { exact: true })).toBeVisible({
+  await expect(region(page, 'In this site').getByText('Locked', { exact: true })).toBeVisible({
     timeout: 30_000,
   });
 
@@ -147,7 +147,7 @@ async function engageScout(page: Page): Promise<void> {
 }
 
 async function waitForClearedSite(page: Page): Promise<void> {
-  await expect(region(page, 'Encounter').getByText(/^Site cleared: 3,000 ISK paid/)).toBeVisible({
+  await expect(page.locator('[data-encounter-summary="complete"]', { hasText: 'Cleared: 3,000 ISK paid' })).toBeVisible({
     timeout: 6 * 60_000,
   });
 }
@@ -199,7 +199,7 @@ test.describe('the first vertical slice', () => {
       timeout: 30_000,
     });
     await reopen(page, 'Verge Belt');
-    await expect(region(page, 'Locks').getByText('Locked', { exact: true })).toBeVisible();
+    await expect(region(page, 'In this site').getByText('Locked', { exact: true })).toBeVisible();
     await expect(region(page, 'Weapons').getByText(/^Firing at Pirate Scout/).first()).toBeVisible();
     await expect(
       region(page, 'Modules').getByRole('button', { name: /^Deactivate Small Shield Booster/ }),
@@ -312,7 +312,7 @@ test.describe('combat commands', () => {
 
     // The secondary click selected it too, so its panel says when it is in
     // lock range; then lock it from the same menu, paused again.
-    await expect(region(page, 'Selected').getByRole('button', { name: /^Lock target/ })).toBeEnabled({
+    await expect(region(page, 'Navigation').getByRole('button', { name: /^Lock target/ })).toBeEnabled({
       timeout: 90_000,
     });
     await ensurePaused(page);
@@ -320,7 +320,7 @@ test.describe('combat commands', () => {
     await menu.getByRole('button', { name: /^Lock target/ }).click();
     await expect(menu).toBeHidden();
     await ensureRunning(page);
-    await expect(region(page, 'Locks').getByText('Locked', { exact: true })).toBeVisible({
+    await expect(region(page, 'In this site').getByText('Locked', { exact: true })).toBeVisible({
       timeout: 30_000,
     });
 
@@ -340,8 +340,8 @@ test.describe('combat commands', () => {
     await weapons.getByRole('button', { name: /^Cease fire/ }).click();
     await expect(weapons.locator('[data-weapon-status="stopped"]')).toBeVisible({ timeout: 10_000 });
     await expect(weapons.getByText('Stopped: Stopped on command.')).toBeVisible();
-    await region(page, 'Locks').getByRole('button', { name: /^Unlock Pirate Scout/ }).click();
-    await expect(region(page, 'Locks').getByText(/^No target is locked/)).toBeVisible();
+    await region(page, 'Navigation').getByRole('button', { name: /^Unlock target/ }).click();
+    await expect(region(page, 'In this site').locator('[data-lock]')).toHaveCount(0);
 
     // Leaving mid-sortie is an ordinary warp to the station destination.
     await warpHome(page);
@@ -382,9 +382,9 @@ test.describe('combat commands', () => {
     // l locks once the scout is in range; e opens fire; 1 runs the booster.
     await expect(async () => {
       await page.keyboard.press('l');
-      await expect(region(page, 'Locks').locator('[data-lock]')).toHaveCount(1, { timeout: 1_000 });
+      await expect(region(page, 'In this site').locator('[data-lock]')).toHaveCount(1, { timeout: 1_000 });
     }).toPass({ timeout: 90_000 });
-    await expect(region(page, 'Locks').getByText('Locked', { exact: true })).toBeVisible({
+    await expect(region(page, 'In this site').getByText('Locked', { exact: true })).toBeVisible({
       timeout: 30_000,
     });
     const weapons = region(page, 'Weapons');
@@ -413,7 +413,7 @@ test.describe('combat commands', () => {
 
     // n drops the lock; x, the return key, warps home.
     await page.keyboard.press('n');
-    await expect(region(page, 'Locks').getByText(/^No target is locked/)).toBeVisible();
+    await expect(region(page, 'In this site').locator('[data-lock]')).toHaveCount(0);
     await page.keyboard.press('x');
     await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({
       timeout: 60_000,

@@ -143,10 +143,10 @@ test.describe('guided first loop', () => {
     await page.keyboard.press('o');
 
     // Lock (L).
-    expect(await step(page, 'Lock a target')).toMatch(/Lock target \(L\) once it is inside your lock range/);
-    await expect(region(page, 'Selected').getByRole('button', { name: /^Lock target/ })).toBeEnabled({ timeout: 90_000 });
+    expect(await step(page, 'Lock a target')).toMatch(/Lock target \(L\) on the Local tab once it is inside your lock range/);
+    await expect(region(page, 'Navigation').getByRole('button', { name: /^Lock target/ })).toBeEnabled({ timeout: 90_000 });
     await page.keyboard.press('l');
-    await expect(region(page, 'Locks').getByText('Locked', { exact: true })).toBeVisible({ timeout: 60_000 });
+    await expect(region(page, 'In this site').getByText('Locked', { exact: true })).toBeVisible({ timeout: 60_000 });
 
     // Fire (E).
     expect(await step(page, 'Open fire', 60_000)).toContain('Fire (E)');
@@ -178,7 +178,7 @@ test.describe('guided first loop', () => {
 
     // Home: Borrell Harbour is a destination; the return key (X) warps
     // there, then Dock (D).
-    expect(await step(page, 'Return and dock')).toMatch(/Borrell Harbour under Destinations.*Dock \(D\).*Return to station \(X\)/);
+    expect(await step(page, 'Return and dock')).toMatch(/Warp tab, choose Borrell Harbour.*Dock \(D\).*Return to station \(X\)/);
     await page.keyboard.press('x');
     await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({ timeout: 90_000 });
     await page.keyboard.press('d');

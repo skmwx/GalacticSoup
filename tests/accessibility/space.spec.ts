@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-import { chooseDestination, destinationEntry, destinations, siteObject } from '../support/destinations.ts';
+import { chooseDestination, destinationEntry, destinations, showNavigationView, siteObject } from '../support/destinations.ts';
 
 /**
  * The space view under keyboard-only operation
@@ -77,6 +77,7 @@ test.describe('space accessibility', () => {
     page,
   }) => {
     await undock(page);
+    await showNavigationView(page, 'Local');
 
     const station = siteObject(page, /Borrell Harbour/);
     await station.focus();
@@ -97,6 +98,7 @@ test.describe('space accessibility', () => {
     // the destinations.
     await expect(page.getByRole('button', { name: /^Retreat/ })).toHaveCount(0);
 
+    await showNavigationView(page, 'Local');
     const approach = page.getByRole('button', { name: /^Approach/ });
     await expect(approach).toBeVisible();
     await expect(approach).toBeDisabled();

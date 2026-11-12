@@ -47,6 +47,8 @@ test('keeps frequent flight controls in the desktop working view and reflows wit
   expect(departureBox).not.toBeNull();
   expect(departureBox!.y + departureBox!.height).toBeLessThanOrEqual(900);
   await undock.click();
+  // The navigation panel opens on Warp at the station's site; its Local view lists what is here.
+  await page.getByRole('tab', { name: 'Local', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'In this site' })).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
 

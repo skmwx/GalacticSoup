@@ -146,7 +146,6 @@ describe('message catalogue', () => {
       ...Object.keys(shippedContent().rules.combat.npcRoles).map((role) => `role.${role}`),
       ...TURRET_LIMITING_FACTORS.map((factor) => `tactical.limiting.${factor}`),
       ...LOCK_STATUSES.map((status) => `combat.lock.${status}`),
-      ...LOCK_STATUSES.map((status) => `tactical.hostileLock.${status}`),
       ...LOCK_STATUSES.map((status) => `tactical.targetingYou.${status}`),
       ...[...WEAPON_STOP_REASONS, ...ACTIVE_MODULE_STOP_REASONS].map((reason) => `combat.stop.${reason}`),
       ...COMBAT_LOG_FILTERS.map((filter) => `tactical.log.filter.${filter}`),

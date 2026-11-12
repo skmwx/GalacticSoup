@@ -6,10 +6,22 @@ import { expect, type Locator, type Page } from '@playwright/test';
  *
  * The ship undocks with no destination; the station, the encounter sites and
  * the player's own wrecks are chosen in space from the Destinations section of
- * the navigation panel. Choosing one shows its briefing and moves nothing; the
- * Warp button beside it - or Dock, for the station from its own site - sends
- * the ordinary command.
+ * the navigation panel's Warp tab. Choosing one shows its briefing and moves
+ * nothing; the Warp button beside it - or Dock, for the station from its own
+ * site - sends the ordinary command.
+ *
+ * The navigation panel shows one of two views (MVP review 02): Warp, which it
+ * opens on at the station's site, and Local - the orders, locking and the list
+ * of what is in the site - which it opens on anywhere else. The helpers that
+ * act on destinations show the Warp view first.
  */
+
+/** Shows one of the navigation panel's two views, if it is not showing already. */
+export async function showNavigationView(page: Page, view: 'Warp' | 'Local'): Promise<void> {
+  const tab = page.getByRole('tab', { name: view, exact: true });
+  if ((await tab.getAttribute('aria-selected')) !== 'true') await tab.click();
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
+}
 
 /** The station's authored name, as the chooser shows it. */
 export const HOME_STATION = 'Borrell Harbour';
@@ -32,6 +44,7 @@ export function destinationBriefing(page: Page): Locator {
 
 /** Chooses a destination in space; it is recorded but nothing moves. */
 export async function chooseDestination(page: Page, name: string | RegExp): Promise<void> {
+  await showNavigationView(page, 'Warp');
   const entry = destinationEntry(page, name);
   await entry.click();
   await expect(entry).toHaveAttribute('aria-pressed', 'true');
@@ -74,8 +87,9 @@ export async function dockHome(page: Page): Promise<void> {
 }
 
 /**
- * An object's entry in the list of objects in the site. The destination
- * chooser also names the station, so a bare name match is ambiguous.
+ * An object's entry in the list of objects in the site, on the Local view.
+ * The destination chooser also names the station, so a bare name match is
+ * ambiguous.
  */
 export function siteObject(page: Page, name: RegExp): Locator {
   return page

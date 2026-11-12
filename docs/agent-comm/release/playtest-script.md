@@ -71,7 +71,7 @@ anything that surprised you.
 **Retreat and loss (MVP-AC-08)**
 
 - [ ] Fly to the Pirate Patrol in the ship you were given, take some damage and go home: choose Borrell
-      Harbour under Destinations and warp, or press the return key (X). You should get home, and the
+      Harbour under Destinations on the Navigation panel's Warp tab and warp, or press the return key (X). You should get home, and the
       site should be offered again.
 - [ ] On the Overview, use "Improve insurance", then fly the starter ship to the Pirate Base and let it be
       destroyed. Read the loss report. Does it tell you what killed you, what you lost, what

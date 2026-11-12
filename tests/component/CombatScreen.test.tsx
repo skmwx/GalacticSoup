@@ -110,7 +110,9 @@ describe('a fight in progress', () => {
 
     const entry = objectEntry(/Pirate Scout/);
     expect(entry).toHaveAttribute('data-attitude', 'hostile');
-    expect(within(entry).getByText(/Hostile · Locked/)).toBeInTheDocument();
+    expect(within(entry).getByText('Hostile')).toBeInTheDocument();
+    expect(within(entry).getByText('Locked')).toBeInTheDocument();
+    expect(entry.querySelector('[data-lock-status="locked"]')).not.toBeNull();
 
     const view = screen.getByRole('img', { name: /Schematic view of Verge Belt/ });
     const drawn = view.querySelector(`[data-layer="objects"] [data-attitude="hostile"]`);
@@ -158,10 +160,16 @@ describe('a fight in progress', () => {
 
     expect(status.querySelector('[data-layer-name="shield"]')?.textContent).toMatch(/^Shield\d+ \/ 350/);
     expect(within(status).getAllByText('Capacitor').length).toBeGreaterThan(0);
-    expect(status.querySelector('[data-capacitor-outlook]')).not.toBeNull();
+    // Under the bar: the seconds alone, or Stable, with the sentence for assistive technology.
+    const outlook = status.querySelector('[data-capacitor-outlook]');
+    expect(outlook?.textContent).toMatch(/^(\d+(\.\d)? s|Stable)(Runs dry in \d+(\.\d)? s at this use|Stable: recharge covers what is running)$/);
+    // Who has locked the ship is marked on its entry in the target list, not in the ship panel.
     const state = await combat(harness);
     expect(state.hostileLocks.length).toBeGreaterThan(0);
-    expect(within(status).getByText(/Pirate Scout (has you locked|is locking you)/)).toBeInTheDocument();
+    expect(within(status).queryByText(/has you locked|is locking you|Targeted by/i)).toBeNull();
+    const scout = objectEntry(/Pirate Scout/);
+    expect(scout.querySelector('[data-targeting-you]')).not.toBeNull();
+    expect(within(scout).getByText(/^(Has you locked|Locking you)$/)).toBeInTheDocument();
 
     const modules = panel('Modules');
     const booster = within(modules).getByRole('button', { name: /Deactivate Small Shield Booster/ });
@@ -170,7 +178,7 @@ describe('a fight in progress', () => {
 
     // The cockpit ship rail carries the condition once, alongside flight controls.
     expect(document.querySelector('[data-readout="defenses"]')?.textContent).toMatch(/Shield\d+ \/ 350/);
-    expect(document.querySelector('[data-readout="threats"]')?.textContent).toBe('1 hostile');
+    expect(document.querySelector('[data-readout="threats"]')).toBeNull();
     expect(document.querySelector('[data-readout="locks"]')?.textContent).toBe('1 of 3');
 
     harness.gateway.dispose();
@@ -186,7 +194,16 @@ describe('a fight in progress', () => {
     expect(within(selected).getByText('3,000 ISK')).toBeInTheDocument();
     expect(within(selected).getByText('Transverse speed')).toBeInTheDocument();
     expect(within(selected).getByText('Angular velocity')).toBeInTheDocument();
-    expect(within(selected).getByText('Locked')).toBeInTheDocument();
+    expect(within(selected).getByText('Lock time')).toBeInTheDocument();
+    // In the order a fight needs: layers, range, speeds, running, then the rest.
+    const groups = [...selected.querySelectorAll('dt[data-readout-group]')].map((term) =>
+      term.getAttribute('data-readout-group'));
+    expect(groups).toEqual(['range', 'speeds', 'running', 'identity']);
+    expect(
+      selected.querySelector('[data-defenses]')?.compareDocumentPosition(
+        selected.querySelector('[data-selected-readouts]') as Node,
+      ),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     // Its layers are known from the tactical view, so they are not "unknown".
     expect(selected.querySelector('[data-defenses]')).not.toBeNull();
     expect(within(selected).queryByText('Unknown')).not.toBeInTheDocument();
@@ -219,16 +236,19 @@ describe('combat commands', () => {
       .toBeGreaterThan(0);
 
     await harness.user.click(objectEntry(/Pirate Scout/));
-    await harness.user.click(within(panel('Selected')).getByRole('button', { name: /^Lock target/ }));
+    // Locking is in the Navigation panel's local view, beside the target list.
+    const navigation = panel('Navigation');
+    await harness.user.click(within(navigation).getByRole('button', { name: /^Lock target/ }));
     await waitFor(async () => {
       expect((await combat(harness)).locks.map((lock) => lock.targetId)).toEqual([opponent]);
     });
-    const locks = panel('Locks');
-    expect(await within(locks).findByText(/^Locking - \d/)).toBeInTheDocument();
-    await harness.user.click(within(locks).getByText('Show the lock-time calculation'));
-    expect(within(locks).getByText(/^Lock time = clamp/).textContent).not.toMatch(/[{}]/);
+    expect(await within(objectEntry(/Pirate Scout/)).findByText(/^Locking \d/)).toBeInTheDocument();
+    // The lock time and its calculation are part of what the target panel says.
+    const selected = panel('Selected');
+    await harness.user.click(within(selected).getByText('Show the lock-time calculation'));
+    expect(within(selected).getByText(/^Lock time = clamp/).textContent).not.toMatch(/[{}]/);
 
-    await harness.user.click(within(locks).getByRole('button', { name: /^Unlock Pirate Scout/ }));
+    await harness.user.click(within(navigation).getByRole('button', { name: /^Unlock target/ }));
     await waitFor(async () => {
       expect((await combat(harness)).locks).toEqual([]);
     });
@@ -341,6 +361,10 @@ describe('wrecks and loot', () => {
     await closeSortie(sortie);
     const harness = await resume(sortie, 'Verge Belt');
 
+    // The encounter is collapsed by default, and its summary says how it stands.
+    const encounter = document.querySelector('details[data-panel="encounter"]');
+    expect(encounter).not.toHaveAttribute('open');
+    expect(encounter?.querySelector('summary')).toHaveTextContent('Encounter Cleared: 3,000 ISK paid');
     expect(within(panel('Encounter')).getByText(/^Site cleared: 3,000 ISK paid/)).toBeInTheDocument();
 
     await harness.user.click(objectEntry(/Wreck/));

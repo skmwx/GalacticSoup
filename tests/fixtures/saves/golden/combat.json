@@ -3,16 +3,16 @@
  "formatVersion": 10,
  "protocolVersion": 18,
  "engineVersion": "0.1.0",
- "contentVersion": "0.1.0+8f13b5394f04",
- "contentHash": "8f13b5394f048a0f4d295f2d155394a7c68d6e5f483b985dfc4338028315cea2",
+ "contentVersion": "0.1.0+d3b6fc450d60",
+ "contentHash": "d3b6fc450d60d01994a2c4e509e7c6f78a24b65fff307cc78c9cead3cbb3fbd1",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
  "displayName": "Test Pilot",
  "kind": "auto",
  "sequence": 1,
- "revision": 131,
- "simulationTimeMs": 28250,
+ "revision": 83,
+ "simulationTimeMs": 16250,
  "savedAtRealMs": 1700000600000,
  "state": {
   "assets": {
@@ -39,7 +39,7 @@
      "fittingInventoryId": "ce0f36ba8e20edb4ebcba9757-e4",
      "condition": {
       "damage": {
-       "shield": 13.146259,
+       "shield": 13.092592,
        "armor": 0,
        "hull": 0
       },
@@ -876,7 +876,7 @@
       {
        "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
        "status": "locked",
-       "startedAtMs": 22742,
+       "startedAtMs": 10650,
        "completesAtMs": null,
        "boundaryEntryId": null,
        "outOfRangeSinceMs": null
@@ -887,8 +887,8 @@
        "repeating": true,
        "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
        "cycle": {
-        "startedAtMs": 28242,
-        "completesAtMs": 30742,
+        "startedAtMs": 16150,
+        "completesAtMs": 18650,
         "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e99",
         "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
         "ammunitionId": "ammo.projectile.small.phased",
@@ -904,8 +904,8 @@
        "repeating": true,
        "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
        "cycle": {
-        "startedAtMs": 28242,
-        "completesAtMs": 30742,
+        "startedAtMs": 16150,
+        "completesAtMs": 18650,
         "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e100",
         "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
         "ammunitionId": "ammo.projectile.small.phased",
@@ -927,7 +927,7 @@
       {
        "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
        "status": "locked",
-       "startedAtMs": 22742,
+       "startedAtMs": 10650,
        "completesAtMs": null,
        "boundaryEntryId": null,
        "outOfRangeSinceMs": null
@@ -938,8 +938,8 @@
        "repeating": true,
        "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
        "cycle": {
-        "startedAtMs": 28242,
-        "completesAtMs": 30742,
+        "startedAtMs": 16150,
+        "completesAtMs": 18650,
         "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e101",
         "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
         "ammunitionId": "ammo.projectile.small.phased",
@@ -955,8 +955,8 @@
        "repeating": true,
        "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
        "cycle": {
-        "startedAtMs": 28242,
-        "completesAtMs": 30742,
+        "startedAtMs": 16150,
+        "completesAtMs": 18650,
         "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e102",
         "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
         "ammunitionId": "ammo.projectile.small.phased",
@@ -978,7 +978,7 @@
       {
        "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
        "status": "locked",
-       "startedAtMs": 22742,
+       "startedAtMs": 10650,
        "completesAtMs": null,
        "boundaryEntryId": null,
        "outOfRangeSinceMs": null
@@ -989,8 +989,8 @@
        "repeating": true,
        "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
        "cycle": {
-        "startedAtMs": 28242,
-        "completesAtMs": 30742,
+        "startedAtMs": 16150,
+        "completesAtMs": 18650,
         "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e103",
         "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
         "ammunitionId": "ammo.projectile.small.phased",
@@ -1006,8 +1006,8 @@
        "repeating": true,
        "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
        "cycle": {
-        "startedAtMs": 28242,
-        "completesAtMs": 30742,
+        "startedAtMs": 16150,
+        "completesAtMs": 18650,
         "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e104",
         "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
         "ammunitionId": "ammo.projectile.small.phased",
@@ -1029,7 +1029,7 @@
       {
        "targetId": "ce0f36ba8e20edb4ebcba9757-e28",
        "status": "locked",
-       "startedAtMs": 23000,
+       "startedAtMs": 11000,
        "completesAtMs": null,
        "boundaryEntryId": null,
        "outOfRangeSinceMs": null
@@ -1037,15 +1037,15 @@
       {
        "targetId": "ce0f36ba8e20edb4ebcba9757-e19",
        "status": "locked",
-       "startedAtMs": 23000,
+       "startedAtMs": 11000,
        "completesAtMs": null,
        "boundaryEntryId": null,
        "outOfRangeSinceMs": null
       },
       {
-       "targetId": "ce0f36ba8e20edb4ebcba9757-e44",
+       "targetId": "ce0f36ba8e20edb4ebcba9757-e37",
        "status": "locked",
-       "startedAtMs": 23000,
+       "startedAtMs": 11000,
        "completesAtMs": null,
        "boundaryEntryId": null,
        "outOfRangeSinceMs": null
@@ -1056,8 +1056,8 @@
        "repeating": true,
        "targetId": "ce0f36ba8e20edb4ebcba9757-e28",
        "cycle": {
-        "startedAtMs": 27500,
-        "completesAtMs": 30000,
+        "startedAtMs": 15500,
+        "completesAtMs": 18000,
         "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e91",
         "targetId": "ce0f36ba8e20edb4ebcba9757-e28",
         "ammunitionId": "ammo.projectile.small.phased",
@@ -1073,8 +1073,8 @@
        "repeating": true,
        "targetId": "ce0f36ba8e20edb4ebcba9757-e28",
        "cycle": {
-        "startedAtMs": 27500,
-        "completesAtMs": 30000,
+        "startedAtMs": 15500,
+        "completesAtMs": 18000,
         "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e92",
         "targetId": "ce0f36ba8e20edb4ebcba9757-e28",
         "ammunitionId": "ammo.projectile.small.phased",
@@ -1095,8 +1095,8 @@
    "events": [
     {
      "kind": "damage",
-     "firstAtMs": 27500,
-     "lastAtMs": 27500,
+     "firstAtMs": 15500,
+     "lastAtMs": 15500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e1",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e28",
      "slotKey": "weapon:1",
@@ -1121,8 +1121,8 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 28242,
-     "lastAtMs": 28242,
+     "firstAtMs": 16150,
+     "lastAtMs": 16150,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e44",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e1",
      "slotKey": "weapon:1",
@@ -1302,7 +1302,7 @@
     "systemId": "system.borrell",
     "siteId": "site.borrell.outpost-cradle",
     "status": "active",
-    "startedAtMs": 22742,
+    "startedAtMs": 10650,
     "resolvedAtMs": null,
     "npcs": [
      {
@@ -1356,7 +1356,7 @@
   },
   "fitting": null,
   "navigation": {
-   "version": 316,
+   "version": 313,
    "knownDestinationSiteIds": [
     "site.borrell.derelict-lane",
     "site.borrell.outpost-cradle",
@@ -1376,14 +1376,14 @@
       "definitionId": "hull.independent.starter",
       "nameKey": "content.hull.independent.starter.name",
       "position": {
-       "x": 8.263254313529982,
-       "y": -3.566000846178474
+       "x": 8.263225994353794,
+       "y": -3.5659841155827583
       },
       "velocity": {
-       "x": -0.24400308077163968,
-       "y": 0.20703259785345082
+       "x": -0.24388473772444078,
+       "y": 0.20717199305186196
       },
-      "facingRadians": 2.43797963132959,
+      "facingRadians": 2.4374082081895416,
       "radiusKm": 0.019,
       "movable": true
      },
@@ -1393,14 +1393,14 @@
       "definitionId": "hull.pirate.raider",
       "nameKey": "content.hull.pirate.raider.name",
       "position": {
-       "x": -3.8980770780517426,
-       "y": 6.745831527857393
+       "x": -3.8727781814790943,
+       "y": 6.724358117914392
       },
       "velocity": {
-       "x": 0.27457981622504113,
-       "y": -0.2328216581888864
+       "x": 0.2745797819832532,
+       "y": -0.23282169857216725
       },
-      "facingRadians": -0.7032851507027367,
+      "facingRadians": -0.7032852977757589,
       "radiusKm": 0.023,
       "movable": true
      },
@@ -1410,14 +1410,14 @@
       "definitionId": "hull.pirate.raider",
       "nameKey": "content.hull.pirate.raider.name",
       "position": {
-       "x": -6.315532697390305,
-       "y": -4.762810814295969
+       "x": -6.282391420569641,
+       "y": -4.7612429410773025
       },
       "velocity": {
-       "x": 0.35879668527698755,
-       "y": 0.0294098390720922
+       "x": 0.3588134321607284,
+       "y": 0.029204809553194325
       },
-      "facingRadians": 0.08178514113724589,
+      "facingRadians": 0.0812137179971959,
       "radiusKm": 0.023,
       "movable": true
      },
@@ -1427,14 +1427,14 @@
       "definitionId": "hull.pirate.scout",
       "nameKey": "content.hull.pirate.scout.name",
       "position": {
-       "x": 19.958061209893064,
-       "y": -30.6479609366242
+       "x": 19.94348086516207,
+       "y": -30.613084812967294
       },
       "velocity": {
-       "x": -0.16252807419755053,
-       "y": 0.37641018197922793
+       "x": -0.16245783563654986,
+       "y": 0.37644050212521996
       },
-      "facingRadians": 1.978399425606204,
+      "facingRadians": 1.9782128320033028,
       "radiusKm": 0.0165,
       "movable": true
      },
@@ -1444,14 +1444,14 @@
       "definitionId": "hull.pirate.raider",
       "nameKey": "content.hull.pirate.raider.name",
       "position": {
-       "x": 17.830829241476028,
-       "y": 10.817299695388462
+       "x": 17.813658893422595,
+       "y": 10.788918857727056
       },
       "velocity": {
-       "x": -0.19934065577158683,
-       "y": -0.2997720850188585
+       "x": -0.19913378091858253,
+       "y": -0.2999095485260013
       },
-      "facingRadians": -2.1576261993109904,
+      "facingRadians": -2.1569362504006833,
       "radiusKm": 0.023,
       "movable": true
      }
@@ -1488,7 +1488,7 @@
    "lastCancellation": {
     "orderKind": "stop",
     "reason": "replaced",
-    "simulationTimeMs": 23000
+    "simulationTimeMs": 11000
    }
   },
   "notifications": {
@@ -1594,8 +1594,8 @@
      "params": {
       "siteKey": "content.site.borrell.outpost-cradle.name"
      },
-     "firstAtMs": 22742,
-     "lastAtMs": 22742,
+     "firstAtMs": 10650,
+     "lastAtMs": 10650,
      "count": 1
     },
     {
@@ -1607,8 +1607,8 @@
      "params": {
       "stepKey": "content.guide.loop.warp.title"
      },
-     "firstAtMs": 22750,
-     "lastAtMs": 22750,
+     "firstAtMs": 10750,
+     "lastAtMs": 10750,
      "count": 1
     },
     {
@@ -1620,8 +1620,8 @@
      "params": {
       "stepKey": "content.guide.loop.harder.title"
      },
-     "firstAtMs": 22750,
-     "lastAtMs": 22750,
+     "firstAtMs": 10750,
+     "lastAtMs": 10750,
      "count": 1
     },
     {
@@ -1633,26 +1633,13 @@
      "params": {
       "stepKey": "content.guide.loop.move.title"
      },
-     "firstAtMs": 23000,
-     "lastAtMs": 23000,
+     "firstAtMs": 11000,
+     "lastAtMs": 11000,
      "count": 1
     },
     {
      "id": 12,
      "sequence": 12,
-     "definitionId": "notify.guidance.step",
-     "groupKey": "notify.guidance.step|guide.loop.lock",
-     "subjectIds": [],
-     "params": {
-      "stepKey": "content.guide.loop.lock.title"
-     },
-     "firstAtMs": 24500,
-     "lastAtMs": 24500,
-     "count": 1
-    },
-    {
-     "id": 13,
-     "sequence": 13,
      "definitionId": "notify.combat.hostile-lock",
      "groupKey": "notify.combat.hostile-lock",
      "subjectIds": [
@@ -1661,8 +1648,21 @@
      "params": {
       "attackerKey": "content.npc.pirate.gunner.name"
      },
-     "firstAtMs": 24542,
-     "lastAtMs": 24542,
+     "firstAtMs": 12450,
+     "lastAtMs": 12450,
+     "count": 1
+    },
+    {
+     "id": 13,
+     "sequence": 13,
+     "definitionId": "notify.guidance.step",
+     "groupKey": "notify.guidance.step|guide.loop.lock",
+     "subjectIds": [],
+     "params": {
+      "stepKey": "content.guide.loop.lock.title"
+     },
+     "firstAtMs": 12500,
+     "lastAtMs": 12500,
      "count": 1
     },
     {
@@ -1674,8 +1674,8 @@
      "params": {
       "stepKey": "content.guide.loop.fire.title"
      },
-     "firstAtMs": 25000,
-     "lastAtMs": 25000,
+     "firstAtMs": 13000,
+     "lastAtMs": 13000,
      "count": 1
     }
    ],
@@ -1701,23 +1701,23 @@
     },
     "guide.loop.warp": {
      "outcome": "completed",
-     "atMs": 22750
+     "atMs": 10750
     },
     "guide.loop.harder": {
      "outcome": "completed",
-     "atMs": 22750
+     "atMs": 10750
     },
     "guide.loop.move": {
      "outcome": "completed",
-     "atMs": 23000
+     "atMs": 11000
     },
     "guide.loop.lock": {
      "outcome": "completed",
-     "atMs": 24500
+     "atMs": 12500
     },
     "guide.loop.fire": {
      "outcome": "completed",
-     "atMs": 25000
+     "atMs": 13000
     }
    }
   },
@@ -1731,11 +1731,11 @@
   "displayName": "Test Pilot",
   "seed": "bb22cc33dd44ee55ff6677889900aa11",
   "createdAtRealMs": 1700000000000,
-  "revision": 131,
+  "revision": 83,
   "nextEntityOrdinal": 105,
   "nextEventOrdinal": 102,
   "time": {
-   "simulationTimeMs": 28250,
+   "simulationTimeMs": 16250,
    "paused": false,
    "rate": 1,
    "accumulatorMs": 0
@@ -1782,7 +1782,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e85",
      "kind": "encounter.npcDecision",
-     "dueAtMs": 28742,
+     "dueAtMs": 16650,
      "priority": 20,
      "insertionOrdinal": 34,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e19"
@@ -1790,7 +1790,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e86",
      "kind": "encounter.npcDecision",
-     "dueAtMs": 28742,
+     "dueAtMs": 16650,
      "priority": 20,
      "insertionOrdinal": 35,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e28"
@@ -1798,7 +1798,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e87",
      "kind": "encounter.npcDecision",
-     "dueAtMs": 28742,
+     "dueAtMs": 16650,
      "priority": 20,
      "insertionOrdinal": 36,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e37"
@@ -1806,7 +1806,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e88",
      "kind": "encounter.npcDecision",
-     "dueAtMs": 28742,
+     "dueAtMs": 16650,
      "priority": 20,
      "insertionOrdinal": 37,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e44"
@@ -1814,7 +1814,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e91",
      "kind": "combat.weaponCycle",
-     "dueAtMs": 30000,
+     "dueAtMs": 18000,
      "priority": 40,
      "insertionOrdinal": 38,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e1"
@@ -1822,7 +1822,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e92",
      "kind": "combat.weaponCycle",
-     "dueAtMs": 30000,
+     "dueAtMs": 18000,
      "priority": 40,
      "insertionOrdinal": 39,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e1"
@@ -1830,7 +1830,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e99",
      "kind": "combat.weaponCycle",
-     "dueAtMs": 30742,
+     "dueAtMs": 18650,
      "priority": 40,
      "insertionOrdinal": 40,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e19"
@@ -1838,7 +1838,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e100",
      "kind": "combat.weaponCycle",
-     "dueAtMs": 30742,
+     "dueAtMs": 18650,
      "priority": 40,
      "insertionOrdinal": 41,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e19"
@@ -1846,7 +1846,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e101",
      "kind": "combat.weaponCycle",
-     "dueAtMs": 30742,
+     "dueAtMs": 18650,
      "priority": 40,
      "insertionOrdinal": 42,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e28"
@@ -1854,7 +1854,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e102",
      "kind": "combat.weaponCycle",
-     "dueAtMs": 30742,
+     "dueAtMs": 18650,
      "priority": 40,
      "insertionOrdinal": 43,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e28"
@@ -1862,7 +1862,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e103",
      "kind": "combat.weaponCycle",
-     "dueAtMs": 30742,
+     "dueAtMs": 18650,
      "priority": 40,
      "insertionOrdinal": 44,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e44"
@@ -1870,7 +1870,7 @@
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e104",
      "kind": "combat.weaponCycle",
-     "dueAtMs": 30742,
+     "dueAtMs": 18650,
      "priority": 40,
      "insertionOrdinal": 45,
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e44"
@@ -1887,5 +1887,5 @@
    "nextInsertionOrdinal": 46
   }
  },
- "checksum": "1e5f4756cd9a59a19a401ed7692e4b499de042f4f2e88ee162e8519668a64894"
+ "checksum": "dc995957200f009459c0962f0d943b86173aefa381284ddf46e01fdea3f062e7"
 }

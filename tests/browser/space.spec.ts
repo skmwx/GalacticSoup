@@ -1,5 +1,5 @@
 import { openGameMenu } from '../support/cockpit.ts';
-import { chooseDestination, destinationBriefing, dockHome, siteObject, warpHome, warpTo } from '../support/destinations.ts';
+import { chooseDestination, destinationBriefing, dockHome, showNavigationView, siteObject, warpHome, warpTo } from '../support/destinations.ts';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -57,7 +57,10 @@ test.describe('traversal', () => {
     await expect(page.getByRole('img', { name: /Schematic view of Borrell Harbour/ })).toBeVisible();
     await expect(page.getByText('Borrell Harbour, Borrell — danger 1')).toBeVisible();
 
-    // Selecting the station enables the orders that need a target.
+    // Selecting the station enables the orders that need a target. They are
+    // on the navigation panel's Local view; at the station's site it opens on Warp.
+    await expect(page.getByRole('tab', { name: 'Warp', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await showNavigationView(page, 'Local');
     await expect(page.getByRole('button', { name: /^Orbit/ })).toBeDisabled();
     await siteObject(page, /Borrell Harbour/).click();
     await page.getByLabel('Range').selectOption('5');
@@ -107,6 +110,7 @@ test.describe('traversal', () => {
 
   test('resumes in the site it was closed in [MVP-AC-01, FUNC-3.4]', async ({ page }) => {
     await undock(page);
+    await showNavigationView(page, 'Local');
     await siteObject(page, /Borrell Harbour/).click();
     await page.getByRole('button', { name: /^Approach/ }).click();
     await expect(page.getByText('Approaching')).toBeVisible();

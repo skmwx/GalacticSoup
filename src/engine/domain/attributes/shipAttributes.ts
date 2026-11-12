@@ -141,8 +141,6 @@ function baseAttribute(hull: HullDefinition, attribute: ShipAttribute): number {
       return hull.signatureRadiusMetres;
     case 'turnRateRadiansPerSecond':
       return hull.movement.turnRateRadiansPerSecond;
-    case 'warpSpeedKmPerSecond':
-      return hull.movement.warpSpeedKmPerSecond;
     default:
       return unreachable(attribute);
   }

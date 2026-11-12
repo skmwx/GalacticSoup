@@ -16,6 +16,9 @@ import styles from './Space.module.css';
  * turning to the wrecks. Range is read from the site, which moves every step,
  * rather than from the slower encounter view.
  *
+ * It sits at the foot of the target column, collapsed by default (MVP review
+ * 02); its summary line keeps the objective's progress in view.
+ *
  * @implements FUNC-9.10, FUNC-9.11, FUNC-19.3, MVP-AC-05, MVP-AC-06, MVP-AC-09
  */
 
@@ -36,9 +39,27 @@ export function EncounterPanel({
   const { locale } = useLocalizer();
   const instance = encounter?.instance ?? null;
 
+  // Collapsed by default: the line it folds into still says how the fight stands.
+  const progress =
+    instance === null
+      ? translate('tactical.encounter.summaryNone')
+      : instance.objective.complete
+        ? translate('tactical.encounter.summaryCleared', {
+            bounty: formatCredits(instance.bountyCreditsPaid, locale),
+          })
+        : translate('tactical.encounter.objective', {
+            destroyed: instance.objective.destroyed,
+            required: instance.objective.required,
+          });
+
   return (
-    <section className={styles['panel']} aria-labelledby="encounter-heading" data-panel="encounter">
-      <h3 id="encounter-heading" className={styles['panelHeading']}>
+    <details className={`${styles['panelDisclosure']} ${styles['encounterDisclosure']}`} data-panel="encounter">
+      <summary data-encounter-summary={instance === null ? 'none' : instance.objective.complete ? 'complete' : 'open'}>
+        <span className={styles['panelHeading']}>{translate('tactical.encounter.heading')}</span>{' '}
+        <span className={styles['encounterProgress']}>{progress}</span>
+      </summary>
+    <section className={styles['panel']} aria-labelledby="encounter-heading">
+      <h3 id="encounter-heading" className={styles['visuallyHidden']}>
         {translate('tactical.encounter.heading')}
       </h3>
       {instance === null ? (
@@ -116,5 +137,6 @@ export function EncounterPanel({
         </>
       )}
     </section>
+    </details>
   );
 }

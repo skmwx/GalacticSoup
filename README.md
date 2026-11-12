@@ -224,11 +224,12 @@ and sends it; the clock the frame shows is the one the engine answered with.
 ## Leaving the station
 
 Departure only checks that the ship is fit to leave; undocking needs no destination. In space the
-navigation panel lists the destinations - the station by its own name, each encounter site with its
+navigation panel's Warp tab lists the destinations - the station by its own name, each encounter site with its
 tier, opponents, bounties, possible loot and completion count, and the player's own wrecks - and
 choosing one marks it as the destination without moving the ship. The player warps to the encounter,
 then warps back to the station and docks: returning is an ordinary warp and dock, and the return key
-(`x`) does whichever is next. That is what makes retreat mean something.
+(`x`) does whichever is next. That is what makes retreat mean something. Once a warp begins, the
+transit takes two seconds whatever the distance (`warpTransitMs` in `content/rules/navigation.json`).
 
 The schematic view is two-dimensional and deliberately plain. The engine publishes world coordinates
 in kilometres and the renderer applies the camera; zoom changes display scale and nothing else. The
@@ -324,23 +325,28 @@ ring - as well as written beside the object in the list. The effects layer draws
 fire, every ship that has locked the player, and recent damage and repairs beside the ship they
 happened to. Weapon and lock ranges are drawn on demand.
 
-Beneath the radar, Navigation (orders, range and destinations) and one Equipment panel (weapons,
-then modules) share a row as two columns; each scrolls inside itself when it is longer than the
-space left, and they stack on a narrow screen. The ship's status sits in the rail beside the radar,
-and the site's object list beside it names everything except the player's own ship, which stays
-on the radar. The panels read the tactical projection. Status shows layers, resistances,
-capacitor with its endurance calculation, and who has locked the ship. Weapons are grouped by
+Beneath the radar, Navigation and one Equipment panel (weapons, then modules) share a row as two
+columns; each scrolls inside itself when it is longer than the space left, and they stack on a
+narrow screen. Navigation has two tabs: Warp (destinations, arrival distance, warp or dock) and
+Local (range, Approach, Orbit, Keep range, Stop, Lock or Unlock, and the list of everything in the
+site except the player's own ship). Each list entry marks the player's lock on it and, with a
+crosshair, whether it has locked the player. The panel opens on Warp at the station's site and on
+Local anywhere else. The ship's status sits in the rail beside the radar; the column beside the
+activity describes the selected object - layers, range, speeds, what it runs, then type, attitude,
+role, bounty and lock time - with the encounter collapsed at its foot. The panels read the tactical
+projection. Status shows layers, resistances, and capacitor with the seconds it lasts under its
+bar and its endurance calculation. Weapons are grouped by
 turret and charge; each group shows its hit chance against the aimed target, which half of the
 turret formula limits it (`limitingFactor`), and the formula with the engine's operands written
 into it. Each weapon shows its magazine, cycle and reload, and every charge it could change to with
-what that charge would do. Modules are toggles; locks show their lock-time calculation; the
-encounter panel lists the opponents by role and bounty; the combat log summarises the engine's
+what that charge would do. Modules are toggles; the selected target shows its lock-time
+calculation; the encounter panel lists the opponents by role and bounty; the combat log summarises the engine's
 aggregated events and can be filtered. Selecting a wreck opens it, and the loot panel takes what
 the hold accepts, asking the engine afresh between stacks.
 
 The weapons aim at the selected object when it is locked, otherwise at the first completed lock.
 A secondary click on an object - or the context-menu key or Shift+F10 on its list entry - opens
-its commands, the same list the selected-object panel renders. Every combat action is a registry
+its commands. Every combat action is a registry
 entry with a shortcut: `l` lock, `n` unlock, `e` fire, `q` cease fire, `v` reload, `1`-`4` toggle
 active modules, `t` take all, `]` and `[` step the selection, `b` draw ranges.
 

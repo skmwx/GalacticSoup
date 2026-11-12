@@ -104,7 +104,6 @@ export interface HullDefinition {
     readonly accelerationKmPerSecondSquared: number;
     readonly brakingKmPerSecondSquared: number;
     readonly turnRateRadiansPerSecond: number;
-    readonly warpSpeedKmPerSecond: number;
   };
   readonly signatureRadiusMetres: number;
   readonly targeting: {

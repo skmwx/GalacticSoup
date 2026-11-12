@@ -32,7 +32,6 @@ export const SHIP_ATTRIBUTES = [
   'shieldRechargeSeconds',
   'signatureRadiusMetres',
   'turnRateRadiansPerSecond',
-  'warpSpeedKmPerSecond',
 ] as const;
 
 export type ShipAttribute = (typeof SHIP_ATTRIBUTES)[number];

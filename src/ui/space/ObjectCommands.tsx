@@ -12,13 +12,11 @@ import styles from './Space.module.css';
  * The commands one object offers, where the object is
  * (Functional Specification 7.1, 9.2, 9.11, 19.2; Technical Specification 12.3).
  *
- * The selected-object panel and the view's context menu render this same
- * component, so the two cannot disagree about an object. The panel sits
- * beside the command bar and the weapons, so it lists only what neither of
- * those offers - locking; the menu is the one place a right-click reaches, so
- * it lists everything the object allows. Each entry is a registry action
- * paired with the availability the engine projected for this object; an order
- * that cannot be given stays visible and says why.
+ * The view's context menu, the one place a right-click reaches, so it lists
+ * everything the object allows. Each entry is a registry action paired with
+ * the availability the engine projected for this object; an order that cannot
+ * be given stays visible and says why. The Navigation panel's local view gives
+ * the same orders and locking for the selected object.
  *
  * @implements FUNC-7.1, FUNC-9.2, FUNC-9.11, FUNC-19.2, TECH-12.3, MVP-AC-03
  */
@@ -27,8 +25,6 @@ export interface ObjectCommandsProps {
   readonly object: SiteObjectData;
   readonly data: PlayData;
   readonly runner: ActionRunner;
-  /** `menu` lists every command; `panel` only those no other surface offers. */
-  readonly variant: 'panel' | 'menu';
   /** The distance range orders use, as the command bar has it set. */
   readonly rangeKm: number;
   /** The closest distance an approach offers, which is how a wreck is reached. */
@@ -45,7 +41,6 @@ export function ObjectCommands({
   object,
   data,
   runner,
-  variant,
   rangeKm,
   closestKm,
   canFire,
@@ -87,27 +82,23 @@ export function ObjectCommands({
               onRun={() => after(() => data.send('targeting.lock', { targetId: object.id }))}
             />
           )}
-          {variant === 'menu' ? (
-            <ActionButton
-              actionId="weapons.fire"
-              runner={runner}
-              available={canFire}
-              unavailableReason={fireReason}
-              onRun={() => after(onFire)}
-            />
-          ) : null}
+          <ActionButton
+            actionId="weapons.fire"
+            runner={runner}
+            available={canFire}
+            unavailableReason={fireReason}
+            onRun={() => after(onFire)}
+          />
         </>
       ) : null}
-      {variant === 'panel' ? null : (
-        <MenuOrders
-          object={object}
-          data={data}
-          runner={runner}
-          rangeKm={rangeKm}
-          approachKm={approachKm}
-          after={after}
-        />
-      )}
+      <MenuOrders
+        object={object}
+        data={data}
+        runner={runner}
+        rangeKm={rangeKm}
+        approachKm={approachKm}
+        after={after}
+      />
     </div>
   );
 }

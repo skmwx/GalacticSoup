@@ -20,12 +20,10 @@ import { CombatLog } from './CombatLog';
 import { CommandBar } from './CommandBar';
 import { CourseCommands } from './CourseCommands';
 import { EncounterPanel } from './EncounterPanel';
-import { LocksPanel } from './LocksPanel';
 import { EquipmentPanel } from './EquipmentPanel';
 import { LootPanel, takeEverything } from './LootPanel';
 import { ObjectCommands } from './ObjectCommands';
 import { ObjectContextMenu } from './ObjectContextMenu';
-import { ObjectList } from './ObjectList';
 import { SelectedObjectPanel } from './SelectedObjectPanel';
 import { ShipStatusPanel } from './ShipStatusPanel';
 import { SiteView } from './SiteView';
@@ -55,6 +53,10 @@ import { useSiteMotion } from './useSiteMotion';
  * The radar sits on top; beneath it Navigation and the combined weapons and
  * equipment panel share one row as two columns, each scrolling on its own
  * when it is longer than the space left, and stacking on a narrow screen.
+ * Navigation holds both where to warp and what to do here, including the
+ * list targets are chosen from; the column beside the activity describes the
+ * selected object, its loot if it is a wreck, and - collapsed at its foot -
+ * the encounter (MVP review 02).
  *
  * @implements FUNC-19.2, FUNC-19.3, TECH-12.1, TECH-12.2, TECH-12.3, MVP-AC-03, MVP-AC-04, MVP-AC-06, MVP-AC-08
  */
@@ -379,7 +381,7 @@ export function SpaceScreen({
       </div>
 
       <aside className={styles['shipRail']} aria-label={translate('tactical.status.heading')}>
-        <ShipStatusPanel combat={combat} site={site} encounter={encounter} />
+        <ShipStatusPanel combat={combat} />
         <FlightReadouts data={data} />
       </aside>
       <div className={styles['stage']} ref={stage}>
@@ -464,7 +466,6 @@ export function SpaceScreen({
               object={menuObject}
               data={data}
               runner={runner}
-              variant="menu"
               rangeKm={rangeKm}
               closestKm={closestKm}
               canFire={fire.available && weaponTargetId(combat, menuObject.id) === menuObject.id}
@@ -484,13 +485,7 @@ export function SpaceScreen({
 
       {renderSidebar(
         <div className={`${styles['aside']} ${sidebar === null ? '' : styles['externalAside']}`}  role="region" aria-label={translate('cockpit.objects')} tabIndex={0}>
-        <ObjectList
-          objects={objects}
-          combat={combat}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onContextMenu={openMenuFor}
-        />
+        <SelectedObjectPanel object={selected} combat={combat} encounter={encounter} />
         {selected?.kind === 'wreck' ? (
           <LootPanel
             data={data}
@@ -502,27 +497,6 @@ export function SpaceScreen({
             simulationTimeMs={simulationTimeMs}
           />
         ) : null}
-        <SelectedObjectPanel
-          object={selected}
-          combat={combat}
-          encounter={encounter}
-          data={data}
-          runner={runner}
-          rangeKm={rangeKm}
-          closestKm={closestKm}
-          canFire={fire.available}
-          fireReason={fire.unavailableReason}
-          onFire={fireAtTarget}
-        />
-        <LocksPanel
-          data={data}
-          runner={runner}
-          combat={combat}
-          site={site}
-          encounter={encounter}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-        />
         <EncounterPanel
           encounter={encounter}
           site={site}
@@ -549,11 +523,15 @@ export function SpaceScreen({
         <CommandBar
           data={data}
           site={site}
+          combat={combat}
+          objects={objects}
           selected={selected}
           runner={runner}
           simulationTimeMs={simulationTimeMs}
           rangeKm={rangeKm}
           onRangeChange={setRangeKm}
+          onSelect={setSelectedId}
+          onContextMenu={openMenuFor}
         />
         <EquipmentPanel
           data={data}

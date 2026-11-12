@@ -292,6 +292,8 @@ After a warp command, the ship automatically turns toward the destination and ac
 
 Taking damage does not cancel warp preparation, but a warp-disruption effect does. Changing movement command cancels preparation. The interface shows the unmet condition and estimated time to warp.
 
+Once warp begins, the transit takes a fixed time regardless of distance, with a tuning default of two seconds. A long warp would only make a single player wait, so distance and hull do not change it.
+
 The player chooses an arrival distance of 0, 10, 30, 50, or 100 km where the destination permits it. Stations and gates always allow 0 km. Some authored encounters may restrict arrival distance and must state that restriction before warp begins.
 
 Weapons and active modules deactivate when warp begins. Passive modules remain in effect. Capacitor and shield regeneration continue in warp.
@@ -332,7 +334,6 @@ Every hull defines at least:
 - signature radius;
 - scan resolution, maximum lock range, and maximum locked targets;
 - cargo capacity;
-- warp speed;
 - weapon, system, engineering, and utility slot counts;
 - supported weapon or industrial hardpoints;
 - available power and processing capacity;
@@ -976,7 +977,7 @@ Right-click or the equivalent opens contextual commands. Common commands also ha
 
 ### 19.3 Object and combat information
 
-The selected-object panel shows identity, faction, attitude, range, relative motion, known defenses, active effects, and applicable commands. Unknown information is marked unknown rather than replaced with false precision.
+The selected-object panel shows identity, faction, attitude, range, relative motion, known defenses, and active effects, ordered by their weight in a fight: defensive layers first, then range, speeds and other relative motion, active effects, and finally type, attitude, role, and reward. Unknown information is marked unknown rather than replaced with false precision. The commands for the selected object, including locking, are offered beside the list of objects in the site that targets are chosen from, and that list marks the player's locks and every ship that has locked the player.
 
 For a locked combat target, the interface shows:
 
