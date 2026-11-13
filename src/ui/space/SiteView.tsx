@@ -422,8 +422,11 @@ function LockMarker({ status }: { readonly status: 'locking' | 'locked' }): JSX.
 }
 
 function facingDegrees(facingRadians: number): number {
-  // Zero radians points along positive x; the triangle is drawn pointing up.
-  return (facingRadians * 180) / Math.PI + 90;
+  // Zero radians points along positive x in a world whose y axis points up,
+  // while the screen's y axis points down (worldToScreen) and SVG rotation is
+  // clockwise. The angle is therefore mirrored, and the triangle is drawn
+  // pointing up: 0 rad points right, +90 deg of rotation points the nose down.
+  return 90 - (facingRadians * 180) / Math.PI;
 }
 
 /**
