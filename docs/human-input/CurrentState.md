@@ -6,5 +6,4 @@ All phases of MVP are implemented.
 
 The MVP has undergone several human reviews, and fixes according to the findings.
 
-Now we are working on feature block 01 - expansion of combat options and enemy variety
-
+Now we are working on features for game version v0.2.

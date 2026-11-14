@@ -123,3 +123,32 @@ Please implement UIR1-07.
 Please implement UIR1-08.
 Please implement UIR1-09.
 Please implement UIR1-10.
+
+# 026 Opus 5.5 High
+For context, read docs\00_GameDesignBrief.md
+docs\01_FunctionalSpecification.md
+docs\02_TechnicalSpecification.md
+docs\human-input\CurrentState.md
+
+Please implement improvements described in docs\human-input\MVP-review-02.md.
+
+# 027 zCode GLM 5.3
+There seems to be a UI bug: the ship icon is pointing the wrong direction as compared to the ships acceleration. Please fix it.
+
+# 028 Opus 5.5 High
+For context, read docs\00_GameDesignBrief.md
+docs\01_FunctionalSpecification.md
+docs\02_TechnicalSpecification.md
+docs\human-input\CurrentState.md
+
+Please implement improvements described in docs\human-input\MVP-review-03.md.
+
+# 029 Sol 6.1 EH
+For context, read docs\00_GameDesignBrief.md
+docs\01_FunctionalSpecification.md
+docs\02_TechnicalSpecification.md
+docs\human-input\CurrentState.md
+
+There is a new block of features to be implemented for version v0.2, they are described on high level in docs\human-input\Features-02.md . Prepare a feature specification for it, and a phased implementation plan. Do not change the main technical and functional specification yet, but if such changes will be necessary in the course of implementation, make sure they are in the implementation plan.
+
+Produce docs\v02\FeatureSpec02.md and docs\v01\FeatureImplementationPlan02.md .

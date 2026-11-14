@@ -15,3 +15,6 @@ Expand possible loot, add modules that can drop.
 
 ## Site progression
 A site progression ladder. 10–15 encounters grouped into several difficulty bands. Some should punish inappropriate fits rather than merely requiring higher DPS.
+
+## Saves migration
+Since it's early implementation phase, do not worry about savegames migration, being incompatible with old saves is okay.
