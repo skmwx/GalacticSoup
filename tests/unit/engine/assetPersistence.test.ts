@@ -66,7 +66,18 @@ describe('asset persistence and ownership', () => {
     expect(!result.ok && result.error.messageKey).toBe('error.saveLoad.contentIncompatible');
     expect(!result.ok && result.error.params!['firstMissing']).toBe('item.missing');
   });
-  it.each(['format-1.json', 'format-2.json', 'format-3.json', 'format-7.json', 'format-8.json', 'format-9.json'])(
+  it('refuses the representative v0.1 save as an earlier release, unchanged [V02-AC-13, TECH-11.4]', () => {
+    // format-10.json is what v0.1 wrote. v0.2 does not migrate it
+    // (ADR-V02-01): it is refused before its checksum, migrations or content
+    // references are looked at, and the stored document is left as it was.
+    const old = JSON.parse(readFileSync('tests/fixtures/saves/format-10.json', 'utf8')) as unknown;
+    const before = canonicalJson(old);
+    const result = loadSave(old, { content });
+    expect(!result.ok && result.error.messageKey).toBe('error.saveLoad.earlierRelease');
+    expect(!result.ok && result.error.params).toMatchObject({ stored: 10, oldestSupported: 11, release: '0.1' });
+    expect(canonicalJson(old)).toBe(before);
+  });
+  it.each(['format-1.json', 'format-2.json', 'format-3.json', 'format-7.json', 'format-8.json', 'format-9.json', 'format-10.json'])(
     'rejects the unreleased %s save shape with no migration obligation [TECH-11.4]',
     (fixture) => {
       const old = JSON.parse(readFileSync(`tests/fixtures/saves/${fixture}`, 'utf8')) as unknown;

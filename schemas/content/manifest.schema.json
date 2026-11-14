@@ -20,6 +20,17 @@
       "uniqueItems": true,
       "items": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" }
     },
+    "compatibleContentVersions": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 64,
+      "items": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+      "description": "Authored versions whose saves this content opens although the content hash differs: a declared compatible content transition (Technical Specification 11.4). The authored version itself is always compatible. A save from any other content version is refused."
+    },
+    "contentFloor": {
+      "enum": ["v0.2-phase-1", "v0.2-release"],
+      "description": "The delivery content floor this content claims to meet (v0.2 Implementation Plan phase 0). A development milestone profile holds the completed phases; only v0.2-release passes the release gate. Absent means v0.2-release."
+    },
     "$comment": { "type": "string" }
   }
 }

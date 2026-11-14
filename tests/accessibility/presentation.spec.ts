@@ -25,7 +25,7 @@ import { warpTo } from '../support/destinations.ts';
 const PILOT = 'Presentation Pilot';
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const STORAGE_KEY = 'galactic-soup.preferences';
-const SURFACES = ['Overview', 'Market', 'Hangar', 'Fitting', 'Ship', 'Departure'] as const;
+const SURFACES = ['Overview', 'Market', 'Hangar', 'Fitting', 'Ships', 'Departure'] as const;
 
 interface Variant {
   readonly name: string;
@@ -375,7 +375,7 @@ test.describe('presentation settings and accessibility', () => {
     });
 
     // Fitting validity: the undock status carries a tick; a warning an exclamation mark.
-    await surface(page, 'Ship').click();
+    await surface(page, 'Ships').click();
     await expect(page.getByRole('status', { name: 'Undock readiness' }).locator('[data-status-mark="ok"]')).toBeVisible();
     await surface(page, 'Fitting').click();
     await chooseModule(page, 'Weapon 1', '');

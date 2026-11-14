@@ -25,9 +25,9 @@ import { REQUEST_TYPES } from '../../src/protocol/requests.ts';
 
 export const REGISTRY_FILE = path.join(REPO_ROOT, 'config', 'requirements.json');
 
-const ID_PATTERN = /\b(TECH-\d+(?:\.\d+)*|FUNC-\d+(?:\.\d+)*|MVP-AC-\d{2})\b/g;
+const ID_PATTERN = /\b(TECH-\d+(?:\.\d+)*|FUNC-\d+(?:\.\d+)*|MVP-AC-\d{2}|V02-AC-\d{2})\b/g;
 const IMPLEMENTS_PATTERN = /@implements\s+([^\n*]+)/g;
-const TAG_PATTERN = /\[((?:TECH|FUNC|MVP)-[^\]]+)\]/g;
+const TAG_PATTERN = /\[((?:TECH|FUNC|MVP|V02)-[^\]]+)\]/g;
 
 /** Where production claims are looked for, and the file types that can carry one. */
 const CLAIM_ROOTS = ['src', 'scripts', 'config'];
@@ -52,7 +52,11 @@ export const TEST_LEVELS = ['unit', 'integration', 'performance', 'component', '
  * @typedef {object} Requirement
  * @property {string} id
  * @property {string} title
- * @property {'included' | 'deferred'} scope
+ * @property {'included' | 'planned' | 'deferred'} scope
+ *   `planned` records a v0.2 acceptance criterion whose delivery phase has not
+ *   completed: claims and tests may already name it, but it is not yet held
+ *   to coverage. It becomes `included` when its phase's exit gate is met.
+ * @property {number[]} [phases] v0.2 implementation-plan phases that deliver it
  * @property {string} [extent]
  * @property {string} [reason]
  * @property {'tests'} [evidence]
@@ -191,24 +195,27 @@ export function buildTraceability(sources = {}) {
       // An acceptance criterion is about the played loop, so a unit test alone
       // does not demonstrate it (MVP Scope 9.2).
       if (
-        requirement.id.startsWith('MVP-AC-') &&
+        (requirement.id.startsWith('MVP-AC-') || requirement.id.startsWith('V02-AC-')) &&
         byLevel.integration.length === 0 &&
         byLevel.browser.length === 0
       ) {
         gaps.push('no integration or browser test names it');
       }
-    } else if (implementedBy.length > 0) {
+    } else if (requirement.scope === 'deferred' && implementedBy.length > 0) {
       gaps.push(`deferred, yet claimed by ${implementedBy.join(', ')}`);
     }
 
     const status =
-      requirement.scope === 'deferred' ? 'deferred' : gaps.length === 0 ? 'covered' : 'uncovered';
+      requirement.scope === 'deferred' || requirement.scope === 'planned'
+        ? requirement.scope
+        : gaps.length === 0 ? 'covered' : 'uncovered';
     return {
       id: requirement.id,
       title: requirement.title,
       scope: requirement.scope,
       ...(requirement.extent === undefined ? {} : { extent: requirement.extent }),
       ...(requirement.reason === undefined ? {} : { reason: requirement.reason }),
+      ...(requirement.phases === undefined ? {} : { phases: requirement.phases }),
       evidence: requirement.evidence ?? 'implementation',
       status,
       implementation,
@@ -231,7 +238,8 @@ export function buildTraceability(sources = {}) {
       included: included.length,
       covered: included.filter((requirement) => requirement.status === 'covered').length,
       uncovered: included.filter((requirement) => requirement.status === 'uncovered').length,
-      deferred: requirements.length - included.length,
+      planned: requirements.filter((requirement) => requirement.scope === 'planned').length,
+      deferred: requirements.filter((requirement) => requirement.scope === 'deferred').length,
     },
     problems,
     requirements,
@@ -252,7 +260,7 @@ export function renderMarkdown(report) {
     '',
     `Requirements: ${String(report.summary.requirements)} - ${String(report.summary.included)} included, ` +
       `${String(report.summary.covered)} covered, ${String(report.summary.uncovered)} uncovered, ` +
-      `${String(report.summary.deferred)} deferred.`,
+      `${String(report.summary.planned ?? 0)} planned, ${String(report.summary.deferred)} deferred.`,
     '',
   ];
 
@@ -295,6 +303,18 @@ export function renderMarkdown(report) {
     for (const level of TEST_LEVELS) {
       if (requirement.tests[level].length === 0) continue;
       lines.push(`| ${requirement.id} | ${level} | ${cell(requirement.tests[level])} |`);
+    }
+  }
+
+  const planned = report.requirements.filter((entry) => entry.scope === 'planned');
+  if (planned.length > 0) {
+    lines.push('', '## Planned requirements', '', '| Requirement | Phases | Tests so far |', '|---|---|---|');
+    for (const requirement of planned) {
+      const tests = TEST_LEVELS
+        .filter((level) => requirement.tests[level].length > 0)
+        .map((level) => `${level}: ${String(requirement.tests[level].length)}`)
+        .join(', ');
+      lines.push(`| **${requirement.id}** ${requirement.title} | ${(requirement.phases ?? []).join(', ')} | ${tests === '' ? '-' : tests} |`);
     }
   }
 

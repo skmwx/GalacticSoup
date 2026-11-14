@@ -22,6 +22,7 @@ import {
   type OnboardingData,
   type RequestPayload,
   type ShipData,
+  type ShipsListData,
   type SiteData,
   type StationServicesData,
   type UndockValidityData,
@@ -58,7 +59,13 @@ import type { MessageKey } from '@shared';
  * written is folded into one follow-up save rather than queued behind it
  * (Functional Specification 3.4, 9.12; Technical Specification 11.3).
  *
- * @implements TECH-7.3, TECH-12.1, TECH-11.3, FUNC-9.12
+ * A pilot may own several ships (Functional Specification 6.3). `ship` is
+ * always the active one; `ships` lists every owned ship with whether it can be
+ * flown from here; and while a fitting draft is open on a ship that is not
+ * the active one, `fittingShip` describes that ship, so the fitting screen
+ * edits the ship the draft belongs to and never the active one by accident.
+ *
+ * @implements TECH-7.3, TECH-12.1, TECH-11.3, FUNC-9.12, FUNC-6.3
  */
 
 export interface PlayProjections {
@@ -66,6 +73,13 @@ export interface PlayProjections {
   readonly services: StationServicesData | null;
   readonly market: MarketListingsData | null;
   readonly ship: ShipData | null;
+  /** Every ship the player owns, read while docked. */
+  readonly ships: ShipsListData | null;
+  /**
+   * The ship an open fitting draft belongs to, when it is not the active
+   * ship; `null` otherwise.
+   */
+  readonly fittingShip: ShipData | null;
   readonly fitting: FittingDraftData | null;
   readonly undock: UndockValidityData | null;
   readonly site: SiteData | null;
@@ -163,6 +177,7 @@ export type PlayCommand =
   | 'navigation.retreat'
   | 'navigation.dock'
   | 'ship.undock'
+  | 'ship.activate'
   | 'onboarding.hide'
   | 'onboarding.show'
   | 'onboarding.skipStep'
@@ -175,23 +190,23 @@ const TOPIC_TARGETS: Readonly<Record<string, readonly ProjectionName[]>> = {
   // Whether the ship may undock is a site command, and it moves with the active
   // ship - a pilot who buys a hull after a loss may leave at once. The market's
   // sell side and its ammunition matches follow the active ship too.
-  assets: ['assets', 'ship', 'undock', 'site', 'market'],
+  assets: ['assets', 'ship', 'undock', 'site', 'market', 'ships'],
   wallet: ['assets'],
   // What the hold carries decides which charges a weapon may change to and
   // how much of a wreck's contents would still fit. The market lists the
   // stacks held locally for sale.
-  inventory: ['assets', 'fitting', 'combat', 'wreck', 'market'],
-  ship: ['ship', 'undock', 'assets', 'fitting', 'combat'],
+  inventory: ['assets', 'fitting', 'combat', 'wreck', 'market', 'ships'],
+  ship: ['ship', 'undock', 'assets', 'fitting', 'combat', 'ships'],
   // The market marks charges that suit the committed fit.
-  fitting: ['fitting', 'ship', 'undock', 'market'],
+  fitting: ['fitting', 'ship', 'undock', 'market', 'ships'],
   // Docking and undocking invalidate the station. Nothing station-only is read
   // while the ship is away - including after a campaign reopened in space - so
   // arriving refreshes every surface a docked ship can use.
-  station: ['services', 'market', 'fitting', 'undock'],
+  station: ['services', 'market', 'fitting', 'undock', 'ships'],
   market: ['market'],
-  repair: ['services', 'ship'],
-  resupply: ['services', 'ship', 'assets'],
-  insurance: ['services'],
+  repair: ['services', 'ship', 'ships'],
+  resupply: ['services', 'ship', 'assets', 'ships'],
+  insurance: ['services', 'ships'],
   // A wreck opens and closes with range, which moves whenever the ship does.
   navigation: ['site', 'wreck'],
   site: ['site', 'wreck'],
@@ -207,7 +222,7 @@ const TOPIC_TARGETS: Readonly<Record<string, readonly ProjectionName[]>> = {
 };
 
 /** Projections only a docked ship can answer for. */
-const STATION_ONLY: readonly ProjectionName[] = ['services', 'market', 'fitting', 'undock'];
+const STATION_ONLY: readonly ProjectionName[] = ['services', 'market', 'fitting', 'undock', 'ships', 'fittingShip'];
 
 /** Projections that say nothing while the ship is docked. */
 const SPACE_ONLY: readonly ProjectionName[] = ['combat', 'wreck'];
@@ -217,6 +232,7 @@ const EVERYTHING: readonly ProjectionName[] = [
   'services',
   'market',
   'ship',
+  'ships',
   'fitting',
   'undock',
   'site',
@@ -235,6 +251,8 @@ const INITIAL: PlayDataState = {
   services: null,
   market: null,
   ship: null,
+  ships: null,
+  fittingShip: null,
   fitting: null,
   undock: null,
   site: null,
@@ -324,6 +342,7 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         services,
         market,
         ship,
+        ships,
         fitting,
         undock,
         site,
@@ -338,6 +357,7 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         ask('services') && stationId !== null ? gateway.request('station.services', { stationId }) : null,
         ask('market') && stationId !== null ? gateway.request('market.listings', { stationId }) : null,
         ask('ship') && shipId !== null ? gateway.request('ship.get', { shipId }) : null,
+        ask('ships') ? gateway.request('ships.list', EMPTY_PAYLOAD) : null,
         ask('fitting') ? gateway.request('fitting.draft', EMPTY_PAYLOAD) : null,
         ask('undock') && shipId !== null
           ? gateway.request('ship.undockValidity', { shipId })
@@ -352,6 +372,13 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         ask('notifications') ? gateway.request('notifications.list', EMPTY_PAYLOAD) : null,
       ]);
 
+      // A draft open on a ship other than the active one is described too,
+      // so the fitting screen shows the ship the draft would change.
+      const draftShipId = fitting?.ok === true ? (fitting.data.draft?.shipId ?? null) : null;
+      const fittingShip = fitting?.ok === true && draftShipId !== null && draftShipId !== shipId
+        ? await gateway.request('ship.get', { shipId: draftShipId })
+        : null;
+
       // A later read has already published; this one is stale and dropped
       // rather than allowed to overwrite it (Technical Specification 7.3).
       if (generation !== inFlight.current) {
@@ -364,7 +391,10 @@ export function usePlayData(options: PlayDataOptions): PlayData {
         ...(services?.ok === true ? { services: services.data } : {}),
         ...(market?.ok === true ? { market: market.data } : {}),
         ...(ship?.ok === true ? { ship: ship.data } : {}),
-        ...(fitting?.ok === true ? { fitting: fitting.data } : {}),
+        ...(ships?.ok === true ? { ships: ships.data } : {}),
+        ...(fitting?.ok === true
+          ? { fitting: fitting.data, fittingShip: fittingShip?.ok === true ? fittingShip.data : null }
+          : {}),
         ...(undock?.ok === true ? { undock: undock.data } : {}),
         ...(site?.ok === true ? { site: site.data } : {}),
         ...(destinations?.ok === true ? { destinations: destinations.data } : {}),

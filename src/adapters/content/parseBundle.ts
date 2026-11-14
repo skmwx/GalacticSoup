@@ -101,6 +101,8 @@ export function parseContentBundle(value: unknown): ParsedContent {
     locales: array(bundle['locales'], 'locales').map((entry, index) =>
       text(entry, `locales[${String(index)}]`),
     ),
+    compatibleContentVersions: array(bundle['compatibleContentVersions'], 'compatibleContentVersions')
+      .map((entry, index) => text(entry, `compatibleContentVersions[${String(index)}]`)),
   };
 
   verifyDigest(bundle, identity.contentHash);

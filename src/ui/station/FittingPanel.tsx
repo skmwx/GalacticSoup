@@ -1,4 +1,4 @@
-import { useId, useRef, type JSX } from 'react';
+import { useId, useRef, useState, type JSX } from 'react';
 
 import type {
   FittedSlotData,
@@ -14,6 +14,7 @@ import { StatusMark } from '../common/StatusMark';
 import { formatQuantity, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { ChoicePicker, type PickerChoice } from './ChoicePicker';
+import { shipLabels } from './shipLabels';
 import { FitIssues, ShipAttributes, ShipOverview, WeaponStats } from './ShipPanel';
 import styles from './Station.module.css';
 import type { PlayData } from '../frame/usePlayData';
@@ -44,7 +45,13 @@ import type { PlayData } from '../frame/usePlayData';
  * A pilot who lost their only ship has nothing to fit (Functional
  * Specification 9.12) and is told so.
  *
- * @implements FUNC-8.4, FUNC-8.5, FUNC-19.5, FUNC-9.12, MVP-AC-02
+ * Any ship docked here can be fitted, not only the one the player flies
+ * (Functional Specification 6.3). The ship being fitted is the one the
+ * engine's draft belongs to; choosing another starts a draft on that ship,
+ * and while changes are open on one ship no other can be chosen, so Apply can
+ * only ever change the ship it says it will (FeatureSpec02 4.2).
+ *
+ * @implements FUNC-8.4, FUNC-8.5, FUNC-19.5, FUNC-9.12, FUNC-6.3, MVP-AC-02, V02-AC-03
  */
 
 export interface FittingPanelProps {
@@ -55,8 +62,11 @@ export interface FittingPanelProps {
 export function FittingPanel({ data, runner }: FittingPanelProps): JSX.Element {
   const translate = useTranslate();
   const draft = data.fitting?.draft ?? null;
-  const ship = data.ship;
-  const shipless = data.assets !== null && data.assets.activeShipId === null;
+  const activeShipId = data.assets?.activeShipId ?? null;
+  // The draft decides which ship is being fitted; without one it is the
+  // active ship.
+  const ship = draft !== null && draft.shipId !== activeShipId ? data.fittingShip : data.ship;
+  const shipless = data.assets !== null && activeShipId === null && draft === null;
 
   return (
     <section className={styles['panel']} aria-labelledby="fitting-heading">
@@ -71,9 +81,90 @@ export function FittingPanel({ data, runner }: FittingPanelProps): JSX.Element {
       ) : ship === null ? (
         <p className={styles['muted']}>{translate('ship.loading')}</p>
       ) : (
-        <FittingSurface ship={ship} draft={draft} data={data} runner={runner} />
+        <>
+          <FittingSubject subjectId={ship.id} draft={draft} data={data} />
+          <FittingSurface ship={ship} draft={draft} data={data} runner={runner} />
+        </>
       )}
     </section>
+  );
+}
+
+/**
+ * Which local ship is being fitted. Shown once the player has two ships here;
+ * locked while the open draft has changes, with the reason beside it.
+ */
+function FittingSubject({
+  subjectId,
+  draft,
+  data,
+}: {
+  readonly subjectId: string;
+  readonly draft: OpenFittingDraftData | null;
+  readonly data: PlayData;
+}): JSX.Element | null {
+  const translate = useTranslate();
+  const selectId = useId();
+  const [busy, setBusy] = useState(false);
+  const local = (data.ships?.ships ?? []).filter((candidate) => candidate.local);
+  const activeShipId = data.assets?.activeShipId ?? null;
+  const labels = shipLabels(data.ships?.ships ?? [], translate);
+  const subjectLabel = labels.get(subjectId) ?? '';
+  const inactive = subjectId !== activeShipId;
+  if (local.length < 2 && !inactive) return null;
+  const locked = draft !== null && draft.changed;
+
+  const choose = async (shipId: string): Promise<void> => {
+    if (shipId === subjectId || locked) return;
+    setBusy(true);
+    try {
+      if (draft !== null) {
+        const reverted = await data.send('fitting.revert', {});
+        if (!reverted.ok) return;
+      }
+      // The active ship needs no draft until the first edit opens one.
+      if (shipId !== activeShipId) {
+        await data.send('fitting.begin', { shipId });
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className={styles['detail']} data-fitting-subject>
+      <label className={styles['field']} htmlFor={selectId}>
+        {translate('fitting.subject')}
+        <select
+          id={selectId}
+          className={styles['select']}
+          value={subjectId}
+          aria-disabled={locked || busy ? 'true' : undefined}
+          aria-describedby={locked ? `${selectId}-locked` : undefined}
+          onChange={(event) => {
+            if (locked || busy) return;
+            void choose(event.target.value);
+          }}
+        >
+          {local.map((candidate) => (
+            <option key={candidate.id} value={candidate.id}>
+              {labels.get(candidate.id)}
+              {candidate.active ? ` (${translate('ships.active')})` : ''}
+            </option>
+          ))}
+        </select>
+      </label>
+      {locked ? (
+        <p id={`${selectId}-locked`} className={styles['muted']}>
+          {translate('fitting.subjectLocked')}
+        </p>
+      ) : null}
+      {inactive ? (
+        <p className={styles['notice']} data-fitting-inactive>
+          {translate('fitting.subjectInactive', { ship: subjectLabel })}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

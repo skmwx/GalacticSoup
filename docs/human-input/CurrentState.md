@@ -2,8 +2,6 @@
 This file describes the current state of the game development.
 
 # Current state
-All phases of MVP are implemented. 
+The MVP is implemented, undergone several human reviews, fixes applied according to the findings.
 
-The MVP has undergone several human reviews, and fixes according to the findings.
-
-Now we are working on features for game version v0.2.
+Now we are doing phase by phase implementation of features for game version v0.2.

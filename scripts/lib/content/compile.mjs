@@ -286,6 +286,14 @@ function canonicalise(collected) {
   const rest = {
     defaultLocale: collected.manifest.value.defaultLocale,
     locales: [...collected.manifest.value.locales].sort(compare),
+    // The declared compatible content transitions (Technical Specification
+    // 11.4): a save written against one of these authored versions may be
+    // opened although the hash differs. The authored version itself is always
+    // one; any other version is refused at load.
+    compatibleContentVersions: [...new Set([
+      collected.manifest.value.version,
+      ...(collected.manifest.value.compatibleContentVersions ?? []),
+    ])].sort(compare),
     rules: {
       time: strip(collected.rules.time.values),
       navigation: strip(collected.rules.navigation.values),

@@ -71,7 +71,7 @@ test.describe('station interface', () => {
     await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
 
     // The ship screen explains the result and says the fit may undock.
-    await page.getByRole('button', { name: 'Ship', exact: true }).click();
+    await page.getByRole('button', { name: 'Ships', exact: true }).click();
     await expect(page.getByRole('status', { name: 'Undock readiness' })).toHaveText(
       /may undock/,
     );
@@ -80,12 +80,15 @@ test.describe('station interface', () => {
     const priced = await serviceButton(page, 'Improve insurance', true);
     const premium = /· (.+ ISK)$/.exec(await priced.innerText())?.[1];
     expect(premium).toBeDefined();
+    const beforeCover = await page.getByText(/ISK$/).first().innerText();
     await priced.click();
     const insurance = page.getByRole('dialog', { name: 'Confirm insurance' });
     await expect(insurance.getByText('Enhanced', { exact: true })).toBeVisible();
     await expect(insurance.getByText(premium!, { exact: true }).first()).toBeVisible();
     await insurance.getByRole('button', { name: 'Confirm' }).click();
     await expect(insurance).toBeHidden();
+    // The wallet is read back from the engine after the command; wait for it.
+    await expect(page.getByText(/ISK$/).first()).not.toHaveText(beforeCover);
 
     const wallet = await page.getByText(/ISK$/).first().innerText();
 

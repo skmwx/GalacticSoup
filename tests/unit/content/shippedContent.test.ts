@@ -31,8 +31,37 @@ describe('shipped content identity', () => {
 });
 
 describe('player content floor', () => {
-  it('ships exactly one player-usable hull [MVP-AC-02]', () => {
-    expect(content.hulls().filter((hull) => hull.playerUsable)).toHaveLength(1);
+  it('ships the v0.2 lineup: one frigate, one destroyer and one cruiser [V02-AC-02, FUNC-8.1]', () => {
+    const usable = content.hulls().filter((hull) => hull.playerUsable);
+    expect(usable.map((hull) => hull.hullClass).sort()).toEqual(['cruiser', 'destroyer', 'frigate']);
+    const byClass = new Map(usable.map((hull) => [hull.hullClass, hull]));
+    const frigate = byClass.get('frigate')!;
+    const destroyer = byClass.get('destroyer')!;
+    const cruiser = byClass.get('cruiser')!;
+    // Only the cruiser accepts medium modules; every hull accepts small ones.
+    expect(usable.every((hull) => hull.moduleSizes.includes('small'))).toBe(true);
+    expect(usable.filter((hull) => hull.moduleSizes.includes('medium')).map((hull) => hull.id)).toEqual([cruiser.id]);
+    // Each step up is bigger, slower, easier to hit and dearer to replace
+    // (FeatureSpec02 4.1): a larger hull keeps real disadvantages.
+    for (const [smaller, larger] of [[frigate, destroyer], [destroyer, cruiser]] as const) {
+      expect(larger.slots.weapon).toBeGreaterThan(smaller.slots.weapon);
+      expect(larger.defenses.shield.hitPoints + larger.defenses.armor.hitPoints + larger.defenses.hull.hitPoints)
+        .toBeGreaterThan(smaller.defenses.shield.hitPoints + smaller.defenses.armor.hitPoints + smaller.defenses.hull.hitPoints);
+      expect(larger.movement.maxSpeedKmPerSecond).toBeLessThan(smaller.movement.maxSpeedKmPerSecond);
+      expect(larger.movement.turnRateRadiansPerSecond).toBeLessThan(smaller.movement.turnRateRadiansPerSecond);
+      expect(larger.signatureRadiusMetres).toBeGreaterThan(smaller.signatureRadiusMetres);
+      expect(larger.referenceValueCredits).toBeGreaterThan(smaller.referenceValueCredits);
+    }
+    // Every player hull can carry a guided fit later without losing its turret fit.
+    expect(usable.every((hull) => hull.hardpoints.launcher > 0 && hull.hardpoints.turret > 0)).toBe(true);
+  });
+
+  it('sells every player hull at the starting station [V02-AC-02, FUNC-11.1]', () => {
+    const start = content.rules.economy.startingStationId;
+    const sold = new Set(content.listings(start).map((listing) => listing.itemId));
+    for (const hull of content.hulls().filter((entry) => entry.playerUsable)) {
+      expect(sold.has(hull.id), hull.id).toBe(true);
+    }
   });
 
   it('offers a short-range and a longer-range turret [MVP-AC-04]', () => {
@@ -168,7 +197,8 @@ describe('recovery guarantee', () => {
       .filter((listing) => listing.supply === 'fixed')
       .map((listing) => listing.itemId);
 
-    const starter = content.hulls().find((hull) => hull.playerUsable);
+    const starter = content.hull(content.rules.economy.starterHullId);
+    expect(starter?.playerUsable).toBe(true);
     expect(fixed).toContain(starter?.id);
 
     const stockedTurret = turrets().find((module) => fixed.includes(module.id));

@@ -162,13 +162,27 @@ describe('save load pipeline', () => {
   it('accepts content whose values changed but whose definitions all resolve [TECH-11.4]', () => {
     const envelope = sealed({
       contentHash: 'f'.repeat(64),
-      contentVersion: '9.9.9+ffffffffffff',
+      contentVersion: `${content.contentVersion.split('+')[0]!}+ffffffffffff`,
     });
 
     const result = loadSave(envelope, { content });
 
     expect(result.ok).toBe(true);
     expect(result.ok && result.contentChanged).toBe(true);
+  });
+
+  it('refuses changed content from an undeclared content version even when every id resolves [TECH-11.4, V02-AC-13]', () => {
+    const envelope = sealed({
+      contentHash: 'f'.repeat(64),
+      contentVersion: '0.1.0+ffffffffffff',
+    });
+    const before = JSON.stringify(envelope);
+
+    const result = loadSave(envelope, { content });
+
+    expect(!result.ok && result.error.messageKey).toBe('error.saveLoad.contentIncompatible');
+    expect(!result.ok && result.error.params?.['reason']).toBe('undeclaredTransition');
+    expect(JSON.stringify(envelope)).toBe(before);
   });
 
   it('runs ordered migrations and marks what it applied [TECH-11.4]', () => {
@@ -230,13 +244,19 @@ describe('save load pipeline', () => {
         describe: 'ninth test step',
         migrate: (save) => ({ ...save, migratedNinth: true }),
       },
+      {
+        from: 10,
+        to: 11,
+        describe: 'tenth test step',
+        migrate: (save) => ({ ...save, migratedTenth: true }),
+      },
     ];
 
     // The fixture registry proves loading through every version boundary.
-    const result = loadSave(older, { content, migrations });
+    const result = loadSave(older, { content, migrations, oldestSupportedFormatVersion: 1 });
 
     expect(result.ok).toBe(true);
-    expect(result.ok && result.migrated).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(result.ok && result.migrated).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 
   it('reads a campaign payload independently of its envelope [TECH-11.4]', () => {

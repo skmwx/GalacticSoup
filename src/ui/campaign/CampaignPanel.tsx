@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent, type JSX } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent, type JSX } from 'react';
 
 import type { CampaignSession, CampaignSessionState } from '@gateway';
 import type { ResumableSaveData, SaveSlotData, SaveStatusData } from '@protocol';
@@ -22,7 +22,14 @@ import styles from './CampaignPanel.module.css';
  * Nothing here is authoritative. Every value shown arrived from the engine,
  * and every action is a command.
  *
- * @implements FUNC-3.1, FUNC-3.4, MVP-AC-01
+ * A save this build cannot open - one written by v0.1, which v0.2
+ * deliberately does not migrate, a newer build's, or content with no declared
+ * transition - is described rather than offered for resume, and it stays in
+ * storage untouched. Starting a new campaign over any saved one asks first,
+ * because the first save of the new campaign replaces the old one
+ * (ADR-V02-01; Technical Specification 11.4).
+ *
+ * @implements FUNC-3.1, FUNC-3.4, MVP-AC-01, V02-AC-13
  */
 
 export interface CampaignPanelProps {
@@ -33,7 +40,14 @@ export interface CampaignPanelProps {
 export function CampaignPanel({ session, state }: CampaignPanelProps): JSX.Element {
   const translate = useTranslate();
   const [name, setName] = useState('');
+  const [confirmingReplace, setConfirmingReplace] = useState(false);
+  const replaceButton = useRef<HTMLButtonElement | null>(null);
   const nameId = useId();
+  // The confirmation takes focus when it appears, so a keyboard player answers
+  // it next (Technical Specification 12.3).
+  useEffect(() => {
+    if (confirmingReplace) replaceButton.current?.focus();
+  }, [confirmingReplace]);
 
   const resumable = state.slot?.resumable ?? null;
   const busy = state.busy;
@@ -45,8 +59,14 @@ export function CampaignPanel({ session, state }: CampaignPanelProps): JSX.Eleme
     if (busy || name.trim().length === 0) {
       return;
     }
+    if (resumable !== null && !confirmingReplace) {
+      setConfirmingReplace(true);
+      return;
+    }
+    setConfirmingReplace(false);
     void session.create(name);
   };
+  const openable = resumable !== null && resumable.compatibility === 'supported';
 
   return (
     <section className={styles['panel']} aria-labelledby="campaign-heading">
@@ -61,16 +81,27 @@ export function CampaignPanel({ session, state }: CampaignPanelProps): JSX.Eleme
           {resumable === null ? null : (
             <div className={styles['resumable']}>
               <p className={styles['summary']}>{describeResumable(resumable, translate)}</p>
-              {resumable.contentMatches ? null : (
-                <p className={styles['warning']}>{translate('campaign.contentChanged')}</p>
+              {openable ? (
+                <>
+                  {resumable.contentMatches ? null : (
+                    <p className={styles['warning']}>{translate('campaign.contentChanged')}</p>
+                  )}
+                  <TooltipButton
+                    unavailable={busy}
+                    reason={translate('campaign.busy')}
+                    onClick={() => void session.resume()}
+                  >
+                    {translate('campaign.resume')}
+                  </TooltipButton>
+                </>
+              ) : (
+                <p className={styles['warning']} role="note">
+                  {translate(`campaign.compatibility.${resumable.compatibility}`, {
+                    formatVersion: resumable.formatVersion,
+                    contentVersion: resumable.contentVersion,
+                  })}
+                </p>
               )}
-              <TooltipButton
-                unavailable={busy}
-                reason={translate('campaign.busy')}
-                onClick={() => void session.resume()}
-              >
-                {translate('campaign.resume')}
-              </TooltipButton>
             </div>
           )}
 
@@ -98,6 +129,24 @@ export function CampaignPanel({ session, state }: CampaignPanelProps): JSX.Eleme
             {resumable === null ? null : (
               <p className={styles['warning']}>{translate('campaign.startReplaces')}</p>
             )}
+            {confirmingReplace && resumable !== null ? (
+              <div className={styles['confirm']} role="group" aria-label={translate('campaign.replace.label')}>
+                <p className={styles['warning']}>
+                  {translate('campaign.replace.detail', { name: resumable.displayName })}
+                </p>
+                <button type="submit" className={styles['danger']} ref={replaceButton}>
+                  {translate('campaign.replace.confirm')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmingReplace(false);
+                  }}
+                >
+                  {translate('campaign.replace.cancel')}
+                </button>
+              </div>
+            ) : null}
           </form>
         </div>
       )}

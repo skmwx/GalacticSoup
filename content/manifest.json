@@ -1,9 +1,11 @@
 {
   "kind": "manifest",
-  "$comment": "Authored identity of the content set. The build appends the content hash.",
-  "version": "0.1.0",
+  "$comment": "Authored identity of the content set. The build appends the content hash. compatibleContentVersions lists earlier authored versions whose saves this content may open although the hash differs (Technical Specification 11.4); 0.1.0 is deliberately absent because v0.2 does not continue v0.1 campaigns (ADR-V02-01).",
+  "version": "0.2.0",
   "defaultLocale": "en",
   "locales": [
     "en"
-  ]
+  ],
+  "compatibleContentVersions": [],
+  "contentFloor": "v0.2-phase-1"
 }

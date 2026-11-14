@@ -114,6 +114,17 @@
   color: var(--gs-color-danger) !important;
 }
 
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gs-space-2);
+}
+
+.confirm p {
+  flex-basis: 100%;
+}
+
 .saveStatus {
   margin: 0;
   font-size: var(--gs-font-small);

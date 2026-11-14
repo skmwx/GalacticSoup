@@ -182,7 +182,7 @@ test.describe('the first vertical slice', () => {
     await freshCampaign(page);
   });
 
-  test('clears the easiest site, converts the rewards and clears it again with a better fit [MVP-AC-02, MVP-AC-03, MVP-AC-04, MVP-AC-06, MVP-AC-09, MVP-AC-01]', async ({
+  test('clears the easiest site, converts the rewards and clears it again with a better fit [MVP-AC-02, MVP-AC-03, MVP-AC-04, MVP-AC-06, MVP-AC-09, MVP-AC-01, V02-AC-01]', async ({
     page,
   }) => {
     // Two sorties at 1x, each with warps, a fight and a docking cycle.

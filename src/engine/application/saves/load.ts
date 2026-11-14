@@ -6,6 +6,8 @@ import {
   type InvariantIssue,
 } from '@engine/domain';
 import {
+  OLDEST_SUPPORTED_SAVE_FORMAT_VERSION,
+  PREVIOUS_RELEASE_LABEL,
   SAVE_FORMAT_VERSION,
   SAVE_LIMITS,
   isSaveKind,
@@ -46,6 +48,11 @@ import { migrateSave, SAVE_MIGRATIONS, type MigratableSave, type SaveMigration }
 export interface LoadContext {
   readonly content: ContentRepository;
   readonly migrations?: readonly SaveMigration[];
+  /**
+   * The release boundary (ADR-V02-01). Tests lower it to exercise the
+   * migration runner on a fixture registry; production uses the constant.
+   */
+  readonly oldestSupportedFormatVersion?: number;
 }
 
 export interface LoadSuccess {
@@ -83,6 +90,21 @@ export function loadSave(stored: unknown, context: LoadContext): LoadResult {
   }
 
   const storedVersion = save['formatVersion'] as number;
+
+  // The release boundary comes before anything else is trusted: a save from
+  // the earlier release is refused as such, not as damaged, and is never
+  // handed to the migration runner or the content check, where resolvable ids
+  // could make it look compatible (v0.2 decision record ADR-V02-01).
+  const oldestSupported = context.oldestSupportedFormatVersion ?? OLDEST_SUPPORTED_SAVE_FORMAT_VERSION;
+  if (storedVersion < oldestSupported) {
+    return failure(
+      saveLoadError('earlierRelease', {
+        stored: storedVersion,
+        oldestSupported,
+        release: PREVIOUS_RELEASE_LABEL,
+      }),
+    );
+  }
 
   if (storedVersion === SAVE_FORMAT_VERSION) {
     // Only an envelope of the current shape can be checksummed by this build:
@@ -147,6 +169,16 @@ export function loadSave(stored: unknown, context: LoadContext): LoadResult {
   }
 
   const contentChanged = envelope.contentHash !== context.content.contentHash;
+  // A different hash is accepted only across a transition the installed
+  // content declares; resolvable ids alone are not evidence of compatibility
+  // (Technical Specification 11.4; v0.2 decision record ADR-V02-01).
+  if (contentChanged && !declaresCompatible(context.content, envelope.contentVersion)) {
+    return failure(saveLoadError('contentIncompatible', {
+      storedContentVersion: envelope.contentVersion,
+      installedContentVersion: context.content.contentVersion,
+      reason: 'undeclaredTransition',
+    }));
+  }
   // A matching bundle hash is not evidence that a saved reference is valid.
   const missing = unresolvedReferences(campaignDefinitionReferences(payload.state), context.content);
   if (missing.length > 0) {
@@ -256,6 +288,16 @@ function checkEnvelopeShape(save: MigratableSave): LoadFailure | null {
   }
 
   return null;
+}
+
+/**
+ * Whether the installed content declares a compatible transition from the
+ * content a save was written against: the authored part of its version, before
+ * the `+hash` suffix, must be one the installed bundle lists.
+ */
+export function declaresCompatible(content: ContentRepository, storedContentVersion: string): boolean {
+  const authored = storedContentVersion.split('+', 1)[0] ?? '';
+  return content.compatibleContentVersions.includes(authored);
 }
 
 /** Definition ids the save state names that the installed content lacks. */

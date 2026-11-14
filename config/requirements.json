@@ -1,5 +1,5 @@
 {
-  "$comment": "The machine-readable traceability source (Technical Specification 15.2; MVP Implementation Plan phase 20). One entry per MVP acceptance criterion and per normative section of the functional and technical specifications. scope says whether MVP Scope selects it; extent says how much of it; evidence \"tests\" marks a requirement that constrains or defines rather than adds behaviour, so tests alone demonstrate it. content and requests name the authored data and the protocol requests that carry it. npm run traceability joins this with the @implements claims in production code and the [ID] tags in test names, and fails when an included requirement is uncovered.",
+  "$comment": "The machine-readable traceability source (Technical Specification 15.2; MVP Implementation Plan phase 20). One entry per MVP acceptance criterion and per normative section of the functional and technical specifications. scope says whether MVP Scope selects it; extent says how much of it; evidence \"tests\" marks a requirement that constrains or defines rather than adds behaviour, so tests alone demonstrate it. content and requests name the authored data and the protocol requests that carry it. npm run traceability joins this with the @implements claims in production code and the [ID] tags in test names, and fails when an included requirement is uncovered. v0.2 adds the V02-AC-* criteria of docs/v02/FeatureSpec02.md section 11. A V02 criterion is planned until its implementation-plan phases (FeatureImplementationPlan02) have met their exit gates, then included; extent says how much of it is delivered so far.",
   "requirements": [
     {
       "id": "MVP-AC-01",
@@ -202,7 +202,7 @@
       "id": "FUNC-3.4",
       "title": "Saving and loading",
       "scope": "included",
-      "extent": "One slot with automatic save and resume; manual-save controls, save history, export and import are deferred.",
+      "extent": "One slot with automatic save and resume; manual-save controls, save history, export and import are deferred. Purchases and active-ship switches autosave (v0.2).",
       "requests": [
         "campaign.save",
         "campaign.saves",
@@ -307,8 +307,14 @@
     {
       "id": "FUNC-6.3",
       "title": "Ships and remote transport",
-      "scope": "deferred",
-      "reason": "MVP Scope 8: additional hulls, remote assets and ship transport."
+      "scope": "included",
+      "extent": "Several owned ships, local switching while docked, inactive-ship fitting and cargo (v0.2 phase 1); insured remote transport is deferred (FeatureSpec02 section 2).",
+      "requests": [
+        "ships.list",
+        "ship.activate",
+        "fitting.begin",
+        "inventory.transfer"
+      ]
     },
     {
       "id": "FUNC-7.1",
@@ -362,7 +368,7 @@
       "id": "FUNC-8.1",
       "title": "Required hull lineups",
       "scope": "included",
-      "extent": "The starter multi-role hull only.",
+      "extent": "The starter frigate plus the destroyer and cruiser of the combat lineup (v0.2); other careers' lineups are deferred.",
       "content": [
         "content/catalog/hulls"
       ]
@@ -1169,7 +1175,7 @@
       "id": "TECH-11.4",
       "title": "Load, import, and migration",
       "scope": "included",
-      "extent": "Load and migration; import and export are deferred.",
+      "extent": "Load, the v0.1 save boundary (formats below 11 refused unchanged, ADR-V02-01) and declared content transitions; import and export are deferred.",
       "requests": [
         "campaign.resume"
       ]
@@ -1259,6 +1265,170 @@
       "title": "Technical completion criteria",
       "scope": "deferred",
       "reason": "Full-game criteria; the applicable ones are checked by the release gate of MVP Implementation Plan phase 21."
+    },
+    {
+      "id": "V02-AC-01",
+      "title": "Fresh campaign completes Scout with the starting fit",
+      "scope": "included",
+      "phases": [
+        1
+      ],
+      "extent": "Delivered: the original starting fit completes Pirate Scout, returns and reopens without offline progress.",
+      "content": [
+        "content/rules/economy.json",
+        "content/encounters/templates"
+      ]
+    },
+    {
+      "id": "V02-AC-02",
+      "title": "Three hulls, 26 functional modules and the ammunition floor",
+      "scope": "planned",
+      "phases": [
+        0,
+        2,
+        3,
+        4
+      ],
+      "content": [
+        "content/catalog"
+      ]
+    },
+    {
+      "id": "V02-AC-03",
+      "title": "Buy, switch, fit inactive ships and transfer cargo",
+      "scope": "included",
+      "phases": [
+        1
+      ],
+      "extent": "Delivered in phase 1.",
+      "content": [
+        "content/catalog/hulls",
+        "content/economy/listings"
+      ],
+      "requests": [
+        "ships.list",
+        "ship.activate",
+        "market.confirmBuy",
+        "fitting.begin",
+        "fitting.commit",
+        "inventory.transfer",
+        "repair.confirm",
+        "insurance.confirm"
+      ]
+    },
+    {
+      "id": "V02-AC-04",
+      "title": "Six reference fits and same-hull preference reversals",
+      "scope": "planned",
+      "phases": [
+        2,
+        4,
+        6
+      ]
+    },
+    {
+      "id": "V02-AC-05",
+      "title": "Turret, ammunition, defence, capacitor and size choices with traces",
+      "scope": "planned",
+      "phases": [
+        2,
+        3
+      ]
+    },
+    {
+      "id": "V02-AC-06",
+      "title": "Guided weapons formula and flight boundaries",
+      "scope": "planned",
+      "phases": [
+        3
+      ]
+    },
+    {
+      "id": "V02-AC-07",
+      "title": "Player and NPC webs",
+      "scope": "planned",
+      "phases": [
+        4
+      ]
+    },
+    {
+      "id": "V02-AC-08",
+      "title": "Ten NPC profiles across five archetypes",
+      "scope": "planned",
+      "phases": [
+        4
+      ]
+    },
+    {
+      "id": "V02-AC-09",
+      "title": "Twelve-site ladder in three bands",
+      "scope": "planned",
+      "phases": [
+        5
+      ]
+    },
+    {
+      "id": "V02-AC-10",
+      "title": "Ten module drops and one-time reward materialisation",
+      "scope": "planned",
+      "phases": [
+        5,
+        6
+      ]
+    },
+    {
+      "id": "V02-AC-11",
+      "title": "Career runs buy and use both hull upgrades",
+      "scope": "planned",
+      "phases": [
+        6
+      ]
+    },
+    {
+      "id": "V02-AC-12",
+      "title": "Retreat, purchased-hull loss, stored-ship reuse and recovery stay viable",
+      "scope": "included",
+      "phases": [
+        1,
+        2,
+        6
+      ],
+      "extent": "Phase 1: loss of a purchased hull with a usable, an unusable or no stored ship, shipless purchases and starter recovery. Career-level evidence follows in phase 6."
+    },
+    {
+      "id": "V02-AC-13",
+      "title": "Deterministic v0.2 resume; old, future and incompatible saves fail safely",
+      "scope": "included",
+      "phases": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "extent": "Phases 0-1: multi-ship resume, v0.1/future/undeclared-content rejection without alteration, explicit reset and replace confirmation. Mid-flight and mid-effect resume arrive with phases 3-4.",
+      "requests": [
+        "campaign.saves",
+        "campaign.resume",
+        "campaign.reset",
+        "campaign.create"
+      ]
+    },
+    {
+      "id": "V02-AC-14",
+      "title": "Browser loop from purchase to harder site and reopen",
+      "scope": "planned",
+      "phases": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": "V02-AC-15",
+      "title": "Human playtest confirms fit decisions and hull progression",
+      "scope": "planned",
+      "phases": [
+        6
+      ]
     }
   ]
 }

@@ -635,6 +635,11 @@ function BuyDialog({
       inventory.location.kind === 'cargo' &&
       inventory.location.shipId === data.assets?.activeShipId,
   );
+  // A hull is not cargo: it arrives as a ship of its own, empty, and the ship
+  // the player flies stays active (FeatureSpec02 4.2).
+  const preview = transaction.preview;
+  const isHull = preview !== null && 'item' in preview && preview.item.kind === 'hull';
+  const shipless = data.assets !== null && data.assets.activeShipId === null;
 
   return (
     <TransactionDialog
@@ -653,10 +658,16 @@ function BuyDialog({
           onChange({ ...intent, quantity });
         }}
       />
-      <label className={styles['field']} htmlFor={destinationId}>
+      {isHull ? (
+        <p className={styles['notice']} data-hull-arrives>
+          {translate(shipless ? 'market.noShip' : 'market.hullArrives')}
+        </p>
+      ) : null}
+      <label className={styles['field']} htmlFor={destinationId} hidden={isHull}>
         {translate('market.destination')}
       </label>
       <select
+        hidden={isHull}
         id={destinationId}
         className={styles['select']}
         value={intent.destinationInventoryId ?? ''}

@@ -1,8 +1,8 @@
 {
   "$comment": "The closed MVP contracts (MVP Implementation Plan phase 20). Written by npm run contracts:record; do not edit by hand. A schema digest covers requirements only, not titles or descriptions.",
-  "protocolVersion": 18,
-  "saveFormatVersion": 10,
-  "campaignStateVersion": 10,
+  "protocolVersion": 19,
+  "saveFormatVersion": 11,
+  "campaignStateVersion": 11,
   "replayLogVersion": 1,
   "requestTypes": [
     "assets.list",
@@ -68,9 +68,11 @@
     "repair.preview",
     "resupply.confirm",
     "resupply.preview",
+    "ship.activate",
     "ship.get",
     "ship.undock",
     "ship.undockValidity",
+    "ships.list",
     "station.services",
     "system.capabilities",
     "system.health",
@@ -89,9 +91,9 @@
     "protocol/assets.list.data.schema.json": "9a61f19b9ddd3d061da0399f558bf1e2a57d2c7e0c5b6d6e5f9c48ca7ed00752",
     "protocol/audio.cues.data.schema.json": "1914b399f1bb70b068c759980ad46e2a8d5a0241dbc5dc396cfa37d6e678163c",
     "protocol/campaign.frame.data.schema.json": "3ddc18fc3e1d2ded653ebe496c8c04db8b576ed9ea81c2033a02cd89dcc8eea0",
-    "protocol/campaign.saves.data.schema.json": "81c54a3a14f35c738be9dc8552d9135d927cda8dfb1cb43da00ac0b7c23553f4",
+    "protocol/campaign.saves.data.schema.json": "b4b67c2e7d9dd9d5404882c41e1ee3307aacc6ad825727c3f5ee413c1b93f410",
     "protocol/campaign.session.data.schema.json": "9ec30eab4de71ddcbeae2b1716d5a368fc574fcb43abd560b441a650ff147efb",
-    "protocol/client-request.schema.json": "7050032f06578bc51b12baf7b243b345402f298cb3083c85e2af047b7616ddcb",
+    "protocol/client-request.schema.json": "77c679148d33b6909cc245c0a67ff2b9e398608c66846e0d035e60838274302e",
     "protocol/combat.state.data.schema.json": "c680d33b963e28ccc79bf636f7c8f1b9e3c773644836d89139f4e9023c891838",
     "protocol/command-result.data.schema.json": "aba4dcbb299621a9820e2e171bb9817b3b3bafbf5e45a7deb91b7f1c941cc3cc",
     "protocol/content-issue.schema.json": "6b4ec7ee0590feb51f47c67be7e6e48942ab35dccfc44d37d0a6003be1719f6b",
@@ -120,12 +122,13 @@
     "protocol/save-status.data.schema.json": "1f32c7f1c0a28676f077b19bcdabf42bfb752276007c21fcd06199fb6bc0803a",
     "protocol/ship.get.data.schema.json": "66fa16babb8fa9f9d99f4ccfe4655df45d92b5c55cf36213c55911e74baa149d",
     "protocol/ship.undockValidity.data.schema.json": "05c246435f1871a63a376427aa7fc3183828713c728589357eee7358425adfeb",
+    "protocol/ships.list.data.schema.json": "7ceb7863e106f8f7309455f9361bc6f60e584ec1ac050edf5fde8492162da5cb",
     "protocol/station.services.data.schema.json": "916f275842024c599882fdac73ee352a7ed55aa62d629f1a7d02a5686a0cb42b",
-    "protocol/system.capabilities.data.schema.json": "fe0883867518e1391e56e3a2c086407d88a3fb053770d0a590d7a08dc1332261",
-    "protocol/system.health.data.schema.json": "f5d82d3f1f74267803197ac41fa1b2de6e183bc906e24301ef65034b18ea1c80",
+    "protocol/system.capabilities.data.schema.json": "e7c79f9df332814c42e7c958411ddcb99d771a400ac88a84e957eff58189370a",
+    "protocol/system.health.data.schema.json": "c286e08f5439b71c4de1e6636e1bb5e601e15fc942bbc7521be7a4130a774218",
     "protocol/transaction-preview.data.schema.json": "5649e2eea2f2d8675f1cb99641cafad00f9bf77744130ac07168255b16571c19",
     "protocol/wallet.get.data.schema.json": "d1ffd8a9ce85c433c5ff5109921862e77135e49316be443a148219f9012814e1",
-    "save/campaign-state.schema.json": "a04bd59ae93caf9f77705c8dc27f73c56cc09f1a1e66f2b6ba78a76446f8cef3",
-    "save/save-envelope.schema.json": "14bd2ea048634dad58e4de065491d7cfbcd2fcdb8db4eead1647a8b9af098de9"
+    "save/campaign-state.schema.json": "f8963c76a64efc4fb8d9fdbc690572703cd87a84f0a6c4f70d5c78ebeb778709",
+    "save/save-envelope.schema.json": "a9b7c6cfcb49cb36714d875b2ed246b2a3d41a55ce400280ce7e28ea31f4a661"
   }
 }

@@ -29,7 +29,7 @@
   ],
   "properties": {
     "stateVersion": {
-      "const": 10
+      "const": 11
     },
     "campaignId": {
       "type": "string",

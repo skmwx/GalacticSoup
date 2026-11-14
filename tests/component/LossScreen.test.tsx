@@ -294,7 +294,7 @@ describe('a pilot with no ship', () => {
   it('is told why they cannot undock and where the next ship comes from [FUNC-9.12, FUNC-10, FUNC-22.10, MVP-AC-08]', async () => {
     const harness = await resume(await lostWithoutShip(), 'Borrell Harbour');
     const listings = await ask<MarketListingsData>(harness, 'market.listings', { stationId: STATION });
-    const hull = listings.listings.find((listing) => listing.item.kind === 'hull');
+    const hull = listings.listings.find((listing) => listing.item.definitionId === 'hull.independent.starter');
     if (hull === undefined) throw new Error('The station sells no hull.');
 
     const notice = region('No ship');
@@ -328,7 +328,7 @@ describe('a pilot with no ship', () => {
   it('keeps every docked surface usable and says there is no ship [FUNC-9.12, FUNC-19.5, FUNC-22.10]', async () => {
     const harness = await resume(await lostWithoutShip(), 'Borrell Harbour');
 
-    await harness.user.click(screen.getByRole('button', { name: 'Ship' }));
+    await harness.user.click(screen.getByRole('button', { name: 'Ships' }));
     expect(
       await screen.findByText('You have no ship. Buy a hull at the market; it becomes your active ship.'),
     ).toBeInTheDocument();
@@ -386,8 +386,8 @@ describe('a pilot with no ship', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /^Undock/ })).not.toBeUnavailable();
     });
-    await harness.user.click(screen.getByRole('button', { name: 'Ship' }));
-    expect(await screen.findByText('Wayfarer')).toBeInTheDocument();
+    await harness.user.click(screen.getByRole('button', { name: 'Ships' }));
+    expect((await screen.findAllByText('Wayfarer'))[0]).toBeInTheDocument();
 
     harness.gateway.dispose();
   }, 60_000);
@@ -408,7 +408,7 @@ describe('recovery-grant equipment', () => {
     expect(within(loss).getByText(/the recovery service supplied a replacement Wayfarer with its original fit\./)).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'No ship' })).not.toBeInTheDocument();
 
-    await harness.user.click(screen.getByRole('button', { name: 'Ship' }));
+    await harness.user.click(screen.getByRole('button', { name: 'Ships' }));
     const ship = panel('Active ship');
     expect(await within(ship).findByText('Recovery grant')).toBeInTheDocument();
     expect(

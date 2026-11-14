@@ -55,6 +55,13 @@ export interface ContentIdentity {
   readonly contentHash: string;
   readonly defaultLocale: string;
   readonly locales: readonly string[];
+  /**
+   * Authored content versions (the part of `contentVersion` before `+`) whose
+   * saves this content opens although the hash differs, including its own
+   * (Technical Specification 11.4). A save written against any other content
+   * version is refused even if every definition it names still resolves.
+   */
+  readonly compatibleContentVersions: readonly string[];
 }
 
 export interface ContentRepository extends ContentIdentity {

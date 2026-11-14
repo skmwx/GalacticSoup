@@ -1,8 +1,8 @@
 {
   "$comment": "The candidate tuning bundle for release-candidate comparison (MVP Implementation Plan phase 17). Written by npm run balance:record; do not edit by hand. tuningDigest covers rules, definitions and listings; a tuning change makes this record stale until it is recorded again.",
-  "contentVersion": "0.1.0+c8deeb6e49f4",
-  "contentHash": "c8deeb6e49f42f6b64650fb3063cc92f2b3e7b2dff4c6a96f6ca1383f75e00ee",
-  "tuningDigest": "02df49996b62fa056443205850d097d9f1214564ea278bcf31945e4bbbd6b205",
+  "contentVersion": "0.2.0+9f5f4cec9c4a",
+  "contentHash": "9f5f4cec9c4ab7c95b5f3ef13a139b8b83bc033822c1121a8dba87957f5d4e54",
+  "tuningDigest": "81d07fbc28426e2a32d0c4c13dd8ae6ea32bd09983cd25f61bf9d6289c99935f",
   "seeds": [
     "0123456789abcdef0123456789abcdef",
     "0badf00d0badf00d0badf00d0badf00d",

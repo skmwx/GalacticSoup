@@ -17,8 +17,42 @@ import type { StructuralLimits } from '@shared';
  * @implements TECH-11.1
  */
 
-/** Shape version of the save envelope (Technical Specification 11.2). */
-export const SAVE_FORMAT_VERSION = 10;
+/**
+ * Shape version of the save envelope (Technical Specification 11.2).
+ *
+ * Format 11 is the first v0.2 (Combat Progression Alpha) format. Its payload
+ * is campaign state version 11.
+ */
+export const SAVE_FORMAT_VERSION = 11;
+
+/**
+ * The oldest save format this release opens (Technical Specification 11.4,
+ * 18; v0.2 decision record ADR-V02-01).
+ *
+ * v0.1 wrote formats up to 10. v0.2 deliberately does not migrate them: the
+ * early-alpha exception to the released-version migration guarantee is
+ * bounded to that one transition. A save below this boundary is refused as
+ * belonging to an earlier release before its checksum, migrations or content
+ * references are considered, so it can never appear compatible merely
+ * because the definitions it names still resolve. The stored snapshot is
+ * left exactly as it was found.
+ */
+export const OLDEST_SUPPORTED_SAVE_FORMAT_VERSION = 11;
+
+/**
+ * The release that wrote saves below the supported boundary, for the
+ * player-facing compatibility message.
+ */
+export const PREVIOUS_RELEASE_LABEL = '0.1';
+
+/** Whether this build can open a save of `formatVersion` at all. */
+export type SaveFormatCompatibility = 'supported' | 'earlierRelease' | 'newerVersion';
+
+export function saveFormatCompatibility(formatVersion: number): SaveFormatCompatibility {
+  if (formatVersion > SAVE_FORMAT_VERSION) return 'newerVersion';
+  if (formatVersion < OLDEST_SUPPORTED_SAVE_FORMAT_VERSION) return 'earlierRelease';
+  return 'supported';
+}
 
 /** Identifier of the single campaign slot the MVP exposes (MVP Scope 6). */
 export const DEFAULT_SLOT_ID = 'slot-1';

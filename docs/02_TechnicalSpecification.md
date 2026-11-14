@@ -153,7 +153,7 @@ Authored definitions use stable, namespaced string IDs such as `hull.independent
 
 TypeScript uses branded types for definition IDs, entity IDs, campaign IDs, inventory IDs, request IDs, simulation timestamps, and revisions. At runtime they serialize as strings or numbers. Every authored reference is validated at build time, and every saved reference is validated at import or migration time.
 
-Renaming a shipped definition requires either retaining its ID or adding an explicit migration alias. Deleting a definition referenced by an existing campaign requires a save migration.
+Renaming a shipped definition requires either retaining its ID or adding an explicit migration alias. Deleting a definition referenced by an existing campaign requires a save migration, except across a release boundary that section 11.4 declares incompatible, where saves from before the boundary are refused instead.
 
 ### 5.2 Canonical units and numbers
 
@@ -227,7 +227,9 @@ JSON Schema validates field types, required values, ranges, discriminated unions
 - bidirectional gates with valid destination sites;
 - at least one neutral-access station per region and a connected neutral recovery route;
 - positive market target stock and legal elasticity/spread ranges;
-- valid slot, hardpoint, skill, module, and ammunition relationships;
+- valid slot, hardpoint, skill, module, and ammunition relationships, including explicit module sizes and weapon families: each hull lists the module sizes it accepts, each module states its size or the sizes it suits, and charges state the weapon family and size they load into;
+- modifier definitions that use only registered operators and the attributes those operators allow, so a module category that would not execute its described effect fails validation;
+- NPC loadouts that are legal fits with an authored, finite ammunition reserve for every loaded weapon group;
 - faction-relation completeness and values in range;
 - recipe inputs, outputs, facilities, and knowledge sources;
 - availability of every fabrication raw material;
@@ -236,7 +238,9 @@ JSON Schema validates field types, required values, ranges, discriminated unions
 - encounter rewards and NPC loadouts referencing valid definitions;
 - full localization keys and icon references.
 
-Validation runs at development startup, test startup, and production build time. A production build fails on any error. Development diagnostics include the file, JSON path, bad value, and violated rule.
+Validation runs at development startup, test startup, and production build time. A production build fails on any error.
+
+A delivery may additionally hold the shipped bundle to a content floor named in the content manifest. A development milestone floor states honestly what the completed delivery phases contain; only the release floor is accepted by the release gate, so incomplete content can never be presented as the final delivery. Development diagnostics include the file, JSON path, bad value, and violated rule.
 
 ### 6.3 Content compilation
 
@@ -325,7 +329,8 @@ Large immutable definitions remain in the content repository. Historical series 
 
 Mutation is organized around aggregate boundaries:
 
-- **Ship aggregate:** hull reference, fitted modules, cargo inventory, damage, capacitor, movement order, locks, effects, and insurance.
+- **Ship aggregate:** hull reference, fitted modules, cargo inventory, damage, capacitor, movement order, locks, effects, and insurance. A player may own several ships; the campaign holds one optional active ship ID. Fitting drafts and station previews name the ship they belong to and never default to the active ship at confirmation.
+- **Projectile and effect records:** a guided projectile is owned by the site, not by its launcher, and stores its target ID, the launch parameters resolved at launch, remaining flight time, and a retained source attribution that stays valid after the source is gone. A temporary control effect is owned by its target and stores its source attribution, strength, and expiry. Neither keeps a live reference that would dangle when the source is destroyed or leaves.
 - **Inventory aggregate:** explicit location, capacity policy, and item stacks.
 - **Site aggregate:** objects, positions, velocities, encounter state, ownership, timers, and hazards.
 - **Station economy aggregate:** stock, production/consumption accumulator, events, quote history, and service state.
@@ -344,7 +349,7 @@ Every physical item has exactly one location. Moving an item is one atomic remov
 
 Industry inputs, processor inputs, weapon ammunition, and other committed items move into explicit reserve locations. Reservations are not flags on items left in a hangar, preventing the same item from being used twice.
 
-A weapon's magazine is such a location. Loading moves the rounds out of cargo into a charge stack in the ship's fitting store that is bound to one weapon slot. The single round a running cycle holds back until its shot is applied is recorded on that cycle and deducted from the magazine's available count; it needs no inventory of its own, because the cycle owns its magazine exclusively and the round cannot be committed twice.
+A weapon's magazine is such a location, one per weapon slot, so turrets and launchers on one ship keep separate magazines of their own compatible charges. NPC loadouts likewise name ammunition per weapon group rather than one charge for the whole ship. Loading moves the rounds out of cargo into a charge stack in the ship's fitting store that is bound to one weapon slot. The single round a running cycle holds back until its shot is applied is recorded on that cycle and deducted from the magazine's available count; it needs no inventory of its own, because the cycle owns its magazine exclusively and the round cannot be committed twice.
 
 ### 8.4 Knowledge and remote information
 
@@ -382,6 +387,8 @@ Each quantum advances in this order:
 
 All committed completions due at one timestamp resolve even if another due completion destroys their source at that timestamp. Destruction is applied after the completion batch. This prevents entity iteration order from deciding simultaneous exchanges.
 
+Projectile contacts and expiries are scheduled boundaries like any other completion. A contact due at a timestamp is staged in step 4 and applied in step 5 with the other damage results, in stable order of scheduler ordinal; an expiry at the same timestamp is processed in step 7, after the contact. A control-effect refresh is a completion and therefore also wins a tie with that effect's expiry. A projectile whose target was destroyed or left the site earlier in the same batch is removed without effect.
+
 Systems with coarse cycles do not iterate through every small simulation quantum. They schedule their next boundary and calculate the exact number of whole elapsed cycles when reached. The result must be identical to resolving each cycle in order, including storage blocks, depletion, hourly stock clamps, and daily limits.
 
 ### 9.3 Movement and geometry
@@ -412,7 +419,7 @@ Real creation timestamps, performance measurements, and UI settings are excluded
 
 The universe repository holds authored regions, systems, gates, and permanent site definitions. Campaign world state overlays discoveries, dynamic anomalies, asteroid depletion, station economies, roaming NPC state, events, and timestamps on those definitions.
 
-Only the current tactical site is simulated at movement/combat granularity. Other locations advance through scheduled aggregate events. A site instance is loaded from its authored definition plus persistent overlay and is unloaded only after a completed warp, gate jump, docking, or destruction recovery transaction.
+Only the current tactical site is simulated at movement/combat granularity. Leaving a site, by warp, docking, or destruction, removes projectiles aimed at the departing ship and effects on it; projectiles it launched remain until they resolve. Each fresh encounter attempt has its own identity, and rewards are recorded against NPC and attempt identities so that resuming or repeating completion events cannot pay twice. Other locations advance through scheduled aggregate events. A site instance is loaded from its authored definition plus persistent overlay and is unloaded only after a completed warp, gate jump, docking, or destruction recovery transaction.
 
 Warp is a state machine with aligning, preparation, transit, and arrival states. Dock and jump are state machines that retain the requested target and cancellation reason. Arrival concealment is an effect with explicit break triggers checked by command handlers before the requested action begins.
 
@@ -430,9 +437,11 @@ Ship statistics are evaluated by one dependency-aware attribute pipeline:
 6. clamp rule-bounded outputs;
 7. record a calculation trace.
 
-Modifier definitions declare target attribute, operation, value, stage, condition, and source label. Fitted percentage modifiers affecting the same attribute are diminished together by direction as required by the functional specification; content cannot declare an alternate group to bypass that rule. Arbitrary executable expressions are not allowed in content. A registry of reviewed formula operators implements all permitted effects.
+Modifier definitions declare target attribute, operation, value, stage, condition, and source label. Fitted percentage modifiers affecting the same attribute are diminished together by direction as required by the functional specification; content cannot declare an alternate group to bypass that rule. Arbitrary executable expressions are not allowed in content. A registry of reviewed formula operators implements all permitted effects, including operators restricted to one weapon family (such as a turret-family damage bonus) or to guided application. Validation rejects any operator used on an attribute or category it does not support.
 
-Fitting edits occur in an engine-side fitting draft. The draft references a base revision, returns live previews, and is committed atomically. Closing or reverting discards it. Applying a saved fit is a planner operation that returns exact local allocations and missing items before confirmation.
+Module size compatibility is checked by fitting validity before and at commit; hull size never changes a module's own statistics. When a fit lowers a maximum, stored condition is limited to the new maximum, and the draft and commit paths guarantee that removing and refitting the same modules never repairs a ship or creates capacitor charge.
+
+Fitting edits occur in an engine-side fitting draft. The draft references a base revision and the ship it belongs to, which may be any player ship docked at the current station, returns live previews, and is committed atomically to that ship only. Closing or reverting discards it. While a draft is open the active ship cannot be switched. Applying a saved fit is a planner operation that returns exact local allocations and missing items before confirmation.
 
 ### 10.3 Targeting, modules, and combat
 
@@ -440,7 +449,9 @@ Lock attempts, active module cycles, reloads, repairs, control effects, and proj
 
 Turret, guided-weapon, resistance, layer spillover, repair, capacitor, and lock-time calculations are independent pure functions with shared fixtures taken from the functional formulas. Damage is represented as a four-component vector. For each defensive layer, the engine calculates resisted damage for all four components together. If the total would deplete the layer, it consumes the same proportion of every raw component needed to reach zero hit points and passes the remaining raw vector to the next layer. Damage-type iteration order therefore cannot change the outcome.
 
-NPCs issue the same movement and module commands available to player ships through an AI command adapter. A behavior selector combines authored role priorities, encounter objectives, target scoring, range bands, capacitor state, defense state, and retreat/reinforcement conditions. It receives only information the NPC is defined to know and cannot mutate ship state directly.
+Guided weapons reserve a round at cycle start like turrets, consume it at cycle completion, and create a projectile instead of applying damage; damage is applied only at contact using the guided formula and the parameters snapshotted at launch. A speed-reduction cycle checks lock and range at start and at completion, then creates or refreshes one effect per source and target; effects from different sources combine multiplicatively above the hull's speed floor and feed the movement controller as a lower speed cap.
+
+NPCs issue the same movement and module commands available to player ships through an AI command adapter. A behavior selector combines authored role priorities, encounter objectives, target scoring, range bands (including guided reach and control-module range as well as turret range), capacitor and ammunition state, the NPC's own loadout, defense state, and retreat/reinforcement conditions. It receives only information the NPC is defined to know and cannot mutate ship state directly.
 
 The combat recorder keeps a bounded ring buffer of significant events and periodically aggregates routine repeated damage. On player destruction it freezes the interval needed for the loss report, including incoming sources, damage types, layer transitions, control effects, destroyed equipment, survivors, insurance, and recovery result.
 
@@ -552,9 +563,11 @@ Loading proceeds through:
 8. loading into a new worker session;
 9. projection generation before the campaign is shown.
 
-Migrations are immutable functions with golden before/after fixtures. Every publicly released save version has a migration path to the current version. A save from a newer unsupported version is rejected without modification. Missing required content produces a precise compatibility error rather than substituting an unrelated item.
+Migrations are immutable functions with golden before/after fixtures. Every publicly released save version has a migration path to the current version, except where a release declares a compatibility boundary. A save from a newer unsupported version is rejected without modification. Missing required content produces a precise compatibility error rather than substituting an unrelated item.
 
-The loader compares the save's content version and hash with the installed bundle. A hash mismatch is accepted only when the installed release declares a compatible content transition or provides a migration. Compatible balance-only changes retain entity and definition IDs and adopt the installed values for future calculations. Structural content changes migrate affected campaign state explicitly. An incompatible save is rejected without modification, and the original snapshot remains available. Released content transitions have fixtures covering representative saves that reference changed definitions.
+A compatibility boundary is a declared oldest supported save format. A save below it is refused with a message naming the release that wrote it, before checksum, migration, or content checks, so it cannot appear compatible because the definitions it names still resolve; the stored snapshot is left unchanged, nothing is deleted or replaced, and starting over still requires the explicit reset or replace confirmation. The only boundary declared so far is the early-alpha transition from v0.1 (save formats 1-10) to v0.2 (format 11), recorded in decision ADR-V02-01. A boundary waives only the migration obligation: schema validation, checksums, bounded parsing, transaction safety, autosave recovery, current-version replay fixtures, and forward-version rejection all remain required.
+
+The loader compares the save's content version and hash with the installed bundle. A hash mismatch is accepted only when the installed release declares a compatible content transition or provides a migration. Transitions are declared in the content manifest as the authored content versions whose saves the bundle may open; the bundle's own authored version is always included. Resolvable references alone never establish compatibility. Compatible balance-only changes retain entity and definition IDs and adopt the installed values for future calculations. Structural content changes migrate affected campaign state explicitly. An incompatible save is rejected without modification, and the original snapshot remains available. Released content transitions have fixtures covering representative saves that reference changed definitions.
 
 Import first validates into temporary storage. By default it creates a new campaign slot with a new local slot identity while retaining the campaign identity inside the save only when it cannot collide. Overwrite requires an explicit preview and confirmation; the previous slot remains until the imported snapshot commits successfully.
 
@@ -657,10 +670,10 @@ At minimum, a full campaign validation verifies:
 2. every entity and definition reference resolves;
 3. every item exists in exactly one valid location;
 4. inventory capacity and job/colony reservations are consistent;
-5. at most one active player ship exists; when one does, its location agrees with campaign location; a campaign without one is docked, no ship of the player's waits at that station, and the player either owns a flight-ready ship elsewhere or holds at least the starter ship reference value (Functional Specification 9.12);
+5. at most one active player ship exists among any number of owned ships; when one does, its location agrees with campaign location; a campaign without one is docked, no ship of the player's waits at that station, and the player either owns a flight-ready ship elsewhere or holds at least the starter ship reference value (Functional Specification 9.12);
 6. fitting slot, hardpoint, online resource, and skill rules are internally consistent;
 7. scheduler entries refer to live owners or an allowed persistent world event;
-8. locks, movement targets, effects, and objectives refer to valid entities;
+8. locks, movement targets, effects, objectives, and fitting drafts refer to valid entities; projectiles refer to a live target in the current site, and projectile and effect source attributions are retained values rather than live references;
 9. completed and one-time rewards cannot be granted again;
 10. recovery and neutral-access guarantees remain available;
 11. random streams, simulation time, revisions, entity ordinals, and event ordinals are valid and monotonic;
@@ -700,7 +713,7 @@ Technical changes are handled as follows:
 
 - a player-visible rule change belongs first in the appropriate higher-authority game document;
 - a balance-only change updates content data and relevant tests;
-- a protocol or save-shape change increments its version and supplies compatibility handling;
+- a protocol or save-shape change increments its version and supplies compatibility handling, which is a migration unless an architecture decision record declares a compatibility boundary under section 11.4;
 - a new gameplay system declares its commands, queries, aggregate ownership, scheduled boundaries, persistence shape, content schema, formula traces, and acceptance tests;
 - a new dependency requires a documented purpose and must not breach engine portability or offline operation;
 - a deliberate exception to this specification is recorded in an architecture decision record and updates this document if the exception becomes the new rule.
@@ -714,7 +727,7 @@ The full-game implementation satisfies this technical specification when:
 3. the headless engine runs without DOM, React, browser storage, or network dependencies;
 4. all complete-game content passes schema and semantic validation;
 5. identical snapshots, elapsed deltas, and commands reproduce identical authoritative results;
-6. campaign snapshots survive autosave rotation, manual save, close/reopen, export/import, corruption handling, and every released migration path;
+6. campaign snapshots survive autosave rotation, manual save, close/reopen, export/import, corruption handling, and every released migration path, and saves from before a declared compatibility boundary are refused unchanged;
 7. closing, pausing, changing the system clock, or resuming after browser suspension never creates unearned campaign progress;
 8. inventory, credit, fitting, scheduler, progression, and recovery invariants hold under property and long-running simulation tests;
 9. the SVG/HTML interface meets required keyboard, mouse, scale, contrast, reduced-motion, notification, and explanation behavior;

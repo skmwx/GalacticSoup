@@ -90,12 +90,27 @@ export interface LayerDefinition {
   readonly resistances: ResistanceProfile;
 }
 
+/** Hull size classes of the combat lineup (FeatureSpec02 4.1). */
+export const HULL_CLASSES = ['frigate', 'destroyer', 'cruiser'] as const;
+export type HullClass = (typeof HULL_CLASSES)[number];
+
+/** Module sizes a hull may accept (FeatureSpec02 4.1, 5.1). */
+export const MODULE_SIZES = ['small', 'medium'] as const;
+export type ModuleSize = (typeof MODULE_SIZES)[number];
+
 export interface HullDefinition {
   readonly id: HullId;
   readonly nameKey: MessageKey;
   readonly descriptionKey: MessageKey;
   /** Only a player-usable hull may be bought, fitted and undocked by the player. */
   readonly playerUsable: boolean;
+  /** The hull's step in the combat lineup. Information only; it changes no rule. */
+  readonly hullClass: HullClass;
+  /**
+   * Module sizes the hull accepts, declared explicitly (FeatureSpec02 4.1).
+   * Fitting enforces it once modules carry a size (v0.2 phase 2).
+   */
+  readonly moduleSizes: readonly ModuleSize[];
   readonly defenses: Readonly<Record<DefenseLayer, LayerDefinition>>;
   readonly shieldRechargeSeconds: number;
   readonly capacitor: { readonly capacity: number; readonly rechargeSeconds: number };

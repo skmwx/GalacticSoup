@@ -178,7 +178,7 @@ test.describe('losing a ship', () => {
     await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible();
 
     // The replacement is a recovery grant: flown freely, never sold or insured.
-    await page.getByRole('button', { name: 'Ship', exact: true }).click();
+    await page.getByRole('button', { name: 'Ships', exact: true }).click();
     await expect(page.getByText('Recovery grant').first()).toBeVisible();
 
     // Recover the wreck through the ordinary destination flow, without a map.

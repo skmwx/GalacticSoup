@@ -9,6 +9,7 @@ import { ItemComparison, ItemSummary } from '../common/ItemDetail';
 import { formatQuantity, formatVolume } from '../format/numbers';
 import { readWholeQuantity } from '../format/quantity';
 import { useLocalizer, useTranslate } from '../localization';
+import { shipLabels } from './shipLabels';
 import styles from './Station.module.css';
 import type { PlayData } from '../frame/usePlayData';
 
@@ -40,7 +41,12 @@ import type { PlayData } from '../frame/usePlayData';
  * be loaded. Recovery-grant stacks are labelled in words, because they can be
  * used and refitted but never sold or insured.
  *
- * @implements FUNC-6.2, FUNC-19.5, FUNC-9.12, MVP-AC-02, MVP-AC-08
+ * With several ships docked here the player chooses whose hold the second
+ * column is (Functional Specification 6.3). Cargo always belongs to its ship:
+ * moving goods between two ships goes through the hangar, one explicit
+ * transfer at a time, and the hold of a ship the player does not fly says so.
+ *
+ * @implements FUNC-6.2, FUNC-19.5, FUNC-9.12, FUNC-6.3, MVP-AC-02, MVP-AC-08, V02-AC-03
  */
 
 export interface HangarPanelProps {
@@ -54,6 +60,8 @@ export function HangarPanel({ gateway, data, runner }: HangarPanelProps): JSX.El
   const assets = data.assets;
   const [inspecting, setInspecting] = useState<StackData | null>(null);
   const [comparedWith, setComparedWith] = useState<string | null>(null);
+  const [holdShipId, setHoldShipId] = useState<string | null>(null);
+  const holdSelectId = useId();
 
   const inspect = (stack: StackData): void => {
     setInspecting(stack);
@@ -70,9 +78,15 @@ export function HangarPanel({ gateway, data, runner }: HangarPanelProps): JSX.El
   ].sort((left, right) => left.definitionId.localeCompare(right.definitionId));
 
   const hangar = assets?.inventories.find((inventory) => inventory.location.kind === 'hangar');
+  const here = assets?.location.kind === 'station' ? assets.location.stationId : null;
+  const localShips = (assets?.ships ?? []).filter(
+    (ship) => ship.location.kind === 'station' && ship.location.stationId === here,
+  );
+  const labels = shipLabels(assets?.ships ?? [], translate);
+  // The chosen hold, while that ship is still here; otherwise the active one.
+  const holdShip = localShips.find((ship) => ship.id === holdShipId)?.id ?? assets?.activeShipId ?? null;
   const cargo = assets?.inventories.find(
-    (inventory) =>
-      inventory.location.kind === 'cargo' && inventory.location.shipId === assets.activeShipId,
+    (inventory) => inventory.location.kind === 'cargo' && inventory.location.shipId === holdShip,
   );
   const shipless = assets !== null && assets.activeShipId === null;
 
@@ -104,6 +118,34 @@ export function HangarPanel({ gateway, data, runner }: HangarPanelProps): JSX.El
       ) : hangar === undefined || cargo === undefined ? (
         <p className={styles['muted']}>{translate('hangar.loading')}</p>
       ) : (
+        <>
+        {localShips.length < 2 ? null : (
+          <div className={styles['detail']} data-hold-choice>
+            <label className={styles['field']} htmlFor={holdSelectId}>
+              {translate('hangar.holdOf')}
+            </label>
+            <select
+              id={holdSelectId}
+              className={styles['select']}
+              value={holdShip ?? ''}
+              onChange={(event) => {
+                setHoldShipId(event.target.value);
+              }}
+            >
+              {localShips.map((ship) => (
+                <option key={ship.id} value={ship.id}>
+                  {labels.get(ship.id)}
+                  {ship.active ? ` (${translate('ships.active')})` : ''}
+                </option>
+              ))}
+            </select>
+            {holdShip !== null && holdShip !== assets?.activeShipId ? (
+              <p className={styles['notice']} data-hold-inactive>
+                {translate('hangar.holdInactive', { ship: labels.get(holdShip) ?? '' })}
+              </p>
+            ) : null}
+          </div>
+        )}
         <div className={styles['inventoryColumns']}>
           <InventoryColumn
             inventory={hangar}
@@ -126,6 +168,7 @@ export function HangarPanel({ gateway, data, runner }: HangarPanelProps): JSX.El
             onInspect={inspect}
           />
         </div>
+        </>
       )}
 
       {inspecting === null ? null : (

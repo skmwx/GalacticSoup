@@ -38,6 +38,7 @@ import { handleEconomyCommand } from './economyCommands';
 import { handleNavigationCommand } from './navigationCommands';
 import { observeTransaction } from './observers';
 import { handleOnboardingCommand } from './onboardingCommands';
+import { handleShipCommand } from './shipCommands';
 
 /**
  * The command pipeline (Technical Specification 7.2).
@@ -164,6 +165,8 @@ function apply(transaction: Transaction, request: CommandRequest): CommandOutcom
     case 'inventory.split':
     case 'inventory.merge':
       return handleInventoryCommand(transaction, request.type, request.payload);
+    case 'ship.activate':
+      return handleShipCommand(transaction, request.type, request.payload);
     case 'loot.take':
       return handleEncounterCommand(transaction, request.type, request.payload);
     case 'onboarding.hide':

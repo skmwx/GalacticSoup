@@ -145,6 +145,7 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
 
   switch (type) {
     case 'assets.list':
+    case 'ships.list':
     case 'fitting.draft':
     case 'fitting.revert':
     case 'fitting.commit':
@@ -318,6 +319,7 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
     }
 
     case 'ship.get':
+    case 'ship.activate':
     case 'ship.undockValidity':
     case 'fitting.begin': {
       const unexpected = unexpectedField(fields, ['shipId']);

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galacticsoup.invalid/schemas/protocol/client-request.schema.json",
   "title": "ClientRequest",
-  "description": "Protocol version 14 request envelope and payloads.",
+  "description": "Protocol version 19 request envelope and payloads.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 18
+      "const": 19
     },
     "requestId": {
       "type": "string",
@@ -94,9 +94,11 @@
         "repair.preview",
         "resupply.confirm",
         "resupply.preview",
+        "ship.activate",
         "ship.get",
         "ship.undock",
         "ship.undockValidity",
+        "ships.list",
         "station.services",
         "system.capabilities",
         "system.health",
@@ -619,6 +621,28 @@
       "if": {
         "properties": {
           "type": {
+            "const": "ships.list"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [],
+            "properties": {}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "wallet.get"
           }
         },
@@ -930,6 +954,36 @@
         "properties": {
           "payload": {
             "$ref": "#/$defs/emptyPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "ship.activate"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "shipId"
+            ],
+            "properties": {
+              "shipId": {
+                "type": "string",
+                "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$",
+                "maxLength": 128
+              }
+            }
           }
         }
       }

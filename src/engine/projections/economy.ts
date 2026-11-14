@@ -657,9 +657,15 @@ function allocateOwnedRounds(
   return allocated;
 }
 
+/**
+ * The ship a station service is priced for. Every service preview names its
+ * ship, and only one of the player's own ships can be serviced: an opponent's
+ * ship id is not a valid preview (FeatureSpec02 4.2). Whether that ship is
+ * docked where the player is decides the service's availability separately.
+ */
 function requireShip(state: CampaignState, shipId: string) {
-  const ship = state.assets.ships[shipId];
-  if (ship === undefined) throw new EconomyError('invalidPreview');
+  const ship = Object.hasOwn(state.assets.ships, shipId) ? state.assets.ships[shipId] : undefined;
+  if (ship === undefined || ship.owner !== 'player') throw new EconomyError('invalidPreview');
   return ship;
 }
 

@@ -73,6 +73,7 @@ export const DOMAIN_EVENT_KINDS = [
   'recovery.insurancePaid',
   'recovery.shipGranted',
   'recovery.activeShipChanged',
+  'ship.activated',
   'onboarding.stepCompleted',
   'onboarding.stepSkipped',
   'onboarding.hidden',

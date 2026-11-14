@@ -1,6 +1,12 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
+ * Version 19 is the first v0.2 protocol. The resumable save in
+ * `campaign.saves` says whether this build can open it (`compatibility`), so a
+ * v0.1 save is explained rather than offered; `ship.activate` switches the
+ * active ship between the player's ships docked at the same station; and
+ * `ships.list` describes every ship the player owns with its readiness and the
+ * figures a comparison needs.
  * Version 18 adds the system's stations to `navigation.destinations`, each
  * with the warp to its site and the dock with it, so space navigation can
  * offer the way home beside the encounters and wrecks. Choosing an encounter
@@ -38,7 +44,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 18;
+export const PROTOCOL_VERSION = 19;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

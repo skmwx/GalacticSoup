@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { migrateSave, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, type SaveMigration } from '@engine';
+import { migrateSave, OLDEST_SUPPORTED_SAVE_FORMAT_VERSION, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, type SaveMigration } from '@engine';
 
 /**
  * The migration registry and its runner (Technical Specification 11.4).
@@ -22,9 +22,12 @@ const step = (from: number, apply: (save: Record<string, unknown>) => void): Sav
 });
 
 describe('save migrations', () => {
-  it('ships no migration before the first released format change [TECH-11.4]', () => {
+  it('ships no migration: v0.2 starts at format 11 and refuses v0.1 saves instead [TECH-11.4, V02-AC-13]', () => {
+    // ADR-V02-01: the v0.1 -> v0.2 transition is a declared compatibility
+    // boundary, so no migration from formats 1-10 exists or is owed.
     expect(SAVE_MIGRATIONS).toEqual([]);
-    expect(SAVE_FORMAT_VERSION).toBe(10);
+    expect(SAVE_FORMAT_VERSION).toBe(11);
+    expect(OLDEST_SUPPORTED_SAVE_FORMAT_VERSION).toBe(11);
   });
 
   it('is a no-op for a save already at the current version [TECH-11.4]', () => {

@@ -14,7 +14,7 @@ import { MarketPanel } from './MarketPanel';
 import { NoShipNotice } from './NoShipNotice';
 import { ServicesPanel } from './ServicesPanel';
 import { ShipReadiness } from './ShipReadiness';
-import { ShipPanel } from './ShipPanel';
+import { ShipsPanel } from './ShipsPanel';
 import { SortieSummary } from './SortieSummary';
 import styles from './Station.module.css';
 import { STATION_PANELS, type StationPanelId } from './panels';
@@ -251,7 +251,23 @@ export function StationScreen({
         <HangarPanel gateway={gateway} data={data} runner={runner} />
       ) : null}
       {open === 'station.fitting' ? <FittingPanel data={data} runner={runner} /> : null}
-      {open === 'station.ship' ? <ShipPanel data={data} /> : null}
+      {open === 'station.ship' ? (
+        <ShipsPanel
+          data={data}
+          runner={runner}
+          onFit={(shipId) => {
+            void (async () => {
+              // The fitting screen edits the ship its draft belongs to, so
+              // fitting another ship starts with a draft on that ship.
+              if (data.fitting?.draft?.shipId !== shipId) {
+                const answer = await data.send('fitting.begin', { shipId });
+                if (!answer.ok) return;
+              }
+              setOpen('station.fitting');
+            })();
+          }}
+        />
+      ) : null}
       {open === 'station.departure' ? (
         <DeparturePanel data={data} runner={runner} />
       ) : null}

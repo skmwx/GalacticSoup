@@ -10,7 +10,12 @@ import {
 } from '../../support/contentFixtures.ts';
 
 /**
- * The MVP content floor (MVP Scope 4.1-4.2; MVP Implementation Plan phase 16).
+ * The delivery content floor (MVP Scope 4.1-4.2, as carried into v0.2;
+ * FeatureSpec02 4-8; v0.2 Implementation Plan phase 0).
+ *
+ * The shipped manifest names a development milestone profile; the release
+ * profile adds the complete v0.2 quantities and must refuse the content until
+ * the catalog and ladder phases have delivered it.
  *
  * The shipped bundle must sell enough at the starting station for two combat
  * approaches and offer three repeatable encounters that press the player in
@@ -85,11 +90,11 @@ describe('the MVP content floor', () => {
     expect(details.some((detail) => detail.includes('"module.turret.railgun.small" turret but no ammunition'))).toBe(true);
   });
 
-  it('needs one repeatable encounter at each of the three tiers [MVP-AC-07, MVP-AC-09]', () => {
+  it('needs repeatable encounters covering tiers 1, 2 and 3 [MVP-AC-07, MVP-AC-09]', () => {
     const tiers = floorIssues(editEncounters((definitions) => {
       (definitions[2] as Record<string, unknown>)['tier'] = 2;
     }));
-    expect(tiers.some((entry) => entry.detail.includes('tiers 1, 2 and 3, not tiers 1, 2, 2'))).toBe(true);
+    expect(tiers.some((entry) => entry.detail.includes('cover tiers 1, 2 and 3 and no other, not tiers 1, 2'))).toBe(true);
 
     const repeatable = floorIssues(editEncounters((definitions) => {
       (definitions[0] as Record<string, unknown>)['repeatable'] = false;
@@ -109,11 +114,43 @@ describe('the MVP content floor', () => {
     expect(single.some((detail) => detail.includes('only 1 range or movement behaviour'))).toBe(true);
   });
 
-  it('keeps the MVP to one player-usable hull [MVP-AC-02]', () => {
-    const issues = floorIssues(editDocument(shippedPack(), 'catalog/hulls/pirate.json', (document) => {
+  it('holds the v0.2 lineup to exactly one frigate, destroyer and cruiser, each on sale [V02-AC-02, FUNC-8.1]', () => {
+    const extra = floorIssues(editDocument(shippedPack(), 'catalog/hulls/pirate.json', (document) => {
       (document['definitions'] as Record<string, unknown>[])[0]!['playerUsable'] = true;
     }));
+    expect(extra.some((entry) => entry.detail.includes('exactly 3 player-usable hulls, not 4'))).toBe(true);
+    expect(extra.some((entry) => entry.detail.includes('one player-usable frigate, not 2'))).toBe(true);
 
-    expect(issues.some((entry) => entry.detail.includes('exactly one player-usable hull, not 2'))).toBe(true);
+    const unsold = floorIssues(withoutListings('hull.independent.cruiser'));
+    expect(unsold.some((entry) => entry.detail.includes('does not sell the player hull "hull.independent.cruiser"'))).toBe(true);
+  });
+});
+
+describe('content floor profiles', () => {
+  const declare = (profile: string | null): ContentFile[] =>
+    editDocument(shippedPack(), 'content/manifest.json', (document) => {
+      if (profile === null) delete document['contentFloor'];
+      else document['contentFloor'] = profile;
+    });
+
+  it('ships a development milestone, which the release profile refuses as incomplete [V02-AC-02, TECH-6.2]', () => {
+    const manifest = JSON.parse(shippedPack().find((file) => file.path === 'content/manifest.json')!.text) as {
+      contentFloor?: string;
+    };
+    expect(manifest.contentFloor).toBe('v0.2-phase-1');
+
+    const release = floorIssues(declare('v0.2-release')).map((entry) => entry.detail);
+    expect(release.some((detail) => detail.includes('combat module definitions, not 26'))).toBe(true);
+    expect(release.some((detail) => detail.includes('ammunition definitions, fewer than 16'))).toBe(true);
+    expect(release.some((detail) => detail.includes('NPC profiles, fewer than 10'))).toBe(true);
+    expect(release.some((detail) => detail.includes('tier 1 encounters, not 4'))).toBe(true);
+    expect(release.some((detail) => detail.includes('module definitions can drop, fewer than 10'))).toBe(true);
+    expect(release.every((detail) => detail.endsWith('(v0.2 release floor)'))).toBe(true);
+  });
+
+  it('holds a manifest that names no profile to the release floor, and refuses an unknown one [TECH-6.2]', () => {
+    expect(floorIssues(declare(null)).some((entry) => entry.detail.includes('(v0.2 release floor)'))).toBe(true);
+    // The schema refuses an unknown profile before the floor is reached.
+    expect(compilePack(declare('v0.2-anything'), { floor: true }).ok).toBe(false);
   });
 });

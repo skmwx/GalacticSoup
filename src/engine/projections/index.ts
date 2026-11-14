@@ -5,6 +5,7 @@
  * changes state, consumes randomness or advances time.
  */
 export * from './assets';
+export { shipsListProjection } from './ships';
 export * from './economy';
 export { combatProjection, objectLockCommands } from './combat';
 export { destinationsProjection, siteProjection } from './navigation';

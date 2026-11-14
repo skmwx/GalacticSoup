@@ -4,7 +4,7 @@
  */
 export { captureSnapshot, envelopeChecksum, isSealed, saveIdOf } from './envelope';
 export type { CaptureInput } from './envelope';
-export { loadSave } from './load';
+export { declaresCompatible, loadSave } from './load';
 export type { LoadContext, LoadFailure, LoadResult, LoadSuccess } from './load';
 export { migrateSave, SAVE_MIGRATIONS } from './migrations';
 export type { MigratableSave, MigrationResult, SaveMigration } from './migrations';

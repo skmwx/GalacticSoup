@@ -63,15 +63,51 @@ describe('the requirement registry', () => {
       'FUNC-11.1', 'FUNC-11.2', 'FUNC-11.3', 'FUNC-19.1', 'FUNC-19.2', 'FUNC-19.3', 'FUNC-19.5', 'FUNC-19.6',
       'FUNC-19.7', 'FUNC-20', 'TECH-9.1', 'TECH-10.1', 'TECH-10.2', 'TECH-10.3', 'TECH-10.4', 'TECH-10.9',
       'TECH-11.1', 'TECH-11.2', 'TECH-11.3', 'TECH-11.4', 'TECH-12.3', 'TECH-15.3', 'TECH-18',
+      // v0.2 phase 1: several ships and local switching.
+      'FUNC-6.3',
     ]) {
       expect(scopeOf(id), id).toBe('included');
     }
     for (const id of [
-      'FUNC-6.3', 'FUNC-9.6', 'FUNC-9.9', 'FUNC-11.4', 'FUNC-12.2', 'FUNC-13.1', 'FUNC-14.3', 'FUNC-15.2',
+      'FUNC-9.6', 'FUNC-9.9', 'FUNC-11.4', 'FUNC-12.2', 'FUNC-13.1', 'FUNC-14.3', 'FUNC-15.2',
       'FUNC-16.3', 'FUNC-17.2', 'FUNC-19.4', 'TECH-8.4', 'TECH-10.5', 'TECH-10.7', 'TECH-10.8',
     ]) {
       expect(scopeOf(id), id).toBe('deferred');
     }
+  });
+});
+
+describe('the v0.2 acceptance criteria', () => {
+  it('records V02-AC-01 to V02-AC-15, each planned or included with the phases that deliver it [TECH-15.2]', () => {
+    const v02 = registry.requirements.filter((entry) => entry.id.startsWith('V02-AC-'));
+    expect(v02.map((entry) => entry.id)).toEqual(
+      Array.from({ length: 15 }, (_unused, index) => `V02-AC-${String(index + 1).padStart(2, '0')}`),
+    );
+    for (const entry of v02) {
+      expect(['planned', 'included'], entry.id).toContain(entry.scope);
+      expect((entry as { phases?: number[] }).phases?.length ?? 0, entry.id).toBeGreaterThan(0);
+    }
+    // Phases 0 and 1 are delivered; the criteria they complete are included.
+    const included = v02.filter((entry) => entry.scope === 'included').map((entry) => entry.id);
+    expect(included).toEqual(['V02-AC-01', 'V02-AC-03', 'V02-AC-12', 'V02-AC-13']);
+  });
+
+  it('holds a planned criterion to no coverage, but an included one to an integration or browser test [TECH-15.2]', () => {
+    const planned = buildTraceability({
+      registry: { requirements: [{ id: 'V02-AC-06', title: 'Guided', scope: 'planned' } as never] },
+      claims: new Map([['V02-AC-06', new Set(['src/engine/domain/combat/formulas.ts'])]]),
+      tests: new Map(),
+    });
+    expect(planned.problems).toEqual([]);
+    expect(planned.requirements[0]?.status).toBe('planned');
+    expect(planned.summary.planned).toBe(1);
+
+    const included = buildTraceability({
+      registry: { requirements: [{ id: 'V02-AC-03', title: 'Switch', scope: 'included' }] },
+      claims: new Map([['V02-AC-03', new Set(['src/engine/application/shipCommands.ts'])]]),
+      tests: new Map([['V02-AC-03', new Set(['tests/unit/engine/ships.test.ts'])]]),
+    });
+    expect(included.problems).toEqual(['V02-AC-03: no integration or browser test names it']);
   });
 });
 

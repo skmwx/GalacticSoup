@@ -7,7 +7,9 @@
  * and the production build use, so a problem found here is a problem that
  * would have stopped any of them.
  *
- * The shipped content is also held to the MVP content floor (MVP Scope 4.1-4.2).
+ * The shipped content is also held to the content floor profile its manifest
+ * names (v0.2 Implementation Plan phase 0). With `--release`, as the release
+ * gate runs it, any profile but the complete v0.2 release floor fails.
  *
  * On success it writes the compiled bundle to `reports/content-bundle.json`
  * for inspection. That file is a diagnostic; the build does not read it.
@@ -22,6 +24,7 @@ import { formatWarning } from './lib/content/budgets.mjs';
 import { formatIssue } from './lib/content/issues.mjs';
 import { readContentFiles } from './lib/content/read.mjs';
 import { loadSchemas } from './lib/content/schema.mjs';
+import { RELEASE_FLOOR_PROFILE } from './lib/content/floor.mjs';
 
 const files = readContentFiles();
 const schemas = loadSchemas();
@@ -32,6 +35,19 @@ if (files.length === 0) {
 }
 
 const result = compileContent(files, { floor: true });
+
+if (process.argv.includes('--release')) {
+  const manifest = files.find((file) => file.path.endsWith('manifest.json'));
+  const declared = manifest === undefined ? undefined : JSON.parse(manifest.text ?? '{}').contentFloor;
+  if ((declared ?? RELEASE_FLOOR_PROFILE) !== RELEASE_FLOOR_PROFILE) {
+    process.stderr.write(
+      `Content validation failed: the content declares the development floor "${String(declared)}". ` +
+        `A release needs "${RELEASE_FLOOR_PROFILE}", the complete v0.2 floor.
+`,
+    );
+    process.exit(1);
+  }
+}
 
 if (!result.ok) {
   process.stderr.write(`Content validation failed (${String(result.issues.length)}):\n\n`);

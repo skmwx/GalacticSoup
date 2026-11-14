@@ -778,3 +778,40 @@
 .fitMark {
   font-weight: 700;
 }
+
+/* The player's ships (v0.2): one entry per owned ship. */
+.shipList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--gs-space-2);
+}
+
+.shipEntry {
+  border: var(--gs-border);
+  border-radius: var(--gs-radius, 4px);
+  padding: var(--gs-space-2);
+  display: grid;
+  gap: var(--gs-space-1);
+}
+
+.shipEntry[data-active='true'] {
+  border-color: var(--gs-color-accent);
+  border-width: 2px;
+}
+
+.activeTag {
+  font-size: var(--gs-font-small);
+  font-weight: 600;
+}
+
+.bestTag {
+  font-family: var(--gs-font-stack);
+  font-size: var(--gs-font-small);
+  font-weight: 600;
+}
+
+td[data-best='true'] {
+  font-weight: 700;
+}

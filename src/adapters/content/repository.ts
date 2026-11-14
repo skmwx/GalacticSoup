@@ -125,6 +125,7 @@ export function createContentRepository(
     contentHash: content.identity.contentHash,
     defaultLocale: content.identity.defaultLocale,
     locales: content.identity.locales,
+    compatibleContentVersions: content.identity.compatibleContentVersions,
     rules: content.rules,
 
     hull: (id) => hulls.get(id),

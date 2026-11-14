@@ -1,12 +1,16 @@
 {
   "kind": "hulls",
-  "$comment": "Player-usable hulls. The MVP ships exactly one.",
+  "$comment": "Player-usable hulls: the v0.2 combat lineup of frigate, destroyer and cruiser (FeatureSpec02 4.1). Statistics and reference values are preliminary and tuned in v0.2 phase 6.",
   "definitions": [
     {
       "id": "hull.independent.starter",
       "nameKey": "content.hull.independent.starter.name",
       "descriptionKey": "content.hull.independent.starter.description",
       "playerUsable": true,
+      "hullClass": "frigate",
+      "moduleSizes": [
+        "small"
+      ],
       "defenses": {
         "shield": {
           "hitPoints": 350,
@@ -62,7 +66,7 @@
       },
       "hardpoints": {
         "turret": 2,
-        "launcher": 0,
+        "launcher": 2,
         "mining": 0
       },
       "fitting": {
@@ -73,6 +77,164 @@
       "insuranceClass": "light",
       "traitKeys": [
         "content.hull.independent.starter.trait.versatile"
+      ]
+    },
+    {
+      "id": "hull.independent.destroyer",
+      "nameKey": "content.hull.independent.destroyer.name",
+      "descriptionKey": "content.hull.independent.destroyer.description",
+      "playerUsable": true,
+      "hullClass": "destroyer",
+      "moduleSizes": [
+        "small"
+      ],
+      "defenses": {
+        "shield": {
+          "hitPoints": 700,
+          "resistances": {
+            "electromagnetic": 0.0,
+            "thermal": 0.2,
+            "kinetic": 0.4,
+            "explosive": 0.5
+          }
+        },
+        "armor": {
+          "hitPoints": 650,
+          "resistances": {
+            "electromagnetic": 0.5,
+            "thermal": 0.35,
+            "kinetic": 0.25,
+            "explosive": 0.1
+          }
+        },
+        "hull": {
+          "hitPoints": 550,
+          "resistances": {
+            "electromagnetic": 0,
+            "thermal": 0,
+            "kinetic": 0,
+            "explosive": 0
+          }
+        }
+      },
+      "shieldRechargeSeconds": 750,
+      "capacitor": {
+        "capacity": 450,
+        "rechargeSeconds": 260
+      },
+      "movement": {
+        "maxSpeedKmPerSecond": 0.25,
+        "accelerationKmPerSecondSquared": 0.05,
+        "brakingKmPerSecondSquared": 0.11,
+        "turnRateRadiansPerSecond": 0.55
+      },
+      "signatureRadiusMetres": 75,
+      "targeting": {
+        "scanResolution": 450,
+        "maxLockRangeKm": 36,
+        "maxLockedTargets": 4
+      },
+      "cargoCapacityCubicMetres": 300,
+      "slots": {
+        "weapon": 4,
+        "system": 3,
+        "engineering": 3,
+        "utility": 0
+      },
+      "hardpoints": {
+        "turret": 4,
+        "launcher": 3,
+        "mining": 0
+      },
+      "fitting": {
+        "powerOutput": 60,
+        "processingOutput": 190
+      },
+      "referenceValueCredits": 48000,
+      "insuranceClass": "medium",
+      "traitKeys": [
+        "content.hull.independent.destroyer.trait.firepower",
+        "content.hull.independent.destroyer.trait.bulk"
+      ]
+    },
+    {
+      "id": "hull.independent.cruiser",
+      "nameKey": "content.hull.independent.cruiser.name",
+      "descriptionKey": "content.hull.independent.cruiser.description",
+      "playerUsable": true,
+      "hullClass": "cruiser",
+      "moduleSizes": [
+        "small",
+        "medium"
+      ],
+      "defenses": {
+        "shield": {
+          "hitPoints": 1500,
+          "resistances": {
+            "electromagnetic": 0.0,
+            "thermal": 0.2,
+            "kinetic": 0.4,
+            "explosive": 0.5
+          }
+        },
+        "armor": {
+          "hitPoints": 1400,
+          "resistances": {
+            "electromagnetic": 0.5,
+            "thermal": 0.35,
+            "kinetic": 0.25,
+            "explosive": 0.1
+          }
+        },
+        "hull": {
+          "hitPoints": 1200,
+          "resistances": {
+            "electromagnetic": 0,
+            "thermal": 0,
+            "kinetic": 0,
+            "explosive": 0
+          }
+        }
+      },
+      "shieldRechargeSeconds": 900,
+      "capacitor": {
+        "capacity": 900,
+        "rechargeSeconds": 360
+      },
+      "movement": {
+        "maxSpeedKmPerSecond": 0.18,
+        "accelerationKmPerSecondSquared": 0.03,
+        "brakingKmPerSecondSquared": 0.07,
+        "turnRateRadiansPerSecond": 0.35
+      },
+      "signatureRadiusMetres": 140,
+      "targeting": {
+        "scanResolution": 300,
+        "maxLockRangeKm": 48,
+        "maxLockedTargets": 5
+      },
+      "cargoCapacityCubicMetres": 500,
+      "slots": {
+        "weapon": 5,
+        "system": 4,
+        "engineering": 4,
+        "utility": 0
+      },
+      "hardpoints": {
+        "turret": 5,
+        "launcher": 4,
+        "mining": 0
+      },
+      "fitting": {
+        "powerOutput": 160,
+        "processingOutput": 380
+      },
+      "referenceValueCredits": 140000,
+      "insuranceClass": "heavy",
+      "traitKeys": [
+        "content.hull.independent.cruiser.trait.durable",
+        "content.hull.independent.cruiser.trait.medium",
+        "content.hull.independent.cruiser.trait.slow"
       ]
     }
   ]

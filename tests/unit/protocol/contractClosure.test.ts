@@ -112,7 +112,7 @@ describe('what the protocol does not offer', () => {
     expect([...families].sort()).toEqual([
       'assets', 'audio', 'campaign', 'combat', 'content', 'diagnostics', 'encounter', 'fitting',
       'insurance', 'inventory', 'item', 'loot', 'loss', 'market', 'module', 'movement', 'navigation',
-      'notifications', 'onboarding', 'repair', 'resupply', 'ship', 'station', 'system', 'targeting',
+      'notifications', 'onboarding', 'repair', 'resupply', 'ship', 'ships', 'station', 'system', 'targeting',
       'time', 'wallet', 'weapon',
     ]);
     // Movement is the five discrete orders of Functional Specification 7.1;

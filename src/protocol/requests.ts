@@ -12,7 +12,7 @@
 import type { EngineError } from './errors';
 import type { AssetsData, WalletData, InventoryData, ItemInspectionData, MaximumInventoryData,
   TransferInventoryPayload, SplitInventoryPayload, MergeInventoryPayload, MaximumInventoryPayload,
-  StackPayload, HangarPayload, CargoPayload } from './assets';
+  StackPayload, HangarPayload, CargoPayload, ShipsListData } from './assets';
 import type { BeginFittingPayload, ClearFittingSlotPayload, ComparePayload, ComparisonData,
   FittingDraftData, SetFittingSlotPayload, ShipData, ShipPayload, UndockValidityData } from './fitting';
 import type {
@@ -305,7 +305,18 @@ export interface ResumableSaveData {
   readonly contentVersion: string;
   /** False when the save was written against different content. */
   readonly contentMatches: boolean;
+  /**
+   * Whether this build can open it: `earlierRelease` for a v0.1 save the
+   * v0.2 release deliberately does not migrate, `newerVersion` for a save from
+   * a newer build, `contentIncompatible` for content this build declares no
+   * transition from (Technical Specification 11.4; ADR-V02-01).
+   */
+  readonly compatibility: SaveCompatibilityName;
 }
+
+export const SAVE_COMPATIBILITY_NAMES = ['supported', 'earlierRelease', 'newerVersion', 'contentIncompatible'] as const;
+
+export type SaveCompatibilityName = (typeof SAVE_COMPATIBILITY_NAMES)[number];
 
 /**
  * The campaign slot (MVP Scope 6; Technical Specification 11.1).
@@ -356,6 +367,8 @@ export interface ProtocolContract {
   'navigation.dock': { payload: DockPayload; data: CommandResultData };
   'assets.list': { payload: EmptyPayload; data: AssetsData };
   'ship.get': { payload: ShipPayload; data: ShipData };
+  'ship.activate': { payload: ShipPayload; data: CommandResultData };
+  'ships.list': { payload: EmptyPayload; data: ShipsListData };
   'ship.undockValidity': { payload: ShipPayload; data: UndockValidityData };
   'fitting.draft': { payload: EmptyPayload; data: FittingDraftData };
   'fitting.begin': { payload: BeginFittingPayload; data: CommandResultData };
@@ -471,9 +484,11 @@ export const REQUEST_TYPES = [
   'repair.preview',
   'resupply.confirm',
   'resupply.preview',
+  'ship.activate',
   'ship.get',
   'ship.undock',
   'ship.undockValidity',
+  'ships.list',
   'station.services',
   'system.capabilities',
   'system.health',
@@ -524,6 +539,7 @@ export const COMMAND_TYPES = [
   'onboarding.skipStep',
   'repair.confirm',
   'resupply.confirm',
+  'ship.activate',
   'ship.undock',
   'targeting.lock',
   'targeting.unlock',

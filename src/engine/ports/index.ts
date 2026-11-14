@@ -79,7 +79,10 @@ export {
   DEFAULT_SAVE_RETENTION,
   DEFAULT_SLOT_ID,
   isSaveKind,
+  OLDEST_SUPPORTED_SAVE_FORMAT_VERSION,
+  PREVIOUS_RELEASE_LABEL,
   SAVE_FORMAT_VERSION,
+  saveFormatCompatibility,
   SAVE_KINDS,
   SAVE_LIMITS,
   SaveStoreError,
@@ -87,6 +90,7 @@ export {
 } from './persistence/saves.ts';
 export type {
   SaveEnvelope,
+  SaveFormatCompatibility,
   SaveKind,
   SaveRetention,
   SaveStore,

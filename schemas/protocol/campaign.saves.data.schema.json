@@ -35,7 +35,8 @@
             "savedAtRealMs",
             "formatVersion",
             "contentVersion",
-            "contentMatches"
+            "contentMatches",
+            "compatibility"
           ],
           "properties": {
             "saveId": {
@@ -82,6 +83,9 @@
             },
             "contentMatches": {
               "type": "boolean"
+            },
+            "compatibility": {
+              "enum": ["supported", "earlierRelease", "newerVersion", "contentIncompatible"]
             }
           }
         },

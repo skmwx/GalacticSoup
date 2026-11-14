@@ -303,7 +303,9 @@ describe('the migration runner on a real save', () => {
     const stored = older(goldens[name]);
     const before = JSON.stringify(stored);
 
-    const loaded = loadSave(stored, { content, migrations: registry });
+    const loaded = loadSave(stored, {
+      content, migrations: registry, oldestSupportedFormatVersion: SAVE_FORMAT_VERSION - 1,
+    });
 
     if (!loaded.ok) throw new Error(`The migrated save did not load: ${JSON.stringify(loaded.error)}`);
     expect(loaded.migrated).toEqual([SAVE_FORMAT_VERSION - 1]);
@@ -318,10 +320,20 @@ describe('the migration runner on a real save', () => {
     const stored = older(goldens.station);
     const before = JSON.stringify(stored);
 
-    const loaded = loadSave(stored, { content });
+    const loaded = loadSave(stored, { content, oldestSupportedFormatVersion: SAVE_FORMAT_VERSION - 1 });
 
     expect(loaded.ok).toBe(false);
     expect(!loaded.ok && loaded.error.messageKey).toBe('error.saveLoad.migrationFailed');
+    expect(JSON.stringify(stored)).toBe(before);
+  });
+
+  it('refuses the earlier release format before any migration is tried [TECH-11.4, V02-AC-13]', () => {
+    const stored = older(goldens.station);
+    const before = JSON.stringify(stored);
+
+    const loaded = loadSave(stored, { content, migrations: registry });
+
+    expect(!loaded.ok && loaded.error.messageKey).toBe('error.saveLoad.earlierRelease');
     expect(JSON.stringify(stored)).toBe(before);
   });
 });

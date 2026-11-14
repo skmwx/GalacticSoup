@@ -10,6 +10,7 @@
     "contentHash",
     "defaultLocale",
     "locales",
+    "compatibleContentVersions",
     "rules",
     "definitions",
     "listings",
@@ -37,6 +38,17 @@
         "type": "string",
         "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
       }
+    },
+    "compatibleContentVersions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 65,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^\\d+\\.\\d+\\.\\d+$"
+      },
+      "description": "Authored content versions whose saves this bundle opens although the hash differs, including its own. Technical Specification 11.4."
     },
     "rules": {
       "type": "object",

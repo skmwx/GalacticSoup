@@ -49,7 +49,7 @@ import { cancelBoundariesOwnedBy, scheduleBoundary } from './scheduler';
  * settled what the same completion batch did to the opponents, so a pilot who
  * destroys the last opponent in the instant they die still earns its bounty.
  *
- * @implements FUNC-9.12, FUNC-22.1, FUNC-22.3, FUNC-22.7, TECH-9.2, TECH-10.3, TECH-10.9, MVP-AC-08
+ * @implements FUNC-9.12, FUNC-22.1, FUNC-22.3, FUNC-22.7, TECH-9.2, TECH-10.3, TECH-10.9, MVP-AC-08, V02-AC-12
  */
 
 /** Loot and survival share one stream (Technical Specification 9.4). */

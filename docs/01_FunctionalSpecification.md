@@ -101,7 +101,7 @@ The game must support at least three separate campaign slots. Each campaign has:
 - export to a portable save file;
 - import from a portable save file after validation and confirmation.
 
-The game autosaves after docking, undocking, completing a gate jump, completing a market transaction, installing or cancelling an industry job, changing a skill, changing planetary infrastructure, completing an anomaly, and resolving player ship destruction. Autosaves also occur every five minutes of real play while the simulation is not paused.
+The game autosaves after docking, undocking, completing a gate jump, completing a market transaction (including buying a hull), switching the active ship, installing or cancelling an industry job, changing a skill, changing planetary infrastructure, completing an anomaly, and resolving player ship destruction. A resumed campaign therefore never returns the player to a ship they had already left. Autosaves also occur every five minutes of real play while the simulation is not paused.
 
 Manual saving is available while docked and while undocked if no hostile ship is present in the current site. Loading returns to the main menu before the selected save is opened. Import never overwrites an existing campaign without explicit confirmation.
 
@@ -229,6 +229,15 @@ Cargo can be split and merged. Identical items stack if their functional state i
 The player controls one active ship. Other ships are stored at stations.
 
 The player may switch active ships while docked if the destination ship is at the same station. Cargo stays with the previous ship unless moved explicitly. Any locally stored ship may be opened in the fitting screen, but only a valid active ship may undock.
+
+Each ship keeps its own cargo hold, fitted modules, loaded ammunition, damage, capacitor, and insurance. Switching moves and copies none of them. In particular:
+
+- Switching is instantaneous and free. It accepts only a ship the player owns that is docked at the station where the player is docked, and it is refused in space and for a ship stored elsewhere, with the reason.
+- A ship whose fit is invalid may be made active so that its fit can be corrected, but it still may not undock.
+- Cargo belonging to any ship docked at the current station may be moved to and from that station's hangar by explicit transfers. Goods move between two ships only through such transfers.
+- A fitting draft belongs to the ship it was opened for, which need not be the active ship. While a draft is open the active ship cannot change: the player applies or discards it first, so a change can never be applied to a ship the player did not choose.
+- Repair, resupply, and insurance previews name the ship they price and act only on it. Switching ships makes any open preview stale, and confirmation then shows the current figures again.
+- A bought hull arrives empty, with no modules or ammunition, as a stored ship at the station where it was bought. Buying it leaves the active ship unchanged; it becomes active only when the player had no active ship (section 9.12).
 
 Discovered non-hostile stations offer insured transport of empty stored ships. Transport:
 
@@ -359,10 +368,13 @@ Hull hardpoints may further restrict weapon-slot modules. A launcher cannot use 
 Each module consumes power and processing capacity while online. A fit is valid only if:
 
 - no slot count or hardpoint count is exceeded;
+- every fitted module's size is one the hull accepts;
 - total online power use does not exceed the ship's available power;
 - total online processing use does not exceed available processing capacity;
 - the player meets the hull and module skill requirements;
 - all mutually exclusive restrictions are satisfied.
+
+Each hull lists the module sizes it accepts, and every module states its size, or for a non-sized support module the hull sizes it suits. A module of a size the hull does not accept cannot be fitted however much power and processing remain. Weapon slots and hardpoints are separate limits: a weapon needs both a free weapon slot and a free hardpoint of its kind. A larger hull does not change a module's own statistics; a small weapon fitted to a larger hull performs as a small weapon.
 
 The player may store offline modules in fitted slots. Offline modules consume no power or processing, provide no modifiers, and cannot activate. Module online state can be changed only while docked at a fitting service.
 
@@ -381,6 +393,8 @@ The fitting screen provides:
 - weapon damage, optimal range, falloff, tracking, and ammunition effects;
 - movement, targeting, cargo, mining, and scan changes;
 - warnings for missing ammunition, inactive modules, uncovered damage weaknesses, and unstable capacitor use.
+
+The fitting screen names the ship being fitted, which may be any ship docked at the current station rather than only the active ship.
 
 The player may save named fitting templates. Applying a template fits available local items and lists missing items; it never buys items automatically.
 
@@ -424,6 +438,8 @@ A cycle cannot start without enough capacitor and, when required, ammunition. Ca
 
 Weapons stop repeating when their target is destroyed, the lock breaks, ammunition is exhausted, or a later cycle cannot pay its capacitor cost. The interface displays the reason.
 
+For a guided weapon, applying the shot means launching: at the end of the cycle the reserved round is consumed and a projectile is created, and damage is applied only when that projectile reaches its target (section 9.6). If the target is destroyed, leaves the site, or the lock breaks before the cycle ends, nothing is launched and the round stays loaded. Each weapon has its own magazine; weapons of different families or sizes on one ship never share loaded ammunition.
+
 Reloading draws a compatible ammunition stack from cargo, takes five seconds, and prevents that weapon from firing. Reloading or changing ammunition begins only after any current weapon cycle completes. Reload may be automatic when empty or explicitly commanded. Changing ammunition unloads the remaining magazine into cargo and then performs a full reload. It fails if cargo cannot hold the unloaded ammunition.
 
 ### 9.5 Turret accuracy
@@ -458,6 +474,17 @@ On impact, for target signature `S` and current speed `Q`, the damage multiplier
 
 Guided weapons therefore do at least 10% listed damage on a successful impact. They do not use the turret hit calculation and cannot critically hit unless an ammunition description explicitly says otherwise.
 
+A projectile's lifecycle follows these rules:
+
+- Its damage, damage distribution, explosion radius and velocity, flight speed, maximum flight time, and source are fixed when it is launched. Later changes to the launching ship, its fit, or its loaded ammunition do not alter a projectile already in flight.
+- Once launched, a projectile needs no lock. It continues if the launcher is deactivated or the launching ship warps away or is destroyed, and its damage is still attributed to that source in reports.
+- It follows only its original target. If that target is destroyed or leaves the site, the projectile is removed without damage and nothing is refunded. It never retargets and never follows a target through warp.
+- It impacts when it reaches its target, including when launched at zero distance. Signature `S` and speed `Q` in the formula are the target's values at the moment of impact.
+- If its flight time expires before contact it misses. Contact and expiry at the same instant resolve as contact, following section 4.2.
+- Saving and loading preserve every projectile in flight with its remaining flight time. Loading cannot make a projectile hit twice, refund its round, or reroll its outcome.
+
+The interface shows flight time, an estimated maximum flight distance, explosion radius and velocity, and the current application against the selected target with the factor that limits it. The maximum flight distance assumes a stationary target; a target moving away may escape before the projectile expires.
+
 ### 9.7 Damage types and defenses
 
 All weapon damage is divided among electromagnetic, thermal, kinetic, and explosive damage. The weapon or loaded ammunition shows its exact distribution.
@@ -477,6 +504,8 @@ hit points per second until full. Armor and hull do not regenerate naturally.
 Active shield, armor, or hull repair modules restore their listed amount at the end of each successful cycle. A repair cycle that began with enough capacitor completes even if capacitor later reaches zero. Repairs cannot exceed the layer maximum.
 
 Passive tanking consists of hit-point, resistance, shield-recharge, and capacitor-recharge choices that require no activation. Active tanking consumes capacitor per cycle and can produce stronger immediate recovery.
+
+Passive modules that add shield hit points, shorten shield recharge time, or shorten capacitor recharge time are fitted modifiers: they stack with other fitted modules on the same attribute under section 4.4, and an offline one provides nothing. Damage is kept as hit points lost rather than hit points remaining. When a fitting change lowers a layer's maximum or the capacitor's capacity, the hit points lost and the charge are limited to the new maximum. Changing the fit can never repair a ship, create capacitor charge, or restore anything that removing and refitting the same modules took away.
 
 ### 9.8 Capacitor
 
@@ -503,6 +532,17 @@ The full game supports at least:
 Effects require range and a completed lock unless their description says otherwise. Repeating effects reapply at the end of every successful cycle. Their icons show source, strength, and time until the next cycle or expiration.
 
 Movement speed cannot be reduced below 10% of the unmodified hull maximum. A ship may be affected by multiple warp disruptors, but any one active disruptor is sufficient to prevent warp.
+
+Speed reduction follows these rules:
+
+- Target, lock, and range are checked when a cycle starts and again when it completes. A cycle that cannot start spends nothing. A cycle whose completion check fails applies nothing, and the capacitor it committed is not refunded.
+- A completed cycle applies, or refreshes, an effect from that source on that target. The effect lasts for the duration its module states, by default one cycle, so a module that keeps cycling keeps it in place. A refresh at the same instant as expiry is resolved before the expiry, following section 4.2. Repeated cycles from one source never stack with themselves.
+- Effects from different sources multiply together, subject to the 10% floor. They are temporary hostile effects, not fitted modifiers, so section 4.4 stacking does not apply to them.
+- The effect lowers the target's maximum normal speed only. It does not change position directly, turret tracking, damage, or defenses, and the ship slows through its normal braking rather than instantly. Speed reduction does not prevent warp.
+- Stopping the module, losing the lock, or leaving range prevents later applications; an effect already applied lasts until it expires. If the source is destroyed or leaves, the effect keeps its source attribution until it expires. All effects on a ship end when it leaves the site or is destroyed.
+- The interface shows each effect's source, strength, remaining time, and the resulting speed limit. No speed effect is hidden or permanent.
+
+Player and NPC control modules follow identical rules.
 
 ### 9.10 NPC behavior
 

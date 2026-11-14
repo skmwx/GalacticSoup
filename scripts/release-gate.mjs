@@ -89,7 +89,7 @@ const SMOKE_SPECS = [
 const STEPS = [
   { id: 'typecheck', title: 'Type check', run: () => command([TSC, '--noEmit']) },
   { id: 'architecture', title: 'Architecture check', run: () => command(['scripts/check-architecture.mjs']) },
-  { id: 'content', title: 'Content validation', run: () => command(['scripts/validate-content.mjs']) },
+  { id: 'content', title: 'Content validation at the release floor', run: () => command(['scripts/validate-content.mjs', '--release']) },
   { id: 'unit', title: 'Unit suite', run: () => vitest('unit') },
   { id: 'integration', title: 'Integration suite: loops, replay, properties, balance', run: () => vitest('integration') },
   { id: 'balance', title: 'Balance report against its candidate', run: balance },

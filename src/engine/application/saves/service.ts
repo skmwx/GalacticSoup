@@ -3,6 +3,7 @@ import {
   DEFAULT_SAVE_RETENTION,
   DEFAULT_SLOT_ID,
   SaveStoreError,
+  saveFormatCompatibility,
   type ContentRepository,
   type SaveEnvelope,
   type SaveKind,
@@ -25,7 +26,7 @@ import {
 } from '@protocol';
 
 import { captureSnapshot } from './envelope';
-import { loadSave, type LoadResult } from './load';
+import { declaresCompatible, loadSave, type LoadResult } from './load';
 
 /**
  * Save orchestration (Technical Specification 11.3; Functional Specification 3.4).
@@ -197,7 +198,7 @@ export function createSaveService(options: SaveServiceOptions): SaveService {
       return {
         slotId,
         saveCount: current?.saves.length ?? 0,
-        resumable: newest === null ? null : resumableOf(newest, content.contentHash),
+        resumable: newest === null ? null : resumableOf(newest, content),
         status: statusOf(),
       };
     },
@@ -328,7 +329,22 @@ function summaryFor(manifest: SlotManifest, saveId: string): SaveSummary | null 
   return manifest.saves.find((save) => save.saveId === saveId) ?? null;
 }
 
-function resumableOf(summary: SaveSummary, installedContentHash: string): ResumableSaveData {
+/**
+ * Whether the newest save can be opened, judged from its manifest entry, so
+ * the start screen can say so before the player tries (v0.2 decision record
+ * ADR-V02-01). Loading still checks everything itself.
+ */
+function compatibilityOf(summary: SaveSummary, content: ContentRepository): ResumableSaveData['compatibility'] {
+  const format = saveFormatCompatibility(summary.formatVersion);
+  if (format !== 'supported') return format;
+  if (summary.contentHash !== content.contentHash && !declaresCompatible(content, summary.contentVersion)) {
+    return 'contentIncompatible';
+  }
+  return 'supported';
+}
+
+function resumableOf(summary: SaveSummary, content: ContentRepository): ResumableSaveData {
+  const installedContentHash = content.contentHash;
   return {
     saveId: summary.saveId,
     campaignId: summary.campaignId,
@@ -340,6 +356,7 @@ function resumableOf(summary: SaveSummary, installedContentHash: string): Resuma
     formatVersion: summary.formatVersion,
     contentVersion: summary.contentVersion,
     contentMatches: summary.contentHash === installedContentHash,
+    compatibility: compatibilityOf(summary, content),
   };
 }
 

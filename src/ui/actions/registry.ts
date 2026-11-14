@@ -232,6 +232,22 @@ export const ACTIONS: readonly ActionDefinition[] = [
     category: 'station',
   },
   {
+    id: 'ship.activate',
+    labelKey: 'action.ship.activate',
+    descriptionKey: 'action.ship.activate.detail',
+    icon: 'ship',
+    shortcut: null,
+    category: 'station',
+  },
+  {
+    id: 'ship.fit',
+    labelKey: 'action.ship.fit',
+    descriptionKey: null,
+    icon: 'fitting',
+    shortcut: null,
+    category: 'station',
+  },
+  {
     id: 'fitting.commit',
     labelKey: 'action.fitting.commit',
     descriptionKey: null,

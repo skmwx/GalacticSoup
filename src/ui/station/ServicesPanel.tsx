@@ -6,6 +6,7 @@ import type { RepairScope } from '@protocol';
 import { ActionButton, type ActionRunner } from '../actions';
 import { formatCredits } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
+import { shipLabels } from './shipLabels';
 import styles from './Station.module.css';
 import { TransactionDialog } from './TransactionDialog';
 import type { PlayData } from '../frame/usePlayData';
@@ -154,6 +155,15 @@ export const ServicesPanel = forwardRef<HTMLHeadingElement, ServicesPanelProps>(
       <h3 id="services-heading" ref={headingRef} tabIndex={-1} className={styles['panelHeading']}>
         {translate('services.heading')}
       </h3>
+      {shipId === null ? null : (
+        // Every service here prices and acts on this one ship (FeatureSpec02 4.2).
+        <p className={styles['muted']} data-services-ship>
+          {translate('services.forShip', {
+            ship: shipLabels(data.ships?.ships ?? [], translate).get(shipId) ??
+              (data.ship === null ? '' : translate(data.ship.nameKey)),
+          })}
+        </p>
+      )}
       <div className={styles['serviceRows']}>
         <div className={styles['serviceRow']} role="group" aria-labelledby="services-repair">
           <span id="services-repair" className={styles['serviceLabel']}>{translate('services.repair')}</span>

@@ -105,7 +105,7 @@ describe('station hub', () => {
     await startCampaign(harness);
 
     expect(screen.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeInTheDocument();
-    for (const service of ['Market', 'Hangar', 'Fitting', 'Ship']) {
+    for (const service of ['Market', 'Hangar', 'Fitting', 'Ships']) {
       expect(screen.getByRole('button', { name: service })).not.toBeUnavailable();
     }
     expect(screen.getByRole('region', { name: 'Services' })).toBeInTheDocument();
@@ -127,11 +127,11 @@ describe('station hub', () => {
   it('resolves authored content names through the engine [TECH-12.5]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
-    await openPanel(harness, 'Ship');
+    await openPanel(harness, 'Ships');
 
     // The hull's name is authored beside the content, not in the interface
     // catalogue, so seeing it proves the content catalogue reached the UI.
-    expect(await screen.findByText('Wayfarer')).toBeInTheDocument();
+    expect((await screen.findAllByText('Wayfarer'))[0]).toBeInTheDocument();
 
     harness.gateway.dispose();
   });
@@ -889,7 +889,7 @@ describe('services', () => {
 
     // The rail is the only way between surfaces; the Overview does not repeat it.
     expect(screen.queryByRole('button', { name: 'Services' })).not.toBeInTheDocument();
-    for (const surface of ['Market', 'Hangar', 'Fitting', 'Ship', 'Departure']) {
+    for (const surface of ['Market', 'Hangar', 'Fitting', 'Ships', 'Departure']) {
       expect(screen.getAllByRole('button', { name: surface })).toHaveLength(1);
     }
 
@@ -1015,7 +1015,7 @@ describe('ship', () => {
   it('explains a derived statistic instead of asserting it [FUNC-19.6, MVP-AC-04]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
-    await openPanel(harness, 'Ship');
+    await openPanel(harness, 'Ships');
 
     const row = (await screen.findByRole('rowheader', { name: 'Shield hit points' })).closest('tr');
     expect(row).not.toBeNull();
@@ -1032,7 +1032,7 @@ describe('ship', () => {
   it('reports whether the fit may undock [MVP-AC-02, FUNC-8.4]', async () => {
     const harness = renderGame();
     await startCampaign(harness);
-    await openPanel(harness, 'Ship');
+    await openPanel(harness, 'Ships');
 
     expect(
       await screen.findByRole('status', { name: 'Undock readiness' }),
@@ -1046,7 +1046,7 @@ describe('ship', () => {
     const harness = renderGame({ onIssue });
     await startCampaign(harness);
 
-    for (const panel of ['Market', 'Hangar', 'Fitting', 'Ship', 'Overview']) {
+    for (const panel of ['Market', 'Hangar', 'Fitting', 'Ships', 'Overview']) {
       await openPanel(harness, panel);
     }
     await screen.findByRole('button', { name: /^Improve insurance ·/ });

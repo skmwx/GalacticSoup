@@ -1046,7 +1046,13 @@ function checkStarterReachability(collected, { stations, hulls, modules }) {
       table.listings.filter((listing) => listing.supply === 'fixed').map((listing) => listing.itemId),
     );
 
-    const playerHulls = [...hulls.values()].filter((hull) => hull.playerUsable);
+    // The recovery guarantee is about the starter ship (Functional
+    // Specification 9.12, 22.1): a neutral station keeps that hull at a fixed,
+    // non-scarce price. Larger player hulls are ordinary purchases and only
+    // need a listing somewhere (v0.2, FeatureSpec02 4.2).
+    const starterHullId = collected.rules.economy?.values.starterHullId;
+    const playerHulls = [...hulls.values()].filter((hull) =>
+      hull.playerUsable && (starterHullId === undefined || hull.id === starterHullId));
     for (const hull of playerHulls) {
       if (!fixed.has(hull.id)) {
         issues.push(

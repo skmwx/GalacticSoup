@@ -242,7 +242,7 @@ describe('full-campaign property runs', () => {
     expect(validateCampaign(summary.final, content)).toEqual([]);
   }, 300_000);
 
-  it('reaches the same state when the campaign is closed and reopened along the way [TECH-9.5, TECH-11.4, FUNC-4.3, MVP-AC-01]', () => {
+  it('reaches the same state when the campaign is closed and reopened along the way [TECH-9.5, TECH-11.4, FUNC-4.3, MVP-AC-01, V02-AC-01]', () => {
     const first = RUNS[0];
     if (first === undefined) throw new Error('No run.');
     const reloaded = fly(first.from, first.pilot, true);

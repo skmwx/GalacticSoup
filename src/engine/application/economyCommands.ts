@@ -46,7 +46,7 @@ import { APPLIED, reject, type CommandOutcome, type Transaction } from './transa
 
 /**
  * Atomic preview-confirm station transactions.
- * @implements MVP-AC-02, MVP-AC-06, FUNC-9.12, FUNC-10, FUNC-11.3, FUNC-22.2, FUNC-22.4, TECH-7.4, TECH-8.2, TECH-8.3, TECH-10.4
+ * @implements MVP-AC-02, MVP-AC-06, FUNC-9.12, FUNC-10, FUNC-11.3, FUNC-22.2, FUNC-22.4, TECH-7.4, TECH-8.2, TECH-8.3, TECH-10.4, V02-AC-03, V02-AC-12
  */
 export function handleEconomyCommand(
   transaction: Transaction,

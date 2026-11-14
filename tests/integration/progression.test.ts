@@ -64,7 +64,7 @@ describe('progression through the three encounters', () => {
     expect(cost('lancer')).toBeGreaterThan(cost('mastery'));
   });
 
-  it('clears the easiest site with every fit, the starter fit repeatedly and the poor purchase too [MVP-AC-05, MVP-AC-09, FUNC-9.10, FUNC-9.11, FUNC-18]', async () => {
+  it('clears the easiest site with every fit, the starter fit repeatedly and the poor purchase too [MVP-AC-05, MVP-AC-09, V02-AC-01, FUNC-9.10, FUNC-9.11, FUNC-18]', async () => {
     for (const id of ['scout.starter', 'scout.folly', 'scout.intermediate', 'scout.mastery', 'scout.lancer']) {
       await measure(id);
     }

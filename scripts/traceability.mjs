@@ -14,8 +14,8 @@
  *   - a test covers a requirement by carrying `[<ID>]` in its name.
  *
  * Recognised id shapes: `TECH-<section>` (Technical Specification),
- * `FUNC-<section>` (Functional Specification) and `MVP-AC-<nn>`
- * (MVP Scope acceptance criteria).
+ * `FUNC-<section>` (Functional Specification), `MVP-AC-<nn>` (MVP Scope
+ * acceptance criteria) and `V02-AC-<nn>` (v0.2 Feature Specification 11).
  *
  * The run fails when an included requirement is uncovered, when code or a test
  * names an id the registry does not list, or when the registry names content
@@ -43,7 +43,7 @@ fs.writeFileSync(path.join(reportsDir, 'traceability.md'), renderMarkdown(report
 const { summary } = report;
 process.stdout.write(
   `Traceability: ${String(summary.requirements)} requirements, ${String(summary.included)} included, ` +
-    `${String(summary.covered)} covered, ${String(summary.deferred)} deferred. ` +
+    `${String(summary.covered)} covered, ${String(summary.planned)} planned, ${String(summary.deferred)} deferred. ` +
     'Report written to reports/traceability.md.\n',
 );
 

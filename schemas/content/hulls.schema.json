@@ -30,8 +30,10 @@
           "descriptionKey",
           "fitting",
           "hardpoints",
+          "hullClass",
           "id",
           "insuranceClass",
+          "moduleSizes",
           "movement",
           "nameKey",
           "playerUsable",
@@ -54,6 +56,17 @@
           },
           "playerUsable": {
             "type": "boolean"
+          },
+          "hullClass": {
+            "enum": ["frigate", "destroyer", "cruiser"],
+            "description": "The hull's size class (FeatureSpec02 4.1). It names the role step in the combat lineup; it does not change any rule by itself."
+          },
+          "moduleSizes": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "enum": ["small", "medium"] },
+            "description": "Module sizes the hull accepts (FeatureSpec02 4.1). Explicit, so no hull fits a medium module merely because its power budget would allow it."
           },
           "defenses": {
             "type": "object",

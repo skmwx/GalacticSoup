@@ -135,6 +135,9 @@ export const RULE_VIOLATION_REASONS = [
   'noResumableSave',
   'bookmarkUnknown',
   'noActiveShip',
+  'shipNotFound',
+  'shipNotLocal',
+  'shipSwitchInSpace',
   'guidanceStepUnknown',
   'guidanceStepRecorded',
   'guidanceStepNotSkippable',
@@ -268,6 +271,7 @@ export const SAVE_LOAD_REASONS = [
   'envelope',
   'checksum',
   'forwardVersion',
+  'earlierRelease',
   'migrationFailed',
   'payload',
   'contentIncompatible',
@@ -291,6 +295,10 @@ const SAVE_LOAD_CODES: Readonly<Record<SaveLoadReason, EngineErrorCode>> = {
   envelope: 'INTEGRITY_ERROR',
   checksum: 'INTEGRITY_ERROR',
   forwardVersion: 'SAVE_ERROR',
+  // A save written by an earlier release that this one deliberately does not
+  // migrate (v0.2 decision record ADR-V02-01). Not damage: the file is intact
+  // and stays where it was.
+  earlierRelease: 'SAVE_ERROR',
   migrationFailed: 'SAVE_ERROR',
   payload: 'INTEGRITY_ERROR',
   contentIncompatible: 'CONTENT_ERROR',

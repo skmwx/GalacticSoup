@@ -7,6 +7,10 @@
       "nameKey": "content.hull.pirate.scout.name",
       "descriptionKey": "content.hull.pirate.scout.description",
       "playerUsable": false,
+      "hullClass": "frigate",
+      "moduleSizes": [
+        "small"
+      ],
       "defenses": {
         "shield": {
           "hitPoints": 120,
@@ -80,6 +84,10 @@
       "nameKey": "content.hull.pirate.raider.name",
       "descriptionKey": "content.hull.pirate.raider.description",
       "playerUsable": false,
+      "hullClass": "frigate",
+      "moduleSizes": [
+        "small"
+      ],
       "defenses": {
         "shield": {
           "hitPoints": 150,

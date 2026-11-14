@@ -14,7 +14,7 @@ import { serviceButton } from '../support/services.ts';
 
 const PILOT = 'Keyboard Pilot';
 
-const PANELS = ['Market', 'Hangar', 'Fitting', 'Ship'] as const;
+const PANELS = ['Market', 'Hangar', 'Fitting', 'Ships'] as const;
 
 async function freshCampaign(page: Page): Promise<void> {
   await page.goto('/');

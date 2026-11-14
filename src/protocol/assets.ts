@@ -62,3 +62,65 @@ export interface MaximumInventoryData {
   readonly revision: number; readonly stackId: string; readonly destinationInventoryId: string;
   readonly maximumQuantity: number; readonly unavailableReason: string | null;
 }
+
+/**
+ * One figure of a ship comparison (Functional Specification 19.6;
+ * FeatureSpec02 4.2, 9). `better` says which way is an advantage, so the
+ * interface can mark it without reasoning about the rule itself.
+ */
+export interface ShipFigureData {
+  readonly key: string;
+  readonly labelKey: string;
+  readonly value: number;
+  readonly better: 'higher' | 'lower';
+}
+
+/** A layer's current and maximum hit points, for the ship list. */
+export interface ShipLayerSummaryData {
+  readonly layer: string;
+  readonly hitPoints: number;
+  readonly maximumHitPoints: number;
+}
+
+/**
+ * One ship the player owns (Functional Specification 6.3; FeatureSpec02 4.2).
+ *
+ * `local` is true for the ships docked where the player is docked: those may
+ * be made active, fitted and have their cargo moved. `activation` answers
+ * whether this one can be made active now and, when not, why.
+ */
+export interface OwnedShipData {
+  readonly id: string;
+  readonly hullId: string;
+  readonly nameKey: string;
+  readonly descriptionKey: string;
+  readonly hullClass: string;
+  readonly moduleSizes: readonly string[];
+  readonly traitKeys: readonly string[];
+  readonly active: boolean;
+  readonly local: boolean;
+  readonly location: LocationData;
+  readonly cargoInventoryId: string;
+  readonly cargoUsedCubicDecimetres: number;
+  readonly cargoCapacityCubicDecimetres: number;
+  readonly fittedModules: number;
+  /** The fit breaks no rule, so the ship may undock once active. */
+  readonly undockable: boolean;
+  readonly layers: readonly ShipLayerSummaryData[];
+  readonly capacitorCharge: number;
+  readonly insuranceCoverage: 'basic' | 'enhanced';
+  readonly recoveryGrant: boolean;
+  readonly referenceValueCredits: number;
+  readonly figures: readonly ShipFigureData[];
+  readonly activation: { readonly available: boolean; readonly unavailableReason: string | null };
+}
+
+export interface ShipsListData {
+  readonly revision: number;
+  readonly activeShipId: string | null;
+  /** The station the player is docked at, or `null` in space. */
+  readonly stationId: string | null;
+  /** The fitting draft is open on this ship, or `null`. Switching waits for it. */
+  readonly draftShipId: string | null;
+  readonly ships: readonly OwnedShipData[];
+}

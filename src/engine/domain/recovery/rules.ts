@@ -15,7 +15,7 @@ import { assessFit } from '../fitting/validity';
  * transaction, the station projections and the tests all ask the same
  * question the same way.
  *
- * @implements FUNC-9.12, FUNC-22.1, TECH-10.9
+ * @implements FUNC-9.12, FUNC-22.1, TECH-10.9, V02-AC-12
  */
 
 export interface InsuranceSettlement {

@@ -6,6 +6,10 @@
       "nameKey": "content.hull.test.starter.name",
       "descriptionKey": "content.hull.test.starter.description",
       "playerUsable": true,
+      "hullClass": "frigate",
+      "moduleSizes": [
+        "small"
+      ],
       "defenses": {
         "shield": {
           "hitPoints": 100,
@@ -77,6 +81,10 @@
       "nameKey": "content.hull.test.pirate.name",
       "descriptionKey": "content.hull.test.pirate.description",
       "playerUsable": false,
+      "hullClass": "frigate",
+      "moduleSizes": [
+        "small"
+      ],
       "defenses": {
         "shield": {
           "hitPoints": 100,

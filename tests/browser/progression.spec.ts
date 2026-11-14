@@ -329,7 +329,7 @@ async function repairAndRecharge(page: Page, capacity: string): Promise<void> {
   await takeService(page, 'Repair all', 'Confirm full repair', async (dialog) => {
     await expect(dialog.getByText(/recharged to full for free$/)).toBeVisible();
   });
-  await page.getByRole('button', { name: 'Ship', exact: true }).click();
+  await page.getByRole('button', { name: 'Ships', exact: true }).click();
   await expect(page.getByText(new RegExp(`^${capacity} of ${capacity},`))).toBeVisible({ timeout: 10_000 });
 }
 

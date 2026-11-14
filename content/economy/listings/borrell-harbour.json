@@ -16,6 +16,30 @@
       "consumptionPerHour": 0
     },
     {
+      "itemId": "hull.independent.destroyer",
+      "supply": "dynamic",
+      "basePriceCredits": 48000,
+      "regionalPriceFactor": 1,
+      "targetStock": 3,
+      "initialStock": 3,
+      "elasticity": 0.3,
+      "baseSpread": 0.08,
+      "productionPerHour": 0.1,
+      "consumptionPerHour": 0
+    },
+    {
+      "itemId": "hull.independent.cruiser",
+      "supply": "dynamic",
+      "basePriceCredits": 140000,
+      "regionalPriceFactor": 1,
+      "targetStock": 2,
+      "initialStock": 2,
+      "elasticity": 0.3,
+      "baseSpread": 0.08,
+      "productionPerHour": 0.1,
+      "consumptionPerHour": 0
+    },
+    {
       "itemId": "module.turret.autocannon.small",
       "supply": "fixed",
       "basePriceCredits": 11111,

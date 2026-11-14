@@ -65,6 +65,7 @@ export {
   isRequestType,
   PERSISTENCE_TYPES,
   REQUEST_TYPES,
+  SAVE_COMPATIBILITY_NAMES,
   SAVE_KIND_NAMES,
   SAVE_STATES,
 } from './requests';
@@ -89,6 +90,7 @@ export type {
   RequestType,
   ResponseData,
   ResumableSaveData,
+  SaveCompatibilityName,
   SaveCampaignPayload,
   SaveKindName,
   SaveSlotData,
