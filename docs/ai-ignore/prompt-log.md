@@ -153,6 +153,6 @@ docs\01_FunctionalSpecification.md
 docs\02_TechnicalSpecification.md
 docs\human-input\CurrentState.md
 
-There is a new block of features to be implemented for version v0.2, they are described on high level in docs\human-input\Features-02.md . Prepare a feature specification for it, and a phased implementation plan. Do not change the main technical and functional specification yet, but if such changes will be necessary in the course of implementation, make sure they are in the implementation plan.
+There is a new block of features to be implemented for the next game version v0.2, they are described on high level in docs\human-input\Features-02.md . Prepare a feature specification for it, and a phased implementation plan. Do not change the main technical and functional specification yet, but if such changes will be necessary in the course of implementation, make sure they are in the implementation plan.
 
 Produce docs\v02\FeatureSpec02.md and docs\v01\FeatureImplementationPlan02.md .
