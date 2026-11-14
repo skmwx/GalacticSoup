@@ -91,3 +91,10 @@ fix it with whatever else the playtest finds. I would do (a): it is in the loop 
 judges, and a first-time player meets it right after their first fight.
 
 **Answer:**
+Automatically restore shield and capacitor to full when docking.
+
+Adjust confirmation checks so natural regeneration cannot invalidate unrelated transactions, and exclude those free restoration values from the repair check.
+
+**Resolution applied (2026-11-14):** Completed docking now restores shield and capacitor instantly for free, preserving armor and hull damage. Natural regeneration no longer increments the asset version used by economic confirmations, and repair confirmation hashes exclude shield damage and capacitor charge. Regression tests cover docking restoration and confirming repair and purchase after one second of regeneration, including a campaign resumed docked with depleted pools.
+
+**Validation:** Type checking, architecture, content validation, all 1,407 unit tests, 135 integration tests, 143 component tests, performance, balance, traceability, and the production build audit passed. The focused station and guidance browser suites passed all five tests in Chromium and all five in Firefox. Firefox required an elevated rerun after restricted execution failed during page creation. Golden campaign and save fixtures were refreshed. The full release gate was stopped after its Chromium progression test lost its ship and stalled waiting for a vanished target. Full release certification and a new candidate record remain pending.

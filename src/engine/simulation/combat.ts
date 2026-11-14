@@ -156,7 +156,6 @@ function regenerateShips(context: SimulationContext, elapsedMs: number): void {
     if (capacitor.regenerated > 0 || shield.regenerated > 0) {
       ship.condition.capacitorCharge = capacitor.after;
       ship.condition.damage.shield = round(Math.max(0, shieldMaximum - shield.after));
-      context.draft.assets.version += 1;
       recordCapacitorChange(
         context.draft,
         shipId,

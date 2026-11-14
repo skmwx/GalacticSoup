@@ -566,6 +566,8 @@ While docked, the station view is the main hub. Undocking is allowed only with a
 
 A warning never blocks undocking. While one stands, undocking first lists the warnings and asks the player to undock anyway or stay docked. That question is a configurable confirmation prompt under section 20; when the player has switched it off, the warnings are still listed beside the undock control.
 
+Completing docking automatically restores the shield and recharges the capacitor to full, instantly and for free. Armor and hull damage remain until repaired.
+
 Repair service restores layers instantly and recharges the capacitor to full. The player chooses which paid layers to repair:
 
 - **Repair armor** restores armor only; it is available while armor is damaged.
@@ -578,7 +580,7 @@ Every choice also restores the shield and recharges the capacitor. Shield repair
 
 Because each choice is rounded on its own, Repair armor and Repair hull together may cost one credit more than Repair all.
 
-Station service modifier is a displayed content value from 0.75 through 1.50. Standing service multiplier is 1.10 when Distrusted, 1.00 when Neutral, 0.95 when Friendly, 0.90 when Allied, and 0.85 when Honored. Hostile stations do not provide service. Each repair choice shows its current price before it is chosen. Repair never begins without confirmation of the chosen layers and the total price, including when that price is zero. The price is checked again at confirmation; if the damage, the wallet, or the service has changed, the player is shown the new figures and confirms again.
+Station service modifier is a displayed content value from 0.75 through 1.50. Standing service multiplier is 1.10 when Distrusted, 1.00 when Neutral, 0.95 when Friendly, 0.90 when Allied, and 0.85 when Honored. Hostile stations do not provide service. Each repair choice shows its current price before it is chosen. Repair never begins without confirmation of the chosen layers and the total price, including when that price is zero. The price is checked again at confirmation; if the paid repair damage, the wallet, or the service has changed, the player is shown the new figures and confirms again. Natural shield and capacitor regeneration can proceed while a confirmation is open without invalidating an otherwise available repair or unrelated station transaction.
 
 Stations controlled by hostile factions may deny docking. A station cannot revoke docking while the player is already docked; it permits undocking and asset removal. Neutral-access recovery stations never deny docking based on standings.
 

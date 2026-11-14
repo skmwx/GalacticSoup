@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { runCommand, type CampaignState } from '@engine';
 
 import {
   angularVelocity,
@@ -35,6 +36,32 @@ const target: SiteObjectState = {
   position: { x: 10, y: 0 }, velocity: { x: 0, y: 0 }, facingRadians: 0,
   radiusKm: 1, movable: false,
 };
+
+it('restores shield and capacitor free on completed docking while preserving paid damage [FUNC-7.4, FUNC-10]', () => {
+  const undock = runCommand({ campaign: testDraft() as CampaignState, content, type: 'ship.undock', payload: {} });
+  if (undock.kind !== 'committed' || undock.campaign === null) throw new Error('Undocking failed.');
+  const shipId = undock.campaign.assets.activeShipId!;
+  const capacitorCapacity = undock.campaign.assets.ships[shipId]!.condition.capacitorCharge;
+  const mutable = testDraft(undock.campaign);
+  mutable.assets.ships[shipId]!.condition.damage = { shield: 100, armor: 10, hull: 5 };
+  mutable.assets.ships[shipId]!.condition.capacitorCharge = 0;
+  mutable.time.paused = false;
+  const credits = mutable.assets.credits;
+  const dock = runCommand({ campaign: mutable as CampaignState, content, type: 'navigation.dock',
+    payload: { stationId: content.rules.economy.startingStationId } });
+  if (dock.kind !== 'committed' || dock.campaign === null) throw new Error('Docking order failed.');
+  expect(dock.campaign.assets.ships[shipId]!.condition.damage.shield).toBe(100);
+  let state = dock.campaign;
+  for (let step = 0; step < 240 && state.assets.location.kind !== 'station'; step += 1) {
+    const advanced = runCommand({ campaign: state, content, type: 'time.advance', payload: { elapsedRealMs: 250 } });
+    if (advanced.kind !== 'committed' || advanced.campaign === null) throw new Error('Docking did not advance.');
+    state = advanced.campaign;
+  }
+  expect(state.assets.location.kind).toBe('station');
+  expect(state.assets.ships[shipId]!.condition.damage).toEqual({ shield: 0, armor: 10, hull: 5 });
+  expect(state.assets.ships[shipId]!.condition.capacitorCharge).toBe(capacitorCapacity);
+  expect(state.assets.credits).toBe(credits);
+});
 
 describe('navigation geometry', () => {
   it('handles zero-distance and relative-motion edge cases [FUNC-7.2, TECH-9.3]', () => {

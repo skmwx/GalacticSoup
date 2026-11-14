@@ -245,6 +245,15 @@ export function resolveDockComplete(context: SimulationContext, entry: Scheduler
   abandonEncounter(context);
   clearCombat(context, ship.id);
   const docked = { kind: 'station' as const, stationId: station.id, systemId: station.systemId };
+  const fit = shipFit(draft.assets, ship.id);
+  const derived = deriveShipAttributes({
+    hull: context.content.requireHull(ship.hullId),
+    fit,
+    content: context.content,
+    conditions: activeAttributeConditions(fit, context.content, shipCombat(draft, ship.id)),
+  });
+  ship.condition.damage.shield = 0;
+  ship.condition.capacitorCharge = attributeValue(derived, 'capacitorCapacity');
   draft.assets.location = docked;
   ship.location = docked;
   // This is now where a destroyed pilot is recovered (Functional Specification 9.12).

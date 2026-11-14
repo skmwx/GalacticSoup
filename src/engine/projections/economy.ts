@@ -557,7 +557,14 @@ function bindIfAvailable<T extends TransactionPreviewData>(
 ): T {
   if (!preview.available) return preview;
   const canonicalParameters = canonicalJson(parameters);
-  const valuesHash = sha256Hex(canonicalJson(preview));
+  // Free restoration may change while a repair confirmation is open.
+  // Keep its paid layers, price, availability and capacity bound to the token.
+  let confirmationValues: object = preview;
+  if (preview.action === 'repair') {
+    const { shieldDamage, capacitorCharge, ...values } = preview;
+    confirmationValues = values;
+  }
+  const valuesHash = sha256Hex(canonicalJson(confirmationValues));
   const token: PreviewTokenData = {
     action: preview.action,
     canonicalParameters,

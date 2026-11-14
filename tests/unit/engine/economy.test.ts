@@ -94,6 +94,36 @@ describe('local market formulas', () => {
 });
 
 describe('station service previews and confirmations', () => {
+  it.each(['repair', 'purchase'] as const)('confirms a %s after one second of natural regeneration [FUNC-10, TECH-7.4]', (action) => {
+    const draft = draftOf(testCampaign());
+    const shipId = draft.assets.activeShipId!;
+    const ship = draft.assets.ships[shipId]!;
+    // An older save can resume docked with partially depleted pools.
+    ship.condition.damage = { shield: 100, armor: 10, hull: 5 };
+    ship.condition.capacitorCharge = 15;
+    draft.time.paused = false;
+    let state = draft as CampaignState;
+    const preview = action === 'repair'
+      ? repairPreview(state, content, { shipId })
+      : marketBuyPreview(state, content, { stationId, itemId: 'ammo.projectile.small.fusion', quantity: 1 });
+    expect(preview.token).not.toBeNull();
+    const versionBefore = state.assets.version;
+    for (let step = 0; step < 4; step += 1) {
+      const advanced = runCommand({ campaign: state, content, type: 'time.advance', payload: { elapsedRealMs: 250 } });
+      expect(advanced.kind).toBe('committed');
+      if (advanced.kind !== 'committed' || advanced.campaign === null) throw new Error('Time did not advance.');
+      state = advanced.campaign;
+    }
+    expect(state.assets.ships[shipId]!.condition.damage.shield).toBeLessThan(100);
+    expect(state.assets.ships[shipId]!.condition.capacitorCharge).toBeGreaterThan(15);
+    expect(state.assets.version).toBe(versionBefore);
+    const result = runCommand({ campaign: state, content,
+      type: action === 'repair' ? 'repair.confirm' : 'market.confirmBuy', payload: { token: preview.token! } });
+    expect(result.kind).toBe('committed');
+    if (result.kind !== 'committed') throw new Error('Confirmation failed.');
+    expect(result.campaign!.assets.credits).toBe(state.assets.credits - preview.totalCredits);
+  });
+
   it('repairs every layer atomically using the authored price formula [FUNC-10, TECH-7.4]', () => {
     const draft = draftOf(testCampaign());
     const shipId = draft.assets.activeShipId!;

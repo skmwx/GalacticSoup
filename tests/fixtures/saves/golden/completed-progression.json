@@ -11,12 +11,12 @@
  "displayName": "Test Pilot",
  "kind": "auto",
  "sequence": 1,
- "revision": 7139,
+ "revision": 7137,
  "simulationTimeMs": 1743250,
  "savedAtRealMs": 1700000600000,
  "state": {
   "assets": {
-   "version": 54234,
+   "version": 4795,
    "credits": 30841,
    "location": {
     "kind": "station",
@@ -497,7 +497,7 @@
    }
   },
   "combat": {
-   "version": 2463,
+   "version": 2461,
    "ships": {},
    "events": [
     {
@@ -3880,8 +3880,34 @@
    }
   },
   "notifications": {
-   "sequence": 161,
+   "sequence": 159,
    "entries": [
+    {
+     "id": 64,
+     "sequence": 64,
+     "definitionId": "notify.encounter.wreck",
+     "groupKey": "notify.encounter.wreck",
+     "subjectIds": [
+      "ce0f36ba8e20edb4ebcba9757-e1746"
+     ],
+     "params": {},
+     "firstAtMs": 470000,
+     "lastAtMs": 470000,
+     "count": 1
+    },
+    {
+     "id": 65,
+     "sequence": 65,
+     "definitionId": "notify.encounter.bounty",
+     "groupKey": "notify.encounter.bounty",
+     "subjectIds": [],
+     "params": {
+      "credits": 4000
+     },
+     "firstAtMs": 470000,
+     "lastAtMs": 470000,
+     "count": 1
+    },
     {
      "id": 66,
      "sequence": 66,
@@ -4048,19 +4074,6 @@
     {
      "id": 80,
      "sequence": 80,
-     "definitionId": "notify.station.repaired",
-     "groupKey": "notify.station.repaired",
-     "subjectIds": [],
-     "params": {
-      "credits": 0
-     },
-     "firstAtMs": 747000,
-     "lastAtMs": 747000,
-     "count": 1
-    },
-    {
-     "id": 81,
-     "sequence": 81,
      "definitionId": "notify.station.resupplied",
      "groupKey": "notify.station.resupplied",
      "subjectIds": [],
@@ -4073,8 +4086,8 @@
      "count": 1
     },
     {
-     "id": 82,
-     "sequence": 82,
+     "id": 81,
+     "sequence": 81,
      "definitionId": "notify.station.bought",
      "groupKey": "notify.station.bought",
      "subjectIds": [],
@@ -4088,8 +4101,8 @@
      "count": 1
     },
     {
-     "id": 83,
-     "sequence": 83,
+     "id": 82,
+     "sequence": 82,
      "definitionId": "notify.navigation.undocked",
      "groupKey": "notify.navigation.undocked",
      "subjectIds": [],
@@ -4099,8 +4112,8 @@
      "count": 1
     },
     {
-     "id": 84,
-     "sequence": 84,
+     "id": 83,
+     "sequence": 83,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
@@ -4112,8 +4125,8 @@
      "count": 1
     },
     {
-     "id": 85,
-     "sequence": 85,
+     "id": 84,
+     "sequence": 84,
      "definitionId": "notify.combat.hostile-lock",
      "groupKey": "notify.combat.hostile-lock",
      "subjectIds": [
@@ -4127,8 +4140,8 @@
      "count": 1
     },
     {
-     "id": 87,
-     "sequence": 87,
+     "id": 86,
+     "sequence": 86,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
@@ -4140,8 +4153,8 @@
      "count": 1
     },
     {
-     "id": 88,
-     "sequence": 88,
+     "id": 87,
+     "sequence": 87,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
@@ -4153,8 +4166,8 @@
      "count": 1
     },
     {
-     "id": 86,
-     "sequence": 96,
+     "id": 85,
+     "sequence": 95,
      "definitionId": "notify.combat.shield-low",
      "groupKey": "notify.combat.shield-low",
      "subjectIds": [
@@ -4168,8 +4181,8 @@
      "count": 9
     },
     {
-     "id": 97,
-     "sequence": 97,
+     "id": 96,
+     "sequence": 96,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
@@ -4181,8 +4194,8 @@
      "count": 1
     },
     {
-     "id": 98,
-     "sequence": 98,
+     "id": 97,
+     "sequence": 97,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
@@ -4194,8 +4207,8 @@
      "count": 1
     },
     {
-     "id": 106,
-     "sequence": 106,
+     "id": 105,
+     "sequence": 105,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
@@ -4207,8 +4220,8 @@
      "count": 1
     },
     {
-     "id": 107,
-     "sequence": 107,
+     "id": 106,
+     "sequence": 106,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
@@ -4220,8 +4233,8 @@
      "count": 1
     },
     {
-     "id": 108,
-     "sequence": 108,
+     "id": 107,
+     "sequence": 107,
      "definitionId": "notify.encounter.completed",
      "groupKey": "notify.encounter.completed|encounter.borrell.pirate-patrol",
      "subjectIds": [],
@@ -4233,8 +4246,8 @@
      "count": 1
     },
     {
-     "id": 115,
-     "sequence": 115,
+     "id": 114,
+     "sequence": 114,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.alloy",
      "subjectIds": [],
@@ -4247,8 +4260,8 @@
      "count": 1
     },
     {
-     "id": 99,
-     "sequence": 122,
+     "id": 98,
+     "sequence": 121,
      "definitionId": "notify.combat.defense-starved",
      "groupKey": "notify.combat.defense-starved|system:0",
      "subjectIds": [],
@@ -4260,8 +4273,8 @@
      "count": 20
     },
     {
-     "id": 123,
-     "sequence": 123,
+     "id": 122,
+     "sequence": 122,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.circuitry",
      "subjectIds": [],
@@ -4274,8 +4287,8 @@
      "count": 1
     },
     {
-     "id": 124,
-     "sequence": 124,
+     "id": 123,
+     "sequence": 123,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
@@ -4287,8 +4300,8 @@
      "count": 1
     },
     {
-     "id": 125,
-     "sequence": 125,
+     "id": 124,
+     "sequence": 124,
      "definitionId": "notify.navigation.docked",
      "groupKey": "notify.navigation.docked",
      "subjectIds": [],
@@ -4300,8 +4313,8 @@
      "count": 1
     },
     {
-     "id": 126,
-     "sequence": 126,
+     "id": 125,
+     "sequence": 125,
      "definitionId": "notify.station.sold",
      "groupKey": "notify.station.sold",
      "subjectIds": [],
@@ -4315,8 +4328,8 @@
      "count": 1
     },
     {
-     "id": 127,
-     "sequence": 127,
+     "id": 126,
+     "sequence": 126,
      "definitionId": "notify.station.sold",
      "groupKey": "notify.station.sold",
      "subjectIds": [],
@@ -4330,21 +4343,8 @@
      "count": 1
     },
     {
-     "id": 128,
-     "sequence": 128,
-     "definitionId": "notify.station.repaired",
-     "groupKey": "notify.station.repaired",
-     "subjectIds": [],
-     "params": {
-      "credits": 0
-     },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
-     "count": 1
-    },
-    {
-     "id": 129,
-     "sequence": 129,
+     "id": 127,
+     "sequence": 127,
      "definitionId": "notify.station.resupplied",
      "groupKey": "notify.station.resupplied",
      "subjectIds": [],
@@ -4357,8 +4357,8 @@
      "count": 1
     },
     {
-     "id": 130,
-     "sequence": 130,
+     "id": 128,
+     "sequence": 128,
      "definitionId": "notify.station.bought",
      "groupKey": "notify.station.bought",
      "subjectIds": [],
@@ -4372,8 +4372,8 @@
      "count": 1
     },
     {
-     "id": 131,
-     "sequence": 131,
+     "id": 129,
+     "sequence": 129,
      "definitionId": "notify.station.bought",
      "groupKey": "notify.station.bought",
      "subjectIds": [],
@@ -4387,8 +4387,8 @@
      "count": 1
     },
     {
-     "id": 132,
-     "sequence": 132,
+     "id": 130,
+     "sequence": 130,
      "definitionId": "notify.station.bought",
      "groupKey": "notify.station.bought",
      "subjectIds": [],
@@ -4402,8 +4402,8 @@
      "count": 1
     },
     {
-     "id": 133,
-     "sequence": 133,
+     "id": 131,
+     "sequence": 131,
      "definitionId": "notify.station.bought",
      "groupKey": "notify.station.bought",
      "subjectIds": [],
@@ -4417,8 +4417,8 @@
      "count": 1
     },
     {
-     "id": 134,
-     "sequence": 134,
+     "id": 132,
+     "sequence": 132,
      "definitionId": "notify.station.bought",
      "groupKey": "notify.station.bought",
      "subjectIds": [],
@@ -4432,8 +4432,8 @@
      "count": 1
     },
     {
-     "id": 135,
-     "sequence": 135,
+     "id": 133,
+     "sequence": 133,
      "definitionId": "notify.station.fitted",
      "groupKey": "notify.station.fitted",
      "subjectIds": [],
@@ -4443,8 +4443,8 @@
      "count": 1
     },
     {
-     "id": 136,
-     "sequence": 136,
+     "id": 134,
+     "sequence": 134,
      "definitionId": "notify.station.repaired",
      "groupKey": "notify.station.repaired",
      "subjectIds": [],
@@ -4456,8 +4456,8 @@
      "count": 1
     },
     {
-     "id": 137,
-     "sequence": 137,
+     "id": 135,
+     "sequence": 135,
      "definitionId": "notify.navigation.undocked",
      "groupKey": "notify.navigation.undocked",
      "subjectIds": [],
@@ -4467,8 +4467,8 @@
      "count": 1
     },
     {
-     "id": 138,
-     "sequence": 138,
+     "id": 136,
+     "sequence": 136,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
@@ -4480,8 +4480,8 @@
      "count": 1
     },
     {
-     "id": 139,
-     "sequence": 139,
+     "id": 137,
+     "sequence": 137,
      "definitionId": "notify.combat.hostile-lock",
      "groupKey": "notify.combat.hostile-lock",
      "subjectIds": [
@@ -4495,8 +4495,8 @@
      "count": 1
     },
     {
-     "id": 140,
-     "sequence": 140,
+     "id": 138,
+     "sequence": 138,
      "definitionId": "notify.combat.lock-out-of-range",
      "groupKey": "notify.combat.lock-out-of-range|ce0f36ba8e20edb4ebcba9757-e2994",
      "subjectIds": [
@@ -4510,8 +4510,8 @@
      "count": 1
     },
     {
-     "id": 141,
-     "sequence": 141,
+     "id": 139,
+     "sequence": 139,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
@@ -4523,8 +4523,8 @@
      "count": 1
     },
     {
-     "id": 142,
-     "sequence": 142,
+     "id": 140,
+     "sequence": 140,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
@@ -4536,8 +4536,8 @@
      "count": 1
     },
     {
-     "id": 143,
-     "sequence": 145,
+     "id": 141,
+     "sequence": 143,
      "definitionId": "notify.combat.shield-low",
      "groupKey": "notify.combat.shield-low",
      "subjectIds": [
@@ -4551,8 +4551,8 @@
      "count": 3
     },
     {
-     "id": 146,
-     "sequence": 146,
+     "id": 144,
+     "sequence": 144,
      "definitionId": "notify.combat.armor-damaged",
      "groupKey": "notify.combat.armor-damaged",
      "subjectIds": [
@@ -4564,8 +4564,8 @@
      "count": 1
     },
     {
-     "id": 147,
-     "sequence": 147,
+     "id": 145,
+     "sequence": 145,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
@@ -4577,8 +4577,8 @@
      "count": 1
     },
     {
-     "id": 148,
-     "sequence": 148,
+     "id": 146,
+     "sequence": 146,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
@@ -4590,8 +4590,8 @@
      "count": 1
     },
     {
-     "id": 149,
-     "sequence": 150,
+     "id": 147,
+     "sequence": 148,
      "definitionId": "notify.combat.shield-low",
      "groupKey": "notify.combat.shield-low",
      "subjectIds": [
@@ -4605,8 +4605,8 @@
      "count": 2
     },
     {
-     "id": 151,
-     "sequence": 151,
+     "id": 149,
+     "sequence": 149,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
@@ -4618,8 +4618,8 @@
      "count": 1
     },
     {
-     "id": 152,
-     "sequence": 152,
+     "id": 150,
+     "sequence": 150,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
@@ -4631,8 +4631,8 @@
      "count": 1
     },
     {
-     "id": 153,
-     "sequence": 153,
+     "id": 151,
+     "sequence": 151,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
@@ -4644,8 +4644,8 @@
      "count": 1
     },
     {
-     "id": 154,
-     "sequence": 154,
+     "id": 152,
+     "sequence": 152,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
@@ -4657,8 +4657,8 @@
      "count": 1
     },
     {
-     "id": 155,
-     "sequence": 155,
+     "id": 153,
+     "sequence": 153,
      "definitionId": "notify.encounter.completed",
      "groupKey": "notify.encounter.completed|encounter.borrell.pirate-base",
      "subjectIds": [],
@@ -4670,8 +4670,8 @@
      "count": 1
     },
     {
-     "id": 156,
-     "sequence": 156,
+     "id": 154,
+     "sequence": 154,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.circuitry",
      "subjectIds": [],
@@ -4684,8 +4684,8 @@
      "count": 1
     },
     {
-     "id": 157,
-     "sequence": 157,
+     "id": 155,
+     "sequence": 155,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.alloy",
      "subjectIds": [],
@@ -4698,8 +4698,8 @@
      "count": 1
     },
     {
-     "id": 158,
-     "sequence": 158,
+     "id": 156,
+     "sequence": 156,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|module.plating.armor.small",
      "subjectIds": [],
@@ -4712,8 +4712,8 @@
      "count": 1
     },
     {
-     "id": 159,
-     "sequence": 159,
+     "id": 157,
+     "sequence": 157,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.circuitry",
      "subjectIds": [],
@@ -4726,8 +4726,8 @@
      "count": 1
     },
     {
-     "id": 160,
-     "sequence": 160,
+     "id": 158,
+     "sequence": 158,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
@@ -4739,8 +4739,8 @@
      "count": 1
     },
     {
-     "id": 161,
-     "sequence": 161,
+     "id": 159,
+     "sequence": 159,
      "definitionId": "notify.navigation.docked",
      "groupKey": "notify.navigation.docked",
      "subjectIds": [],
@@ -5024,9 +5024,9 @@
   "displayName": "Test Pilot",
   "seed": "bb22cc33dd44ee55ff6677889900aa11",
   "createdAtRealMs": 1700000000000,
-  "revision": 7139,
+  "revision": 7137,
   "nextEntityOrdinal": 5216,
-  "nextEventOrdinal": 7893,
+  "nextEventOrdinal": 7889,
   "time": {
    "simulationTimeMs": 1743250,
    "paused": false,
@@ -5188,5 +5188,5 @@
    "nextInsertionOrdinal": 3395
   }
  },
- "checksum": "efe8a9c1cff48d9eafccc6431b7bcf91afc4059e2437004f60b8fcdcf4ea36c1"
+ "checksum": "33b8e5281cfb0e240b07429402b9b9bcaf49f3d17e27301b747223a361fc9ed6"
 }

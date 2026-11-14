@@ -16,7 +16,7 @@
  "savedAtRealMs": 1700000600000,
  "state": {
   "assets": {
-   "version": 97,
+   "version": 80,
    "credits": 4186,
    "location": {
     "kind": "site",
@@ -1887,5 +1887,5 @@
    "nextInsertionOrdinal": 46
   }
  },
- "checksum": "dc995957200f009459c0962f0d943b86173aefa381284ddf46e01fdea3f062e7"
+ "checksum": "26b903113852f571a585f35ad230e7d7a580ff3212c9e067d371ec23df31c9e9"
 }

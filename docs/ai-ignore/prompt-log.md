@@ -143,7 +143,11 @@ docs\human-input\CurrentState.md
 
 Please implement improvements described in docs\human-input\MVP-review-03.md.
 
-# 029 Sol 6.1 EH
+# 029 Sol 6.1 H
+I've added this answer to Q12, please do the fix.
+Let's leave Q11 for later.
+
+# 030 Sol 6.1 EH
 For context, read docs\00_GameDesignBrief.md
 docs\01_FunctionalSpecification.md
 docs\02_TechnicalSpecification.md
