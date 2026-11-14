@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react';
+import { useId, useState, type JSX } from 'react';
 
 import type {
   AmmunitionOptionData,
@@ -8,20 +8,15 @@ import type {
   WeaponRuntimeData,
 } from '@protocol';
 
-import { ActionButton, commandAvailability, useActionShortcuts, type ActionRunner } from '../actions';
+import { ActionButton, ActionIcon, commandAvailability, useActionShortcuts, type ActionRunner } from '../actions';
 import { SubstitutedExplanation } from '../common/Explanation';
+import { useTooltip } from '../common/Tooltip';
 import { formatDistanceKm, formatPercent, formatQuantity, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
+import { CycleClock, type CycleClockState } from './CycleClock';
 import styles from './Space.module.css';
-import {
-  damageBreakdown,
-  describeSubject,
-  subjectName,
-  weaponGroups,
-  type FireAvailability,
-  type WeaponGroup,
-} from './tactical';
+import { damageBreakdown, describeSubject, subjectName, type FireAvailability } from './tactical';
 
 /**
  * Turrets, their charges and what they would do right now
@@ -30,12 +25,15 @@ import {
  * This is the first half of the equipment panel beside Navigation; its
  * subsection keeps its own heading, so it stays a named region.
  *
- * Weapons that fire the same turret with the same charge are one group and
- * share one hit chance, shown against the target the weapons are aimed at
- * with the half of the formula that limits it and the formula itself. Each
- * weapon still reports its own magazine, cycle and reload, because those are
- * where a fight is lost to an empty gun. Every control is a registry action
- * paired with the availability the engine projected for it.
+ * The controls that act on every weapon at once - fire, cease fire, reload
+ * all - stay on top. Beneath them each weapon is one compact entry in slot
+ * order: its name, a round clock for its cycle, the magazine as
+ * `loaded/size (hold)` beside an ammunition icon, its own reload, and a
+ * fire switch. What a fight needs less often folds beneath the entry and opens
+ * from its name: changing charge, optimal, falloff and reach, the hit chance
+ * against the aimed target with the strain that limits it and the formula
+ * behind it, and the expected damage of a shot. Every control is a registry
+ * action paired with the availability the engine projected for it.
  *
  * @implements FUNC-9.4, FUNC-9.5, FUNC-19.3, FUNC-19.6, TECH-12.3, MVP-AC-03, MVP-AC-04
  */
@@ -66,7 +64,6 @@ export function WeaponsPanel({
 }: WeaponsPanelProps): JSX.Element {
   const translate = useTranslate();
   const weapons = combat?.weapons ?? [];
-  const groups = weaponGroups(weapons);
   const shipId = combat?.shipId ?? null;
   const targetName =
     targetId === null ? null : describeSubject(subjectName(targetId, site, encounter, shipId), translate);
@@ -146,123 +143,29 @@ export function WeaponsPanel({
         />
       </div>
 
-      {groups.length === 0 ? (
+      {weapons.length === 0 ? (
         <p className={styles['muted']}>{translate('tactical.weapons.none')}</p>
       ) : (
-        groups.map((group) => (
-          <WeaponGroupView
-            key={group.key}
-            group={group}
-            data={data}
-            runner={runner}
-            targetId={targetId}
-            site={site}
-            encounter={encounter}
-            shipId={shipId}
-          />
-        ))
+        <ul className={styles['entryList']}>
+          {weapons.map((weapon) => (
+            <WeaponEntry
+              key={`${weapon.slot.kind}:${String(weapon.slot.index)}`}
+              weapon={weapon}
+              data={data}
+              runner={runner}
+              targetId={targetId}
+              site={site}
+              encounter={encounter}
+              shipId={shipId}
+            />
+          ))}
+        </ul>
       )}
     </section>
   );
 }
 
-interface WeaponGroupViewProps {
-  readonly group: WeaponGroup;
-  readonly data: PlayData;
-  readonly runner: ActionRunner;
-  readonly targetId: string | null;
-  readonly site: SiteData | null;
-  readonly encounter: EncounterData | null;
-  readonly shipId: string | null;
-}
-
-function WeaponGroupView({
-  group,
-  data,
-  runner,
-  targetId,
-  site,
-  encounter,
-  shipId,
-}: WeaponGroupViewProps): JSX.Element {
-  const translate = useTranslate();
-  const { locale } = useLocalizer();
-  const lead = group.weapons[0];
-  const effect = targetId === null ? undefined : lead?.effects.find((entry) => entry.targetId === targetId);
-
-  return (
-    <article className={styles['group']} data-weapon-group={group.key}>
-      <h5 className={styles['groupHeading']}>
-        {translate('tactical.weapons.group', {
-          count: group.weapons.length,
-          name: translate(group.nameKey),
-          charge:
-            group.ammunitionNameKey === null
-              ? translate('tactical.weapons.empty')
-              : translate(group.ammunitionNameKey),
-        })}
-      </h5>
-
-      <ul className={styles['plainList']}>
-        {group.weapons.map((weapon) => (
-          <WeaponRow key={`${weapon.slot.kind}:${String(weapon.slot.index)}`} weapon={weapon} data={data} runner={runner} targetId={targetId} site={site} encounter={encounter} shipId={shipId} />
-        ))}
-      </ul>
-      {lead === undefined ? null : (
-        <dl className={styles['readouts']}>
-          <dt>{translate('tactical.weapons.ranges')}</dt>
-          <dd>
-            {translate('tactical.weapons.rangeValue', {
-              optimal: formatDistanceKm(lead.optimalRangeKm, locale),
-              falloff: formatDistanceKm(lead.falloffKm, locale),
-              absolute: formatDistanceKm(lead.absoluteRangeKm, locale),
-            })}
-          </dd>
-          <dt>{translate('ship.tracking')}</dt>
-          <dd>
-            {translate('tactical.radiansPerSecond', {
-              value: formatStat(lead.trackingRadiansPerSecond, locale),
-            })}
-          </dd>
-        </dl>
-      )}
-
-      {effect === undefined ? (
-        <p className={styles['muted']}>{translate('tactical.weapons.noEffect')}</p>
-      ) : (
-        <div data-hit-chance={String(effect.hitChance)} data-limiting={effect.limitingFactor}>
-          <p className={styles['hitChance']}>
-            {translate('tactical.weapons.hitChance', {
-              chance: formatPercent(effect.hitChance, locale),
-              target: describeSubject(subjectName(effect.targetId, site, encounter, shipId), translate),
-            })}
-          </p>
-          <p className={styles['limiting']}>
-            {translate(`tactical.limiting.${effect.limitingFactor}`, {
-              range: formatStat(effect.rangeStrain, locale),
-              tracking: formatStat(effect.trackingStrain, locale),
-            })}
-          </p>
-          <p className={styles['muted']}>
-            {translate('tactical.weapons.expected', {
-              expected: formatStat(Math.round(effect.expectedDamagePerShot * 10) / 10, locale),
-              profile: describeProfile(effect.listedDamage, translate, locale),
-            })}
-          </p>
-          <SubstitutedExplanation
-            trace={effect.trace}
-            label={translate('tactical.weapons.explain')}
-            result={formatPercent(effect.hitChance, locale)}
-          />
-        </div>
-      )}
-
-
-    </article>
-  );
-}
-
-interface WeaponRowProps {
+interface WeaponEntryProps {
   readonly weapon: WeaponRuntimeData;
   readonly data: PlayData;
   readonly runner: ActionRunner;
@@ -272,7 +175,8 @@ interface WeaponRowProps {
   readonly shipId: string | null;
 }
 
-function WeaponRow({
+/** One weapon: a line of routine controls, with its details folded beneath. */
+function WeaponEntry({
   weapon,
   data,
   runner,
@@ -280,10 +184,209 @@ function WeaponRow({
   site,
   encounter,
   shipId,
-}: WeaponRowProps): JSX.Element {
+}: WeaponEntryProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
+  const detailId = useId();
+  const [expanded, setExpanded] = useState(false);
   const slot = { slotKind: weapon.slot.kind, slotIndex: weapon.slot.index };
+  const slotNumber = weapon.slot.index + 1;
+  const activate = commandAvailability(weapon.commands, 'weapon.activate');
+  const deactivate = commandAvailability(weapon.commands, 'weapon.deactivate');
+  const reload = commandAvailability(weapon.commands, 'weapon.reload');
+  // The switch is on while the weapon repeats; turning it off lets the
+  // current cycle finish, as Cease fire does.
+  const ceasing = weapon.repeating && deactivate.available;
+  const nameOf = (id: string): string => describeSubject(subjectName(id, site, encounter, shipId), translate);
+  const status = statusKind(weapon);
+
+  return (
+    <li
+      className={styles['entry']}
+      data-weapon={`${weapon.slot.kind}:${String(weapon.slot.index)}`}
+      data-expanded={expanded}
+    >
+      <div className={styles['entryHead']}>
+        <button
+          type="button"
+          className={styles['entryToggle']}
+          aria-expanded={expanded}
+          aria-controls={detailId}
+          onClick={() => {
+            setExpanded((open) => !open);
+          }}
+        >
+          <span className={styles['entryChevron']} aria-hidden="true" />
+          <span className={styles['entryName']}>{translate(weapon.nameKey)}</span>
+          <span className={styles['visuallyHidden']}>
+            {translate('tactical.weapons.details', { slot: slotNumber })}
+          </span>
+        </button>
+        <CycleClock
+          state={clockState(status)}
+          elapsed={cycleElapsed(weapon)}
+          label={clockLabel(weapon, status, translate, locale)}
+        />
+        <Magazine weapon={weapon} />
+        <ActionButton
+          actionId="weapon.reload"
+          runner={runner}
+          display="icon"
+          available={reload.available}
+          unavailableReason={reload.unavailableReason}
+          label={translate('tactical.weapons.reloadSlot', { slot: slotNumber })}
+          onRun={async () => {
+            await data.send('weapon.reload', slot);
+          }}
+        />
+        <span className={styles['entrySwitch']}>
+          <ActionButton
+            actionId={ceasing ? 'weapon.deactivate' : 'weapon.activate'}
+            runner={runner}
+            display="icon"
+            icon="fire"
+            pressed={weapon.repeating}
+            available={ceasing || (activate.available && targetId !== null)}
+            unavailableReason={
+              targetId === null && !ceasing ? 'tactical.weapons.noTarget' : activate.unavailableReason
+            }
+            label={translate(ceasing ? 'tactical.weapons.ceaseSlot' : 'tactical.weapons.fireSlot', {
+              slot: slotNumber,
+            })}
+            onRun={async () => {
+              if (ceasing) {
+                await data.send('weapon.deactivate', slot);
+              } else if (targetId !== null) {
+                await data.send('weapon.activate', { ...slot, targetId });
+              }
+            }}
+          />
+        </span>
+      </div>
+      <p className={styles['entryStatus']} data-weapon-status={status}>
+        {describeStatus(weapon, status, translate, locale, nameOf)}
+      </p>
+      <div id={detailId} className={styles['entryDetail']} hidden={!expanded}>
+        <WeaponDetail weapon={weapon} data={data} runner={runner} targetId={targetId} />
+      </div>
+    </li>
+  );
+}
+
+/** `17/20 (180)` beside an ammunition icon, and the same in words. */
+function Magazine({ weapon }: { readonly weapon: WeaponRuntimeData }): JSX.Element {
+  const translate = useTranslate();
+  const { locale } = useLocalizer();
+  const loaded = weapon.ammunitionOptions.find((option) => option.loaded) ?? null;
+  const hold = loaded?.cargoRounds ?? 0;
+  const words = translate('tactical.weapons.magazine', {
+    charge:
+      weapon.ammunitionNameKey === null
+        ? translate('tactical.weapons.empty')
+        : translate(weapon.ammunitionNameKey),
+    loaded: formatQuantity(weapon.loadedRounds, locale),
+    size: formatQuantity(weapon.magazineSize, locale),
+    hold: formatQuantity(hold, locale),
+  });
+  const tooltip = useTooltip({ heading: <span>{words}</span> });
+
+  return (
+    <span
+      className={styles['magazine']}
+      data-magazine={`${String(weapon.loadedRounds)}/${String(weapon.magazineSize)}`}
+      data-empty={weapon.loadedRounds === 0}
+      {...tooltip.anchorProps}
+    >
+      <ActionIcon icon="ammunition" className={styles['magazineIcon']} />
+      <span aria-hidden="true">
+        {translate('tactical.weapons.magazineShort', {
+          loaded: formatQuantity(weapon.loadedRounds, locale),
+          size: formatQuantity(weapon.magazineSize, locale),
+          hold: formatQuantity(hold, locale),
+        })}
+      </span>
+      <span className={styles['visuallyHidden']}>{words}</span>
+      {tooltip.element}
+    </span>
+  );
+}
+
+interface WeaponDetailProps {
+  readonly weapon: WeaponRuntimeData;
+  readonly data: PlayData;
+  readonly runner: ActionRunner;
+  readonly targetId: string | null;
+}
+
+/**
+ * What a weapon folds away: its charge choice, its ranges, and what it would
+ * do to the aimed target.
+ */
+function WeaponDetail({ weapon, data, runner, targetId }: WeaponDetailProps): JSX.Element {
+  const translate = useTranslate();
+  const { locale } = useLocalizer();
+  const effect = targetId === null ? undefined : weapon.effects.find((entry) => entry.targetId === targetId);
+
+  return (
+    <>
+      <ChargeChoice weapon={weapon} data={data} runner={runner} />
+      <dl className={styles['readouts']}>
+        <dt>{translate('tactical.weapons.ranges')}</dt>
+        <dd>
+          {translate('tactical.weapons.rangeValue', {
+            optimal: formatDistanceKm(weapon.optimalRangeKm, locale),
+            falloff: formatDistanceKm(weapon.falloffKm, locale),
+            absolute: formatDistanceKm(weapon.absoluteRangeKm, locale),
+          })}
+        </dd>
+        {effect === undefined ? null : (
+          <>
+            <dt>{translate('tactical.weapons.hitChanceTerm')}</dt>
+            <dd className={styles['hitChance']} data-hit-chance={String(effect.hitChance)}>
+              {formatPercent(effect.hitChance, locale)}
+            </dd>
+            <dt>{translate('tactical.weapons.strainTerm')}</dt>
+            <dd data-limiting={effect.limitingFactor}>
+              {translate(`tactical.limiting.${effect.limitingFactor}`, {
+                range: formatStat(effect.rangeStrain, locale),
+                tracking: formatStat(effect.trackingStrain, locale),
+              })}
+            </dd>
+            <dt>{translate('tactical.weapons.expectedTerm')}</dt>
+            <dd>
+              {translate('tactical.weapons.expected', {
+                expected: formatStat(Math.round(effect.expectedDamagePerShot * 10) / 10, locale),
+                profile: describeProfile(effect.listedDamage, translate, locale),
+              })}
+            </dd>
+          </>
+        )}
+      </dl>
+      {effect === undefined ? (
+        <p className={styles['muted']}>{translate('tactical.weapons.noEffect')}</p>
+      ) : (
+        <SubstitutedExplanation
+          trace={effect.trace}
+          label={translate('tactical.weapons.explain')}
+          result={formatPercent(effect.hitChance, locale)}
+        />
+      )}
+    </>
+  );
+}
+
+/** Choosing and loading another charge, with what it would do. */
+function ChargeChoice({
+  weapon,
+  data,
+  runner,
+}: {
+  readonly weapon: WeaponRuntimeData;
+  readonly data: PlayData;
+  readonly runner: ActionRunner;
+}): JSX.Element | null {
+  const translate = useTranslate();
+  const { locale } = useLocalizer();
   const options = weapon.ammunitionOptions;
   const [chosen, setChosen] = useState<string>('');
   const choice =
@@ -291,104 +394,56 @@ function WeaponRow({
     options.find((option) => !option.loaded) ??
     options[0] ??
     null;
-  const loaded = options.find((option) => option.loaded) ?? null;
-  const activate = commandAvailability(weapon.commands, 'weapon.activate');
-  const deactivate = commandAvailability(weapon.commands, 'weapon.deactivate');
-  const reload = commandAvailability(weapon.commands, 'weapon.reload');
   const change = commandAvailability(choice?.commands, 'weapon.changeAmmunition');
-  const slotLabel = translate('tactical.weapons.slot', { slot: weapon.slot.index + 1 });
+  const slotNumber = weapon.slot.index + 1;
 
+  if (options.length === 0) {
+    return null;
+  }
   return (
-    <li className={styles['weaponRow']} data-weapon={`${weapon.slot.kind}:${String(weapon.slot.index)}`}>
-      <p className={styles['weaponStatus']}>
-        <span className={styles['layerName']}>{slotLabel}</span>{' '}
-        <span data-weapon-status={statusKind(weapon)}>
-          {describeStatus(weapon, translate, locale, (id) =>
-            describeSubject(subjectName(id, site, encounter, shipId), translate),
-          )}
-        </span>
-        {' '}
-        <span className={styles['muted']}>
-          {translate('tactical.weapons.magazine', {
-            loaded: formatQuantity(weapon.loadedRounds, locale),
-            size: formatQuantity(weapon.magazineSize, locale),
-            hold: formatQuantity(loaded?.cargoRounds ?? 0, locale),
-          })}
-        </span>
-      </p>
-      <details className={styles['disclosure']}>
-        <summary>{translate('cockpit.weaponControls', { slot: weapon.slot.index + 1 })}</summary>
+    <div className={styles['chargeChoice']}>
       <div className={styles['commandRow']}>
+        <label className={styles['inlineField']}>
+          <span>{translate('tactical.weapons.chargeTerm')}</span>
+          <select
+            aria-label={translate('tactical.weapons.charge', { slot: slotNumber })}
+            value={choice?.ammunitionId ?? ''}
+            onChange={(event) => {
+              setChosen(event.target.value);
+            }}
+          >
+            {options.map((option) => (
+              <option key={option.ammunitionId} value={option.ammunitionId}>
+                {translate(option.loaded ? 'tactical.weapons.optionLoaded' : 'tactical.weapons.option', {
+                  name: translate(option.nameKey),
+                  rounds: formatQuantity(option.cargoRounds, locale),
+                })}
+              </option>
+            ))}
+          </select>
+        </label>
         <ActionButton
-          actionId="weapon.activate"
+          actionId="weapon.changeAmmunition"
           runner={runner}
-          available={activate.available && targetId !== null}
-          unavailableReason={targetId === null ? 'tactical.weapons.noTarget' : activate.unavailableReason}
-          label={translate('tactical.weapons.fireSlot', { slot: weapon.slot.index + 1 })}
+          display="short"
+          shortLabel={translate('tactical.weapons.load')}
+          available={choice !== null && change.available}
+          unavailableReason={change.unavailableReason}
+          label={translate('tactical.weapons.loadSlot', { slot: slotNumber })}
           onRun={async () => {
-            if (targetId !== null) {
-              await data.send('weapon.activate', { ...slot, targetId });
+            if (choice !== null) {
+              await data.send('weapon.changeAmmunition', {
+                slotKind: weapon.slot.kind,
+                slotIndex: weapon.slot.index,
+                ammunitionId: choice.ammunitionId,
+              });
             }
           }}
         />
-        <ActionButton
-          actionId="weapon.deactivate"
-          runner={runner}
-          available={deactivate.available}
-          unavailableReason={deactivate.unavailableReason}
-          label={translate('tactical.weapons.ceaseSlot', { slot: weapon.slot.index + 1 })}
-          onRun={async () => {
-            await data.send('weapon.deactivate', slot);
-          }}
-        />
-        <ActionButton
-          actionId="weapon.reload"
-          runner={runner}
-          available={reload.available}
-          unavailableReason={reload.unavailableReason}
-          label={translate('tactical.weapons.reloadSlot', { slot: weapon.slot.index + 1 })}
-          onRun={async () => {
-            await data.send('weapon.reload', slot);
-          }}
-        />
       </div>
-      {options.length === 0 ? null : (
-        <div className={styles['commandRow']}>
-          <label className={styles['field']}>
-            {translate('tactical.weapons.charge', { slot: weapon.slot.index + 1 })}
-            <select
-              value={choice?.ammunitionId ?? ''}
-              onChange={(event) => {
-                setChosen(event.target.value);
-              }}
-            >
-              {options.map((option) => (
-                <option key={option.ammunitionId} value={option.ammunitionId}>
-                  {translate(option.loaded ? 'tactical.weapons.optionLoaded' : 'tactical.weapons.option', {
-                    name: translate(option.nameKey),
-                    rounds: formatQuantity(option.cargoRounds, locale),
-                  })}
-                </option>
-              ))}
-            </select>
-          </label>
-          <ActionButton
-            actionId="weapon.changeAmmunition"
-            runner={runner}
-            available={choice !== null && change.available}
-            unavailableReason={change.unavailableReason}
-            label={translate('tactical.weapons.loadSlot', { slot: weapon.slot.index + 1 })}
-            onRun={async () => {
-              if (choice !== null) {
-                await data.send('weapon.changeAmmunition', { ...slot, ammunitionId: choice.ammunitionId });
-              }
-            }}
-          />
-          {choice === null ? null : <ChargeSummary option={choice} />}
-        </div>
-      )}
-      </details>
-    </li>
+      {/* The loaded charge's figures are the weapon's own, read just below. */}
+      {choice === null || choice.loaded ? null : <ChargeSummary option={choice} />}
+    </div>
   );
 }
 
@@ -415,28 +470,72 @@ function statusKind(weapon: WeaponRuntimeData): WeaponStatusKind {
   return weapon.stopReason === null ? 'idle' : 'stopped';
 }
 
+function clockState(status: WeaponStatusKind): CycleClockState {
+  switch (status) {
+    case 'firing':
+      return 'running';
+    case 'finishing':
+      return 'stopping';
+    case 'reloading':
+      return 'reloading';
+    case 'stopped':
+      return 'stopped';
+    default:
+      return 'idle';
+  }
+}
+
+function cycleElapsed(weapon: WeaponRuntimeData): number {
+  if (weapon.cycle === null || weapon.cycleSeconds <= 0) {
+    return 0;
+  }
+  return 1 - weapon.cycle.remainingSeconds / weapon.cycleSeconds;
+}
+
+type Translate = (key: string, params?: Readonly<Record<string, string | number>>) => string;
+
+function tenths(value: number, locale: string): string {
+  return formatStat(Math.round(value * 10) / 10, locale);
+}
+
+function clockLabel(
+  weapon: WeaponRuntimeData,
+  status: WeaponStatusKind,
+  translate: Translate,
+  locale: string,
+): string {
+  switch (status) {
+    case 'firing':
+    case 'finishing':
+      return translate('tactical.weapons.nextShot', {
+        seconds: tenths(weapon.cycle?.remainingSeconds ?? 0, locale),
+      });
+    case 'reloading':
+      return translate('tactical.weapons.reloadEnds', {
+        seconds: tenths(weapon.reload?.remainingSeconds ?? 0, locale),
+      });
+    default:
+      return translate('tactical.clock.idle');
+  }
+}
+
 function describeStatus(
   weapon: WeaponRuntimeData,
-  translate: (key: string, params?: Readonly<Record<string, string | number>>) => string,
+  status: WeaponStatusKind,
+  translate: Translate,
   locale: string,
   nameOf: (id: string) => string,
 ): string {
-  const seconds = (value: number): string => formatStat(Math.round(value * 10) / 10, locale);
-  switch (statusKind(weapon)) {
+  switch (status) {
     case 'reloading':
       return translate(
         weapon.reload?.changing === true ? 'tactical.weapons.changing' : 'tactical.weapons.reloading',
-        { seconds: seconds(weapon.reload?.remainingSeconds ?? 0) },
+        { seconds: tenths(weapon.reload?.remainingSeconds ?? 0, locale) },
       );
     case 'firing':
-      return translate('tactical.weapons.firing', {
-        target: nameOf(weapon.cycle?.targetId ?? ''),
-        seconds: seconds(weapon.cycle?.remainingSeconds ?? 0),
-      });
+      return translate('tactical.weapons.firing', { target: nameOf(weapon.cycle?.targetId ?? '') });
     case 'finishing':
-      return translate('tactical.weapons.finishing', {
-        seconds: seconds(weapon.cycle?.remainingSeconds ?? 0),
-      });
+      return translate('tactical.weapons.finishing');
     case 'stopped':
       return translate('tactical.weapons.stopped', {
         reason: translate(`combat.stop.${weapon.stopReason ?? 'deactivated'}`),

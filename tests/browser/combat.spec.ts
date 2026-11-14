@@ -270,9 +270,11 @@ test.describe('the first vertical slice', () => {
     ).toBeVisible();
     await flyToScout(page);
     await engageScout(page);
-    await expect(
-      region(page, 'Weapons').getByRole('heading', { name: '2 x 200mm Autocannon - Fusion S' }),
-    ).toBeVisible();
+    // Each gun is its own compact entry, with its magazine and Fusion S loaded.
+    const guns = region(page, 'Weapons').locator('[data-weapon]');
+    await expect(guns).toHaveCount(2);
+    await expect(guns.filter({ hasText: '200mm Autocannon' })).toHaveCount(2);
+    await expect(guns.getByText(/^Fusion S: \d+ of \d+ rounds loaded/)).toHaveCount(2);
     await expect(region(page, 'Weapons').getByText(/^Firing at Pirate Scout/)).toHaveCount(2);
     await waitForClearedSite(page);
     await returnAndDock(page);

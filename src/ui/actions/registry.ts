@@ -68,6 +68,7 @@ export const ACTION_ICONS = [
   'reload',
   'ammunition',
   'module',
+  'power',
   'loot',
   'zoomIn',
   'zoomOut',

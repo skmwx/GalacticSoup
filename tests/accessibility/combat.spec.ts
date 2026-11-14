@@ -76,7 +76,11 @@ test.describe('combat accessibility', () => {
     test.setTimeout(3 * 60_000);
     await inAFight(page);
 
-    // Open every explanation so its contents are audited too.
+    // Open every weapon and module entry, then every explanation, so their contents are audited too.
+    const closed = page.locator('[data-panel="equipment"] button[aria-expanded="false"]');
+    while ((await closed.count()) > 0) {
+      await closed.first().click();
+    }
     for (const summary of await page.locator('summary').all()) {
       await summary.click();
     }

@@ -10,9 +10,8 @@ import type {
  * Presentation helpers for the combat surfaces (Technical Specification 12.1).
  *
  * Nothing here decides a rule. They choose what to show - which locked target
- * the weapon controls are pointed at, how identical weapons are grouped, what
- * to call an id the tactical view mentions - from values the engine already
- * published, and every command they lead to is still refused or accepted by
+ * the weapon controls are pointed at, what to call an id the tactical view
+ * mentions - from values the engine already published, and every command they lead to is still refused or accepted by
  * the engine.
  */
 
@@ -67,43 +66,6 @@ export function fireAvailability(
       .find((entry) => entry.command === 'weapon.activate' && entry.unavailableReason !== null)
       ?.unavailableReason ?? 'tactical.weapons.none';
   return { available: false, unavailableReason: refusal, weapons: ready };
-}
-
-/**
- * Weapons that fire the same turret with the same charge
- * (Functional Specification 19.3). They share one hit chance against a
- * target, so they are read, and fired, as one group.
- */
-export interface WeaponGroup {
-  readonly key: string;
-  readonly moduleId: string;
-  readonly nameKey: string;
-  readonly ammunitionNameKey: string | null;
-  readonly weapons: readonly WeaponRuntimeData[];
-}
-
-export function weaponGroups(weapons: readonly WeaponRuntimeData[]): readonly WeaponGroup[] {
-  const groups = new Map<string, { group: WeaponGroup; weapons: WeaponRuntimeData[] }>();
-  for (const weapon of weapons) {
-    const key = `${weapon.moduleId}|${weapon.ammunitionId ?? ''}`;
-    const existing = groups.get(key);
-    if (existing === undefined) {
-      const members = [weapon];
-      groups.set(key, {
-        weapons: members,
-        group: {
-          key,
-          moduleId: weapon.moduleId,
-          nameKey: weapon.nameKey,
-          ammunitionNameKey: weapon.ammunitionNameKey,
-          weapons: members,
-        },
-      });
-    } else {
-      existing.weapons.push(weapon);
-    }
-  }
-  return [...groups.values()].map((entry) => entry.group);
 }
 
 /** How a subject the tactical view mentions is named. */

@@ -983,10 +983,12 @@ For a locked combat target, the interface shows:
 
 - current defensive layers when known;
 - active hostile and friendly effects;
-- each grouped weapon's hit chance or guided damage multiplier;
+- each weapon's hit chance or guided damage multiplier;
 - whether range, tracking, target size, or target speed is the main limiting factor;
 - expected time until the next cycle;
 - warp-disruption state.
+
+The ship's weapons and modules are compact lists. Each entry keeps the item's routine state and controls on one line: its name, its cycle drawn as a clock, a weapon's magazine and hold ammunition, a weapon's reload, and an on/off switch. Controls that act on every weapon at once sit above the weapons list. Less frequent controls, such as changing ammunition, and the detailed figures and their explanations fold beneath each entry.
 
 Combat messages are filterable and summarized. The default view emphasizes causes and important changes rather than displaying every numerical event in a scrolling spreadsheet.
 

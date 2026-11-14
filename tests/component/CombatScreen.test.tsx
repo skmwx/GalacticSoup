@@ -126,7 +126,7 @@ describe('a fight in progress', () => {
     harness.gateway.dispose();
   });
 
-  it('shows hit chance, its limiting factor and the substituted formula [FUNC-9.5, FUNC-19.3, FUNC-19.6, MVP-AC-04]', async () => {
+  it('lists each weapon compactly, with hit chance, main strain and formula folded beneath [FUNC-9.4, FUNC-9.5, FUNC-19.3, FUNC-19.6, MVP-AC-04]', async () => {
     const { harness } = await midFight();
     const weapons = panel('Weapons');
 
@@ -135,20 +135,45 @@ describe('a fight in progress', () => {
     const effect = state.weapons[0]?.effects[0];
     if (effect === undefined) throw new Error('No weapon effect was projected.');
 
-    const chance = within(weapons).getByText(/to hit Pirate Scout$/);
-    expect(chance.textContent).toMatch(/^\d+% to hit Pirate Scout$/);
-    const limiting = weapons.querySelector('[data-limiting]');
-    expect(limiting?.getAttribute('data-limiting')).toBe(effect.limitingFactor);
-    expect(
-      within(weapons).getByText(effect.limitingFactor === 'none' ? /Nothing limits/ : /^Main limit:/),
-    ).toBeInTheDocument();
+    // The line: name, cycle clock, magazine as loaded/size (hold), reload and a fire switch.
+    const entry = weapons.querySelector<HTMLElement>('[data-weapon="weapon:0"]');
+    if (entry === null) throw new Error('No entry for weapon 1.');
+    expect(entry.querySelector('[data-clock]')).not.toBeNull();
+    const magazine = entry.querySelector('[data-magazine]');
+    expect(magazine?.querySelector('[aria-hidden="true"]:not(svg)')?.textContent).toMatch(/^\d+\/\d+ \(\d+\)$/);
+    expect(within(entry).getByText(/^Fusion S: \d+ of 20 rounds loaded, \d+ more in the hold$/)).toBeInTheDocument();
+    expect(within(entry).getByRole('button', { name: 'Reload weapon 1' })).toBeInTheDocument();
+    const fire = within(entry).getByRole('button', { name: /^(Fire|Cease) weapon 1$/ });
+    expect(fire).toHaveAttribute('aria-pressed', String(state.weapons[0]?.repeating));
 
-    await harness.user.click(within(weapons).getByText('Show the hit-chance calculation'));
-    const formula = within(weapons).getByText(/^Hit chance = 0\.5 \^/);
+    // The details are folded until the name is opened.
+    const toggle = within(entry).getByRole('button', { name: /^200mm Autocannon\s?, weapon 1, details$/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const detail = document.getElementById(toggle.getAttribute('aria-controls') ?? '');
+    expect(detail).not.toBeVisible();
+    await harness.user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(detail).toBeVisible();
+    if (detail === null) throw new Error('No details for weapon 1.');
+
+    expect(within(detail).getByLabelText('Charge for weapon 1')).toBeInTheDocument();
+    expect(within(detail).getByText('Optimal / falloff / reach')).toBeInTheDocument();
+    expect(detail.querySelector('[data-hit-chance]')?.textContent).toMatch(/^\d+(\.\d)?%$/);
+    const limiting = detail.querySelector('[data-limiting]');
+    expect(limiting?.getAttribute('data-limiting')).toBe(effect.limitingFactor);
+    expect(limiting?.textContent).toMatch(
+      effect.limitingFactor === 'none' ? /^None/ : /^(Range|Tracking) \d/,
+    );
+    // The strain is stated, not coached.
+    expect(within(weapons).queryByText(/Close in|Cut the angular/)).toBeNull();
+    expect(within(detail).getByText(/^\d+(\.\d)? before resistances \(/)).toBeInTheDocument();
+
+    await harness.user.click(within(detail).getByText('Show the hit-chance calculation'));
+    const formula = within(detail).getByText(/^Hit chance = 0\.5 \^/);
     // Every placeholder was substituted with the engine's operands.
     expect(formula.textContent).not.toMatch(/[{}]/);
-    expect(within(weapons).getByText('Tracking strain')).toBeInTheDocument();
-    expect(within(weapons).getByText('Range strain')).toBeInTheDocument();
+    expect(within(detail).getByText('Tracking strain')).toBeInTheDocument();
+    expect(within(detail).getByText('Range strain')).toBeInTheDocument();
 
     expect(harness.issues).toEqual([]);
     harness.gateway.dispose();
@@ -171,10 +196,17 @@ describe('a fight in progress', () => {
     expect(scout.querySelector('[data-targeting-you]')).not.toBeNull();
     expect(within(scout).getByText(/^(Has you locked|Locking you)$/)).toBeInTheDocument();
 
+    // A module is one line - name, cycle clock, on/off switch - with its description folded beneath.
     const modules = panel('Modules');
     const booster = within(modules).getByRole('button', { name: /Deactivate Small Shield Booster/ });
     expect(booster).toHaveAttribute('aria-pressed', 'true');
-    expect(within(modules).getByText(/per second\) for 15 capacitor a cycle/)).toBeInTheDocument();
+    const boosterEntry = booster.closest<HTMLElement>('[data-module]');
+    expect(boosterEntry?.querySelector('[data-clock="running"], [data-clock="stopping"], [data-clock="waiting"]'))
+      .not.toBeNull();
+    const description = within(modules).getByText(/per second\) for 15 capacitor a cycle/);
+    expect(description).not.toBeVisible();
+    await harness.user.click(within(modules).getByRole('button', { name: /^Small Shield Booster\s?, details$/ }));
+    expect(description).toBeVisible();
 
     // The cockpit ship rail carries the condition once, alongside flight controls.
     expect(document.querySelector('[data-readout="defenses"]')?.textContent).toMatch(/Shield\d+ \/ 350/);

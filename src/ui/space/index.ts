@@ -35,10 +35,9 @@ export {
   fireAvailability,
   matchesFilter,
   subjectName,
-  weaponGroups,
   weaponTargetId,
 } from './tactical';
-export type { CombatLogFilter, FireAvailability, SubjectName, WeaponGroup } from './tactical';
+export type { CombatLogFilter, FireAvailability, SubjectName } from './tactical';
 export { EFFECT_WINDOW_MS } from './SiteView';
 export { TravelStatus } from './TravelStatus';
 export type { TravelStatusProps } from './TravelStatus';

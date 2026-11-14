@@ -335,11 +335,12 @@ Local anywhere else. The ship's status sits in the rail beside the radar; the co
 activity describes the selected object - layers, range, speeds, what it runs, then type, attitude,
 role, bounty and lock time - with the encounter collapsed at its foot. The panels read the tactical
 projection. Status shows layers, resistances, and capacitor with the seconds it lasts under its
-bar and its endurance calculation. Weapons are grouped by
-turret and charge; each group shows its hit chance against the aimed target, which half of the
-turret formula limits it (`limitingFactor`), and the formula with the engine's operands written
-into it. Each weapon shows its magazine, cycle and reload, and every charge it could change to with
-what that charge would do. Modules are toggles; the selected target shows its lock-time
+bar and its endurance calculation. Weapons are a compact list under Fire, Cease fire and Reload
+all: one line per weapon with its cycle clock, magazine (`loaded/size (hold)`), reload and a fire
+switch. Opening a weapon shows its charge choice, optimal / falloff / reach, its hit chance against
+the aimed target with the strain that limits it (`limitingFactor`), the formula with the engine's
+operands written into it, and the expected damage of a shot. Modules are one line each - name,
+cycle clock, on/off switch - with their description and calculation folded beneath; the selected target shows its lock-time
 calculation; the encounter panel lists the opponents by role and bounty; the combat log summarises the engine's
 aggregated events and can be filtered. Selecting a wreck opens it, and the loot panel takes what
 the hold accepts, asking the engine afresh between stacks.

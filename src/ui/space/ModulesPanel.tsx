@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import { useId, useState, type JSX, type ReactNode } from 'react';
 
 import type { ModuleRuntimeData } from '@protocol';
 
@@ -14,21 +14,22 @@ import { SubstitutedExplanation } from '../common/Explanation';
 import { formatPercent, formatSpeedKmPerSecond, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
+import { CycleClock, type CycleClockState } from './CycleClock';
 import styles from './Space.module.css';
 
 /**
  * Active and passive modules (Functional Specification 9.7-9.8, 19.1).
  *
- * The second half of the equipment panel: each active module's toggle sits on
- * its name line, so the shield booster stays one glance from the weapons.
- *
- * An active module is one toggle: it activates when the engine says it may,
- * and deactivates when it is repeating. Its row says what it is doing, what a
- * cycle costs and what it gives back, so active tanking reads as a trade of
- * capacitor for hit points. Passive modules are listed with the effect they
- * already contribute and no control, because there is nothing to operate.
- * The first active modules are also reachable by number keys, taken from the
- * registry like every other shortcut.
+ * The second half of the equipment panel, as compact as the weapons above it.
+ * Each active module is one line: its name, a round clock for its cycle and
+ * an on/off switch. The switch activates the module when the engine says it
+ * may and deactivates it while it repeats. When a module cannot keep cycling,
+ * because it waits for capacitor or was stopped for a reason, the line gains
+ * that reason in words. What a cycle costs and gives back, and the formula
+ * behind it, fold beneath the name. Passive modules are listed with no
+ * control, because there is nothing to operate. The first active modules are
+ * also reachable by number keys, taken from the registry like every other
+ * shortcut.
  *
  * @implements FUNC-9.7, FUNC-9.8, FUNC-19.1, TECH-12.3, MVP-AC-03, MVP-AC-04
  */
@@ -80,63 +81,133 @@ export function ModulesPanel({ data, runner, modules }: ModulesPanelProps): JSX.
       </h4>
       {modules.length === 0 ? (
         <p className={styles['muted']}>{translate('tactical.modules.none')}</p>
-      ) : null}
-      <ul className={styles['plainList']}>
-        {active.map((module, index) => {
-          const activate = commandAvailability(module.commands, 'module.activate');
-          const deactivate = commandAvailability(module.commands, 'module.deactivate');
-          const turningOff = !activate.available && deactivate.available;
-          const actionId =
-            index < MODULE_TOGGLE_COUNT
-              ? moduleToggleActionId(index + 1)
-              : turningOff
-                ? 'module.deactivate'
-                : 'module.activate';
-          return (
-            <li
+      ) : (
+        <ul className={styles['entryList']}>
+          {active.map((module, index) => {
+            const activate = commandAvailability(module.commands, 'module.activate');
+            const deactivate = commandAvailability(module.commands, 'module.deactivate');
+            const turningOff = !activate.available && deactivate.available;
+            const actionId =
+              index < MODULE_TOGGLE_COUNT
+                ? moduleToggleActionId(index + 1)
+                : turningOff
+                  ? 'module.deactivate'
+                  : 'module.activate';
+            return (
+              <ModuleEntry
+                key={`${module.slot.kind}:${String(module.slot.index)}`}
+                module={module}
+                controls={
+                  <>
+                    <CycleClock
+                      state={clockState(module)}
+                      elapsed={cycleElapsed(module)}
+                      label={describeStatus(module, translate)}
+                    />
+                    <span className={styles['entrySwitch']}>
+                      <ActionButton
+                        actionId={actionId}
+                        runner={runner}
+                        display="icon"
+                        icon="power"
+                        pressed={module.repeating}
+                        available={activate.available || deactivate.available}
+                        unavailableReason={activate.unavailableReason ?? deactivate.unavailableReason}
+                        label={translate(
+                          turningOff ? 'tactical.modules.deactivate' : 'tactical.modules.activate',
+                          { name: translate(module.nameKey) },
+                        )}
+                        onRun={() => toggle(module)}
+                      />
+                    </span>
+                  </>
+                }
+              />
+            );
+          })}
+          {passive.map((module) => (
+            <ModuleEntry
               key={`${module.slot.kind}:${String(module.slot.index)}`}
-              className={styles['weaponRow']}
-              data-module={module.moduleId}
-              data-module-status={module.status}
-            >
-              <div className={styles['moduleHead']}>
-                <p className={styles['weaponStatus']}>
-                  <span className={styles['layerName']}>{translate(module.nameKey)}</span>{' '}
-                  <span>{describeStatus(module, translate)}</span>
-                </p>
-                <ActionButton
-                actionId={actionId}
-                runner={runner}
-                pressed={module.repeating}
-                available={activate.available || deactivate.available}
-                unavailableReason={activate.unavailableReason ?? deactivate.unavailableReason}
-                label={translate(turningOff ? 'tactical.modules.deactivate' : 'tactical.modules.activate', {
-                  name: translate(module.nameKey),
-                })}
-                onRun={() => toggle(module)}
-                />
-              </div>
-              <ModuleEffect module={module} />
-            </li>
-          );
-        })}
-        {passive.map((module) => (
-          <li
-            key={`${module.slot.kind}:${String(module.slot.index)}`}
-            className={styles['weaponRow']}
-            data-module={module.moduleId}
-            data-module-status={module.status}
-          >
-            <p className={styles['weaponStatus']}>
-              <span className={styles['layerName']}>{translate(module.nameKey)}</span>{' '}
-              <span>{describeStatus(module, translate)}</span>
-            </p>
-            <ModuleEffect module={module} />
-          </li>
-        ))}
-      </ul>
+              module={module}
+              controls={<span className={styles['entryTag']}>{translate('tactical.modules.passiveTag')}</span>}
+            />
+          ))}
+        </ul>
+      )}
     </section>
   );
+}
+
+interface ModuleEntryProps {
+  readonly module: ModuleRuntimeData;
+  /** What sits on the line after the name: the clock and switch, or a tag. */
+  readonly controls: ReactNode;
+}
+
+/** One module: its name and controls on a line, its description folded beneath. */
+function ModuleEntry({ module, controls }: ModuleEntryProps): JSX.Element {
+  const translate = useTranslate();
+  const detailId = useId();
+  const [expanded, setExpanded] = useState(false);
+  const alert = module.status === 'waiting' || module.status === 'offline' ||
+    (module.status === 'inactive' && module.stopReason !== null);
+
+  return (
+    <li
+      className={styles['entry']}
+      data-module={module.moduleId}
+      data-module-status={module.status}
+      data-expanded={expanded}
+    >
+      <div className={styles['entryHead']}>
+        <button
+          type="button"
+          className={styles['entryToggle']}
+          aria-expanded={expanded}
+          aria-controls={detailId}
+          onClick={() => {
+            setExpanded((open) => !open);
+          }}
+        >
+          <span className={styles['entryChevron']} aria-hidden="true" />
+          <span className={styles['entryName']}>{translate(module.nameKey)}</span>
+          <span className={styles['visuallyHidden']}>{translate('tactical.modules.details')}</span>
+        </button>
+        {controls}
+      </div>
+      {alert ? (
+        <p className={styles['entryAlert']} data-module-alert>
+          {describeStatus(module, translate)}
+        </p>
+      ) : null}
+      <div id={detailId} className={styles['entryDetail']} hidden={!expanded}>
+        {alert ? null : <p className={styles['muted']}>{describeStatus(module, translate)}</p>}
+        <ModuleEffect module={module} />
+      </div>
+    </li>
+  );
+}
+
+function clockState(module: ModuleRuntimeData): CycleClockState {
+  switch (module.status) {
+    case 'active':
+      return 'running';
+    case 'deactivating':
+      return 'stopping';
+    case 'waiting':
+      return 'waiting';
+    case 'inactive':
+      return module.stopReason === null ? 'idle' : 'stopped';
+    default:
+      return 'idle';
+  }
+}
+
+function cycleElapsed(module: ModuleRuntimeData): number {
+  if (module.cycle === null || module.cycleSeconds <= 0) {
+    return 0;
+  }
+  return 1 - module.cycle.remainingSeconds / module.cycleSeconds;
 }
 
 function describeStatus(

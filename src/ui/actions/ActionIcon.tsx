@@ -45,6 +45,7 @@ const PATHS: Readonly<Record<ActionIconName, string>> = {
   reload: 'M19 12a7 7 0 1 1-2-5M17 3v4h-4',
   ammunition: 'M8 20V9l2-4 2 4v11zM14 20V9l2-4 2 4v11z',
   module: 'M5 5h14v14H5zM9 9h6v6H9zM12 2v3M12 19v3',
+  power: 'M12 3v8M7.5 6.5a7 7 0 1 0 9 0',
   loot: 'M4 9h16v10H4zM4 9l3-4h10l3 4M10 13h4',
   zoomIn: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16 16l4 4M8 11h6M11 8v6',
   zoomOut: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16 16l4 4M8 11h6',

@@ -475,14 +475,6 @@
 .equipment .panelHeading {
   font-size: var(--gs-font-small);
 }
-/* A module's toggle on its name line. */
-.moduleHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--gs-space-1) var(--gs-space-2);
-}
 .logDisclosure {
   grid-area: log;
 }
@@ -628,30 +620,176 @@
   font-weight: 600;
 }
 
-.group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gs-space-2);
-  padding: var(--gs-space-2);
-  border: var(--gs-border);
-  border-radius: var(--gs-radius);
-  background: var(--gs-color-surface-raised);
-}
-
-.groupHeading {
-  margin: 0;
-  font-size: var(--gs-font-body);
-}
-
 .hitChance {
   margin: 0;
-  font-family: var(--gs-font-mono);
   font-weight: 600;
 }
 
-.limiting {
+/*
+ * The weapons and modules lists (MVP review 03): one line per item with its
+ * routine controls - name, cycle clock, magazine, reload, on/off switch - and
+ * its details folded beneath, opened from the name.
+ */
+.entryList {
+  list-style: none;
   margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-block: var(--gs-space-1);
+  border-top: var(--gs-border);
+}
+.entryHead {
+  display: flex;
+  align-items: center;
+  gap: var(--gs-space-1);
+  min-width: 0;
+}
+.equipment .entryToggle {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gs-space-1);
+  padding: var(--gs-space-1) 0;
+  min-height: var(--gs-target-min);
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+.entryToggle:hover .entryName {
+  text-decoration: underline;
+}
+.entryChevron {
+  flex: none;
+  width: 0;
+  height: 0;
+  border-block: 0.3em solid transparent;
+  border-inline-start: 0.4em solid var(--gs-color-text-muted);
+  transition: transform var(--gs-transition);
+}
+.entryToggle[aria-expanded='true'] .entryChevron {
+  transform: rotate(90deg);
+}
+.entryName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.entryTag {
   font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+/* The on/off switch: lit while the weapon fires or the module runs. */
+.entrySwitch button[aria-pressed='true'] {
+  border-color: var(--gs-color-ok);
+  color: var(--gs-color-ok);
+  box-shadow: inset 0 0 0 1px var(--gs-color-ok);
+}
+.entryStatus,
+.entryAlert {
+  margin: 0;
+  padding-inline-start: calc(0.4em + var(--gs-space-1));
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+.entryStatus[data-weapon-status='stopped'],
+.entryAlert {
+  color: var(--gs-color-warn);
+}
+.entryDetail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+  padding: var(--gs-space-1) 0 var(--gs-space-1) calc(0.4em + var(--gs-space-1));
+}
+.entryDetail[hidden] {
+  display: none;
+}
+.entryDetail .readouts dd {
+  font-size: var(--gs-font-small);
+}
+.magazine {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--gs-font-mono);
+  font-size: var(--gs-font-small);
+  white-space: nowrap;
+}
+.magazine[data-empty='true'] {
+  color: var(--gs-color-warn);
+}
+.magazineIcon {
+  width: 1.1em;
+  height: 1.1em;
+  color: var(--gs-color-text-muted);
+}
+.cycleClock {
+  flex: none;
+  display: inline-flex;
+  color: var(--gs-color-text-muted);
+}
+.cycleClock svg {
+  width: calc(1.25rem * var(--gs-ui-scale));
+  height: calc(1.25rem * var(--gs-ui-scale));
+}
+.clockRing {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.clockFill {
+  fill: currentColor;
+}
+.clockMark {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.cycleClock[data-clock='running'] {
+  color: var(--gs-color-ok);
+}
+.cycleClock[data-clock='stopping'] {
+  color: var(--gs-color-text-muted);
+}
+.cycleClock[data-clock='reloading'],
+.cycleClock[data-clock='waiting'],
+.cycleClock[data-clock='stopped'] {
+  color: var(--gs-color-warn);
+}
+.chargeChoice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+.inlineField {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gs-space-1);
+  min-width: 0;
+  font-size: var(--gs-font-small);
+  color: var(--gs-color-text-muted);
+}
+.inlineField select {
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+  color: var(--gs-color-text);
+  background: var(--gs-color-surface-raised);
+  border: var(--gs-border);
+  border-radius: var(--gs-radius);
+  padding: var(--gs-space-1);
 }
 
 .weaponRow {
@@ -735,9 +873,6 @@
 .objectList {
   max-height: 12rem;
   overflow-y: auto;
-}
-.group {
-  min-width: 0;
 }
 .shipRail .layer {
   grid-template-columns: minmax(0, 1fr);
