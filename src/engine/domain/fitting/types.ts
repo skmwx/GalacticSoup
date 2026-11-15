@@ -98,6 +98,7 @@ export const FIT_VIOLATIONS = [
   'ammunitionUnknown',
   'slotUnavailable',
   'slotKindMismatch',
+  'sizeNotAccepted',
   'hardpointUnavailable',
   'hardpointMismatch',
   'ammunitionMismatch',

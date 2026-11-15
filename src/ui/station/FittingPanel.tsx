@@ -370,7 +370,7 @@ function SlotRow({
   const candidate = moduleId === null ? undefined : option?.candidates.find((entry) => entry.module.definitionId === moduleId);
   const category =
     candidate?.category ?? (moduleId !== null && moduleId === committed.module?.definitionId ? committed.category : null);
-  const isWeapon = category === 'turret';
+  const isWeapon = category === 'turret' || category === 'launcher';
   const changed =
     draftOpen &&
     (moduleId !== (committed.module?.definitionId ?? null) ||

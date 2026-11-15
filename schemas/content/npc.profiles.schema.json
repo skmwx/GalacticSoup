@@ -53,6 +53,7 @@
             "type": "object",
             "additionalProperties": false,
             "required": [
+              "ammunition",
               "modules"
             ],
             "properties": {
@@ -63,14 +64,28 @@
                   "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/moduleId"
                 }
               },
-              "ammunitionId": {
-                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/ammunitionId"
-              },
-              "reserveRounds": {
-                "description": "Rounds of the loadout's ammunition carried in the hold for reloads.",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 100000
+              "ammunition": {
+                "description": "Ammunition per weapon group (Technical Specification 8.3). Each fitted weapon loads the first entry it accepts; reserveRounds of each ride in the hold for reloads.",
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ammunitionId",
+                    "reserveRounds"
+                  ],
+                  "properties": {
+                    "ammunitionId": {
+                      "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/ammunitionId"
+                    },
+                    "reserveRounds": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100000
+                    }
+                  }
+                }
               }
             }
           },

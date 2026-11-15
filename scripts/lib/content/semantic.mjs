@@ -18,18 +18,92 @@ import { issue } from './issues.mjs';
 /** Slot each module category must occupy (Functional Specification 8.3). */
 const CATEGORY_SLOTS = {
   turret: 'weapon',
+  launcher: 'weapon',
   propulsion: 'system',
   shieldBooster: 'system',
   armorRepairer: 'system',
   resistancePlating: 'engineering',
+  resistanceAmplifier: 'engineering',
   capacitorBattery: 'engineering',
+  shieldExtender: 'engineering',
+  shieldRecharger: 'engineering',
+  capacitorRecharger: 'engineering',
+  weaponUpgrade: 'engineering',
 };
+
+/** Hardpoint each weapon category needs (Functional Specification 8.3). */
+const CATEGORY_HARDPOINTS = { turret: 'turret', launcher: 'launcher' };
 
 /** Layer each repair or resistance category must address. */
 const CATEGORY_LAYERS = {
   shieldBooster: 'shield',
   armorRepairer: 'armor',
 };
+
+/** Layer each resistance category hardens. */
+const RESISTANCE_LAYERS = {
+  resistancePlating: 'armor',
+  resistanceAmplifier: 'shield',
+};
+
+/**
+ * The categories each registered modifier operator may be used by
+ * (Technical Specification 6.2, 10.2). It mirrors the engine registry in
+ * `src/engine/domain/attributes/operators.ts`; a unit test holds the two
+ * together. An operator outside its categories would describe an effect the
+ * module does not execute, so it is refused.
+ */
+export const OPERATOR_CATEGORIES = {
+  shieldCapacity: ['shieldExtender'],
+  shieldRechargeTime: ['shieldRecharger'],
+  capacitorRechargeTime: ['capacitorRecharger'],
+  signatureRadius: ['shieldExtender'],
+  projectileDamage: ['weaponUpgrade'],
+  hybridDamage: ['weaponUpgrade'],
+  turretTracking: ['weaponUpgrade'],
+  guidedExplosionRadius: ['weaponUpgrade'],
+  guidedExplosionVelocity: ['weaponUpgrade'],
+};
+
+/** Operators that may be the sole effect of a category: each category must have one. */
+const CATEGORY_PRIMARY_OPERATORS = {
+  shieldExtender: ['shieldCapacity'],
+  shieldRecharger: ['shieldRechargeTime'],
+  capacitorRecharger: ['capacitorRechargeTime'],
+  weaponUpgrade: ['projectileDamage', 'hybridDamage', 'turretTracking', 'guidedExplosionRadius', 'guidedExplosionVelocity'],
+};
+
+/** Operators whose magnitude is a fraction of the attribute and must stay below 1. */
+const FRACTION_OPERATORS = new Set([
+  'shieldRechargeTime', 'capacitorRechargeTime', 'guidedExplosionRadius',
+]);
+
+/** The family a weapon module fires, or `null` for any other module. */
+export function weaponFamilyOf(module) {
+  if (module.category === 'turret') return module.turret.family;
+  if (module.category === 'launcher') return 'guided';
+  return null;
+}
+
+/** Whether a weapon loads a charge: same family and same size (Technical Specification 6.2). */
+export function acceptsCharge(module, charge) {
+  const family = weaponFamilyOf(module);
+  return family !== null && family === charge.family && module.size === charge.size;
+}
+
+/** Whether a hull accepts a module's size (Functional Specification 8.4). */
+export function hullAcceptsSize(hull, module) {
+  const sizes = hull.moduleSizes ?? [];
+  if (module.size !== undefined) return sizes.includes(module.size);
+  return (module.suitsSizes ?? []).some((size) => sizes.includes(size));
+}
+
+/** The magazine one weapon holds. */
+function magazineOf(module) {
+  if (module.category === 'turret') return module.turret.magazineSize;
+  if (module.category === 'launcher') return module.launcher.magazineSize;
+  return 0;
+}
 
 /**
  * @param {import('./collect.mjs').Collected} collected
@@ -140,13 +214,9 @@ export function validateSemantics(collected) {
     issues.push(...checkStartingFit(start, hull, { modules, ammunition }));
   }
 
-  const ammunitionGroups = new Set(
-    collected.definitions.ammunition.map((entry) => entry.value.group),
-  );
-
   issues.push(...checkVolumes(collected));
   issues.push(...checkHulls(collected));
-  issues.push(...checkModules(collected, ammunitionGroups));
+  issues.push(...checkModules(collected, ammunition));
   issues.push(...checkNpcProfiles(collected, { hulls, modules, ammunition, lootTables }));
   issues.push(...checkLootTables(collected, tradeable));
   issues.push(...checkStations(collected, { systems, sites }));
@@ -158,6 +228,7 @@ export function validateSemantics(collected) {
   issues.push(...checkSiteUse(collected, sites, encounters));
   issues.push(...checkMarket(collected, { stations, sellable }));
   issues.push(...checkStarterReachability(collected, { stations, hulls, modules }));
+  issues.push(...checkReferenceFits(collected, { hulls, modules, ammunition }));
   issues.push(...checkRules(collected));
   issues.push(...checkGuidance(collected, ids));
   issues.push(...checkNotifications(collected));
@@ -231,67 +302,73 @@ function checkHulls(collected) {
   return issues;
 }
 
-function checkModules(collected, ammunitionGroups) {
+function checkModules(collected, ammunition) {
   const issues = [];
+  const charges = [...ammunition.values()];
 
   for (const entry of collected.definitions.modules) {
     const module = entry.value;
+    const fail = (field, detail, rule = 'catalogRelationship') =>
+      issues.push(issue(rule, entry.file, `${entry.path}${field}`, detail));
     const expectedSlot = CATEGORY_SLOTS[module.category];
     if (expectedSlot !== undefined && module.slot !== expectedSlot) {
-      issues.push(
-        issue(
-          'catalogRelationship',
-          entry.file,
-          `${entry.path}.slot`,
-          `a ${module.category} module occupies a ${expectedSlot} slot, not a ${module.slot} slot`,
-        ),
-      );
+      fail('.slot', `a ${module.category} module occupies a ${expectedSlot} slot, not a ${module.slot} slot`);
     }
 
     if (module.hardpoint !== undefined && module.slot !== 'weapon') {
-      issues.push(
-        issue(
-          'catalogRelationship',
-          entry.file,
-          `${entry.path}.hardpoint`,
-          'only a weapon-slot module uses a hardpoint',
-        ),
-      );
+      fail('.hardpoint', 'only a weapon-slot module uses a hardpoint');
     }
 
-    if (module.category === 'turret') {
-      if (module.hardpoint !== 'turret') {
-        issues.push(
-          issue(
-            'catalogRelationship',
-            entry.file,
-            `${entry.path}.hardpoint`,
-            'a turret requires a turret hardpoint',
-          ),
-        );
-      }
-      if (!ammunitionGroups.has(module.turret.ammunitionGroup)) {
-        issues.push(
-          issue(
-            'unresolvedReference',
-            entry.file,
-            `${entry.path}.turret.ammunitionGroup`,
-            `no ammunition belongs to the group "${module.turret.ammunitionGroup}"`,
-          ),
-        );
+    const expectedHardpoint = CATEGORY_HARDPOINTS[module.category];
+    if (expectedHardpoint !== undefined && module.hardpoint !== expectedHardpoint) {
+      fail('.hardpoint', `a ${module.category} requires a ${expectedHardpoint} hardpoint`);
+    }
+
+    // Every module states its size, or for a non-sized support module the
+    // hull sizes it suits - exactly one of the two (Functional Specification 8.4).
+    if ((module.size === undefined) === (module.suitsSizes === undefined)) {
+      fail('.size', 'a module states exactly one of size and suitsSizes');
+    }
+
+    // Weapons are always sized: their size decides which charges they load
+    // (Technical Specification 6.2).
+    if (weaponFamilyOf(module) !== null) {
+      if (module.size === undefined) {
+        fail('.size', `a ${module.category} states its own size`);
+      } else if (!charges.some((charge) => acceptsCharge(module, charge))) {
+        fail('', `no ${module.size} ${weaponFamilyOf(module)} ammunition exists for "${module.id}"`, 'unresolvedReference');
       }
     }
 
     const expectedLayer = CATEGORY_LAYERS[module.category];
     if (expectedLayer !== undefined && module.repair?.layer !== expectedLayer) {
-      issues.push(
-        issue(
-          'catalogRelationship',
-          entry.file,
-          `${entry.path}.repair.layer`,
-          `a ${module.category} repairs the ${expectedLayer} layer`,
-        ),
-      );
+      fail('.repair.layer', `a ${module.category} repairs the ${expectedLayer} layer`);
+    }
+    const resistanceLayer = RESISTANCE_LAYERS[module.category];
+    if (resistanceLayer !== undefined && module.resistance?.layer !== resistanceLayer) {
+      fail('.resistance.layer', `a ${module.category} hardens the ${resistanceLayer} layer`);
+    }
+
+    if (module.modifiers !== undefined) {
+      const seen = new Set();
+      for (const [index, modifier] of module.modifiers.entries()) {
+        const allowed = OPERATOR_CATEGORIES[modifier.operator] ?? [];
+        if (!allowed.includes(module.category)) {
+          fail(`.modifiers[${index}].operator`,
+            `a ${module.category} module cannot use the "${modifier.operator}" operator, which only ${allowed.join(', ') || 'no category'} may use`);
+        }
+        if (seen.has(modifier.operator)) {
+          fail(`.modifiers[${index}].operator`, `"${modifier.operator}" is listed twice; a second entry would bypass stacking`);
+        }
+        seen.add(modifier.operator);
+        if (FRACTION_OPERATORS.has(modifier.operator) && modifier.value >= 1) {
+          fail(`.modifiers[${index}].value`, `"${modifier.operator}" is a fractional reduction and must be below 1`, 'invalidValue');
+        }
+      }
+      const primary = CATEGORY_PRIMARY_OPERATORS[module.category] ?? [];
+      if (!module.modifiers.some((modifier) => primary.includes(modifier.operator))) {
+        fail('.modifiers', `a ${module.category} module must carry one of ${primary.join(', ')}, or it would not execute its described effect`);
+      }
     }
   }
 
@@ -338,93 +415,87 @@ function checkNpcProfiles(collected, { hulls, modules, ammunition, lootTables })
       fitted.push(module);
     }
 
-    if (profile.loadout.ammunitionId !== undefined && !ammunition.has(profile.loadout.ammunitionId)) {
-      issues.push(
-        issue(
-          'unresolvedReference',
-          entry.file,
-          `${entry.path}.loadout.ammunitionId`,
-          `no ammunition "${profile.loadout.ammunitionId}"`,
-        ),
-      );
-    }
-
     if (hull !== undefined) {
-      issues.push(...checkFitValidity(entry, hull, fitted));
+      issues.push(...checkFitValidity(entry, hull, fitted, `${entry.path}.loadout.modules`));
     }
-
-    const turrets = fitted.filter((module) => module.category === 'turret');
-    issues.push(...checkReserveRounds(entry, hull, turrets, ammunition));
-    if (turrets.length > 0) {
-      const charge = profile.loadout.ammunitionId === undefined
-        ? undefined
-        : ammunition.get(profile.loadout.ammunitionId);
-      if (charge === undefined) {
-        issues.push(
-          issue(
-            'catalogRelationship',
-            entry.file,
-            `${entry.path}.loadout`,
-            'a profile with turrets must name compatible ammunition',
-          ),
-        );
-      } else {
-        for (const turret of turrets) {
-          if (turret.turret.ammunitionGroup !== charge.group) {
-            issues.push(
-              issue(
-                'catalogRelationship',
-                entry.file,
-                `${entry.path}.loadout.ammunitionId`,
-                `"${charge.id}" is group "${charge.group}"; "${turret.id}" loads "${turret.turret.ammunitionGroup}"`,
-              ),
-            );
-          }
-        }
-      }
-    }
+    issues.push(...checkNpcAmmunition(entry, hull, fitted, ammunition));
   }
 
   return issues;
 }
 
 /**
- * Reserve rounds reload the loadout's own turrets from the hold
- * (Functional Specification 9.4, 9.10), so they need turrets and a named
- * charge to load, and they must fit the hull's cargo hold.
+ * Ammunition per weapon group (Technical Specification 6.2, 8.3): every
+ * fitted weapon finds a charge it accepts, every listed charge is loaded by
+ * one of the weapons, and the authored reserve is finite and fits the hold,
+ * so an opponent reloads the way the player does (Functional Specification
+ * 9.4, 9.10) and never fires for free.
  */
-function checkReserveRounds(entry, hull, turrets, ammunition) {
+function checkNpcAmmunition(entry, hull, fitted, ammunition) {
+  const issues = [];
   const profile = entry.value;
-  const reserve = profile.loadout.reserveRounds ?? 0;
-  if (reserve === 0) return [];
-  const path = `${entry.path}.loadout.reserveRounds`;
-  const charge = profile.loadout.ammunitionId === undefined
-    ? undefined
-    : ammunition.get(profile.loadout.ammunitionId);
-  if (turrets.length === 0 || charge === undefined) {
-    return [issue('catalogRelationship', entry.file, path, 'reserve rounds need a turret and a named ammunition')];
+  const path = `${entry.path}.loadout.ammunition`;
+  const charges = [];
+  const seen = new Set();
+  for (const [index, supply] of profile.loadout.ammunition.entries()) {
+    const charge = ammunition.get(supply.ammunitionId);
+    if (charge === undefined) {
+      issues.push(issue('unresolvedReference', entry.file, `${path}[${index}].ammunitionId`,
+        `no ammunition "${supply.ammunitionId}"`));
+      continue;
+    }
+    if (seen.has(charge.id)) {
+      issues.push(issue('catalogRelationship', entry.file, `${path}[${index}].ammunitionId`,
+        `"${charge.id}" is listed twice`));
+    }
+    seen.add(charge.id);
+    charges.push({ charge, reserveRounds: supply.reserveRounds, index });
   }
-  if (hull === undefined) return [];
-  const needed = Math.round(reserve * charge.volumeCubicMetres * 1000);
-  const hold = Math.round(hull.cargoCapacityCubicMetres * 1000);
-  return needed <= hold
-    ? []
-    : [issue('catalogRelationship', entry.file, path,
-        `${String(reserve)} rounds need ${String(needed)} dm3 but "${hull.id}" holds ${String(hold)} dm3`)];
+
+  const weapons = fitted.filter((module) => weaponFamilyOf(module) !== null);
+  for (const weapon of weapons) {
+    if (!charges.some(({ charge }) => acceptsCharge(weapon, charge))) {
+      issues.push(issue('catalogRelationship', entry.file, path,
+        `"${weapon.id}" loads ${weapon.size} ${weaponFamilyOf(weapon)} ammunition, but the loadout names none`));
+    }
+  }
+  let volume = 0;
+  for (const { charge, reserveRounds, index } of charges) {
+    if (!weapons.some((weapon) => acceptsCharge(weapon, charge))) {
+      issues.push(issue('catalogRelationship', entry.file, `${path}[${index}].ammunitionId`,
+        `no weapon in the loadout loads "${charge.id}"`));
+    }
+    volume += Math.round(reserveRounds * charge.volumeCubicMetres * 1000);
+  }
+  if (hull !== undefined) {
+    const hold = Math.round(hull.cargoCapacityCubicMetres * 1000);
+    if (volume > hold) {
+      issues.push(issue('catalogRelationship', entry.file, path,
+        `the reserve rounds need ${String(volume)} dm3 but "${hull.id}" holds ${String(hold)} dm3`));
+    }
+  }
+  return issues;
 }
 
-/** Functional Specification 8.4: slots, hardpoints, power and processing. */
-function checkFitValidity(entry, hull, fitted) {
+/**
+ * Functional Specification 8.4: slots, hardpoints, sizes, power and
+ * processing, for a list of modules assigned to slots in order.
+ */
+function checkFitValidity(entry, hull, fitted, path) {
   const issues = [];
   const slotUse = { weapon: 0, system: 0, engineering: 0, utility: 0 };
   const hardpointUse = { turret: 0, launcher: 0, mining: 0 };
   let power = 0;
   let processing = 0;
+  const fail = (detail) => issues.push(issue('catalogRelationship', entry.file, path, detail));
 
   for (const module of fitted) {
     slotUse[module.slot] += 1;
     if (module.hardpoint !== undefined) {
       hardpointUse[module.hardpoint] += 1;
+    }
+    if (!hullAcceptsSize(hull, module)) {
+      fail(`"${module.id}" is ${module.size ?? (module.suitsSizes ?? []).join('/')}, a size "${hull.id}" does not accept`);
     }
     power += module.fitting.powerUse;
     processing += module.fitting.processingUse;
@@ -432,49 +503,103 @@ function checkFitValidity(entry, hull, fitted) {
 
   for (const [slot, used] of Object.entries(slotUse)) {
     if (used > hull.slots[slot]) {
-      issues.push(
-        issue(
-          'catalogRelationship',
-          entry.file,
-          `${entry.path}.loadout.modules`,
-          `${String(used)} ${slot} modules exceed the ${String(hull.slots[slot])} that "${hull.id}" has`,
-        ),
-      );
+      fail(`${String(used)} ${slot} modules exceed the ${String(hull.slots[slot])} that "${hull.id}" has`);
     }
   }
   for (const [hardpoint, used] of Object.entries(hardpointUse)) {
     if (used > hull.hardpoints[hardpoint]) {
-      issues.push(
-        issue(
-          'catalogRelationship',
-          entry.file,
-          `${entry.path}.loadout.modules`,
-          `${String(used)} ${hardpoint} hardpoints exceed the ${String(hull.hardpoints[hardpoint])} that "${hull.id}" has`,
-        ),
-      );
+      fail(`${String(used)} ${hardpoint} hardpoints exceed the ${String(hull.hardpoints[hardpoint])} that "${hull.id}" has`);
     }
   }
   if (power > hull.fitting.powerOutput) {
-    issues.push(
-      issue(
-        'catalogRelationship',
-        entry.file,
-        `${entry.path}.loadout.modules`,
-        `${String(power)} power exceeds the ${String(hull.fitting.powerOutput)} that "${hull.id}" supplies`,
-      ),
-    );
+    fail(`${String(power)} power exceeds the ${String(hull.fitting.powerOutput)} that "${hull.id}" supplies`);
   }
   if (processing > hull.fitting.processingOutput) {
-    issues.push(
-      issue(
-        'catalogRelationship',
-        entry.file,
-        `${entry.path}.loadout.modules`,
-        `${String(processing)} processing exceeds the ${String(hull.fitting.processingOutput)} that "${hull.id}" supplies`,
-      ),
-    );
+    fail(`${String(processing)} processing exceeds the ${String(hull.fitting.processingOutput)} that "${hull.id}" supplies`);
   }
 
+  return issues;
+}
+
+/**
+ * Reference fits (FeatureSpec02 5.3): each is a complete, legal fit of a
+ * player hull - slots, hardpoints, sizes, power and processing - with every
+ * weapon loaded with a charge it accepts, a reserve the weapons can use and
+ * the hold can carry, and every item obtainable at the starting station.
+ */
+function checkReferenceFits(collected, { hulls, modules, ammunition }) {
+  const issues = [];
+  const stationId = collected.rules.economy?.values.startingStationId;
+  const table = collected.listings.find((candidate) => candidate.stationId === stationId);
+  const sold = new Set(table?.listings.map((listing) => listing.itemId) ?? []);
+  const ids = new Set();
+
+  for (const entry of collected.referenceFits ?? []) {
+    const fit = entry.value;
+    const fail = (field, detail, rule = 'catalogRelationship') =>
+      issues.push(issue(rule, entry.file, `${entry.path}${field}`, detail));
+    if (ids.has(fit.id)) fail('.id', `"${fit.id}" is defined twice`, 'duplicateId');
+    ids.add(fit.id);
+
+    const hull = hulls.get(fit.hullId);
+    if (hull === undefined || !hull.playerUsable) {
+      fail('.hullId', `"${fit.hullId}" is not a player-usable hull`, 'unresolvedReference');
+      continue;
+    }
+    if (!sold.has(hull.id)) fail('.hullId', `"${hull.id}" is not sold at "${stationId}"`);
+
+    const fitted = [];
+    const weapons = [];
+    for (const [index, slot] of fit.modules.entries()) {
+      const module = modules.get(slot.moduleId);
+      if (module === undefined) {
+        fail(`.modules[${index}].moduleId`, `no module "${slot.moduleId}"`, 'unresolvedReference');
+        continue;
+      }
+      fitted.push(module);
+      if (!sold.has(module.id)) fail(`.modules[${index}].moduleId`, `"${module.id}" is not sold at "${stationId}"`);
+      const isWeapon = weaponFamilyOf(module) !== null;
+      if (isWeapon) weapons.push(module);
+      if (slot.ammunitionId === undefined) {
+        if (isWeapon) fail(`.modules[${index}]`, `the weapon "${module.id}" is not loaded`);
+        continue;
+      }
+      const charge = ammunition.get(slot.ammunitionId);
+      if (charge === undefined) {
+        fail(`.modules[${index}].ammunitionId`, `no ammunition "${slot.ammunitionId}"`, 'unresolvedReference');
+      } else if (!acceptsCharge(module, charge)) {
+        fail(`.modules[${index}].ammunitionId`, `"${module.id}" cannot load "${charge.id}"`);
+      } else if (!sold.has(charge.id)) {
+        fail(`.modules[${index}].ammunitionId`, `"${charge.id}" is not sold at "${stationId}"`);
+      }
+    }
+    if (weapons.length === 0) fail('.modules', 'a reference fit arms at least one weapon');
+    issues.push(...checkFitValidity(entry, hull, fitted, `${entry.path}.modules`));
+
+    let volume = 0;
+    for (const [index, reserve] of fit.reserve.entries()) {
+      const charge = ammunition.get(reserve.ammunitionId);
+      if (charge === undefined) {
+        fail(`.reserve[${index}].ammunitionId`, `no ammunition "${reserve.ammunitionId}"`, 'unresolvedReference');
+        continue;
+      }
+      if (!weapons.some((weapon) => acceptsCharge(weapon, charge))) {
+        fail(`.reserve[${index}].ammunitionId`, `no weapon in the fit loads "${charge.id}"`);
+      }
+      if (!sold.has(charge.id)) fail(`.reserve[${index}].ammunitionId`, `"${charge.id}" is not sold at "${stationId}"`);
+      volume += Math.round(reserve.quantity * charge.volumeCubicMetres * 1000);
+    }
+    for (const weapon of weapons) {
+      if (!fit.reserve.some((reserve) => {
+        const charge = ammunition.get(reserve.ammunitionId);
+        return charge !== undefined && acceptsCharge(weapon, charge);
+      })) {
+        fail('.reserve', `no reserve ammunition for "${weapon.id}", so the fit could not reload`);
+      }
+    }
+    const hold = Math.round(hull.cargoCapacityCubicMetres * 1000);
+    if (volume > hold) fail('.reserve', `the reserve needs ${String(volume)} dm3 but "${hull.id}" holds ${String(hold)} dm3`);
+  }
   return issues;
 }
 
@@ -786,10 +911,10 @@ function checkLootOutlets(collected, { hulls, modules, ammunition }) {
   );
   const playerHulls = [...hulls.values()].filter((hull) => hull.playerUsable);
   const fittable = (module) => playerHulls.some((hull) =>
-    (hull.slots[module.slot] ?? 0) > 0 &&
+    (hull.slots[module.slot] ?? 0) > 0 && hullAcceptsSize(hull, module) &&
     (module.hardpoint === undefined || (hull.hardpoints[module.hardpoint] ?? 0) > 0));
   const loadable = (charge) => [...modules.values()].some((module) =>
-    module.category === 'turret' && module.turret.ammunitionGroup === charge.group && fittable(module));
+    acceptsCharge(module, charge) && fittable(module));
 
   const issues = [];
   for (const entry of collected.definitions['loot.tables']) {
@@ -948,6 +1073,10 @@ function checkStartingFit(start, hull, { modules, ammunition }) {
     taken.add(key);
 
     if (hull !== undefined) {
+      if (!hullAcceptsSize(hull, module)) {
+        issues.push(issue('catalogRelationship', start.file, at(index, 'moduleId'),
+          `the starter hull does not accept the size of "${entry.moduleId}"`));
+      }
       const available = hull.slots[entry.slot] ?? 0;
       if (entry.index >= available) {
         issues.push(issue('catalogRelationship', start.file, at(index, 'index'),
@@ -976,12 +1105,12 @@ function checkStartingFit(start, hull, { modules, ammunition }) {
     if (charge === undefined) {
       issues.push(issue('unresolvedReference', start.file, at(index, 'ammunitionId'),
         `"${entry.ammunitionId}" is not an ammunition definition`));
-    } else if (module.category !== 'turret') {
+    } else if (weaponFamilyOf(module) === null) {
       issues.push(issue('catalogRelationship', start.file, at(index, 'ammunitionId'),
         `a ${module.category} module takes no charge`));
-    } else if (charge.group !== module.turret.ammunitionGroup) {
+    } else if (!acceptsCharge(module, charge)) {
       issues.push(issue('catalogRelationship', start.file, at(index, 'ammunitionId'),
-        `"${entry.ammunitionId}" is not in the "${module.turret.ammunitionGroup}" group`));
+        `"${entry.ammunitionId}" is not ${module.size} ${weaponFamilyOf(module)} ammunition`));
     } else if (entry.online) {
       armed = true;
     }
@@ -992,7 +1121,7 @@ function checkStartingFit(start, hull, { modules, ammunition }) {
   // do without a loaded gun.
   if (entries.length > 0 && !armed) {
     issues.push(issue('catalogRelationship', start.file, 'values.startingFit',
-      'the starting fit arms no online turret with a charge, so the starter ship could not fight'));
+      'the starting fit arms no online weapon with a charge, so the starter ship could not fight'));
   }
 
   for (const [definitionId, count] of used) {
@@ -1068,7 +1197,7 @@ function checkStarterReachability(collected, { stations, hulls, modules }) {
     issues.push(...checkRecoveryReach(collected, table, hulls, modules));
 
     const turrets = [...modules.values()].filter(
-      (module) => module.category === 'turret' && fixed.has(module.id),
+      (module) => weaponFamilyOf(module) !== null && fixed.has(module.id),
     );
     if (turrets.length === 0) {
       issues.push(
@@ -1082,20 +1211,18 @@ function checkStarterReachability(collected, { stations, hulls, modules }) {
       continue;
     }
 
-    const groups = new Set(turrets.map((module) => module.turret.ammunitionGroup));
-    const stockedGroups = new Set(
-      collected.definitions.ammunition
-        .filter((charge) => fixed.has(charge.value.id))
-        .map((charge) => charge.value.group),
-    );
-    for (const group of groups) {
-      if (!stockedGroups.has(group)) {
+    const stocked = collected.definitions.ammunition
+      .filter((charge) => fixed.has(charge.value.id))
+      .map((charge) => charge.value);
+    for (const turret of turrets) {
+      const group = `${turret.size} ${weaponFamilyOf(turret)}`;
+      if (!stocked.some((charge) => acceptsCharge(turret, charge))) {
         issues.push(
           issue(
             'catalogRelationship',
             table.file,
             'listings',
-            `"${entry.value.id}" stocks a "${group}" turret but no ammunition for it at a fixed price`,
+            `"${entry.value.id}" stocks a ${group} weapon but no ammunition for it at a fixed price`,
           ),
         );
       }

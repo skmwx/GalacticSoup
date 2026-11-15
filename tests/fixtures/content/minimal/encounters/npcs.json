@@ -10,7 +10,12 @@
         "modules": [
           "module.test.turret"
         ],
-        "ammunitionId": "ammo.test.charge"
+        "ammunition": [
+          {
+            "ammunitionId": "ammo.test.charge",
+            "reserveRounds": 0
+          }
+        ]
       },
       "bountyCredits": 3000,
       "lootTableId": "loot.test.pirate"

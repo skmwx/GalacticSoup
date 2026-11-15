@@ -6,6 +6,7 @@ import { isEntityId } from '../campaign/identity';
 import type { CampaignState } from '../campaign/state';
 import { parseSlotKey } from '../fitting/types';
 
+import { isProjectileState, validateProjectiles } from './projectiles';
 import { COMBAT_EVENT_LIMIT } from './recorder';
 import { combatantOf } from './state';
 import {
@@ -41,7 +42,8 @@ export const RELOAD_COMPLETE_KIND = 'combat.reloadComplete';
 export const MODULE_CYCLE_KIND = 'combat.moduleCycle';
 
 export function isCombatState(value: unknown): value is CombatState {
-  if (!shape(value, ['version', 'ships', 'events'])) return false;
+  if (!shape(value, ['version', 'ships', 'events', 'projectiles'])) return false;
+  if (!Array.isArray(value['projectiles']) || !value['projectiles'].every(isProjectileState)) return false;
   if (!count(value['version']) || value['version'] < 1) return false;
   const ships = value['ships'];
   if (!record(ships)) return false;
@@ -63,6 +65,17 @@ export function validateCombat(
   }
   const fail = (path: string, detail: string) => add('combatConsistency', `combat.${path}`, detail);
   const site = state.navigation.currentSite;
+  validateProjectiles(state, fail);
+  if (content !== undefined) {
+    state.combat.projectiles.forEach((projectile, index) => {
+      if (content.module(projectile.moduleId)?.category !== 'launcher') {
+        fail(`projectiles[${String(index)}]`, `"${projectile.moduleId}" is not a launcher.`);
+      }
+      if (content.ammunition(projectile.ammunitionId)?.family !== 'guided') {
+        fail(`projectiles[${String(index)}]`, `"${projectile.ammunitionId}" is not a guided charge.`);
+      }
+    });
+  }
 
   for (const [shipId, combat] of Object.entries(state.combat.ships)) {
     if (state.assets.ships[shipId] === undefined) {

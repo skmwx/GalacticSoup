@@ -215,9 +215,9 @@ describe('market', () => {
         .getByRole('rowheader', { name }).closest('tr') as HTMLElement;
     expect(within(rowOf('200mm Autocannon')).getByText('Weapon slot, turret hardpoint')).toBeInTheDocument();
     expect(within(rowOf('Small Armour Plating')).getByText('Engineering slot')).toBeInTheDocument();
-    expect(within(rowOf('Fusion S')).getByText('For 200mm Autocannon')).toBeInTheDocument();
+    expect(within(rowOf('Fusion S')).getByText('For Light Artillery Cannon, 200mm Autocannon')).toBeInTheDocument();
     expect(within(rowOf('Fusion S')).getByText('Fits a weapon you have fitted')).toBeInTheDocument();
-    expect(within(rowOf(IRON_NAME)).getByText('For 75mm Railgun')).toBeInTheDocument();
+    expect(within(rowOf(IRON_NAME)).getByText('For Light Blaster, 75mm Railgun')).toBeInTheDocument();
     expect(within(rowOf(IRON_NAME)).getByText('No fitted weapon uses it')).toBeInTheDocument();
 
     // Refit the weapon slot with a railgun: the marks follow the applied fit.
@@ -245,8 +245,44 @@ describe('market', () => {
     const detail = await screen.findByRole('dialog', { name: 'Item details' });
     expect(within(detail).getByText('You pay')).toBeInTheDocument();
     expect(within(detail).queryByText('You receive')).not.toBeInTheDocument();
-    expect(within(detail).getByText('For 75mm Railgun')).toBeInTheDocument();
+    expect(within(detail).getByText('For Light Blaster, 75mm Railgun')).toBeInTheDocument();
     expect(within(detail).getByText('Fits a weapon you have fitted')).toBeInTheDocument();
+
+    harness.gateway.dispose();
+  });
+
+  it('filters the market by purpose, size and what fits the active ship, keeping every entry reachable [FUNC-8.4, FUNC-19.5, V02-AC-05]', async () => {
+    const harness = renderGame();
+    await startCampaign(harness);
+    await openPanel(harness, 'Market');
+
+    const table = await screen.findByRole('table', { name: /items quoted here/ });
+    const names = (): string[] => within(table).queryAllByRole('rowheader').map((cell) => cell.textContent ?? '');
+    expect(names()).toContain('Medium Railgun');
+    expect(names()).toContain('Guided Launcher S');
+    // A medium module says the frigate cannot take it.
+    const railgunRow = within(table).getByRole('rowheader', { name: 'Medium Railgun' }).closest('tr') as HTMLElement;
+    expect(within(railgunRow).getByText('Size: Medium')).toBeInTheDocument();
+    expect(within(railgunRow).getByText('Your active ship does not accept Medium modules.')).toBeInTheDocument();
+
+    await harness.user.selectOptions(screen.getByLabelText('Purpose'), 'weapon');
+    expect(names()).toContain('Guided Launcher S');
+    expect(names()).not.toContain('Fusion S');
+    expect(names()).not.toContain('Shield Extender');
+
+    await harness.user.selectOptions(screen.getByLabelText('Size'), 'medium');
+    expect(names()).toEqual(expect.arrayContaining(['Medium Railgun', 'Medium Autocannon', 'Guided Launcher M']));
+    expect(names()).not.toContain('Guided Launcher S');
+
+    await harness.user.click(screen.getByLabelText('Fits the active ship'));
+    expect(names()).toEqual([]);
+
+    // Clearing the filters brings every entry back.
+    await harness.user.click(screen.getByLabelText('Fits the active ship'));
+    await harness.user.selectOptions(screen.getByLabelText('Size'), 'all');
+    await harness.user.selectOptions(screen.getByLabelText('Purpose'), 'all');
+    expect(names()).toContain('Fusion S');
+    expect(names()).toContain('Medium Railgun');
 
     harness.gateway.dispose();
   });

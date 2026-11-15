@@ -475,8 +475,18 @@
     {
       "id": "FUNC-9.6",
       "title": "Guided-weapon accuracy",
-      "scope": "deferred",
-      "reason": "MVP Scope 8: guided weapons."
+      "scope": "included",
+      "content": [
+        "content/catalog/modules",
+        "content/catalog/ammunition",
+        "content/rules/combat.json"
+      ],
+      "requests": [
+        "combat.state",
+        "weapon.activate",
+        "weapon.reload",
+        "weapon.changeAmmunition"
+      ]
     },
     {
       "id": "FUNC-9.7",
@@ -1291,7 +1301,8 @@
       ],
       "content": [
         "content/catalog"
-      ]
+      ],
+      "extent": "Phases 0-3: three hulls, 25 of the 26 combat modules (the web follows in phase 4), the 16-charge ammunition floor with family and size coverage, schema, reference, localization, compatibility and availability checks."
     },
     {
       "id": "V02-AC-03",
@@ -1324,23 +1335,50 @@
         2,
         4,
         6
-      ]
+      ],
+      "extent": "Phases 2-3: five of the six reference fits are authored and validated as legal and obtainable (turret fits for each hull, guided fits for frigate and cruiser). The web-assisted destroyer fit follows in phase 4 and the measured reversals in phase 6."
     },
     {
       "id": "V02-AC-05",
       "title": "Turret, ammunition, defence, capacitor and size choices with traces",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         2,
         3
+      ],
+      "extent": "Phases 2-3: projectile, hybrid and guided families in small and medium sizes; size enforcement before and at commit; registered passive operators for shield capacity and recharge, capacitor recharge, family damage, tracking and guided application, all through the common stacking pipeline with traces and offline behaviour. Phase 6 tunes the magnitudes.",
+      "content": [
+        "content/catalog/modules",
+        "content/catalog/ammunition",
+        "content/balance/reference-fits.json"
+      ],
+      "requests": [
+        "fitting.draft",
+        "fitting.set",
+        "fitting.commit",
+        "ship.get",
+        "item.compare",
+        "market.listings"
       ]
     },
     {
       "id": "V02-AC-06",
       "title": "Guided weapons formula and flight boundaries",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         3
+      ],
+      "extent": "Phase 3: guided application formula, launch-to-impact projectiles, expiry, target loss, source destruction, simultaneous contact and expiry, mixed turret and launcher ammunition, NPC launchers and save/reopen in flight.",
+      "content": [
+        "content/catalog/modules",
+        "content/catalog/ammunition",
+        "content/encounters/npcs"
+      ],
+      "requests": [
+        "combat.state",
+        "weapon.activate",
+        "weapon.reload",
+        "weapon.changeAmmunition"
       ]
     },
     {
@@ -1405,7 +1443,7 @@
         3,
         4
       ],
-      "extent": "Phases 0-1: multi-ship resume, v0.1/future/undeclared-content rejection without alteration, explicit reset and replace confirmation. Mid-flight and mid-effect resume arrive with phases 3-4.",
+      "extent": "Phases 0-1: multi-ship resume, v0.1/future/undeclared-content rejection without alteration, explicit reset and replace confirmation. Phase 3: format 12 with guided projectiles in flight, the format 11 to 12 migration, and mid-flight resume reproducing the uninterrupted result. Mid-effect (web) resume arrives with phase 4.",
       "requests": [
         "campaign.saves",
         "campaign.resume",

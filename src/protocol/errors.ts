@@ -167,6 +167,7 @@ export const FIT_VIOLATION_CODES = [
   'ammunitionUnknown',
   'slotUnavailable',
   'slotKindMismatch',
+  'sizeNotAccepted',
   'hardpointUnavailable',
   'hardpointMismatch',
   'ammunitionMismatch',

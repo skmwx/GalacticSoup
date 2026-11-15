@@ -13,8 +13,11 @@ import {
   deactivateRefusal,
   deactivateModuleRefusal,
   deriveShipAttributes,
-  listedDamage,
+  guidedApplication,
+  guidedFlightSeconds,
   lockRefusal,
+  magnitude,
+  OPERATOR_REGISTRY,
   lockTime,
   relativeMotion,
   resistanceAttribute,
@@ -27,6 +30,7 @@ import {
   turretLimitingFactor,
   unlockRefusal,
   weaponContext,
+  weaponProfile,
   weaponState,
   type CampaignState,
   type CombatantContext,
@@ -35,13 +39,17 @@ import {
   type LockState,
   type FittedSlotDescription,
   type WeaponContext,
+  type WeaponProfile,
 } from '@engine/domain';
 import {
   DAMAGE_TYPES,
   DEFENSE_LAYERS,
+  isWeaponModule,
+  magazineSizeOf,
+  weaponFamilyOf,
   type ContentRepository,
-  type DamageProfile,
   type ModuleDefinition,
+  type WeaponModuleDefinition,
 } from '@engine/ports';
 import type {
   ActiveEffectData,
@@ -56,6 +64,7 @@ import type {
   ModuleEffectData,
   ModuleRuntimeData,
   ObjectLockAvailabilityData,
+  ProjectileData,
   TargetMotionData,
   WeaponEffectData,
   WeaponRuntimeData,
@@ -98,6 +107,7 @@ export function combatProjection(state: CampaignState, content: ContentRepositor
       locks: [],
       motion: [],
       weapons: [],
+      projectiles: [],
       lockCommands: [],
     });
   }
@@ -146,6 +156,7 @@ export function combatProjection(state: CampaignState, content: ContentRepositor
         };
       }),
     weapons: weapons.map((weapon) => weaponData(rules, combatant, weapon, locks)),
+    projectiles: projectileData(rules, combatant),
     lockCommands: Object.values(site?.objects ?? {})
       .sort((a, b) => a.id.localeCompare(b.id))
       .map(
@@ -162,7 +173,7 @@ export function combatProjection(state: CampaignState, content: ContentRepositor
 
 interface ProjectedModule {
   readonly fitted: FittedSlotDescription;
-  readonly module: Exclude<ModuleDefinition, { readonly category: 'turret' }>;
+  readonly module: Exclude<ModuleDefinition, WeaponModuleDefinition>;
 }
 
 function fittedModules(
@@ -172,7 +183,7 @@ function fittedModules(
   return combatant.fit
     .map((fitted) => {
       const module = rules.content.module(fitted.moduleId);
-      return module === undefined || module.category === 'turret' ? null : { fitted, module };
+      return module === undefined || isWeaponModule(module) ? null : { fitted, module };
     })
     .filter((entry): entry is ProjectedModule => entry !== null)
     .sort((a, b) =>
@@ -413,7 +424,7 @@ function moduleEffect(
         displayResult: Math.round(cycleRate(amount, module.activation?.cycleSeconds ?? 0) * 10) / 10,
       });
   }
-  if (module.category === 'resistancePlating') {
+  if (module.category === 'resistancePlating' || module.category === 'resistanceAmplifier') {
     const values = Object.fromEntries(DAMAGE_TYPES.map((type) => [type, module.resistance.bonuses[type]]));
     return effect('resistance', module.resistance.layer, 0, 0, 0, 0, values, {
       formulaKey: 'combat.formula.resistanceModifier', operands: [], unroundedResult: 0, displayResult: 0,
@@ -429,7 +440,17 @@ function moduleEffect(
       attributeValue(combatant.derived, 'capacitorCapacity'), values,
       attributeTrace(combatant.derived.attributes['capacitorCapacity']!));
   }
-  throw new TypeError(`Unsupported projected module ${module.id}.`);
+  // A passive operator module: what each modifier is, and the first attribute
+  // it reaches with its full calculation (Functional Specification 19.6).
+  if (!('modifiers' in module)) throw new TypeError(`Unsupported projected module ${module.id}.`);
+  const values = Object.fromEntries(module.modifiers.map((modifier) => [modifier.operator, modifier.value]));
+  const first = module.modifiers[0];
+  const attribute = first === undefined ? undefined : OPERATOR_REGISTRY[first.operator].attribute;
+  const derived = attribute === undefined ? undefined : combatant.derived.attributes[attribute];
+  return effect('passive', null, 0, 0, derived?.base ?? 0, derived?.value ?? 0, values,
+    derived === undefined
+      ? { formulaKey: 'combat.formula.passiveModifier', operands: [], unroundedResult: 0, displayResult: 0 }
+      : attributeTrace(derived));
 }
 
 function effect(
@@ -504,30 +525,35 @@ function weaponData(
   locks: readonly LockState[],
 ): WeaponRuntimeData {
   const runtime = weaponState(combatant.combat, weapon.key);
-  const turret = weapon.module.turret;
   const charge =
     weapon.ammunitionId === null ? undefined : rules.content.ammunition(weapon.ammunitionId);
-  const optimalRangeKm = turret.optimalRangeKm * (charge?.optimalRangeMultiplier ?? 1);
-  const falloffKm = turret.falloffKm * (charge?.falloffMultiplier ?? 1);
-  const listed = listedDamage(charge?.damagePerShot, turret.damageMultiplier);
+  const profile = weaponProfile(weapon.module, charge, combatant.derived, rules.content.rules.combat);
+  const turret = profile.kind === 'turret' ? profile : null;
+  const guided = profile.kind === 'guided' ? profile : null;
   const now = rules.state.time.simulationTimeMs;
 
   return {
     slot: { kind: weapon.slot.kind, index: weapon.slot.index },
     moduleId: weapon.module.id,
     nameKey: weapon.module.nameKey,
+    kind: profile.kind,
+    family: weaponFamilyOf(weapon.module),
     online: weapon.fitted.online,
     ammunitionId: weapon.ammunitionId,
     ammunitionNameKey: charge?.nameKey ?? null,
     loadedRounds: weapon.loadedRounds,
-    magazineSize: turret.magazineSize,
+    magazineSize: magazineSizeOf(weapon.module),
     cycleSeconds: weapon.module.activation?.cycleSeconds ?? 0,
     capacitorPerCycle: capacitorPerCycle(weapon),
-    optimalRangeKm,
-    falloffKm,
-    absoluteRangeKm:
-      optimalRangeKm + rules.content.rules.combat.absoluteRangeFalloffMultiples * falloffKm,
-    trackingRadiansPerSecond: turret.trackingRadiansPerSecond * (charge?.trackingMultiplier ?? 1),
+    optimalRangeKm: turret?.optimalRangeKm ?? 0,
+    falloffKm: turret?.falloffKm ?? 0,
+    absoluteRangeKm: turret?.absoluteRangeKm ?? 0,
+    trackingRadiansPerSecond: turret?.trackingRadiansPerSecond ?? 0,
+    flightSpeedKmPerSecond: guided?.flightSpeedKmPerSecond ?? 0,
+    flightTimeSeconds: guided?.flightTimeSeconds ?? 0,
+    maximumFlightDistanceKm: guided?.maximumFlightDistanceKm ?? 0,
+    explosionRadiusMetres: guided?.explosionRadiusMetres ?? 0,
+    explosionVelocityKmPerSecond: guided?.explosionVelocityKmPerSecond ?? 0,
     repeating: runtime.repeating,
     targetId: runtime.targetId,
     cycle:
@@ -554,7 +580,7 @@ function weaponData(
     stopReason: runtime.stopReason,
     compatibleAmmunition: compatibleCargoAmmunition(rules, combatant, weapon),
     ammunitionOptions: ammunitionOptions(rules, combatant, weapon),
-    effects: locks.map((lock) => weaponEffect(rules, combatant, weapon, lock, listed)),
+    effects: locks.map((lock) => weaponEffect(rules, combatant, lock, profile)),
     commands: [
       availability('weapon.activate', activateRefusal(rules, weapon.slot, null)),
       availability('weapon.deactivate', deactivateRefusal(rules, weapon.slot)),
@@ -566,7 +592,7 @@ function weaponData(
 
 /**
  * Every charge one weapon could fire: the loaded one and each accepted one in
- * the hold, with what it would do in this turret
+ * the hold, with what it would do in this weapon on this ship
  * (Functional Specification 9.4, 19.6).
  */
 function ammunitionOptions(
@@ -576,20 +602,24 @@ function ammunitionOptions(
 ): readonly AmmunitionOptionData[] {
   const ids = new Set<AmmunitionId>(compatibleCargoAmmunition(rules, combatant, weapon));
   if (weapon.ammunitionId !== null) ids.add(weapon.ammunitionId);
-  const turret = weapon.module.turret;
   return [...ids].sort().flatMap((ammunitionId): AmmunitionOptionData[] => {
     const charge = rules.content.ammunition(ammunitionId);
     if (charge === undefined) return [];
-    const listed = listedDamage(charge.damagePerShot, turret.damageMultiplier);
+    const profile = weaponProfile(weapon.module, charge, combatant.derived, rules.content.rules.combat);
+    const turret = profile.kind === 'turret' ? profile : null;
+    const guided = profile.kind === 'guided' ? profile : null;
     return [{
       ammunitionId,
       nameKey: charge.nameKey,
       loaded: ammunitionId === weapon.ammunitionId,
       cargoRounds: cargoRounds(rules, combatant, ammunitionId),
-      listedDamage: Object.fromEntries(DAMAGE_TYPES.map((type) => [type, listed[type]])),
-      optimalRangeKm: turret.optimalRangeKm * charge.optimalRangeMultiplier,
-      falloffKm: turret.falloffKm * charge.falloffMultiplier,
-      trackingRadiansPerSecond: turret.trackingRadiansPerSecond * charge.trackingMultiplier,
+      listedDamage: Object.fromEntries(DAMAGE_TYPES.map((type) => [type, profile.damagePerShot[type]])),
+      optimalRangeKm: turret?.optimalRangeKm ?? 0,
+      falloffKm: turret?.falloffKm ?? 0,
+      trackingRadiansPerSecond: turret?.trackingRadiansPerSecond ?? 0,
+      maximumFlightDistanceKm: guided?.maximumFlightDistanceKm ?? 0,
+      explosionRadiusMetres: guided?.explosionRadiusMetres ?? 0,
+      explosionVelocityKmPerSecond: guided?.explosionVelocityKmPerSecond ?? 0,
       commands: [
         availability(
           'weapon.changeAmmunition',
@@ -600,29 +630,72 @@ function ammunitionOptions(
   });
 }
 
+/**
+ * What one weapon would do against one locked target now. A turret shows its
+ * hit chance and which strain limits it; a guided weapon shows its estimated
+ * flight, whether the target is within stationary flight range and the
+ * application it would get from the target's current signature and speed,
+ * with the limiting factor (Functional Specification 9.5, 9.6, 19.3).
+ */
 function weaponEffect(
   rules: CombatRuleInput,
   combatant: CombatantContext,
-  weapon: WeaponContext,
   lock: LockState,
-  listed: DamageProfile,
+  profile: WeaponProfile,
 ): WeaponEffectData {
   const target = rules.state.navigation.currentSite?.objects[lock.targetId];
-  const turret = weapon.module.turret;
-  const charge =
-    weapon.ammunitionId === null ? undefined : rules.content.ammunition(weapon.ammunitionId);
+  const listed = profile.damagePerShot;
+  const listedTotal = totalDamage(listed);
+  const listedData = Object.fromEntries(DAMAGE_TYPES.map((type) => [type, listed[type]]));
+  const signature =
+    target === undefined ? 0 : targetSignatureMetres(rules.state, rules.content, target);
   const motion =
     target === undefined
       ? { rangeKm: 0, angularVelocityRadiansPerSecond: 0 }
       : relativeMotion(combatant.object, target);
+
+  if (profile.kind === 'guided') {
+    const targetSpeedKmPerSecond = target === undefined ? 0 : magnitude(target.velocity);
+    const application = guidedApplication(
+      {
+        explosionRadiusMetres: profile.explosionRadiusMetres,
+        explosionVelocityKmPerSecond: profile.explosionVelocityKmPerSecond,
+        targetSignatureMetres: signature,
+        targetSpeedKmPerSecond,
+      },
+      rules.content.rules.combat,
+    );
+    const withinFlightRange = motion.rangeKm <= profile.maximumFlightDistanceKm;
+    const flight = guidedFlightSeconds(motion.rangeKm, profile.flightSpeedKmPerSecond);
+    return {
+      targetId: lock.targetId,
+      kind: 'guided',
+      hitChance: withinFlightRange ? 1 : 0,
+      trackingStrain: 0,
+      rangeStrain: 0,
+      withinAbsoluteRange: withinFlightRange,
+      limitingFactor: application.limitingFactor,
+      listedDamage: listedData,
+      expectedDamagePerShot: withinFlightRange ? application.damageMultiplier * listedTotal : 0,
+      guided: {
+        estimatedFlightSeconds: Number.isFinite(flight) ? flight : 0,
+        withinFlightRange,
+        targetSpeedKmPerSecond,
+        signatureFactor: application.signatureFactor,
+        speedFactor: application.speedFactor,
+        damageMultiplier: application.damageMultiplier,
+      },
+      trace: traceData(application.trace),
+    };
+  }
+
   const accuracy = turretAccuracy(
     {
-      optimalRangeKm: turret.optimalRangeKm * (charge?.optimalRangeMultiplier ?? 1),
-      falloffKm: turret.falloffKm * (charge?.falloffMultiplier ?? 1),
-      trackingRadiansPerSecond: turret.trackingRadiansPerSecond * (charge?.trackingMultiplier ?? 1),
-      signatureResolutionMetres: turret.signatureResolutionMetres,
-      targetSignatureMetres:
-        target === undefined ? 0 : targetSignatureMetres(rules.state, rules.content, target),
+      optimalRangeKm: profile.optimalRangeKm,
+      falloffKm: profile.falloffKm,
+      trackingRadiansPerSecond: profile.trackingRadiansPerSecond,
+      signatureResolutionMetres: profile.signatureResolutionMetres,
+      targetSignatureMetres: signature,
       rangeKm: motion.rangeKm,
       angularVelocityRadiansPerSecond: motion.angularVelocityRadiansPerSecond,
     },
@@ -631,15 +704,36 @@ function weaponEffect(
 
   return {
     targetId: lock.targetId,
+    kind: 'turret',
     hitChance: accuracy.hitChance,
     trackingStrain: Number.isFinite(accuracy.trackingStrain) ? accuracy.trackingStrain : 0,
     rangeStrain: accuracy.rangeStrain,
     withinAbsoluteRange: accuracy.withinAbsoluteRange,
     limitingFactor: turretLimitingFactor(accuracy),
-    listedDamage: Object.fromEntries(DAMAGE_TYPES.map((type) => [type, listed[type]])),
-    expectedDamagePerShot: accuracy.hitChance * totalDamage(listed),
+    listedDamage: listedData,
+    expectedDamagePerShot: accuracy.hitChance * listedTotal,
+    guided: null,
     trace: traceData(accuracy.trace),
   };
+}
+
+/** Guided projectiles in flight, in launch order (Functional Specification 9.6, 19.3). */
+function projectileData(rules: CombatRuleInput, combatant: CombatantContext): readonly ProjectileData[] {
+  const now = rules.state.time.simulationTimeMs;
+  return rules.state.combat.projectiles.map((projectile) => ({
+    id: projectile.id,
+    sourceId: projectile.sourceShipId,
+    sourceSlot: projectile.sourceSlotKey,
+    targetId: projectile.targetId,
+    ammunitionId: projectile.ammunitionId,
+    ammunitionNameKey: rules.content.ammunition(projectile.ammunitionId)?.nameKey ?? projectile.ammunitionId,
+    position: { x: projectile.position.x, y: projectile.position.y },
+    launchedAtMs: projectile.launchedAtMs,
+    expiresAtMs: projectile.expiresAtMs,
+    remainingFlightSeconds: Math.max(0, projectile.expiresAtMs - now) / 1000,
+    fromPlayer: projectile.sourceShipId === combatant.shipId,
+    atPlayer: projectile.targetId === combatant.shipId,
+  }));
 }
 
 /** The lock availability one site object offers, for the site projection. */

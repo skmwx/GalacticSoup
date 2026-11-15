@@ -2,7 +2,10 @@ import {
   DAMAGE_TYPES,
   DEFENSE_LAYERS,
   HARDPOINT_KINDS,
+  hullAcceptsModuleSize,
+  isWeaponModule,
   SLOT_KINDS,
+  weaponChargeGroupOf,
   type ContentRepository,
   type DefenseLayer,
   type HardpointKind,
@@ -177,6 +180,7 @@ function slotCandidates(
         .filter(
           (module) =>
             module.slot === kind &&
+            hullAcceptsModuleSize(hull, module) &&
             (module.hardpoint === undefined || hull.hardpoints[module.hardpoint] > 0),
         )
         .map((module) => ({
@@ -186,10 +190,9 @@ function slotCandidates(
           powerUse: module.fitting.powerUse,
           processingUse: module.fitting.processingUse,
           available: owned.get(module.id) ?? 0,
-          charges:
-            module.category === 'turret'
-              ? ownedCharges(content, owned, module.turret.ammunitionGroup)
-              : [],
+          charges: isWeaponModule(module)
+            ? ownedCharges(content, owned, weaponChargeGroupOf(module))
+            : [],
         }));
       slots.push({ slot: { kind, index }, candidates });
     }
@@ -325,7 +328,7 @@ function describeShip(
 }
 
 /**
- * Online turrets whose hold carries nothing they could reload
+ * Online weapons whose hold carries nothing they could reload
  * (Functional Specification 9.4, 10).
  *
  * A weapon reloads only from the ship's hold, so a turret that leaves without
@@ -341,10 +344,12 @@ function reserveWarnings(
   const warnings: FitWarning[] = [];
   for (const fitted of fit) {
     const module = content.module(fitted.moduleId);
-    if (!fitted.online || module?.category !== 'turret') {
+    if (!fitted.online || module === undefined || !isWeaponModule(module)) {
       continue;
     }
-    if (reserveRounds(state.assets, content, ship.id, module.turret.ammunitionGroup) === 0) {
+    // Each weapon group checks its own reserve: a mixed turret and launcher
+    // fit warns for the group whose hold is empty (FeatureSpec02 6.1).
+    if (reserveRounds(state.assets, content, ship.id, weaponChargeGroupOf(module)) === 0) {
       warnings.push({ code: 'noReserveAmmunition', slot: fitted.slot, params: { moduleId: module.id } });
     }
   }

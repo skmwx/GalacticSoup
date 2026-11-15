@@ -1,4 +1,10 @@
-import { DEFENSE_LAYERS, type ContentRepository, type DefenseLayer } from '@engine/ports';
+import {
+  DEFENSE_LAYERS,
+  isWeaponModule,
+  magazineSizeOf,
+  type ContentRepository,
+  type DefenseLayer,
+} from '@engine/ports';
 import { clamp, type DefinitionId, type ModuleId } from '@shared';
 
 import { attributeValue, deriveShipAttributes } from '../attributes';
@@ -270,5 +276,5 @@ function missingItem(
 
 function magazineOf(content: ContentRepository, moduleId: ModuleId): number {
   const module = content.module(moduleId);
-  return module !== undefined && module.category === 'turret' ? module.turret.magazineSize : 0;
+  return module !== undefined && isWeaponModule(module) ? magazineSizeOf(module) : 0;
 }

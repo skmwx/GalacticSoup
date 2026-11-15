@@ -4,7 +4,6 @@ import {
   activeModuleCycleMilliseconds,
   activeModuleState,
   activeAttributeConditions,
-  applyLayeredDamage,
   applyRepair,
   attributeValue,
   capacitorPerCycle,
@@ -19,7 +18,6 @@ import {
   drawUnitInterval,
   deriveShipAttributes,
   inventoryService,
-  listedDamage,
   lockTime,
   mutableCombat,
   parseSlotKey,
@@ -27,11 +25,9 @@ import {
   PLAIN_STATE,
   pruneCombat,
   recordCapacitorChange,
-  recordDamageEvent,
   recordDestructionEvent,
   recordRepairEvent,
   regeneratePool,
-  resistanceAttribute,
   relativeMotion,
   scaleDamage,
   setActiveModule,
@@ -44,6 +40,7 @@ import {
   totalDamage,
   turretAccuracy,
   weaponContext,
+  weaponProfile,
   weaponState,
   type CampaignDraft,
   type CombatantContext,
@@ -56,10 +53,16 @@ import {
   type WeaponState,
   type WeaponStopReason,
 } from '@engine/domain';
-import { DAMAGE_TYPES, DEFENSE_LAYERS } from '@engine/ports';
+import { DAMAGE_TYPES, DEFENSE_LAYERS, magazineSizeOf } from '@engine/ports';
 import type { AmmunitionId } from '@shared';
 
+import { applyDamageToShip } from './combatDamage';
 import type { SimulationContext } from './context';
+import {
+  advanceProjectiles,
+  launchProjectile,
+  removeProjectilesTargeting,
+} from './projectiles';
 import { cancelBoundary, scheduleBoundary } from './scheduler';
 
 /**
@@ -112,6 +115,9 @@ export function advanceCombat(
   if (toTimeMs > fromTimeMs) {
     regenerateShips(context, toTimeMs - fromTimeMs);
     if (context.draft.navigation.currentSite !== null) {
+      // Projectiles fly after ships have moved this step, toward where their
+      // targets now are (Technical Specification 9.2, step 2).
+      advanceProjectiles(context, fromTimeMs, toTimeMs);
       for (const shipId of combatantIds(context.draft)) {
         evaluateLocks(context, shipId, toTimeMs);
       }
@@ -298,11 +304,32 @@ export function resolveWeaponCycle(context: SimulationContext, entry: SchedulerE
     return;
   }
 
+  const armed = weaponContext({ state: context.draft, content: context.content }, combatant, slot);
+  if (armed?.module.category === 'launcher') {
+    // A guided cycle ends in a launch: the reserved round is consumed and a
+    // projectile carries the damage to the target (Functional Specification
+    // 9.4, 9.6). Nothing is applied now.
+    const charge = cycle.ammunitionId === null ? undefined : context.content.ammunition(cycle.ammunitionId);
+    if (charge !== undefined) {
+      consumeRound(context, combatant, slot);
+      launchProjectile(context, combatant, armed, cycle.targetId, charge);
+    }
+    touch(context, shipId);
+    return;
+  }
+
   const outcome = resolveShot(context, combatant, slot, cycle.targetId, cycle.ammunitionId);
   if (outcome !== null) {
     consumeRound(context, combatant, slot);
     publishShot(context, outcome);
-    applyShotDamage(context, outcome);
+    if (outcome.hit) {
+      applyDamageToShip(context, {
+        attackerId: outcome.attackerId,
+        targetId: outcome.targetId,
+        slotKey: outcome.slotKey,
+        damage: outcome.damage,
+      });
+    }
   }
 
   touch(context, shipId);
@@ -611,6 +638,9 @@ export function clearCombat(context: SimulationContext, shipId: string): void {
     if (module.cycle !== null) cancelBoundary(context.draft, module.cycle.boundaryEntryId);
   }
   delete (context.draft.combat.ships as Record<string, unknown>)[shipId];
+  // Projectiles following a ship that leaves are removed; those it launched
+  // fly on (Technical Specification 10.1).
+  removeProjectilesTargeting(context, shipId);
   combatChanged(context.draft);
   context.invalidate('combat');
   context.invalidate('frame');
@@ -915,7 +945,7 @@ function loadMagazine(
   if (weapon === null) return 0;
   if (weapon.ammunitionId !== null && weapon.ammunitionId !== ammunitionId) return 0;
 
-  let remaining = weapon.module.turret.magazineSize - weapon.loadedRounds;
+  let remaining = magazineSizeOf(weapon.module) - weapon.loadedRounds;
   const service = inventoryService(context.draft, context.content);
   let loaded = 0;
 
@@ -970,14 +1000,15 @@ function resolveShot(
 
   const rules = context.content.rules.combat;
   const charge = ammunitionId === null ? undefined : context.content.ammunition(ammunitionId);
-  const turret = weapon.module.turret;
+  const profile = weaponProfile(weapon.module, charge, combatant.derived, rules);
+  if (profile.kind !== 'turret') return null;
   const motion = relativeMotion(combatant.object, target);
   const accuracy = turretAccuracy(
     {
-      optimalRangeKm: turret.optimalRangeKm * (charge?.optimalRangeMultiplier ?? 1),
-      falloffKm: turret.falloffKm * (charge?.falloffMultiplier ?? 1),
-      trackingRadiansPerSecond: turret.trackingRadiansPerSecond * (charge?.trackingMultiplier ?? 1),
-      signatureResolutionMetres: turret.signatureResolutionMetres,
+      optimalRangeKm: profile.optimalRangeKm,
+      falloffKm: profile.falloffKm,
+      trackingRadiansPerSecond: profile.trackingRadiansPerSecond,
+      signatureResolutionMetres: profile.signatureResolutionMetres,
       targetSignatureMetres: targetSignatureMetres(context.draft, context.content, target),
       rangeKm: motion.rangeKm,
       angularVelocityRadiansPerSecond: motion.angularVelocityRadiansPerSecond,
@@ -992,10 +1023,7 @@ function resolveShot(
     hit && drawChance(streams(context), 'combat', rules.criticalHitChance).outcome === 1;
   const variation = hit && !critical ? drawUnitInterval(streams(context), 'combat').outcome : 0;
   const multiplier = hit ? shotDamageMultiplier(variation, critical, rules) : 0;
-  const damage = scaleDamage(
-    listedDamage(charge?.damagePerShot, turret.damageMultiplier),
-    multiplier,
-  );
+  const damage = scaleDamage(profile.damagePerShot, multiplier);
 
   return {
     attackerId: combatant.shipId,
@@ -1029,59 +1057,6 @@ function publishShot(context: SimulationContext, outcome: ShotOutcome): void {
   });
 }
 
-/** Applies one resolved raw vector to shield, armour and hull together. */
-function applyShotDamage(context: SimulationContext, outcome: ShotOutcome): void {
-  if (!outcome.hit || outcome.totalDamage <= 0) return;
-  const target = combatantOf(context.draft, context.content, outcome.targetId);
-  if (target === null || target.combat.destroyedAtMs !== null) return;
-
-  const layers = DEFENSE_LAYERS.map((layer) => {
-    const maximumHitPoints = attributeValue(target.derived, `${layer}HitPoints`);
-    return {
-      layer,
-      maximumHitPoints,
-      currentHitPoints: Math.max(0, maximumHitPoints - target.ship.condition.damage[layer]),
-      resistances: Object.fromEntries(
-        DAMAGE_TYPES.map((type) => [
-          type,
-          attributeValue(target.derived, resistanceAttribute(layer, type)),
-        ]),
-      ) as Record<(typeof DAMAGE_TYPES)[number], number>,
-    };
-  });
-  const result = applyLayeredDamage(outcome.damage, layers);
-  const ship = context.draft.assets.ships[outcome.targetId];
-  if (ship === undefined) return;
-  for (const layer of result.layers) {
-    const maximum = attributeValue(target.derived, `${layer.layer}HitPoints`);
-    ship.condition.damage[layer.layer] = round(Math.max(0, maximum - layer.afterHitPoints));
-  }
-  context.draft.assets.version += 1;
-  recordDamageEvent(context.draft, {
-    sourceId: outcome.attackerId,
-    targetId: outcome.targetId,
-    slotKey: outcome.slotKey,
-    rawDamage: outcome.damage,
-    appliedDamage: result.appliedDamage,
-    layerDamage: {
-      shield: result.layers.find((layer) => layer.layer === 'shield')?.appliedTotal ?? 0,
-      armor: result.layers.find((layer) => layer.layer === 'armor')?.appliedTotal ?? 0,
-      hull: result.layers.find((layer) => layer.layer === 'hull')?.appliedTotal ?? 0,
-    },
-  });
-  context.publish('combat.damageApplied', {
-    attackerId: outcome.attackerId,
-    targetId: outcome.targetId,
-    slot: outcome.slotKey,
-    appliedDamage: result.appliedTotal,
-    shieldDamage: result.layers.find((layer) => layer.layer === 'shield')?.appliedTotal ?? 0,
-    armorDamage: result.layers.find((layer) => layer.layer === 'armor')?.appliedTotal ?? 0,
-    hullDamage: result.layers.find((layer) => layer.layer === 'hull')?.appliedTotal ?? 0,
-  });
-  context.invalidate('ship');
-  context.invalidate('combat');
-}
-
 /**
  * Marks zero-hull ships after every completion at this timestamp resolved.
  * This is deliberately separate from applying a shot: a ship destroyed by
@@ -1098,6 +1073,9 @@ function finalizeDestruction(context: SimulationContext): void {
 
     stopAllOperationsForDestruction(context, shipId);
     setDestroyedAt(context.draft, shipId, context.draft.time.simulationTimeMs);
+    // Projectiles still following it are removed without damage or refund
+    // (Functional Specification 9.6).
+    removeProjectilesTargeting(context, shipId);
     for (const attackerId of Object.keys(context.draft.combat.ships).sort()) {
       if (attackerId !== shipId) stopLocksTargetingDestroyed(context, attackerId, shipId);
     }

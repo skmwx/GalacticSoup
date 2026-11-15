@@ -115,7 +115,7 @@ export interface ContentRepository extends ContentIdentity {
 
   /** Listings of one station, ordered by item id. */
   listings(stationId: string): readonly MarketListingDefinition[];
-  /** Ammunition compatible with a turret group, ordered by id. */
+  /** Ammunition of one charge group (`chargeGroupKey`: weapon size and family), ordered by id. */
   ammunitionInGroup(group: string): readonly AmmunitionDefinition[];
 
   /** Authored text for a content message key, or `undefined` when absent. */

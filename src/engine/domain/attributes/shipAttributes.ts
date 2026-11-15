@@ -8,6 +8,7 @@ import {
 
 import type { FitDescription } from '../fitting/types';
 
+import { operatorModifiers, WEAPON_MODIFIER_ATTRIBUTES } from './operators';
 import {
   resistanceAttribute,
   SHIP_ATTRIBUTES,
@@ -88,6 +89,18 @@ export function deriveShipAttributes(input: ShipAttributeInput): DerivedShipAttr
         ...(input.conditions === undefined ? {} : { conditions: input.conditions }),
       });
     }
+  }
+
+  // Weapon-scoped multipliers start at 1: the hull contributes nothing, so a
+  // weapon performs as itself on any hull (Functional Specification 8.4).
+  for (const attribute of WEAPON_MODIFIER_ATTRIBUTES) {
+    requests.push({
+      attribute,
+      base: 1,
+      modifiers,
+      minimum: 0,
+      ...(input.conditions === undefined ? {} : { conditions: input.conditions }),
+    });
   }
 
   return { hull, attributes: evaluateAttributes(requests), modifiers };
@@ -198,6 +211,7 @@ function moduleModifiers(module: ModuleDefinition): readonly AttributeModifier[]
       ];
 
     case 'resistancePlating':
+    case 'resistanceAmplifier':
       return DAMAGE_TYPES.map((damageType) => ({
         ...source,
         attribute: resistanceAttribute(module.resistance.layer, damageType),
@@ -206,7 +220,14 @@ function moduleModifiers(module: ModuleDefinition): readonly AttributeModifier[]
         stage: 'fitted' as const,
       }));
 
+    case 'shieldExtender':
+    case 'shieldRecharger':
+    case 'capacitorRecharger':
+    case 'weaponUpgrade':
+      return operatorModifiers(module);
+
     case 'turret':
+    case 'launcher':
     case 'shieldBooster':
     case 'armorRepairer':
       // These act through their own operation rather than by changing a ship

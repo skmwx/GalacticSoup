@@ -1,32 +1,93 @@
 {
   "kind": "modules",
-  "$comment": "Weapon-slot modules. Short range against long range.",
+  "$comment": "Weapon-slot modules (FeatureSpec02 5.1). Projectile turrets need no capacitor; hybrid turrets hit harder but draw it; guided launchers trade instant hits for flight time and signature/speed application. Medium weapons fit only hulls that accept medium modules. Statistics are preliminary and tuned in v0.2 phase 6.",
   "definitions": [
     {
       "id": "module.turret.autocannon.small",
       "nameKey": "content.module.turret.autocannon.small.name",
       "descriptionKey": "content.module.turret.autocannon.small.description",
       "slot": "weapon",
-      "fitting": {
-        "powerUse": 5,
-        "processingUse": 6
-      },
+      "size": "small",
+      "fitting": { "powerUse": 5, "processingUse": 6 },
       "volumeCubicMetres": 0.005,
       "referenceValueCredits": 12000,
       "category": "turret",
       "hardpoint": "turret",
-      "activation": {
-        "capacitorPerCycle": 0,
-        "cycleSeconds": 2.5
-      },
+      "activation": { "capacitorPerCycle": 0, "cycleSeconds": 2.5 },
       "turret": {
+        "family": "projectile",
         "optimalRangeKm": 2.5,
         "falloffKm": 6,
         "trackingRadiansPerSecond": 0.45,
         "signatureResolutionMetres": 40,
         "damageMultiplier": 1.5,
-        "magazineSize": 20,
-        "ammunitionGroup": "small-projectile"
+        "magazineSize": 20
+      }
+    },
+    {
+      "id": "module.turret.artillery.small",
+      "nameKey": "content.module.turret.artillery.small.name",
+      "descriptionKey": "content.module.turret.artillery.small.description",
+      "slot": "weapon",
+      "size": "small",
+      "fitting": { "powerUse": 7, "processingUse": 10 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 15000,
+      "category": "turret",
+      "hardpoint": "turret",
+      "activation": { "capacitorPerCycle": 0, "cycleSeconds": 5 },
+      "turret": {
+        "family": "projectile",
+        "optimalRangeKm": 8,
+        "falloffKm": 6,
+        "trackingRadiansPerSecond": 0.12,
+        "signatureResolutionMetres": 40,
+        "damageMultiplier": 2.6,
+        "magazineSize": 12
+      }
+    },
+    {
+      "id": "module.turret.autocannon.medium",
+      "nameKey": "content.module.turret.autocannon.medium.name",
+      "descriptionKey": "content.module.turret.autocannon.medium.description",
+      "slot": "weapon",
+      "size": "medium",
+      "fitting": { "powerUse": 22, "processingUse": 18 },
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 38000,
+      "category": "turret",
+      "hardpoint": "turret",
+      "activation": { "capacitorPerCycle": 0, "cycleSeconds": 3.5 },
+      "turret": {
+        "family": "projectile",
+        "optimalRangeKm": 4,
+        "falloffKm": 9,
+        "trackingRadiansPerSecond": 0.18,
+        "signatureResolutionMetres": 125,
+        "damageMultiplier": 3.6,
+        "magazineSize": 30
+      }
+    },
+    {
+      "id": "module.turret.blaster.small",
+      "nameKey": "content.module.turret.blaster.small.name",
+      "descriptionKey": "content.module.turret.blaster.small.description",
+      "slot": "weapon",
+      "size": "small",
+      "fitting": { "powerUse": 7, "processingUse": 9 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 14000,
+      "category": "turret",
+      "hardpoint": "turret",
+      "activation": { "capacitorPerCycle": 2, "cycleSeconds": 2.4 },
+      "turret": {
+        "family": "hybrid",
+        "optimalRangeKm": 1.4,
+        "falloffKm": 2.5,
+        "trackingRadiansPerSecond": 0.5,
+        "signatureResolutionMetres": 40,
+        "damageMultiplier": 2,
+        "magazineSize": 30
       }
     },
     {
@@ -34,27 +95,72 @@
       "nameKey": "content.module.turret.railgun.small.name",
       "descriptionKey": "content.module.turret.railgun.small.description",
       "slot": "weapon",
-      "fitting": {
-        "powerUse": 8,
-        "processingUse": 12
-      },
+      "size": "small",
+      "fitting": { "powerUse": 8, "processingUse": 12 },
       "volumeCubicMetres": 0.005,
       "referenceValueCredits": 16000,
       "category": "turret",
       "hardpoint": "turret",
-      "activation": {
-        "capacitorPerCycle": 1.5,
-        "cycleSeconds": 3.2
-      },
+      "activation": { "capacitorPerCycle": 1.5, "cycleSeconds": 3.2 },
       "turret": {
+        "family": "hybrid",
         "optimalRangeKm": 9,
         "falloffKm": 4,
         "trackingRadiansPerSecond": 0.22,
         "signatureResolutionMetres": 40,
         "damageMultiplier": 1.7,
-        "magazineSize": 25,
-        "ammunitionGroup": "small-hybrid"
+        "magazineSize": 25
       }
+    },
+    {
+      "id": "module.turret.railgun.medium",
+      "nameKey": "content.module.turret.railgun.medium.name",
+      "descriptionKey": "content.module.turret.railgun.medium.description",
+      "slot": "weapon",
+      "size": "medium",
+      "fitting": { "powerUse": 28, "processingUse": 30 },
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 52000,
+      "category": "turret",
+      "hardpoint": "turret",
+      "activation": { "capacitorPerCycle": 5, "cycleSeconds": 5 },
+      "turret": {
+        "family": "hybrid",
+        "optimalRangeKm": 18,
+        "falloffKm": 8,
+        "trackingRadiansPerSecond": 0.07,
+        "signatureResolutionMetres": 125,
+        "damageMultiplier": 4.2,
+        "magazineSize": 30
+      }
+    },
+    {
+      "id": "module.launcher.guided.small",
+      "nameKey": "content.module.launcher.guided.small.name",
+      "descriptionKey": "content.module.launcher.guided.small.description",
+      "slot": "weapon",
+      "size": "small",
+      "fitting": { "powerUse": 5, "processingUse": 10 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 15000,
+      "category": "launcher",
+      "hardpoint": "launcher",
+      "activation": { "capacitorPerCycle": 0, "cycleSeconds": 6 },
+      "launcher": { "damageMultiplier": 1, "magazineSize": 8 }
+    },
+    {
+      "id": "module.launcher.guided.medium",
+      "nameKey": "content.module.launcher.guided.medium.name",
+      "descriptionKey": "content.module.launcher.guided.medium.description",
+      "slot": "weapon",
+      "size": "medium",
+      "fitting": { "powerUse": 26, "processingUse": 36 },
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 48000,
+      "category": "launcher",
+      "hardpoint": "launcher",
+      "activation": { "capacitorPerCycle": 0, "cycleSeconds": 8 },
+      "launcher": { "damageMultiplier": 1, "magazineSize": 12 }
     }
   ]
 }

@@ -56,7 +56,7 @@ export const GOLDEN_STATE_DESCRIPTIONS: Readonly<Record<GoldenState, string>> = 
   combat: 'In a fight: locks held both ways, a weapon cycle running, damage recorded.',
   'post-destruction': 'Recovered at the station after losing the ship, with the loss report and the wreck bookmark.',
   wreck: 'In a cleared site beside opponent wrecks that still hold their loot.',
-  'completed-progression': 'Docked with all three sites cleared at least once.',
+  'completed-progression': 'Docked with the Scout, Patrol and Base sites each cleared at least once.',
 };
 
 export const GOLDEN_CAMPAIGN: ReplayLogCampaign = {
@@ -65,6 +65,13 @@ export const GOLDEN_CAMPAIGN: ReplayLogCampaign = {
   seed: 'bb22cc33dd44ee55ff6677889900aa11',
   createdAtRealMs: 1_700_000_000_000,
 };
+
+/** The sites the golden career flies, which `completed-progression` requires cleared. */
+const GOLDEN_SITES: readonly string[] = [
+  'encounter.borrell.pirate-scout',
+  'encounter.borrell.pirate-patrol',
+  'encounter.borrell.pirate-base',
+];
 
 /** The wall-clock stamp every golden save carries; no rule reads it. */
 export const GOLDEN_SAVED_AT_REAL_MS = 1_700_000_600_000;
@@ -121,8 +128,12 @@ const REACHED: Readonly<Record<GoldenState, (recording: Recording) => Promise<bo
     const assets = await recording.query<AssetsData>('assets.list');
     if (assets.location.kind !== 'station') return false;
     const destinations = await recording.query<DestinationsData>('navigation.destinations');
-    return destinations.destinations.length > 0 &&
-      destinations.destinations.every((destination) => destination.completionCount >= 1);
+    // The career flies the three MVP sites; later ladder sites are not part
+    // of this recording (v0.2 phase 3 adds the Missile Picket).
+    const flown = destinations.destinations.filter((destination) =>
+      GOLDEN_SITES.includes(destination.encounterId));
+    return flown.length === GOLDEN_SITES.length &&
+      flown.every((destination) => destination.completionCount >= 1);
   },
 };
 

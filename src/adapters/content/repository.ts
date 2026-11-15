@@ -17,7 +17,7 @@ import type {
   SystemDefinition,
   TradeableDefinition,
 } from '@engine/ports';
-import { ContentIntegrityError, ContentLookupError } from '@engine/ports';
+import { chargeGroupOf, ContentIntegrityError, ContentLookupError } from '@engine/ports';
 import { compareStable, deepFreeze, indexBy, sortedBy } from '@shared';
 
 import type { ParsedContent } from './parseBundle.ts';
@@ -88,9 +88,10 @@ export function createContentRepository(
 
   const ammunitionByGroup = new Map<string, AmmunitionDefinition[]>();
   for (const charge of sortedBy(content.ammunition, (entry) => entry.id)) {
-    const existing = ammunitionByGroup.get(charge.group);
+    const group = chargeGroupOf(charge);
+    const existing = ammunitionByGroup.get(group);
     if (existing === undefined) {
-      ammunitionByGroup.set(charge.group, [charge]);
+      ammunitionByGroup.set(group, [charge]);
     } else {
       existing.push(charge);
     }

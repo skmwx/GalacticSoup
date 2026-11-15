@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galactic-soup.local/schemas/content/modules.schema.json",
   "title": "Module definitions",
-  "description": "Fittable modules. Functional Specification 8.3-8.4.",
+  "description": "Fittable modules. Functional Specification 8.3-8.4; Technical Specification 6.2, 10.2.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -34,6 +34,7 @@
               "id",
               "nameKey",
               "referenceValueCredits",
+              "size",
               "slot",
               "turret",
               "volumeCubicMetres"
@@ -53,6 +54,13 @@
               },
               "hardpoint": {
                 "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ],
+                "description": "The module size (Functional Specification 8.4). A sized module states it; a non-sized support module states suitsSizes instead."
               },
               "fitting": {
                 "type": "object",
@@ -99,15 +107,21 @@
                 "type": "object",
                 "additionalProperties": false,
                 "required": [
-                  "ammunitionGroup",
                   "damageMultiplier",
                   "falloffKm",
+                  "family",
                   "magazineSize",
                   "optimalRangeKm",
                   "signatureResolutionMetres",
                   "trackingRadiansPerSecond"
                 ],
                 "properties": {
+                  "family": {
+                    "enum": [
+                      "projectile",
+                      "hybrid"
+                    ]
+                  },
                   "optimalRangeKm": {
                     "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
                   },
@@ -125,9 +139,108 @@
                   },
                   "magazineSize": {
                     "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
+                  }
+                }
+              },
+              "$comment": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "activation",
+              "category",
+              "descriptionKey",
+              "fitting",
+              "hardpoint",
+              "id",
+              "launcher",
+              "nameKey",
+              "referenceValueCredits",
+              "size",
+              "slot",
+              "volumeCubicMetres"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/moduleId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "slot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/slotKind"
+              },
+              "hardpoint": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ],
+                "description": "The module size (Functional Specification 8.4). A sized module states it; a non-sized support module states suitsSizes instead."
+              },
+              "fitting": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "powerUse",
+                  "processingUse"
+                ],
+                "properties": {
+                  "powerUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
                   },
-                  "ammunitionGroup": {
-                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/ammunitionGroup"
+                  "processingUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "activation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "capacitorPerCycle",
+                  "cycleSeconds"
+                ],
+                "properties": {
+                  "capacitorPerCycle": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "cycleSeconds": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "category": {
+                "const": "launcher"
+              },
+              "launcher": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "damageMultiplier",
+                  "magazineSize"
+                ],
+                "properties": {
+                  "damageMultiplier": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "magazineSize": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveCount"
                   }
                 }
               },
@@ -166,6 +279,25 @@
               },
               "hardpoint": {
                 "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ],
+                "description": "The module size (Functional Specification 8.4). A sized module states it; a non-sized support module states suitsSizes instead."
+              },
+              "suitsSizes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "small",
+                    "medium"
+                  ]
+                },
+                "description": "Hull module sizes a non-sized support module suits."
               },
               "fitting": {
                 "type": "object",
@@ -259,6 +391,25 @@
               },
               "hardpoint": {
                 "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ],
+                "description": "The module size (Functional Specification 8.4). A sized module states it; a non-sized support module states suitsSizes instead."
+              },
+              "suitsSizes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "small",
+                    "medium"
+                  ]
+                },
+                "description": "Hull module sizes a non-sized support module suits."
               },
               "fitting": {
                 "type": "object",
@@ -355,6 +506,25 @@
               "hardpoint": {
                 "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
               },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ],
+                "description": "The module size (Functional Specification 8.4). A sized module states it; a non-sized support module states suitsSizes instead."
+              },
+              "suitsSizes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "small",
+                    "medium"
+                  ]
+                },
+                "description": "Hull module sizes a non-sized support module suits."
+              },
               "fitting": {
                 "type": "object",
                 "additionalProperties": false,
@@ -394,7 +564,10 @@
                 "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
               },
               "category": {
-                "const": "resistancePlating"
+                "enum": [
+                  "resistancePlating",
+                  "resistanceAmplifier"
+                ]
               },
               "resistance": {
                 "type": "object",
@@ -446,6 +619,25 @@
               },
               "hardpoint": {
                 "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ],
+                "description": "The module size (Functional Specification 8.4). A sized module states it; a non-sized support module states suitsSizes instead."
+              },
+              "suitsSizes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "small",
+                    "medium"
+                  ]
+                },
+                "description": "Hull module sizes a non-sized support module suits."
               },
               "fitting": {
                 "type": "object",
@@ -503,6 +695,138 @@
                     "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
                   }
                 }
+              },
+              "$comment": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "category",
+              "descriptionKey",
+              "fitting",
+              "id",
+              "modifiers",
+              "nameKey",
+              "referenceValueCredits",
+              "slot",
+              "volumeCubicMetres"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/moduleId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "slot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/slotKind"
+              },
+              "hardpoint": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/hardpointKind"
+              },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ],
+                "description": "The module size (Functional Specification 8.4). A sized module states it; a non-sized support module states suitsSizes instead."
+              },
+              "suitsSizes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "small",
+                    "medium"
+                  ]
+                },
+                "description": "Hull module sizes a non-sized support module suits."
+              },
+              "fitting": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "powerUse",
+                  "processingUse"
+                ],
+                "properties": {
+                  "powerUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "processingUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "activation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "capacitorPerCycle",
+                  "cycleSeconds"
+                ],
+                "properties": {
+                  "capacitorPerCycle": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "cycleSeconds": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "category": {
+                "enum": [
+                  "shieldExtender",
+                  "shieldRecharger",
+                  "capacitorRecharger",
+                  "weaponUpgrade"
+                ]
+              },
+              "modifiers": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "operator",
+                    "value"
+                  ],
+                  "properties": {
+                    "operator": {
+                      "enum": [
+                        "shieldCapacity",
+                        "shieldRechargeTime",
+                        "capacitorRechargeTime",
+                        "signatureRadius",
+                        "projectileDamage",
+                        "hybridDamage",
+                        "turretTracking",
+                        "guidedExplosionRadius",
+                        "guidedExplosionVelocity"
+                      ]
+                    },
+                    "value": {
+                      "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                    }
+                  }
+                },
+                "description": "Registered passive operators. Semantic validation refuses an operator the category may not use (Technical Specification 6.2, 10.2)."
               },
               "$comment": {
                 "type": "string"

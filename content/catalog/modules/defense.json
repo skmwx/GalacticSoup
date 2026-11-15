@@ -1,108 +1,122 @@
 {
   "kind": "modules",
-  "$comment": "Active and passive defence, propulsion and capacitor support.",
+  "$comment": "Active defence, propulsion and capacitor modules (FeatureSpec02 5.1). Small and medium variants trade fitting cost for output; medium modules fit only hulls that accept them. Statistics are preliminary and tuned in v0.2 phase 6.",
   "definitions": [
     {
       "id": "module.propulsion.afterburner.small",
       "nameKey": "content.module.propulsion.afterburner.small.name",
       "descriptionKey": "content.module.propulsion.afterburner.small.description",
       "slot": "system",
-      "fitting": {
-        "powerUse": 6,
-        "processingUse": 15
-      },
+      "size": "small",
+      "fitting": { "powerUse": 6, "processingUse": 15 },
       "volumeCubicMetres": 0.005,
       "referenceValueCredits": 9500,
       "category": "propulsion",
-      "activation": {
-        "capacitorPerCycle": 3,
-        "cycleSeconds": 10
-      },
-      "propulsion": {
-        "speedBonusFraction": 0.75,
-        "signatureRadiusPenaltyFraction": 0
-      }
+      "activation": { "capacitorPerCycle": 3, "cycleSeconds": 10 },
+      "propulsion": { "speedBonusFraction": 0.75, "signatureRadiusPenaltyFraction": 0 }
+    },
+    {
+      "id": "module.propulsion.afterburner.medium",
+      "nameKey": "content.module.propulsion.afterburner.medium.name",
+      "descriptionKey": "content.module.propulsion.afterburner.medium.description",
+      "slot": "system",
+      "size": "medium",
+      "fitting": { "powerUse": 20, "processingUse": 30 },
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 28000,
+      "category": "propulsion",
+      "activation": { "capacitorPerCycle": 12, "cycleSeconds": 10 },
+      "propulsion": { "speedBonusFraction": 0.6, "signatureRadiusPenaltyFraction": 0 }
     },
     {
       "id": "module.repair.armor.small",
       "nameKey": "content.module.repair.armor.small.name",
       "descriptionKey": "content.module.repair.armor.small.description",
       "slot": "system",
-      "fitting": {
-        "powerUse": 4,
-        "processingUse": 18
-      },
+      "size": "small",
+      "fitting": { "powerUse": 4, "processingUse": 18 },
       "volumeCubicMetres": 0.005,
       "referenceValueCredits": 8000,
       "category": "armorRepairer",
-      "activation": {
-        "capacitorPerCycle": 12,
-        "cycleSeconds": 6
-      },
-      "repair": {
-        "layer": "armor",
-        "amountHitPoints": 45
-      }
+      "activation": { "capacitorPerCycle": 12, "cycleSeconds": 6 },
+      "repair": { "layer": "armor", "amountHitPoints": 45 }
+    },
+    {
+      "id": "module.repair.armor.medium",
+      "nameKey": "content.module.repair.armor.medium.name",
+      "descriptionKey": "content.module.repair.armor.medium.description",
+      "slot": "system",
+      "size": "medium",
+      "fitting": { "powerUse": 16, "processingUse": 40 },
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 26000,
+      "category": "armorRepairer",
+      "activation": { "capacitorPerCycle": 36, "cycleSeconds": 8 },
+      "repair": { "layer": "armor", "amountHitPoints": 140 }
     },
     {
       "id": "module.shield.booster.small",
       "nameKey": "content.module.shield.booster.small.name",
       "descriptionKey": "content.module.shield.booster.small.description",
       "slot": "system",
-      "fitting": {
-        "powerUse": 5,
-        "processingUse": 22
-      },
+      "size": "small",
+      "fitting": { "powerUse": 5, "processingUse": 22 },
       "volumeCubicMetres": 0.005,
       "referenceValueCredits": 8500,
       "category": "shieldBooster",
-      "activation": {
-        "capacitorPerCycle": 15,
-        "cycleSeconds": 4
-      },
-      "repair": {
-        "layer": "shield",
-        "amountHitPoints": 40
-      }
+      "activation": { "capacitorPerCycle": 15, "cycleSeconds": 4 },
+      "repair": { "layer": "shield", "amountHitPoints": 40 }
     },
     {
-      "id": "module.plating.armor.small",
-      "nameKey": "content.module.plating.armor.small.name",
-      "descriptionKey": "content.module.plating.armor.small.description",
-      "slot": "engineering",
-      "fitting": {
-        "powerUse": 1,
-        "processingUse": 5
-      },
-      "volumeCubicMetres": 0.005,
-      "referenceValueCredits": 4000,
-      "category": "resistancePlating",
-      "resistance": {
-        "layer": "armor",
-        "bonuses": {
-          "electromagnetic": 0.1,
-          "thermal": 0.1,
-          "kinetic": 0.1,
-          "explosive": 0.1
-        }
-      }
+      "id": "module.shield.booster.medium",
+      "nameKey": "content.module.shield.booster.medium.name",
+      "descriptionKey": "content.module.shield.booster.medium.description",
+      "slot": "system",
+      "size": "medium",
+      "fitting": { "powerUse": 18, "processingUse": 45 },
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 27000,
+      "category": "shieldBooster",
+      "activation": { "capacitorPerCycle": 40, "cycleSeconds": 5 },
+      "repair": { "layer": "shield", "amountHitPoints": 120 }
     },
     {
       "id": "module.capacitor.battery.small",
       "nameKey": "content.module.capacitor.battery.small.name",
       "descriptionKey": "content.module.capacitor.battery.small.description",
       "slot": "engineering",
-      "fitting": {
-        "powerUse": 1,
-        "processingUse": 8
-      },
+      "size": "small",
+      "fitting": { "powerUse": 1, "processingUse": 8 },
       "volumeCubicMetres": 0.005,
       "referenceValueCredits": 6000,
       "category": "capacitorBattery",
-      "capacitorSupport": {
-        "capacityBonus": 120,
-        "rechargeBonusFraction": 0
-      }
+      "capacitorSupport": { "capacityBonus": 120, "rechargeBonusFraction": 0 }
+    },
+    {
+      "id": "module.capacitor.battery.medium",
+      "nameKey": "content.module.capacitor.battery.medium.name",
+      "descriptionKey": "content.module.capacitor.battery.medium.description",
+      "slot": "engineering",
+      "size": "medium",
+      "fitting": { "powerUse": 2, "processingUse": 14 },
+      "volumeCubicMetres": 0.01,
+      "referenceValueCredits": 17000,
+      "category": "capacitorBattery",
+      "capacitorSupport": { "capacityBonus": 320, "rechargeBonusFraction": 0 }
+    },
+    {
+      "id": "module.capacitor.recharger",
+      "nameKey": "content.module.capacitor.recharger.name",
+      "descriptionKey": "content.module.capacitor.recharger.description",
+      "slot": "engineering",
+      "suitsSizes": ["small", "medium"],
+      "fitting": { "powerUse": 1, "processingUse": 12 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 7000,
+      "category": "capacitorRecharger",
+      "modifiers": [
+        { "operator": "capacitorRechargeTime", "value": 0.2 }
+      ]
     }
   ]
 }

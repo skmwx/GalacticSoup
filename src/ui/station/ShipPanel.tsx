@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import { Fragment, type JSX } from 'react';
 
 import type { ShipData, UndockValidityData } from '@protocol';
 
@@ -9,6 +9,9 @@ import { useLocalizer, useTranslate } from '../localization';
 import { Figure } from './Figure';
 import styles from './Station.module.css';
 import type { PlayData } from '../frame/usePlayData';
+
+/** Shown in a turret-only column for a launcher, which the next row explains. */
+const NOT_APPLICABLE = '—';
 
 /**
  * The active ship (Functional Specification 8.2, 8.5, 19.6).
@@ -205,22 +208,25 @@ export function WeaponStats({ ship }: { readonly ship: ShipData }): JSX.Element 
             </thead>
             <tbody>
               {ship.weapons.map((weapon) => (
-                <tr key={`${weapon.slot.kind}:${String(weapon.slot.index)}`}>
+                <Fragment key={`${weapon.slot.kind}:${String(weapon.slot.index)}`}>
+                <tr data-weapon-kind={weapon.kind}>
                   <th scope="row">
                     {translate(`slot.${weapon.slot.kind}`)} {weapon.slot.index + 1}
                   </th>
+                  {/* A launcher has no optimal, falloff or tracking: its reach and
+                      application are explained in the row that follows. */}
                   <td className={styles['numeric']}>
-                    {translate('ship.kilometres', {
-                      value: formatStat(weapon.optimalRangeKm, locale),
-                    })}
+                    {weapon.kind === 'guided'
+                      ? NOT_APPLICABLE
+                      : translate('ship.kilometres', { value: formatStat(weapon.optimalRangeKm, locale) })}
                   </td>
                   <td className={styles['numeric']}>
-                    {translate('ship.kilometres', {
-                      value: formatStat(weapon.falloffKm, locale),
-                    })}
+                    {weapon.kind === 'guided'
+                      ? NOT_APPLICABLE
+                      : translate('ship.kilometres', { value: formatStat(weapon.falloffKm, locale) })}
                   </td>
                   <td className={styles['numeric']}>
-                    {formatStat(weapon.trackingRadiansPerSecond, locale)}
+                    {weapon.kind === 'guided' ? NOT_APPLICABLE : formatStat(weapon.trackingRadiansPerSecond, locale)}
                   </td>
                   <td className={styles['numeric']}>{formatStat(weapon.volleyDamage, locale)}</td>
                   <td className={styles['numeric']}>
@@ -231,6 +237,20 @@ export function WeaponStats({ ship }: { readonly ship: ShipData }): JSX.Element 
                     {formatQuantity(weapon.magazineSize, locale)}
                   </td>
                 </tr>
+                {weapon.kind === 'guided' ? (
+                  <tr data-weapon-flight>
+                    <td colSpan={7} className={styles['muted']}>
+                      {translate('fitting.weapon.flight', {
+                        speed: formatStat(weapon.flightSpeedKmPerSecond, locale),
+                        seconds: formatStat(weapon.flightTimeSeconds, locale),
+                        reach: formatStat(Math.round(weapon.maximumFlightDistanceKm * 10) / 10, locale),
+                        radius: formatStat(Math.round(weapon.explosionRadiusMetres * 10) / 10, locale),
+                        velocity: formatStat(Math.round(weapon.explosionVelocityKmPerSecond * 1000) / 1000, locale),
+                      })}
+                    </td>
+                  </tr>
+                ) : null}
+                </Fragment>
               ))}
             </tbody>
           </table>

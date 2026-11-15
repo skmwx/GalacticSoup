@@ -1,0 +1,98 @@
+{
+  "kind": "reference.fits",
+  "$comment": "Complete, legally obtainable reference fits (FeatureSpec02 5.3). Authoring-only: validated with the content and used by tests and balance work, never granted to the player and not compiled into the runtime bundle. Phase 2 adds the turret fits, phase 3 the guided fits; the web-assisted destroyer fit follows with the web in phase 4.",
+  "fits": [
+    {
+      "id": "fit.frigate.autocannon",
+      "hullId": "hull.independent.starter",
+      "approach": "Close-range projectile turrets with an afterburner and active armour repair; resistance plating and a battery keep the repairer running.",
+      "modules": [
+        { "moduleId": "module.turret.autocannon.small", "ammunitionId": "ammo.projectile.small.fusion" },
+        { "moduleId": "module.turret.autocannon.small", "ammunitionId": "ammo.projectile.small.fusion" },
+        { "moduleId": "module.propulsion.afterburner.small" },
+        { "moduleId": "module.repair.armor.small" },
+        { "moduleId": "module.plating.armor.small" },
+        { "moduleId": "module.capacitor.battery.small" }
+      ],
+      "reserve": [
+        { "ammunitionId": "ammo.projectile.small.fusion", "quantity": 200 },
+        { "ammunitionId": "ammo.projectile.small.phased", "quantity": 100 }
+      ]
+    },
+    {
+      "id": "fit.frigate.guided",
+      "hullId": "hull.independent.starter",
+      "approach": "Guided launchers at range with an afterburner and active shield boosting; a battery and an application enhancer support them.",
+      "modules": [
+        { "moduleId": "module.launcher.guided.small", "ammunitionId": "ammo.guided.small.kinetic" },
+        { "moduleId": "module.launcher.guided.small", "ammunitionId": "ammo.guided.small.kinetic" },
+        { "moduleId": "module.propulsion.afterburner.small" },
+        { "moduleId": "module.shield.booster.small" },
+        { "moduleId": "module.capacitor.battery.small" },
+        { "moduleId": "module.upgrade.guided" }
+      ],
+      "reserve": [
+        { "ammunitionId": "ammo.guided.small.kinetic", "quantity": 48 },
+        { "ammunitionId": "ammo.guided.small.thermal", "quantity": 24 }
+      ]
+    },
+    {
+      "id": "fit.destroyer.artillery",
+      "hullId": "hull.independent.destroyer",
+      "approach": "Long-range artillery behind a passive shield buffer and recharge, with tracking support for targets that get close.",
+      "modules": [
+        { "moduleId": "module.turret.artillery.small", "ammunitionId": "ammo.projectile.small.phased" },
+        { "moduleId": "module.turret.artillery.small", "ammunitionId": "ammo.projectile.small.phased" },
+        { "moduleId": "module.turret.artillery.small", "ammunitionId": "ammo.projectile.small.phased" },
+        { "moduleId": "module.turret.artillery.small", "ammunitionId": "ammo.projectile.small.phased" },
+        { "moduleId": "module.propulsion.afterburner.small" },
+        { "moduleId": "module.shield.extender" },
+        { "moduleId": "module.shield.recharger" },
+        { "moduleId": "module.upgrade.tracking" }
+      ],
+      "reserve": [
+        { "ammunitionId": "ammo.projectile.small.phased", "quantity": 120 },
+        { "ammunitionId": "ammo.projectile.small.fusion", "quantity": 60 }
+      ]
+    },
+    {
+      "id": "fit.cruiser.railgun",
+      "hullId": "hull.independent.cruiser",
+      "approach": "Medium railguns at long range with an afterburner and active shield boosting; capacitor support pays for both.",
+      "modules": [
+        { "moduleId": "module.turret.railgun.medium", "ammunitionId": "ammo.hybrid.medium.iron" },
+        { "moduleId": "module.turret.railgun.medium", "ammunitionId": "ammo.hybrid.medium.iron" },
+        { "moduleId": "module.turret.railgun.medium", "ammunitionId": "ammo.hybrid.medium.iron" },
+        { "moduleId": "module.turret.railgun.medium", "ammunitionId": "ammo.hybrid.medium.iron" },
+        { "moduleId": "module.propulsion.afterburner.medium" },
+        { "moduleId": "module.shield.booster.medium" },
+        { "moduleId": "module.capacitor.battery.medium" },
+        { "moduleId": "module.capacitor.recharger" },
+        { "moduleId": "module.upgrade.damage.hybrid" }
+      ],
+      "reserve": [
+        { "ammunitionId": "ammo.hybrid.medium.iron", "quantity": 120 },
+        { "ammunitionId": "ammo.hybrid.medium.plasma", "quantity": 60 }
+      ]
+    },
+    {
+      "id": "fit.cruiser.guided",
+      "hullId": "hull.independent.cruiser",
+      "approach": "Medium guided launchers behind a passive shield buffer and recharge, with an application enhancer against smaller targets.",
+      "modules": [
+        { "moduleId": "module.launcher.guided.medium", "ammunitionId": "ammo.guided.medium.thermal" },
+        { "moduleId": "module.launcher.guided.medium", "ammunitionId": "ammo.guided.medium.thermal" },
+        { "moduleId": "module.launcher.guided.medium", "ammunitionId": "ammo.guided.medium.thermal" },
+        { "moduleId": "module.launcher.guided.medium", "ammunitionId": "ammo.guided.medium.thermal" },
+        { "moduleId": "module.propulsion.afterburner.medium" },
+        { "moduleId": "module.shield.extender" },
+        { "moduleId": "module.shield.recharger" },
+        { "moduleId": "module.upgrade.guided" }
+      ],
+      "reserve": [
+        { "ammunitionId": "ammo.guided.medium.thermal", "quantity": 72 },
+        { "ammunitionId": "ammo.guided.medium.kinetic", "quantity": 36 }
+      ]
+    }
+  ]
+}

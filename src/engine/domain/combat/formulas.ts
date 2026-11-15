@@ -260,3 +260,89 @@ export function scaleDamage(profile: DamageProfile, multiplier: number): DamageP
 export function totalDamage(profile: DamageProfile): number {
   return DAMAGE_TYPES.reduce((total, damageType) => total + profile[damageType], 0);
 }
+
+export interface GuidedApplicationInput {
+  /** Explosion radius `E` fixed at launch, in metres. */
+  readonly explosionRadiusMetres: number;
+  /** Explosion velocity `V` fixed at launch, in km/s. */
+  readonly explosionVelocityKmPerSecond: number;
+  /** Target signature `S` at the moment of impact, in metres. */
+  readonly targetSignatureMetres: number;
+  /** Target speed `Q` at the moment of impact, in km/s. */
+  readonly targetSpeedKmPerSecond: number;
+}
+
+export const GUIDED_LIMITING_FACTORS = ['none', 'signature', 'speed'] as const;
+
+export type GuidedLimitingFactor = (typeof GUIDED_LIMITING_FACTORS)[number];
+
+export interface GuidedApplication {
+  readonly signatureFactor: number;
+  readonly speedFactor: number;
+  readonly damageMultiplier: number;
+  /** True when the 10% floor, not either factor, decided the multiplier. */
+  readonly floored: boolean;
+  readonly limitingFactor: GuidedLimitingFactor;
+  readonly trace: FormulaTrace;
+}
+
+/**
+ * The guided damage multiplier (Functional Specification 9.6):
+ *
+ *   signature factor = min(1, S / E)
+ *   speed factor     = min(1, (V / max(Q, 0.1)) x sqrt(S / E))
+ *   multiplier       = max(0.1, min(signature factor, speed factor))
+ *
+ * A non-positive radius cannot shrink an explosion below a point, so it is
+ * treated as a full application rather than as a division by zero.
+ */
+export function guidedApplication(input: GuidedApplicationInput, rules: CombatRules): GuidedApplication {
+  const ratio = input.explosionRadiusMetres > 0
+    ? Math.max(0, input.targetSignatureMetres) / input.explosionRadiusMetres
+    : Number.POSITIVE_INFINITY;
+  const signatureFactor = Math.min(1, ratio);
+  const speed = Math.max(input.targetSpeedKmPerSecond, rules.guidedMinimumTargetSpeedKmPerSecond);
+  const speedFactor = Math.min(
+    1,
+    Number.isFinite(ratio) ? (input.explosionVelocityKmPerSecond / speed) * Math.sqrt(ratio) : 1,
+  );
+  const lesser = Math.min(signatureFactor, speedFactor);
+  const damageMultiplier = Math.max(rules.guidedMinimumDamageMultiplier, lesser);
+
+  return {
+    signatureFactor,
+    speedFactor,
+    damageMultiplier,
+    floored: lesser < rules.guidedMinimumDamageMultiplier,
+    limitingFactor: guidedLimitingFactor(signatureFactor, speedFactor),
+    trace: {
+      formulaKey: 'combat.formula.guidedApplication',
+      operands: [
+        { key: 'targetSignatureMetres', value: input.targetSignatureMetres },
+        { key: 'explosionRadiusMetres', value: input.explosionRadiusMetres },
+        { key: 'targetSpeedKmPerSecond', value: input.targetSpeedKmPerSecond },
+        { key: 'explosionVelocityKmPerSecond', value: input.explosionVelocityKmPerSecond },
+        { key: 'signatureFactor', value: signatureFactor },
+        { key: 'speedFactor', value: speedFactor },
+        { key: 'minimumMultiplier', value: rules.guidedMinimumDamageMultiplier },
+      ],
+      unroundedResult: damageMultiplier,
+      displayResult: Math.round(damageMultiplier * 1000) / 10,
+    },
+  };
+}
+
+/**
+ * Which factor costs a guided impact the most: the smaller of the two, with
+ * a tie naming signature, the one no movement order changes. A full
+ * application has none.
+ */
+export function guidedLimitingFactor(signatureFactor: number, speedFactor: number): GuidedLimitingFactor {
+  if (signatureFactor >= 1 && speedFactor >= 1) return 'none';
+  return signatureFactor <= speedFactor ? 'signature' : 'speed';
+}
+
+/** Seconds a projectile needs to cover a distance against a stationary target. */
+export function guidedFlightSeconds(distanceKm: number, flightSpeedKmPerSecond: number): number {
+  return flightSpeedKmPerSecond > 0 ? Math.max(0, distanceKm) / flightSpeedKmPerSecond : Number.POSITIVE_INFINITY;
+}

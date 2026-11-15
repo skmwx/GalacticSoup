@@ -164,6 +164,7 @@ function collect(documents) {
     definitions: Object.fromEntries(DEFINITION_KINDS.map((kind) => [kind, []])),
     listings: [],
     localization: {},
+    referenceFits: [],
   };
 
   for (const { file, document } of documents) {
@@ -206,6 +207,15 @@ function collect(documents) {
 
     if (kind === 'market.listings') {
       collected.listings.push({ stationId: document.stationId, listings: document.listings, file });
+      continue;
+    }
+
+    // Authoring-only fixtures (FeatureSpec02 5.3): validated with the content,
+    // never compiled into the runtime bundle.
+    if (kind === 'reference.fits') {
+      document.fits.forEach((value, index) => {
+        collected.referenceFits.push({ value, file, path: `fits[${index}]` });
+      });
       continue;
     }
 
@@ -364,4 +374,5 @@ function describe(error) {
  * @property {Record<string, { value: object, file: string, path: string }[]>} definitions
  * @property {{ stationId: string, listings: object[], file: string }[]} listings
  * @property {Record<string, { messages: Record<string, string>, file: string }>} localization
+ * @property {{ value: object, file: string, path: string }[]} referenceFits  Authoring-only.
  */

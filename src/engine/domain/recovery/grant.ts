@@ -1,4 +1,4 @@
-import type { ContentRepository } from '@engine/ports';
+import { isWeaponModule, magazineSizeOf, type ContentRepository } from '@engine/ports';
 import type { DefinitionId, HullId, StationId } from '@shared';
 
 import { attributeValue, deriveShipAttributes } from '../attributes';
@@ -69,7 +69,7 @@ export function grantRecoveryShip(
       online: entry.online,
     }, grant);
     const module = content.module(entry.moduleId);
-    const magazineSize = module?.category === 'turret' ? module.turret.magazineSize : 0;
+    const magazineSize = module !== undefined && isWeaponModule(module) ? magazineSizeOf(module) : 0;
     if (entry.ammunitionId !== undefined && magazineSize > 0) {
       service.addAs(
         fittingInventoryId,

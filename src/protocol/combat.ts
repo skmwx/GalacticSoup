@@ -62,11 +62,29 @@ export interface TargetMotionData {
  * Which half of the turret formula costs a shot the most
  * (Functional Specification 19.3). `none` only when neither costs anything.
  */
-export type LimitingFactorData = 'none' | 'range' | 'tracking';
+/** Turret: range or tracking. Guided: signature or speed (Functional Specification 9.5-9.6). */
+export type LimitingFactorData = 'none' | 'range' | 'tracking' | 'signature' | 'speed';
+
+/**
+ * Guided application against one target now (Functional Specification 9.6).
+ * It is an estimate from current values: the target's signature and speed at
+ * impact decide the real result.
+ */
+export interface GuidedEffectData {
+  readonly estimatedFlightSeconds: number;
+  /** False when the target is beyond the stationary-target flight distance. */
+  readonly withinFlightRange: boolean;
+  readonly targetSpeedKmPerSecond: number;
+  readonly signatureFactor: number;
+  readonly speedFactor: number;
+  readonly damageMultiplier: number;
+}
 
 /** What one weapon would do against one target right now. */
 export interface WeaponEffectData {
   readonly targetId: string;
+  readonly kind: 'turret' | 'guided';
+  /** Turret hit chance; for a guided weapon 1 within flight range and 0 beyond it. */
   readonly hitChance: number;
   readonly trackingStrain: number;
   readonly rangeStrain: number;
@@ -75,7 +93,28 @@ export interface WeaponEffectData {
   /** Listed damage of one shot, before variation and before resistances. */
   readonly listedDamage: Readonly<Record<string, number>>;
   readonly expectedDamagePerShot: number;
+  /** `null` for a turret. */
+  readonly guided: GuidedEffectData | null;
   readonly trace: FormulaTraceData;
+}
+
+/** One guided projectile in flight (Functional Specification 9.6, 19.3). */
+export interface ProjectileData {
+  readonly id: string;
+  /** Retained source attribution; the source may already be gone. */
+  readonly sourceId: string;
+  readonly sourceSlot: string;
+  readonly targetId: string;
+  readonly ammunitionId: string;
+  readonly ammunitionNameKey: string;
+  readonly position: { readonly x: number; readonly y: number };
+  readonly launchedAtMs: number;
+  readonly expiresAtMs: number;
+  readonly remainingFlightSeconds: number;
+  /** True when the player's ship launched it. */
+  readonly fromPlayer: boolean;
+  /** True when it follows the player's ship. */
+  readonly atPlayer: boolean;
 }
 
 export interface WeaponCycleData {
@@ -154,6 +193,10 @@ export interface AmmunitionOptionData {
   readonly optimalRangeKm: number;
   readonly falloffKm: number;
   readonly trackingRadiansPerSecond: number;
+  /** Guided charges only; 0 for a turret charge. */
+  readonly maximumFlightDistanceKm: number;
+  readonly explosionRadiusMetres: number;
+  readonly explosionVelocityKmPerSecond: number;
   /** Whether the weapon could change to it now, and why not. */
   readonly commands: readonly CommandAvailabilityData[];
 }
@@ -181,7 +224,7 @@ export interface ActiveModuleCycleData {
 }
 
 export interface ModuleEffectData {
-  readonly kind: 'propulsion' | 'repair' | 'resistance' | 'capacitorSupport';
+  readonly kind: 'propulsion' | 'repair' | 'resistance' | 'capacitorSupport' | 'passive';
   readonly layer: string | null;
   readonly amountPerCycle: number;
   readonly sustainedPerSecond: number;
@@ -245,6 +288,9 @@ export interface WeaponRuntimeData {
   readonly slot: SlotRefData;
   readonly moduleId: string;
   readonly nameKey: string;
+  /** Turret range fields apply to a turret, flight fields to a launcher; the rest are 0. */
+  readonly kind: 'turret' | 'guided';
+  readonly family: 'projectile' | 'hybrid' | 'guided';
   readonly online: boolean;
   readonly ammunitionId: string | null;
   readonly ammunitionNameKey: string | null;
@@ -256,6 +302,12 @@ export interface WeaponRuntimeData {
   readonly falloffKm: number;
   readonly absoluteRangeKm: number;
   readonly trackingRadiansPerSecond: number;
+  readonly flightSpeedKmPerSecond: number;
+  readonly flightTimeSeconds: number;
+  /** Reach against a stationary target; a target moving away can escape. */
+  readonly maximumFlightDistanceKm: number;
+  readonly explosionRadiusMetres: number;
+  readonly explosionVelocityKmPerSecond: number;
   readonly repeating: boolean;
   readonly targetId: string | null;
   readonly cycle: WeaponCycleData | null;
@@ -292,6 +344,8 @@ export interface CombatData {
   readonly locks: readonly LockData[];
   readonly motion: readonly TargetMotionData[];
   readonly weapons: readonly WeaponRuntimeData[];
+  /** Guided projectiles in flight in the site, in launch order. */
+  readonly projectiles: readonly ProjectileData[];
   /** Whether each object in the site may be locked, keyed by object id. */
   readonly lockCommands: readonly ObjectLockAvailabilityData[];
 }

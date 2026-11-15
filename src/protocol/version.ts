@@ -44,7 +44,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 19;
+export const PROTOCOL_VERSION = 20;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

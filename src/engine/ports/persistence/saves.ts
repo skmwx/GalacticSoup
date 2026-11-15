@@ -20,10 +20,11 @@ import type { StructuralLimits } from '@shared';
 /**
  * Shape version of the save envelope (Technical Specification 11.2).
  *
- * Format 11 is the first v0.2 (Combat Progression Alpha) format. Its payload
- * is campaign state version 11.
+ * Format 11 is the first v0.2 (Combat Progression Alpha) format. Format 12
+ * (v0.2 phase 3) adds guided projectiles in flight to combat state; its
+ * payload is campaign state version 12, and format-11 saves migrate to it.
  */
-export const SAVE_FORMAT_VERSION = 11;
+export const SAVE_FORMAT_VERSION = 12;
 
 /**
  * The oldest save format this release opens (Technical Specification 11.4,

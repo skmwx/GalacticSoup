@@ -185,10 +185,28 @@ export type MarketFitMatch = 'compatible' | 'incompatible' | 'noWeapons' | 'noSh
  * What an item is for, before it is bought: the slot a module occupies, or the
  * weapons a charge suits. `null` for anything else.
  */
+/** What a module is for, the market's purpose filter (FeatureSpec02 9). */
+export type MarketModulePurpose = 'weapon' | 'defense' | 'propulsion' | 'capacitor' | 'weaponSupport';
+
 export type MarketSuitabilityData =
-  | { readonly kind: 'module'; readonly slot: string; readonly hardpoint: string | null }
+  | {
+      readonly kind: 'module';
+      readonly slot: string;
+      readonly hardpoint: string | null;
+      readonly category: string;
+      readonly purpose: MarketModulePurpose;
+      /** The module's size, or the hull sizes a non-sized module suits. */
+      readonly sizes: readonly string[];
+      /** True for a sized module, false for a non-sized one listing what it suits. */
+      readonly sized: boolean;
+      /** Whether the active ship's hull accepts it, or `null` without a ship. */
+      readonly activeHullAccepts: boolean | null;
+    }
   | {
       readonly kind: 'ammunition';
+      /** The weapon family and size the charge loads into. */
+      readonly family: string;
+      readonly size: string;
       readonly weapons: readonly MarketCompatibleWeaponData[];
       readonly currentFit: MarketFitMatch;
     };

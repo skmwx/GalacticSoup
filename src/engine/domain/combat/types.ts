@@ -1,7 +1,8 @@
 import type { DefenseLayer, DamageProfile, DamageType, ModuleCategory } from '@engine/ports';
-import type { AmmunitionId } from '@shared';
+import type { AmmunitionId, ModuleId } from '@shared';
 
 import type { EntityId } from '../campaign/identity';
+import type { Vector2 } from '../navigation/types';
 
 /**
  * Locks, weapon cycles and reloads (Functional Specification 9.2, 9.4;
@@ -192,6 +193,42 @@ export type CombatEventRecord =
   | AggregatedRepairEvent
   | DestructionCombatEvent;
 
+/**
+ * A guided projectile in flight (Functional Specification 9.6; Technical
+ * Specification 8.2).
+ *
+ * It belongs to the loaded site, not to its launcher: it names its source by
+ * a retained attribution - the ship id and the slot it came from, which stay
+ * valid as values after that ship is destroyed or leaves - and carries every
+ * launch parameter it needs, so later changes to the source's fit or charge
+ * cannot alter it. Damage is applied only on contact.
+ */
+export interface ProjectileState {
+  /** Entity id of the projectile; it also owns its boundaries. */
+  readonly id: EntityId;
+  /** Retained source attribution: the launching ship's entity id. */
+  readonly sourceShipId: EntityId;
+  /** The weapon slot of the source that launched it, for reports. */
+  readonly sourceSlotKey: string;
+  readonly moduleId: ModuleId;
+  readonly ammunitionId: AmmunitionId;
+  /** The only object it follows. It never retargets. */
+  readonly targetId: string;
+  readonly launchedAtMs: number;
+  readonly position: Vector2;
+  readonly flightSpeedKmPerSecond: number;
+  /** Flight time runs out here; expiry before contact is a miss. */
+  readonly expiresAtMs: number;
+  /** Listed damage of the round, fixed at launch. */
+  readonly damage: DamageProfile;
+  readonly explosionRadiusMetres: number;
+  readonly explosionVelocityKmPerSecond: number;
+  /** The boundary that expires it. */
+  readonly expiryBoundaryEntryId: EntityId;
+  /** The contact boundary, once movement has brought it to its target. */
+  readonly impactBoundaryEntryId: EntityId | null;
+}
+
 export interface CombatState {
   /** Changes whenever any combat runtime changes, for projection binding. */
   readonly version: number;
@@ -199,6 +236,24 @@ export interface CombatState {
   readonly ships: Readonly<Record<string, ShipCombatState>>;
   /** Oldest first, capped by the recorder. */
   readonly events: readonly CombatEventRecord[];
+  /** Guided projectiles in flight in the loaded site, in launch order. */
+  readonly projectiles: readonly ProjectileState[];
+}
+
+/** One resolved guided impact (Functional Specification 9.6). */
+export interface GuidedImpactOutcome {
+  readonly projectileId: string;
+  readonly sourceShipId: string;
+  readonly targetId: string;
+  readonly slotKey: string;
+  readonly moduleId: string;
+  readonly ammunitionId: AmmunitionId;
+  readonly signatureFactor: number;
+  readonly speedFactor: number;
+  readonly damageMultiplier: number;
+  /** Raw damage before resistances, after the application multiplier. */
+  readonly damage: DamageProfile;
+  readonly totalDamage: number;
 }
 
 /** One resolved turret shot (Functional Specification 9.5). */

@@ -103,7 +103,7 @@ describe('the authored encounter loop', () => {
     const host = await openCampaign();
     const destinations = await data<DestinationsData>(host, 'navigation.destinations');
 
-    expect([...destinations.destinations].map((entry) => entry.tier).sort()).toEqual([1, 2, 3]);
+    expect([...destinations.destinations].map((entry) => entry.tier).sort()).toEqual([1, 1, 2, 3]);
     const scout = destinations.destinations.find((entry) => entry.encounterId === SCOUT);
     expect(scout?.spawns).toEqual([
       {

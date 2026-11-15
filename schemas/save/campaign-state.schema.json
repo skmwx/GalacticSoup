@@ -29,7 +29,7 @@
   ],
   "properties": {
     "stateVersion": {
-      "const": 11
+      "const": 12
     },
     "campaignId": {
       "type": "string",
@@ -1173,13 +1173,14 @@
       ]
     },
     "combat": {
-      "description": "Locks, weapon cycles and reloads by ship entity id (Functional Specification 9.2, 9.4).",
+      "description": "Locks, weapon cycles, reloads and guided projectiles in flight (Functional Specification 9.2, 9.4, 9.6).",
       "type": "object",
       "additionalProperties": false,
       "required": [
         "version",
         "ships",
-        "events"
+        "events",
+        "projectiles"
       ],
       "properties": {
         "version": {
@@ -1201,6 +1202,13 @@
           "maxItems": 128,
           "items": {
             "$ref": "#/$defs/combatEventRecord"
+          }
+        },
+        "projectiles": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/projectileState"
           }
         }
       }
@@ -3112,6 +3120,138 @@
           "activeShipId": {
             "$ref": "#/$defs/entityId"
           }
+        }
+      }
+    },
+    "projectileState": {
+      "description": "A guided projectile in flight (Functional Specification 9.6; Technical Specification 8.2). Its source is a retained attribution, valid after the source is gone; every launch parameter is fixed.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sourceShipId",
+        "sourceSlotKey",
+        "moduleId",
+        "ammunitionId",
+        "targetId",
+        "launchedAtMs",
+        "position",
+        "flightSpeedKmPerSecond",
+        "expiresAtMs",
+        "damage",
+        "explosionRadiusMetres",
+        "explosionVelocityKmPerSecond",
+        "expiryBoundaryEntryId",
+        "impactBoundaryEntryId"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "sourceShipId": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "sourceSlotKey": {
+          "type": "string",
+          "pattern": "^(weapon|system|engineering|utility):(0|[1-9][0-9]?)$"
+        },
+        "moduleId": {
+          "type": "string",
+          "pattern": "^module(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "ammunitionId": {
+          "type": "string",
+          "pattern": "^ammo(?:\\.[a-z0-9][a-z0-9-]*)+$",
+          "maxLength": 96
+        },
+        "targetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "launchedAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "position": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        },
+        "flightSpeedKmPerSecond": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "expiresAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "damage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "electromagnetic",
+            "thermal",
+            "kinetic",
+            "explosive"
+          ],
+          "properties": {
+            "electromagnetic": {
+              "type": "number",
+              "minimum": 0
+            },
+            "thermal": {
+              "type": "number",
+              "minimum": 0
+            },
+            "kinetic": {
+              "type": "number",
+              "minimum": 0
+            },
+            "explosive": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "explosionRadiusMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "explosionVelocityKmPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "expiryBoundaryEntryId": {
+          "type": "string",
+          "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+        },
+        "impactBoundaryEntryId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^c[0-9a-f]{24}-e[1-9][0-9]*$"
+            }
+          ]
         }
       }
     }

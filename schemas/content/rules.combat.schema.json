@@ -26,6 +26,8 @@
         "damageVariationMaximum",
         "damageVariationMinimum",
         "destructionItemSurvivalChance",
+        "guidedMinimumDamageMultiplier",
+        "guidedMinimumTargetSpeedKmPerSecond",
         "lockRangeGraceSeconds",
         "lockReferenceScanResolution",
         "lockReferenceSignatureMetres",
@@ -33,6 +35,7 @@
         "lockTimeMaximumSeconds",
         "lockTimeMinimumSeconds",
         "npcDecisionIntervalSeconds",
+        "npcGuidedReachFraction",
         "npcRangeToleranceFraction",
         "npcRepairThresholdFraction",
         "npcRoles",
@@ -185,6 +188,15 @@
           "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
         },
         "npcRangeToleranceFraction": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "guidedMinimumDamageMultiplier": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "guidedMinimumTargetSpeedKmPerSecond": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+        },
+        "npcGuidedReachFraction": {
           "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
         }
       }

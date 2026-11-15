@@ -1,8 +1,11 @@
-import type {
-  ContentRepository,
-  PropulsionModuleDefinition,
-  RepairModuleDefinition,
-  TurretModuleDefinition,
+import {
+  isWeaponModule,
+  magazineSizeOf,
+  moduleAcceptsCharge,
+  type ContentRepository,
+  type PropulsionModuleDefinition,
+  type RepairModuleDefinition,
+  type WeaponModuleDefinition,
 } from '@engine/ports';
 import type { AmmunitionId } from '@shared';
 
@@ -20,7 +23,7 @@ import {
   isDestroyed,
   lockOn,
   isLockable,
-  turretAt,
+  weaponAt,
   weaponState,
   type CombatantContext,
 } from './state';
@@ -86,12 +89,12 @@ export interface CombatRuleInput {
   readonly content: ContentRepository;
 }
 
-/** The turret a slot holds, together with everything a rule asks about it. */
+/** The weapon a slot holds, together with everything a rule asks about it. */
 export interface WeaponContext {
   readonly slot: SlotRef;
   readonly key: string;
   readonly fitted: FittedSlotDescription;
-  readonly module: TurretModuleDefinition;
+  readonly module: WeaponModuleDefinition;
   readonly ammunitionId: AmmunitionId | null;
   /** Rounds in the magazine, including any a running cycle has reserved. */
   readonly loadedRounds: number;
@@ -135,12 +138,12 @@ export function weaponContext(
   combatant: CombatantContext,
   slot: SlotRef,
 ): WeaponContext | null {
-  const fitted = turretAt(combatant.fit, input.content, slot);
+  const fitted = weaponAt(combatant.fit, input.content, slot);
   if (fitted === null || !fitted.online) {
     return null;
   }
   const module = input.content.module(fitted.moduleId);
-  if (module === undefined || module.category !== 'turret') {
+  if (module === undefined || !isWeaponModule(module)) {
     return null;
   }
   const key = slotKey(slot);
@@ -182,7 +185,7 @@ export function cargoStacks(
   );
 }
 
-/** Ammunition kinds in cargo that one turret accepts, in stable order. */
+/** Ammunition kinds in cargo that one weapon accepts, in stable order. */
 export function compatibleCargoAmmunition(
   input: CombatRuleInput,
   combatant: CombatantContext,
@@ -191,7 +194,7 @@ export function compatibleCargoAmmunition(
   const accepted = new Set<AmmunitionId>();
   for (const stack of cargoStacks(input, combatant, null)) {
     const ammunition = input.content.ammunition(stack.definitionId);
-    if (ammunition !== undefined && ammunition.group === weapon.module.turret.ammunitionGroup) {
+    if (ammunition !== undefined && moduleAcceptsCharge(weapon.module, ammunition)) {
       accepted.add(ammunition.id);
     }
   }
@@ -315,7 +318,7 @@ export function reloadRefusal(input: CombatRuleInput, slot: SlotRef): CombatComm
   if (runtime.reload !== null || runtime.pendingReload !== null) {
     return 'weaponReloading';
   }
-  if (weapon.loadedRounds >= weapon.module.turret.magazineSize) {
+  if (weapon.loadedRounds >= magazineSizeOf(weapon.module)) {
     return 'weaponMagazineFull';
   }
   const ammunitionId = weapon.ammunitionId ?? runtime.lastAmmunitionId;
@@ -354,7 +357,7 @@ export function changeAmmunitionRefusal(
     return options.some((option) => option !== weapon.ammunitionId) ? null : 'weaponNoAmmunition';
   }
   const ammunition = input.content.ammunition(ammunitionId);
-  if (ammunition === undefined || ammunition.group !== weapon.module.turret.ammunitionGroup) {
+  if (ammunition === undefined || !moduleAcceptsCharge(weapon.module, ammunition)) {
     return 'weaponAmmunitionIncompatible';
   }
   if (!options.includes(ammunitionId)) {

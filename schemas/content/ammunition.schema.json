@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://galactic-soup.local/schemas/content/ammunition.schema.json",
   "title": "Ammunition definitions",
-  "description": "Charges a turret can load. Functional Specification 9.4.",
+  "description": "Charges a weapon can load, by weapon family and size. Functional Specification 9.4-9.6; Technical Specification 6.2.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -21,55 +21,140 @@
       "minItems": 1,
       "maxItems": 4096,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "damagePerShot",
-          "descriptionKey",
-          "falloffMultiplier",
-          "group",
-          "id",
-          "nameKey",
-          "optimalRangeMultiplier",
-          "referenceValueCredits",
-          "trackingMultiplier",
-          "volumeCubicMetres"
-        ],
-        "properties": {
-          "id": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/ammunitionId"
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "damagePerShot",
+              "descriptionKey",
+              "falloffMultiplier",
+              "family",
+              "id",
+              "nameKey",
+              "optimalRangeMultiplier",
+              "referenceValueCredits",
+              "size",
+              "trackingMultiplier",
+              "volumeCubicMetres"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/ammunitionId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ]
+              },
+              "damagePerShot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/damageProfile"
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "$comment": {
+                "type": "string"
+              },
+              "family": {
+                "enum": [
+                  "projectile",
+                  "hybrid"
+                ]
+              },
+              "optimalRangeMultiplier": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "falloffMultiplier": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              },
+              "trackingMultiplier": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+              }
+            }
           },
-          "nameKey": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
-          },
-          "descriptionKey": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
-          },
-          "group": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/ammunitionGroup"
-          },
-          "damagePerShot": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/damageProfile"
-          },
-          "optimalRangeMultiplier": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
-          },
-          "falloffMultiplier": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
-          },
-          "trackingMultiplier": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
-          },
-          "volumeCubicMetres": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
-          },
-          "referenceValueCredits": {
-            "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
-          },
-          "$comment": {
-            "type": "string"
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "damagePerShot",
+              "descriptionKey",
+              "family",
+              "guided",
+              "id",
+              "nameKey",
+              "referenceValueCredits",
+              "size",
+              "volumeCubicMetres"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/ammunitionId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ]
+              },
+              "damagePerShot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/damageProfile"
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "$comment": {
+                "type": "string"
+              },
+              "family": {
+                "const": "guided"
+              },
+              "guided": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "explosionRadiusMetres",
+                  "explosionVelocityKmPerSecond",
+                  "flightSpeedKmPerSecond",
+                  "flightTimeSeconds"
+                ],
+                "properties": {
+                  "flightSpeedKmPerSecond": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "flightTimeSeconds": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "explosionRadiusMetres": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "explosionVelocityKmPerSecond": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              }
+            }
           }
-        }
+        ]
       }
     }
   }

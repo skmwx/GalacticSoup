@@ -19,14 +19,15 @@
       "volumeCubicMetres": 0.005,
       "referenceValueCredits": 12000,
       "turret": {
+        "family": "projectile",
         "optimalRangeKm": 3,
         "falloffKm": 6,
         "trackingRadiansPerSecond": 0.4,
         "signatureResolutionMetres": 40,
         "damageMultiplier": 1,
-        "magazineSize": 20,
-        "ammunitionGroup": "test-group"
-      }
+        "magazineSize": 20
+      },
+      "size": "small"
     }
   ]
 }

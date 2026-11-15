@@ -133,19 +133,116 @@ describe('references', () => {
 });
 
 describe('catalog relationships', () => {
-  it('rejects a turret whose ammunition group nothing supplies [TECH-6.2, FUNC-9.4]', () => {
+  it('rejects a turret whose family and size no ammunition supplies [TECH-6.2, FUNC-9.4]', () => {
     const issues = issuesFor(
       editDocument(minimalPack(), 'catalog/modules.json', (document) => {
         const turret = definitionsOf(document)[0]?.['turret'] as Record<string, unknown>;
-        turret['ammunitionGroup'] = 'no-such-group';
+        turret['family'] = 'hybrid';
       }),
     );
 
     expect(
       issues.some(
-        (entry) => entry.reason === 'unresolvedReference' && entry.detail.includes('no-such-group'),
+        (entry) => entry.reason === 'unresolvedReference' && entry.detail.includes('no small hybrid ammunition'),
       ),
     ).toBe(true);
+  });
+
+  it('rejects a module that states both a size and the sizes it suits [TECH-6.2, FUNC-8.4, V02-AC-02]', () => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'catalog/modules.json', (document) => {
+        definitionsOf(document).push({
+          id: 'module.test.extender',
+          nameKey: 'content.module.test.turret.name',
+          descriptionKey: 'content.module.test.turret.description',
+          slot: 'engineering',
+          size: 'small',
+          suitsSizes: ['small'],
+          category: 'shieldExtender',
+          fitting: { powerUse: 1, processingUse: 1 },
+          volumeCubicMetres: 0.005,
+          referenceValueCredits: 1000,
+          modifiers: [{ operator: 'shieldCapacity', value: 10 }],
+        });
+      }),
+    );
+
+    expect(issues.some((entry) => entry.detail.includes('exactly one of size and suitsSizes'))).toBe(true);
+  });
+
+  it('rejects a weapon without its own size [TECH-6.2, FUNC-8.4, V02-AC-02]', () => {
+    // The schema itself requires a weapon's size; a weapon cannot list sizes it suits.
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'catalog/modules.json', (document) => {
+        const turret = definitionsOf(document)[0] as Record<string, unknown>;
+        delete turret['size'];
+        turret['suitsSizes'] = ['small'];
+      }),
+    );
+
+    expect(issues.some((entry) => entry.reason === 'schema' && entry.file.endsWith('catalog/modules.json'))).toBe(true);
+  });
+
+  it('rejects an NPC loadout whose module size its hull does not accept [TECH-6.2, FUNC-8.4, V02-AC-05]', () => {
+    const issues = issuesFor(
+      editDocument(
+        editDocument(minimalPack(), 'catalog/modules.json', (document) => {
+          (definitionsOf(document)[0] as Record<string, unknown>)['size'] = 'medium';
+        }),
+        'catalog/ammunition.json',
+        (document) => {
+          (definitionsOf(document)[0] as Record<string, unknown>)['size'] = 'medium';
+        },
+      ),
+    );
+
+    expect(issues.some((entry) => entry.detail.includes('a size "hull.test.pirate" does not accept'))).toBe(true);
+  });
+
+  it.each([
+    ['an operator its category may not use', [{ operator: 'projectileDamage', value: 0.1 }], 'cannot use the "projectileDamage" operator'],
+    ['no primary effect', [{ operator: 'signatureRadius', value: 0.1 }], 'must carry one of shieldCapacity'],
+    ['the same operator twice', [{ operator: 'shieldCapacity', value: 10 }, { operator: 'shieldCapacity', value: 10 }], 'is listed twice'],
+  ])('rejects a passive module with %s [TECH-6.2, TECH-10.2, V02-AC-05]', (_label, modifiers, detail) => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'catalog/modules.json', (document) => {
+        definitionsOf(document).push({
+          id: 'module.test.extender',
+          nameKey: 'content.module.test.turret.name',
+          descriptionKey: 'content.module.test.turret.description',
+          slot: 'engineering',
+          suitsSizes: ['small'],
+          category: 'shieldExtender',
+          fitting: { powerUse: 1, processingUse: 1 },
+          volumeCubicMetres: 0.005,
+          referenceValueCredits: 1000,
+          modifiers,
+        });
+      }),
+    );
+
+    expect(issues.some((entry) => entry.detail.includes(detail)), JSON.stringify(issues)).toBe(true);
+  });
+
+  it('rejects a fractional reduction of one or more [TECH-6.2, TECH-10.2]', () => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'catalog/modules.json', (document) => {
+        definitionsOf(document).push({
+          id: 'module.test.recharger',
+          nameKey: 'content.module.test.turret.name',
+          descriptionKey: 'content.module.test.turret.description',
+          slot: 'engineering',
+          suitsSizes: ['small'],
+          category: 'shieldRecharger',
+          fitting: { powerUse: 1, processingUse: 1 },
+          volumeCubicMetres: 0.005,
+          referenceValueCredits: 1000,
+          modifiers: [{ operator: 'shieldRechargeTime', value: 1 }],
+        });
+      }),
+    );
+
+    expect(issues.some((entry) => entry.reason === 'invalidValue' && entry.detail.includes('below 1'))).toBe(true);
   });
 
   it('rejects a turret in the wrong slot [TECH-6.2, FUNC-8.3]', () => {
@@ -242,31 +339,33 @@ describe('catalog relationships', () => {
     },
   );
 
-  it.each([
-    [
-      'without a turret to load them',
-      (loadout: Record<string, unknown>) => {
-        loadout['modules'] = [];
-      },
-    ],
-    [
-      'without a named ammunition',
-      (loadout: Record<string, unknown>) => {
-        delete loadout['ammunitionId'];
-      },
-    ],
-  ])('rejects NPC reserve rounds %s [TECH-6.2, FUNC-9.4, FUNC-9.10]', (_label, mutate) => {
+  const supply = (loadout: Record<string, unknown>): Record<string, unknown>[] =>
+    loadout['ammunition'] as Record<string, unknown>[];
+
+  it('rejects NPC ammunition no weapon in the loadout loads [TECH-6.2, TECH-8.3, FUNC-9.10]', () => {
     const issues = issuesFor(
       editDocument(minimalPack(), 'encounters/npcs.json', (document) => {
         const loadout = definitionsOf(document)[0]?.['loadout'] as Record<string, unknown>;
-        loadout['reserveRounds'] = 10;
-        mutate(loadout);
+        loadout['modules'] = [];
+        (supply(loadout)[0] as Record<string, unknown>)['reserveRounds'] = 10;
       }),
     );
 
-    const issue = issues.find((entry) => entry.path === 'definitions[0].loadout.reserveRounds');
+    const issue = issues.find((entry) => entry.path === 'definitions[0].loadout.ammunition[0].ammunitionId');
     expect(issue?.reason).toBe('catalogRelationship');
-    expect(issue?.detail).toContain('reserve rounds need a turret and a named ammunition');
+    expect(issue?.detail).toContain('no weapon in the loadout loads');
+  });
+
+  it('rejects an NPC weapon without ammunition for its group [TECH-6.2, TECH-8.3, FUNC-9.10]', () => {
+    const issues = issuesFor(
+      editDocument(minimalPack(), 'encounters/npcs.json', (document) => {
+        const loadout = definitionsOf(document)[0]?.['loadout'] as Record<string, unknown>;
+        loadout['ammunition'] = [];
+      }),
+    );
+
+    const issue = issues.find((entry) => entry.path === 'definitions[0].loadout.ammunition');
+    expect(issue?.detail).toContain('loads small projectile ammunition, but the loadout names none');
   });
 
   it('rejects NPC reserve rounds that do not fit the hull\'s hold [TECH-6.2, FUNC-9.4, FUNC-22.2]', () => {
@@ -274,20 +373,20 @@ describe('catalog relationships', () => {
     const issues = issuesFor(
       editDocument(minimalPack(), 'encounters/npcs.json', (document) => {
         const loadout = definitionsOf(document)[0]?.['loadout'] as Record<string, unknown>;
-        loadout['reserveRounds'] = 50_001;
+        (supply(loadout)[0] as Record<string, unknown>)['reserveRounds'] = 50_001;
       }),
     );
 
-    const issue = issues.find((entry) => entry.path === 'definitions[0].loadout.reserveRounds');
+    const issue = issues.find((entry) => entry.path === 'definitions[0].loadout.ammunition');
     expect(issue?.reason).toBe('catalogRelationship');
-    expect(issue?.detail).toBe('50001 rounds need 100002 dm3 but "hull.test.pirate" holds 100000 dm3');
+    expect(issue?.detail).toBe('the reserve rounds need 100002 dm3 but "hull.test.pirate" holds 100000 dm3');
   });
 
   it('accepts NPC reserve rounds that exactly fill the hold [TECH-6.2, FUNC-9.4]', () => {
     const result = compilePack(
       editDocument(minimalPack(), 'encounters/npcs.json', (document) => {
         const loadout = definitionsOf(document)[0]?.['loadout'] as Record<string, unknown>;
-        loadout['reserveRounds'] = 50_000;
+        (supply(loadout)[0] as Record<string, unknown>)['reserveRounds'] = 50_000;
       }),
     );
 
@@ -639,7 +738,7 @@ describe('encounters the loop can reach and tell apart', () => {
     expect(issue?.path).toBe('definitions[0].entries[1].itemId');
   });
 
-  it('rejects a starting fit that arms no turret [TECH-6.2, FUNC-3.1]', () => {
+  it('rejects a starting fit that arms no weapon [TECH-6.2, FUNC-3.1]', () => {
     const issues = issuesFor(
       editDocument(minimalPack(), 'rules/economy.json', (document) => {
         const fit = (document['values'] as Record<string, unknown>)['startingFit'] as Record<string, unknown>[];
@@ -647,6 +746,42 @@ describe('encounters the loop can reach and tell apart', () => {
       }),
     );
 
-    expect(issues.some((entry) => entry.detail.includes('arms no online turret'))).toBe(true);
+    expect(issues.some((entry) => entry.detail.includes('arms no online weapon'))).toBe(true);
+  });
+});
+
+describe('reference fits (FeatureSpec02 5.3)', () => {
+  const fit = {
+    kind: 'reference.fits',
+    fits: [{
+      id: 'fit.test.turret',
+      hullId: 'hull.test.starter',
+      approach: 'A test turret fit.',
+      modules: [{ moduleId: 'module.test.turret', ammunitionId: 'ammo.test.charge' }],
+      reserve: [{ ammunitionId: 'ammo.test.charge', quantity: 20 }],
+    }],
+  };
+  const withFit = (edit: (value: typeof fit.fits[number]) => void): ContentFile[] => {
+    const copy = JSON.parse(JSON.stringify(fit)) as typeof fit;
+    edit(copy.fits[0]!);
+    return [...minimalPack(), { path: 'content/balance/fits.json', text: JSON.stringify(copy) }];
+  };
+
+  it('accepts a legal, obtainable reference fit [TECH-6.2, V02-AC-04]', () => {
+    const result = compilePack(withFit(() => undefined));
+    expect(result.issues).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it.each([
+    ['an unloaded weapon', (value: typeof fit.fits[number]) => { delete (value.modules[0] as { ammunitionId?: string }).ammunitionId; }, 'is not loaded'],
+    ['no reserve for a weapon', (value: typeof fit.fits[number]) => { value.reserve = []; }, 'could not reload'],
+    ['more weapons than the hull has slots', (value: typeof fit.fits[number]) => {
+      value.modules = Array.from({ length: 9 }, () => ({ moduleId: 'module.test.turret', ammunitionId: 'ammo.test.charge' }));
+    }, 'weapon modules exceed'],
+    ['an unknown hull', (value: typeof fit.fits[number]) => { value.hullId = 'hull.test.missing'; }, 'is not a player-usable hull'],
+  ])('rejects a reference fit with %s [TECH-6.2, V02-AC-04]', (_label, edit, detail) => {
+    const issues = issuesFor(withFit(edit));
+    expect(issues.some((entry) => entry.detail.includes(detail)), JSON.stringify(issues)).toBe(true);
   });
 });

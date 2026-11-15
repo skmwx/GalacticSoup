@@ -58,26 +58,39 @@ describe('the MVP content floor', () => {
   it('needs an active defence, passive resistance, propulsion and capacitor support on sale [MVP-AC-02, FUNC-8.3]', () => {
     const issues = floorIssues(withoutListings(
       'module.shield.booster.small',
+      'module.shield.booster.medium',
       'module.repair.armor.small',
+      'module.repair.armor.medium',
       'module.plating.armor.small',
+      'module.amplifier.shield',
       'module.propulsion.afterburner.small',
+      'module.propulsion.afterburner.medium',
       'module.capacitor.battery.small',
+      'module.capacitor.battery.medium',
     ));
     const details = issues.map((entry) => entry.detail);
 
     for (const missing of ['active defensive', 'passive resistance', 'propulsion', 'capacitor-support']) {
-      expect(details.some((detail) => detail.includes(missing))).toBe(true);
+      expect(details.some((detail) => detail.includes(missing)), missing).toBe(true);
     }
-    expect(issues.every((entry) => entry.file === 'content/economy/listings/borrell-harbour.json')).toBe(true);
+    // The reference fits that use the removed modules also stop being obtainable;
+    // every floor finding is about the listings.
+    expect(issues
+      .filter((entry) => !entry.file.startsWith('content/balance/'))
+      .every((entry) => entry.file === 'content/economy/listings/borrell-harbour.json')).toBe(true);
   });
 
   it('needs a longer-range turret choice and a second damage profile [MVP-AC-04, FUNC-9.5, FUNC-9.7]', () => {
-    const details = floorIssues(withoutListings(
-      'module.turret.railgun.small',
-      'ammo.projectile.small.phased',
-      'ammo.hybrid.small.iron',
-      'ammo.hybrid.small.plasma',
-    )).map((entry) => entry.detail);
+    // Only the starter's autocannon and its fusion rounds stay on sale.
+    const pack = shippedPack();
+    const sold = JSON.parse(pack.find((file) => file.path === 'content/economy/listings/borrell-harbour.json')!.text) as {
+      listings: { itemId: string }[];
+    };
+    const removed = sold.listings
+      .map((listing) => listing.itemId)
+      .filter((id) => (id.startsWith('module.turret.') && id !== 'module.turret.autocannon.small') ||
+        (id.startsWith('ammo.') && id !== 'ammo.projectile.small.fusion'));
+    const details = floorIssues(withoutListings(...removed)).map((entry) => entry.detail);
 
     expect(details.some((detail) => detail.includes('no longer-range turret choice'))).toBe(true);
     expect(details.some((detail) => detail.includes('only one dominant damage type'))).toBe(true);
@@ -92,7 +105,9 @@ describe('the MVP content floor', () => {
 
   it('needs repeatable encounters covering tiers 1, 2 and 3 [MVP-AC-07, MVP-AC-09]', () => {
     const tiers = floorIssues(editEncounters((definitions) => {
-      (definitions[2] as Record<string, unknown>)['tier'] = 2;
+      // The Pirate Base, the only tier 3 site, drops to tier 2.
+      const base = definitions.find((definition) => definition['id'] === 'encounter.borrell.pirate-base');
+      (base as Record<string, unknown>)['tier'] = 2;
     }));
     expect(tiers.some((entry) => entry.detail.includes('cover tiers 1, 2 and 3 and no other, not tiers 1, 2'))).toBe(true);
 
@@ -137,11 +152,13 @@ describe('content floor profiles', () => {
     const manifest = JSON.parse(shippedPack().find((file) => file.path === 'content/manifest.json')!.text) as {
       contentFloor?: string;
     };
-    expect(manifest.contentFloor).toBe('v0.2-phase-1');
+    expect(manifest.contentFloor).toBe('v0.2-phase-3');
 
     const release = floorIssues(declare('v0.2-release')).map((entry) => entry.detail);
-    expect(release.some((detail) => detail.includes('combat module definitions, not 26'))).toBe(true);
-    expect(release.some((detail) => detail.includes('ammunition definitions, fewer than 16'))).toBe(true);
+    // Phase 3 ships 25 of the 26 modules (the web follows in phase 4) and the
+    // full ammunition floor.
+    expect(release.some((detail) => detail.includes('25 combat module definitions, not 26'))).toBe(true);
+    expect(release.some((detail) => detail.includes('ammunition definitions, fewer than 16'))).toBe(false);
     expect(release.some((detail) => detail.includes('NPC profiles, fewer than 10'))).toBe(true);
     expect(release.some((detail) => detail.includes('tier 1 encounters, not 4'))).toBe(true);
     expect(release.some((detail) => detail.includes('module definitions can drop, fewer than 10'))).toBe(true);

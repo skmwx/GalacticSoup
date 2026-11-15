@@ -75,6 +75,9 @@ export interface ResourceUseData {
 export interface WeaponStatData {
   readonly slot: SlotRefData;
   readonly moduleId: string;
+  /** Turret fields apply to a turret, flight fields to a guided launcher; the rest are 0. */
+  readonly kind: 'turret' | 'guided';
+  readonly family: 'projectile' | 'hybrid' | 'guided';
   readonly online: boolean;
   readonly ammunitionId: string | null;
   readonly loadedRounds: number;
@@ -84,6 +87,12 @@ export interface WeaponStatData {
   readonly absoluteRangeKm: number;
   readonly trackingRadiansPerSecond: number;
   readonly signatureResolutionMetres: number;
+  readonly flightSpeedKmPerSecond: number;
+  readonly flightTimeSeconds: number;
+  /** Reach against a stationary target (Functional Specification 9.6). */
+  readonly maximumFlightDistanceKm: number;
+  readonly explosionRadiusMetres: number;
+  readonly explosionVelocityKmPerSecond: number;
   readonly cycleSeconds: number;
   readonly capacitorPerCycle: number;
   readonly damagePerShot: Readonly<Record<string, number>>;

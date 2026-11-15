@@ -51,13 +51,61 @@ export type HardpointKind = (typeof HARDPOINT_KINDS)[number];
 
 export const MODULE_CATEGORIES = [
   'turret',
+  'launcher',
   'propulsion',
   'shieldBooster',
   'armorRepairer',
   'resistancePlating',
+  'resistanceAmplifier',
   'capacitorBattery',
+  'shieldExtender',
+  'shieldRecharger',
+  'capacitorRecharger',
+  'weaponUpgrade',
 ] as const;
 export type ModuleCategory = (typeof MODULE_CATEGORIES)[number];
+
+/**
+ * Weapon families (FeatureSpec02 5.1, 6.1). Structural: a family decides which
+ * charges a weapon loads and which family-restricted modifiers reach it.
+ * Projectile and hybrid weapons are turrets; guided weapons are launchers.
+ */
+export const WEAPON_FAMILIES = ['projectile', 'hybrid', 'guided'] as const;
+export type WeaponFamily = (typeof WEAPON_FAMILIES)[number];
+
+export const TURRET_FAMILIES = ['projectile', 'hybrid'] as const;
+export type TurretFamily = (typeof TURRET_FAMILIES)[number];
+
+/**
+ * The reviewed passive modifier operators (Technical Specification 10.2;
+ * FeatureSpec02 5.1). Content names an operator and a positive magnitude; the
+ * engine's registry decides which attribute it reaches, how, at which stage,
+ * and which module categories may use it, so a category can never carry an
+ * effect it does not execute.
+ */
+export const MODIFIER_OPERATORS = [
+  'shieldCapacity',
+  'shieldRechargeTime',
+  'capacitorRechargeTime',
+  'signatureRadius',
+  'projectileDamage',
+  'hybridDamage',
+  'turretTracking',
+  'guidedExplosionRadius',
+  'guidedExplosionVelocity',
+] as const;
+export type ModifierOperator = (typeof MODIFIER_OPERATORS)[number];
+
+export interface ModifierDefinition {
+  readonly operator: ModifierOperator;
+  /** Positive magnitude in the operator's own terms (see the registry). */
+  readonly value: number;
+}
+
+/** The charge group key a weapon of one family and size loads. */
+export function chargeGroupKey(family: WeaponFamily, size: ModuleSize): string {
+  return `${size}-${family}`;
+}
 
 export const NPC_ROLES = ['brawler', 'skirmisher', 'sniper'] as const;
 export type NpcRole = (typeof NPC_ROLES)[number];
@@ -150,19 +198,51 @@ interface ModuleCommon {
   };
   readonly volumeCubicDecimetres: CubicDecimetres;
   readonly referenceValueCredits: number;
+  /**
+   * The module's size (Functional Specification 8.4). Every weapon and every
+   * sized module states one; a non-sized support module states `suitsSizes`
+   * instead. Exactly one of the two is present.
+   */
+  readonly size?: ModuleSize;
+  /** The hull sizes a non-sized support module suits. */
+  readonly suitsSizes?: readonly ModuleSize[];
 }
 
 export interface TurretModuleDefinition extends ModuleCommon {
   readonly category: 'turret';
+  readonly size: ModuleSize;
   readonly turret: {
+    readonly family: TurretFamily;
     readonly optimalRangeKm: number;
     readonly falloffKm: number;
     readonly trackingRadiansPerSecond: number;
     readonly signatureResolutionMetres: number;
     readonly damageMultiplier: number;
     readonly magazineSize: number;
-    readonly ammunitionGroup: string;
   };
+}
+
+/**
+ * A guided-weapon launcher (Functional Specification 9.4, 9.6). Flight and
+ * explosion parameters belong to the charge it fires; the launcher supplies
+ * the cycle, the magazine and a damage multiplier.
+ */
+export interface LauncherModuleDefinition extends ModuleCommon {
+  readonly category: 'launcher';
+  readonly size: ModuleSize;
+  readonly launcher: {
+    readonly damageMultiplier: number;
+    readonly magazineSize: number;
+  };
+}
+
+/** A weapon-slot module that fires charges. */
+export type WeaponModuleDefinition = TurretModuleDefinition | LauncherModuleDefinition;
+
+/** A passive module whose whole effect is a list of registered modifiers. */
+export interface ModifierModuleDefinition extends ModuleCommon {
+  readonly category: 'shieldExtender' | 'shieldRecharger' | 'capacitorRecharger' | 'weaponUpgrade';
+  readonly modifiers: readonly ModifierDefinition[];
 }
 
 export interface PropulsionModuleDefinition extends ModuleCommon {
@@ -179,7 +259,8 @@ export interface RepairModuleDefinition extends ModuleCommon {
 }
 
 export interface ResistanceModuleDefinition extends ModuleCommon {
-  readonly category: 'resistancePlating';
+  /** Plating hardens armour; an amplifier hardens shields. */
+  readonly category: 'resistancePlating' | 'resistanceAmplifier';
   readonly resistance: { readonly layer: DefenseLayer; readonly bonuses: ResistanceProfile };
 }
 
@@ -193,23 +274,98 @@ export interface CapacitorModuleDefinition extends ModuleCommon {
 
 export type ModuleDefinition =
   | TurretModuleDefinition
+  | LauncherModuleDefinition
   | PropulsionModuleDefinition
   | RepairModuleDefinition
   | ResistanceModuleDefinition
-  | CapacitorModuleDefinition;
+  | CapacitorModuleDefinition
+  | ModifierModuleDefinition;
 
-export interface AmmunitionDefinition {
+interface AmmunitionCommon {
   readonly id: AmmunitionId;
   readonly nameKey: MessageKey;
   readonly descriptionKey: MessageKey;
-  /** Matches the `ammunitionGroup` of every turret that can load it. */
-  readonly group: string;
+  /** The weapon family that loads it (Technical Specification 6.2). */
+  readonly family: WeaponFamily;
+  /** The weapon size that loads it. */
+  readonly size: ModuleSize;
   readonly damagePerShot: DamageProfile;
+  readonly volumeCubicDecimetres: CubicDecimetres;
+  readonly referenceValueCredits: number;
+}
+
+/** A turret charge: it scales the turret's own range and tracking. */
+export interface TurretAmmunitionDefinition extends AmmunitionCommon {
+  readonly family: TurretFamily;
   readonly optimalRangeMultiplier: number;
   readonly falloffMultiplier: number;
   readonly trackingMultiplier: number;
-  readonly volumeCubicDecimetres: CubicDecimetres;
-  readonly referenceValueCredits: number;
+}
+
+/**
+ * A guided charge: the projectile it becomes carries these parameters, fixed
+ * at launch (Functional Specification 9.6).
+ */
+export interface GuidedAmmunitionDefinition extends AmmunitionCommon {
+  readonly family: 'guided';
+  readonly guided: {
+    readonly flightSpeedKmPerSecond: number;
+    readonly flightTimeSeconds: number;
+    readonly explosionRadiusMetres: number;
+    readonly explosionVelocityKmPerSecond: number;
+  };
+}
+
+export type AmmunitionDefinition = TurretAmmunitionDefinition | GuidedAmmunitionDefinition;
+
+/** The family a weapon module fires. */
+export function weaponFamilyOf(module: WeaponModuleDefinition): WeaponFamily {
+  return module.category === 'turret' ? module.turret.family : 'guided';
+}
+
+/** Whether a module is a weapon that fires charges. */
+export function isWeaponModule(module: ModuleDefinition): module is WeaponModuleDefinition {
+  return module.category === 'turret' || module.category === 'launcher';
+}
+
+/** Rounds one weapon's magazine holds. */
+export function magazineSizeOf(module: WeaponModuleDefinition): number {
+  return module.category === 'turret' ? module.turret.magazineSize : module.launcher.magazineSize;
+}
+
+/** The weapon's own damage multiplier on its charge's listed damage. */
+export function weaponDamageMultiplierOf(module: WeaponModuleDefinition): number {
+  return module.category === 'turret' ? module.turret.damageMultiplier : module.launcher.damageMultiplier;
+}
+
+/** The charge group key of a charge. */
+export function chargeGroupOf(charge: AmmunitionDefinition): string {
+  return chargeGroupKey(charge.family, charge.size);
+}
+
+/** The charge group key a weapon loads. */
+export function weaponChargeGroupOf(module: WeaponModuleDefinition): string {
+  return chargeGroupKey(weaponFamilyOf(module), module.size);
+}
+
+/**
+ * Whether a module can load a charge: only a weapon does, and only charges of
+ * its own family and size (Functional Specification 9.4). Fitting validity,
+ * reloads, resupply and every surface that says which weapon a charge suits
+ * ask this one rule.
+ */
+export function moduleAcceptsCharge(module: ModuleDefinition, charge: AmmunitionDefinition): boolean {
+  return isWeaponModule(module) && weaponFamilyOf(module) === charge.family && module.size === charge.size;
+}
+
+/**
+ * Whether a hull accepts a module's size (Functional Specification 8.4). A
+ * sized module needs its size among the hull's; a non-sized one needs one of
+ * the sizes it suits to be.
+ */
+export function hullAcceptsModuleSize(hull: HullDefinition, module: ModuleDefinition): boolean {
+  if (module.size !== undefined) return hull.moduleSizes.includes(module.size);
+  return (module.suitsSizes ?? []).some((size) => hull.moduleSizes.includes(size));
 }
 
 export interface ItemDefinition {
@@ -274,16 +430,23 @@ export interface NpcProfileDefinition {
   readonly hullId: HullId;
   readonly loadout: {
     readonly modules: readonly ModuleId[];
-    readonly ammunitionId?: AmmunitionId;
     /**
-     * Rounds of that ammunition carried in the hold, so the opponent reloads
-     * the way the player does rather than falling silent after one magazine
-     * (Functional Specification 9.4, 9.10). Absent means none.
+     * Ammunition per weapon group (Technical Specification 8.3). Each fitted
+     * weapon loads the first entry it accepts, so turrets and launchers on one
+     * hull keep their own charges. `reserveRounds` of each charge ride in the
+     * hold so the opponent reloads the way the player does rather than falling
+     * silent after one magazine (Functional Specification 9.4, 9.10).
      */
-    readonly reserveRounds?: number;
+    readonly ammunition: readonly NpcAmmunitionDefinition[];
   };
   readonly bountyCredits: number;
   readonly lootTableId: LootTableId;
+}
+
+export interface NpcAmmunitionDefinition {
+  readonly ammunitionId: AmmunitionId;
+  /** Rounds of it carried in the hold for reloads; 0 means none. */
+  readonly reserveRounds: number;
 }
 
 export interface LootEntryDefinition {

@@ -110,6 +110,29 @@
           "quantityMaximum": 1
         }
       ]
+    },
+    {
+      "id": "loot.pirate.lancer",
+      "entries": [
+        {
+          "itemId": "item.salvage.circuitry",
+          "chance": 0.5,
+          "quantityMinimum": 1,
+          "quantityMaximum": 2
+        },
+        {
+          "itemId": "ammo.guided.small.kinetic",
+          "chance": 0.45,
+          "quantityMinimum": 8,
+          "quantityMaximum": 20
+        },
+        {
+          "itemId": "module.launcher.guided.small",
+          "chance": 0.12,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        }
+      ]
     }
   ]
 }

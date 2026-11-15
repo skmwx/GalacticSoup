@@ -482,6 +482,7 @@ describe('what a fit does', () => {
       throw new Error('The autocannon must be a turret.');
     }
     const charge = content.requireAmmunition(FUSION);
+    if (charge.family === 'guided') throw new Error('Fusion must be a turret charge.');
     const weapon = summary.weapons[0];
     const cycleSeconds = turret.activation?.cycleSeconds ?? 0;
 

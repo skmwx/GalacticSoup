@@ -271,7 +271,7 @@ function diagnoseOpponent(
   const incoming = landedDamage(content, npc, player, engagement, angularVelocity);
   const shieldApplied = incoming.perSecond * layerRatio(player.derived, 'shield', incoming.mix);
   const rounds = weapons.reduce((total, weapon) => total + weapon.magazineSize, 0) +
-    (profile.loadout.reserveRounds ?? 0);
+    profile.loadout.ammunition.reduce((total, supply) => total + supply.reserveRounds, 0);
   const shotsPerSecond = weapons.reduce((total, weapon) =>
     total + (weapon.cycleSeconds > 0 ? 1 / weapon.cycleSeconds : 0), 0);
 

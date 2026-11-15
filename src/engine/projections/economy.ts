@@ -17,7 +17,15 @@ import {
   type EconomyServiceName,
   type MarketListingState,
 } from '@engine/domain';
-import type { ContentRepository, HullDefinition, MarketListingDefinition } from '@engine/ports';
+import {
+  hullAcceptsModuleSize,
+  isWeaponModule,
+  magazineSizeOf,
+  type ContentRepository,
+  type HullDefinition,
+  type MarketListingDefinition,
+  type ModuleDefinition,
+} from '@engine/ports';
 import type {
   FormulaTraceData,
   InsurancePreviewData,
@@ -26,6 +34,7 @@ import type {
   MarketListingsData,
   MarketOwnedStackData,
   MarketSellPreviewPayload,
+  MarketModulePurpose,
   MarketSuitabilityData,
   MarketTransactionPreviewData,
   PreviewTokenData,
@@ -208,18 +217,29 @@ function suitabilityOf(
   definitionId: string,
 ): MarketSuitabilityData | null {
   const module = content.module(definitionId);
+  const shipId = state.assets.activeShipId;
+  const activeShip = shipId === null ? undefined : state.assets.ships[shipId];
   if (module !== undefined) {
-    return { kind: 'module', slot: module.slot, hardpoint: module.hardpoint ?? null };
+    const hull = activeShip === undefined ? undefined : content.hull(activeShip.hullId);
+    return {
+      kind: 'module',
+      slot: module.slot,
+      hardpoint: module.hardpoint ?? null,
+      category: module.category,
+      purpose: modulePurpose(module),
+      sizes: module.size !== undefined ? [module.size] : [...(module.suitsSizes ?? [])],
+      sized: module.size !== undefined,
+      activeHullAccepts: hull === undefined ? null : hullAcceptsModuleSize(hull, module),
+    };
   }
   const charge = content.ammunition(definitionId);
   if (charge === undefined) return null;
 
-  const shipId = state.assets.activeShipId;
   const fitted = shipId === null || state.assets.ships[shipId] === undefined
     ? null
     : shipFit(state.assets, shipId).flatMap((slot) => {
         const definition = content.module(slot.moduleId);
-        return definition?.category === 'turret' ? [definition] : [];
+        return definition !== undefined && isWeaponModule(definition) ? [definition] : [];
       });
   const fittedIds = new Set(fitted?.map((definition) => definition.id) ?? []);
   const weapons = content.modules()
@@ -231,7 +251,41 @@ function suitabilityOf(
     : fitted.length === 0
       ? 'noWeapons'
       : fitted.some((weapon) => moduleAcceptsCharge(weapon, charge)) ? 'compatible' : 'incompatible';
-  return { kind: 'ammunition', weapons, currentFit };
+  return { kind: 'ammunition', family: charge.family, size: charge.size, weapons, currentFit };
+}
+
+/**
+ * What a module is for, the market's purpose filter (FeatureSpec02 9): a
+ * weapon, a defence, propulsion or control, capacitor support or weapon
+ * support. It follows the category rather than an authored label, so a new
+ * module cannot be filed under a purpose it does not serve.
+ */
+function modulePurpose(module: ModuleDefinition): MarketModulePurpose {
+  switch (module.category) {
+    case 'turret':
+    case 'launcher':
+      return 'weapon';
+    case 'shieldBooster':
+    case 'armorRepairer':
+    case 'resistancePlating':
+    case 'resistanceAmplifier':
+    case 'shieldExtender':
+    case 'shieldRecharger':
+      return 'defense';
+    case 'propulsion':
+      return 'propulsion';
+    case 'capacitorBattery':
+    case 'capacitorRecharger':
+      return 'capacitor';
+    case 'weaponUpgrade':
+      return 'weaponSupport';
+    default:
+      return unreachablePurpose(module);
+  }
+}
+
+function unreachablePurpose(module: never): never {
+  throw new TypeError(`Unknown module category: ${JSON.stringify(module)}.`);
 }
 
 export function marketBuyPreview(
@@ -474,8 +528,10 @@ export function resupplyPreview(
 
   for (const fitted of shipFit(state.assets, ship.id)) {
     const module = content.module(fitted.moduleId);
-    if (module?.category !== 'turret') continue;
-    const magazineSize = module.turret.magazineSize;
+    // Every weapon - turret or launcher - refills its own magazine with its
+    // own charge, so a mixed fit is resupplied group by group (FeatureSpec02 6.1).
+    if (module === undefined || !isWeaponModule(module)) continue;
+    const magazineSize = magazineSizeOf(module);
     if (fitted.charge === null) {
       lines.push({ slot: { ...fitted.slot }, ammunitionId: null, ammunitionNameKey: null,
         loadedRounds: 0, magazineSize,

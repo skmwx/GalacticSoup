@@ -1,4 +1,10 @@
-import type { ContentRepository } from '@engine/ports';
+import {
+  chargeGroupOf,
+  isWeaponModule,
+  magazineSizeOf,
+  type AmmunitionDefinition,
+  type ContentRepository,
+} from '@engine/ports';
 import type { AmmunitionId, ModuleId } from '@shared';
 
 import { stacksIn } from '../assets/inventory';
@@ -67,9 +73,10 @@ export function shipFit(assets: AssetState, shipId: string): FitDescription {
 }
 
 /**
- * Rounds of one ammunition group in a ship's hold: the reserve a turret taking
- * that group reloads from once its magazine is empty. A weapon reloads only
- * from the hold, never from a station hangar (Functional Specification 9.4).
+ * Rounds of one charge group (a weapon family and size, `chargeGroupKey`) in
+ * a ship's hold: the reserve a weapon taking that group reloads from once its
+ * magazine is empty. A weapon reloads only from the hold, never from a station
+ * hangar (Functional Specification 9.4).
  */
 export function reserveRounds(
   assets: AssetState,
@@ -83,7 +90,8 @@ export function reserveRounds(
   }
   let rounds = 0;
   for (const stack of stacksIn(assets, ship.cargoInventoryId)) {
-    if (stack.state.kind === 'plain' && content.ammunition(stack.definitionId)?.group === group) {
+    const charge: AmmunitionDefinition | undefined = content.ammunition(stack.definitionId);
+    if (stack.state.kind === 'plain' && charge !== undefined && chargeGroupOf(charge) === group) {
       rounds += stack.quantity;
     }
   }
@@ -132,7 +140,7 @@ function plannedCharge(
     return null;
   }
   const module = content.module(moduleId);
-  const quantity = module !== undefined && module.category === 'turret' ? module.turret.magazineSize : 0;
+  const quantity = module !== undefined && isWeaponModule(module) ? magazineSizeOf(module) : 0;
   return { ammunitionId, quantity, stackId: null };
 }
 

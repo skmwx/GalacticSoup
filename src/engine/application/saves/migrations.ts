@@ -10,9 +10,10 @@ import { deepClone } from '@shared';
  * draw or reach the content port. Each one ships with golden before/after
  * fixtures.
  *
- * No version has been released, so the registry is empty (MVP plan section 2).
- * A released format change adds one entry per step; the runner refuses a registry whose
- * steps do not chain, so a missing step cannot be discovered in production.
+ * Formats below 11 belong to v0.1 and are refused, not migrated (ADR-V02-01);
+ * from format 11 onward each format change adds one step here. The runner
+ * refuses a registry whose steps do not chain, so a missing step cannot be
+ * discovered in production.
  *
  * @implements TECH-11.4
  */
@@ -28,8 +29,33 @@ export interface SaveMigration {
   migrate(save: MigratableSave): MigratableSave;
 }
 
-/** No previous format has been publicly released. */
-export const SAVE_MIGRATIONS: readonly SaveMigration[] = [];
+/**
+ * Format 11 to 12 (v0.2 phase 3): combat state gains the guided projectiles
+ * in flight. A format-11 campaign could not have launched one, so it gains an
+ * empty list and nothing else changes.
+ */
+export const MIGRATE_11_TO_12: SaveMigration = {
+  from: 11,
+  to: 12,
+  describe: 'Combat state gains guided projectiles in flight; format-11 campaigns have none.',
+  migrate(save) {
+    const state = save['state'];
+    if (typeof state !== 'object' || state === null || Array.isArray(state)) return save;
+    const payload = state as Record<string, unknown>;
+    const combat = payload['combat'];
+    if (typeof combat === 'object' && combat !== null && !Array.isArray(combat)) {
+      (combat as Record<string, unknown>)['projectiles'] = [];
+    }
+    payload['stateVersion'] = 12;
+    return save;
+  },
+};
+
+/**
+ * The release boundary is format 11 (ADR-V02-01); every format from there on
+ * migrates forward one step at a time.
+ */
+export const SAVE_MIGRATIONS: readonly SaveMigration[] = [MIGRATE_11_TO_12];
 
 export type MigrationResult =
   | {

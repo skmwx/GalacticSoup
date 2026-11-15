@@ -26,6 +26,16 @@ export {
   resolveWeaponCycle,
   WEAPON_CYCLE_BOUNDARY,
 } from './combat';
+export {
+  advanceProjectiles,
+  clearProjectiles,
+  launchProjectile,
+  PROJECTILE_EXPIRY_BOUNDARY,
+  PROJECTILE_IMPACT_BOUNDARY,
+  removeProjectilesTargeting,
+  resolveProjectileExpiry,
+  resolveProjectileImpact,
+} from './projectiles';
 export { resolveEconomyHour } from './economy';
 export {
   abandonEncounter,

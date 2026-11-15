@@ -1,11 +1,15 @@
 import {
+  chargeGroupOf,
   HARDPOINT_KINDS,
+  hullAcceptsModuleSize,
+  isWeaponModule,
+  magazineSizeOf,
+  moduleAcceptsCharge,
   SLOT_KINDS,
-  type AmmunitionDefinition,
+  weaponChargeGroupOf,
   type ContentRepository,
   type HardpointKind,
   type HullDefinition,
-  type ModuleDefinition,
   type SlotKind,
 } from '@engine/ports';
 
@@ -29,14 +33,8 @@ import type { FitDescription, FitViolation, FitViolationCode, SlotRef } from './
  * @implements FUNC-8.4, FUNC-22.10, TECH-10.2
  */
 
-/**
- * Whether a module can load a charge: only a turret does, and only charges of
- * its ammunition group. Fitting validity, and every surface that says which
- * weapon a charge suits, ask this one rule.
- */
-export function moduleAcceptsCharge(module: ModuleDefinition, charge: AmmunitionDefinition): boolean {
-  return module.category === 'turret' && charge.group === module.turret.ammunitionGroup;
-}
+/** The one charge rule lives with the definitions; it is re-exported here for fitting callers. */
+export { moduleAcceptsCharge };
 
 export interface ResourceUse {
   readonly used: number;
@@ -77,6 +75,19 @@ export function assessFit(input: FitAssessmentInput): FitAssessment {
 
     slotUse[slot.kind] += 1;
 
+    // Size is a hard limit, checked before resources: no hull fits a module of
+    // a size it does not accept however much power remains (Functional
+    // Specification 8.4).
+    if (!hullAcceptsModuleSize(hull, module)) {
+      violations.push(
+        violation('sizeNotAccepted', slot, {
+          moduleId: module.id,
+          size: module.size ?? (module.suitsSizes ?? []).join('/'),
+          accepted: hull.moduleSizes.join('/'),
+        }),
+      );
+    }
+
     if (module.slot !== slot.kind) {
       violations.push(
         violation('slotKindMismatch', slot, { moduleId: module.id, requires: module.slot }),
@@ -116,7 +127,7 @@ export function assessFit(input: FitAssessmentInput): FitAssessment {
       continue;
     }
     const charge = content.ammunition(fitted.charge.ammunitionId);
-    if (module.category !== 'turret') {
+    if (!isWeaponModule(module)) {
       violations.push(
         violation('chargeNotAccepted', slot, { moduleId: module.id, category: module.category }),
       );
@@ -128,15 +139,15 @@ export function assessFit(input: FitAssessmentInput): FitAssessment {
       violations.push(
         violation('ammunitionMismatch', slot, {
           ammunitionId: charge.id,
-          group: charge.group,
-          requires: module.turret.ammunitionGroup,
+          group: chargeGroupOf(charge),
+          requires: weaponChargeGroupOf(module),
         }),
       );
-    } else if (fitted.charge.quantity > module.turret.magazineSize) {
+    } else if (fitted.charge.quantity > magazineSizeOf(module)) {
       violations.push(
         violation('magazineExceeded', slot, {
           loaded: fitted.charge.quantity,
-          magazineSize: module.turret.magazineSize,
+          magazineSize: magazineSizeOf(module),
         }),
       );
     }

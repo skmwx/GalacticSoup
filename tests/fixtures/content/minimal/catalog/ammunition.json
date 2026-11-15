@@ -5,7 +5,6 @@
       "id": "ammo.test.charge",
       "nameKey": "content.ammo.test.charge.name",
       "descriptionKey": "content.ammo.test.charge.description",
-      "group": "test-group",
       "damagePerShot": {
         "electromagnetic": 0,
         "thermal": 0,
@@ -16,7 +15,9 @@
       "falloffMultiplier": 1,
       "trackingMultiplier": 1,
       "volumeCubicMetres": 0.002,
-      "referenceValueCredits": 10
+      "referenceValueCredits": 10,
+      "family": "projectile",
+      "size": "small"
     }
   ]
 }

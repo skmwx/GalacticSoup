@@ -299,7 +299,7 @@ export function SiteView({
       <g className={styles['layerEffects']} data-layer="effects">
         {player === null
           ? null
-          : effects(combat, player, objectById, camera, viewport, positionOf, locale)}
+          : effects(combat, player, objectById, camera, viewport, positionOf, locale, translate)}
       </g>
 
       {/* 6. labels */}
@@ -474,7 +474,7 @@ function combatRanges(
     return [];
   }
   const at = worldToScreen(camera, viewport, centreKm);
-  const rings: { key: string; radiusKm: number; kind: 'lock' | 'optimal' | 'falloff'; label: string }[] = [
+  const rings: { key: string; radiusKm: number; kind: 'lock' | 'optimal' | 'falloff' | 'flight'; label: string }[] = [
     {
       key: 'lock',
       radiusKm: combat.maxLockRangeKm,
@@ -484,6 +484,20 @@ function combatRanges(
   ];
   const seen = new Set<string>();
   for (const weapon of combat.weapons) {
+    if (weapon.kind === 'guided') {
+      // A launcher's reach is its charge's stationary-target flight distance
+      // (Functional Specification 9.6); a target moving away can escape it.
+      const key = `flight-${String(weapon.maximumFlightDistanceKm)}`;
+      if (seen.has(key) || weapon.maximumFlightDistanceKm <= 0) continue;
+      seen.add(key);
+      rings.push({
+        key,
+        radiusKm: weapon.maximumFlightDistanceKm,
+        kind: 'flight',
+        label: translate('space.range.flight', { distance: formatDistanceKm(weapon.maximumFlightDistanceKm, locale) }),
+      });
+      continue;
+    }
     const key = `${String(weapon.optimalRangeKm)}:${String(weapon.falloffKm)}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -527,6 +541,7 @@ function effects(
   viewport: Viewport,
   positionOf: (object: SiteObjectData) => Point,
   locale: string,
+  translate: ReturnType<typeof useTranslate>,
 ): JSX.Element[] {
   if (combat === null) {
     return [];
@@ -548,6 +563,31 @@ function effects(
         className={styles['fireLine']}
         data-effect="fire"
       />,
+    );
+  }
+
+  // Guided projectiles in flight (Functional Specification 9.6, 19.2): a small
+  // diamond at the position the engine reports, hollow for the player's own
+  // and filled for one inbound to the player, so the two differ by shape as
+  // well as colour. They are drawn where they are, without a tween, so reduced
+  // motion changes nothing about what is shown or when it lands.
+  for (const projectile of combat.projectiles) {
+    const at = worldToScreen(camera, viewport, projectile.position);
+    const size = 4;
+    drawn.push(
+      <path
+        key={`projectile-${projectile.id}`}
+        d={`M ${at.x} ${at.y - size} L ${at.x + size} ${at.y} L ${at.x} ${at.y + size} L ${at.x - size} ${at.y} Z`}
+        className={projectile.atPlayer ? styles['projectileIncoming'] : styles['projectileOutgoing']}
+        data-effect="projectile"
+        data-projectile={projectile.atPlayer ? 'incoming' : projectile.fromPlayer ? 'outgoing' : 'other'}
+      >
+        <title>
+          {translate('tactical.projectile.label', {
+            seconds: formatStat(Math.round(projectile.remainingFlightSeconds * 10) / 10, locale),
+          })}
+        </title>
+      </path>,
     );
   }
 

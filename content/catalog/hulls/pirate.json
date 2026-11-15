@@ -15,7 +15,7 @@
         "shield": {
           "hitPoints": 120,
           "resistances": {
-            "electromagnetic": 0.0,
+            "electromagnetic": 0,
             "thermal": 0.2,
             "kinetic": 0.4,
             "explosive": 0.5
@@ -92,7 +92,7 @@
         "shield": {
           "hitPoints": 150,
           "resistances": {
-            "electromagnetic": 0.0,
+            "electromagnetic": 0,
             "thermal": 0.2,
             "kinetic": 0.4,
             "explosive": 0.5
@@ -143,7 +143,7 @@
       },
       "hardpoints": {
         "turret": 2,
-        "launcher": 0,
+        "launcher": 2,
         "mining": 0
       },
       "fitting": {

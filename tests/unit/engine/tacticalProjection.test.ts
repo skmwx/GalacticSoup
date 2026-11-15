@@ -178,7 +178,7 @@ describe('weapon effectiveness', () => {
 
     const turret = content.module('module.turret.autocannon.small');
     const phasedCharge = content.ammunition(PHASED);
-    if (turret?.category !== 'turret' || phasedCharge === undefined) {
+    if (turret?.category !== 'turret' || phasedCharge === undefined || phasedCharge.family === 'guided') {
       throw new Error('The shipped autocannon or phased charge is missing.');
     }
     const phased = weapon.ammunitionOptions[1];

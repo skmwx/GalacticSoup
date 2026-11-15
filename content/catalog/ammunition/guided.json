@@ -1,0 +1,174 @@
+{
+  "kind": "ammunition",
+  "$comment": "Guided charges (FeatureSpec02 6.1, 6.2). One per damage type and size, so the damage type is a deliberate choice. Flight speed and time give the reach; explosion radius and velocity decide how much lands on a small or fast target (Functional Specification 9.6).",
+  "definitions": [
+    {
+      "id": "ammo.guided.small.em",
+      "nameKey": "content.ammo.guided.small.em.name",
+      "descriptionKey": "content.ammo.guided.small.em.description",
+      "family": "guided",
+      "size": "small",
+      "damagePerShot": {
+        "electromagnetic": 30,
+        "thermal": 0,
+        "kinetic": 0,
+        "explosive": 0
+      },
+      "guided": {
+        "flightSpeedKmPerSecond": 2.5,
+        "flightTimeSeconds": 6,
+        "explosionRadiusMetres": 40,
+        "explosionVelocityKmPerSecond": 0.2
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 30
+    },
+    {
+      "id": "ammo.guided.small.thermal",
+      "nameKey": "content.ammo.guided.small.thermal.name",
+      "descriptionKey": "content.ammo.guided.small.thermal.description",
+      "family": "guided",
+      "size": "small",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 30,
+        "kinetic": 0,
+        "explosive": 0
+      },
+      "guided": {
+        "flightSpeedKmPerSecond": 2.5,
+        "flightTimeSeconds": 6,
+        "explosionRadiusMetres": 40,
+        "explosionVelocityKmPerSecond": 0.2
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 30
+    },
+    {
+      "id": "ammo.guided.small.kinetic",
+      "nameKey": "content.ammo.guided.small.kinetic.name",
+      "descriptionKey": "content.ammo.guided.small.kinetic.description",
+      "family": "guided",
+      "size": "small",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 0,
+        "kinetic": 30,
+        "explosive": 0
+      },
+      "guided": {
+        "flightSpeedKmPerSecond": 2.5,
+        "flightTimeSeconds": 6,
+        "explosionRadiusMetres": 40,
+        "explosionVelocityKmPerSecond": 0.2
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 30
+    },
+    {
+      "id": "ammo.guided.small.explosive",
+      "nameKey": "content.ammo.guided.small.explosive.name",
+      "descriptionKey": "content.ammo.guided.small.explosive.description",
+      "family": "guided",
+      "size": "small",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 0,
+        "kinetic": 0,
+        "explosive": 30
+      },
+      "guided": {
+        "flightSpeedKmPerSecond": 2.5,
+        "flightTimeSeconds": 6,
+        "explosionRadiusMetres": 40,
+        "explosionVelocityKmPerSecond": 0.2
+      },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 30
+    },
+    {
+      "id": "ammo.guided.medium.em",
+      "nameKey": "content.ammo.guided.medium.em.name",
+      "descriptionKey": "content.ammo.guided.medium.em.description",
+      "family": "guided",
+      "size": "medium",
+      "damagePerShot": {
+        "electromagnetic": 75,
+        "thermal": 0,
+        "kinetic": 0,
+        "explosive": 0
+      },
+      "guided": {
+        "flightSpeedKmPerSecond": 2,
+        "flightTimeSeconds": 9,
+        "explosionRadiusMetres": 120,
+        "explosionVelocityKmPerSecond": 0.12
+      },
+      "volumeCubicMetres": 0.015,
+      "referenceValueCredits": 90
+    },
+    {
+      "id": "ammo.guided.medium.thermal",
+      "nameKey": "content.ammo.guided.medium.thermal.name",
+      "descriptionKey": "content.ammo.guided.medium.thermal.description",
+      "family": "guided",
+      "size": "medium",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 75,
+        "kinetic": 0,
+        "explosive": 0
+      },
+      "guided": {
+        "flightSpeedKmPerSecond": 2,
+        "flightTimeSeconds": 9,
+        "explosionRadiusMetres": 120,
+        "explosionVelocityKmPerSecond": 0.12
+      },
+      "volumeCubicMetres": 0.015,
+      "referenceValueCredits": 90
+    },
+    {
+      "id": "ammo.guided.medium.kinetic",
+      "nameKey": "content.ammo.guided.medium.kinetic.name",
+      "descriptionKey": "content.ammo.guided.medium.kinetic.description",
+      "family": "guided",
+      "size": "medium",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 0,
+        "kinetic": 75,
+        "explosive": 0
+      },
+      "guided": {
+        "flightSpeedKmPerSecond": 2,
+        "flightTimeSeconds": 9,
+        "explosionRadiusMetres": 120,
+        "explosionVelocityKmPerSecond": 0.12
+      },
+      "volumeCubicMetres": 0.015,
+      "referenceValueCredits": 90
+    },
+    {
+      "id": "ammo.guided.medium.explosive",
+      "nameKey": "content.ammo.guided.medium.explosive.name",
+      "descriptionKey": "content.ammo.guided.medium.explosive.description",
+      "family": "guided",
+      "size": "medium",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 0,
+        "kinetic": 0,
+        "explosive": 75
+      },
+      "guided": {
+        "flightSpeedKmPerSecond": 2,
+        "flightTimeSeconds": 9,
+        "explosionRadiusMetres": 120,
+        "explosionVelocityKmPerSecond": 0.12
+      },
+      "volumeCubicMetres": 0.015,
+      "referenceValueCredits": 90
+    }
+  ]
+}

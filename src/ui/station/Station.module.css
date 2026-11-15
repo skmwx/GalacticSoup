@@ -182,6 +182,12 @@
   gap: var(--gs-space-2);
 }
 
+.checkField {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .field {
   display: flex;
   flex-direction: column;

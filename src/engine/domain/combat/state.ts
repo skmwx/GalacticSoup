@@ -1,4 +1,4 @@
-import type { ContentRepository, HullDefinition } from '@engine/ports';
+import { isWeaponModule, type ContentRepository, type HullDefinition } from '@engine/ports';
 import type { AmmunitionId } from '@shared';
 
 import {
@@ -316,8 +316,8 @@ export function activeCombatant(
     : null;
 }
 
-/** The fitted turret in one slot, or `null` when the slot holds none. */
-export function turretAt(
+/** The fitted weapon (turret or launcher) in one slot, or `null` when the slot holds none. */
+export function weaponAt(
   fit: FitDescription,
   content: ContentRepository,
   slot: SlotRef,
@@ -327,7 +327,8 @@ export function turretAt(
   if (fitted === undefined) {
     return null;
   }
-  return content.module(fitted.moduleId)?.category === 'turret' ? fitted : null;
+  const module = content.module(fitted.moduleId);
+  return module !== undefined && isWeaponModule(module) ? fitted : null;
 }
 
 /**

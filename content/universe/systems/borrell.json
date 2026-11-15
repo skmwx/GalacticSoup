@@ -1,6 +1,6 @@
 {
   "kind": "systems",
-  "$comment": "The single MVP system. Galaxy travel and gates are deferred.",
+  "$comment": "The single v0.2 system. Galaxy travel and gates are deferred; the ladder grows inside it (FeatureSpec02 8.1).",
   "definitions": [
     {
       "id": "system.borrell",
@@ -41,6 +41,15 @@
           "position": {
             "xKm": -51000,
             "yKm": 24000
+          }
+        },
+        {
+          "id": "site.borrell.signal-spire",
+          "nameKey": "content.site.borrell.signal-spire.name",
+          "kind": "combat",
+          "position": {
+            "xKm": -18000,
+            "yKm": -36000
           }
         }
       ]

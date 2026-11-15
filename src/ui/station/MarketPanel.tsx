@@ -82,6 +82,11 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
   const { locale } = useLocalizer();
   const [mode, setMode] = useState<MarketMode>('buy');
   const [filter, setFilter] = useState('');
+  const [purpose, setPurpose] = useState<PurposeFilter>('all');
+  const [size, setSize] = useState<SizeFilter>('all');
+  const [fitsOnly, setFitsOnly] = useState(false);
+  const purposeId = useId();
+  const sizeId = useId();
   const [buy, setBuy] = useState<BuyIntent | null>(null);
   const [sell, setSell] = useState<SellIntent | null>(null);
   const [inspecting, setInspecting] = useState<Inspection | null>(null);
@@ -92,10 +97,16 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
   const stationId = data.services?.stationId ?? null;
   const listings = useMemo(() => data.market?.listings ?? [], [data.market]);
   const owned = useMemo(() => data.market?.owned ?? [], [data.market]);
-  const matches = (nameKey: string): boolean =>
-    translate(nameKey).toLowerCase().includes(filter.trim().toLowerCase());
-  const visibleListings = listings.filter((listing) => matches(listing.item.nameKey));
-  const visibleOwned = owned.filter((stack) => matches(stack.item.nameKey));
+  // Purpose, size and compatibility filters narrow the list without hiding
+  // anything permanently (FeatureSpec02 9); every entry stays reachable by
+  // clearing them.
+  const matches = (nameKey: string, suitability: MarketSuitabilityData | null): boolean =>
+    translate(nameKey).toLowerCase().includes(filter.trim().toLowerCase()) &&
+    (purpose === 'all' || purposeOf(suitability) === purpose) &&
+    (size === 'all' || sizesOf(suitability).includes(size)) &&
+    (!fitsOnly || fitsActiveShip(suitability));
+  const visibleListings = listings.filter((listing) => matches(listing.item.nameKey, listing.suitability));
+  const visibleOwned = owned.filter((stack) => matches(stack.item.nameKey, stack.suitability));
 
   const buyPreview = useTransactionPreview({
     gateway,
@@ -179,6 +190,53 @@ export function MarketPanel({ gateway, data, runner }: MarketPanelProps): JSX.El
               setFilter(event.target.value);
             }}
           />
+        </label>
+        <label className={styles['field']} htmlFor={purposeId}>
+          {translate('market.filter.purpose')}
+          <select
+            id={purposeId}
+            className={styles['input']}
+            value={purpose}
+            data-market-filter="purpose"
+            onChange={(event) => {
+              setPurpose(event.target.value as PurposeFilter);
+            }}
+          >
+            {PURPOSE_FILTERS.map((option) => (
+              <option key={option} value={option}>
+                {translate(option === 'all' ? 'market.filter.all' : `market.purpose.${option}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={styles['field']} htmlFor={sizeId}>
+          {translate('market.filter.size')}
+          <select
+            id={sizeId}
+            className={styles['input']}
+            value={size}
+            data-market-filter="size"
+            onChange={(event) => {
+              setSize(event.target.value as SizeFilter);
+            }}
+          >
+            {SIZE_FILTERS.map((option) => (
+              <option key={option} value={option}>
+                {translate(option === 'all' ? 'market.filter.all' : `size.${option}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={styles['checkField']}>
+          <input
+            type="checkbox"
+            checked={fitsOnly}
+            data-market-filter="fits"
+            onChange={(event) => {
+              setFitsOnly(event.target.checked);
+            }}
+          />
+          <span>{translate('market.filter.fits')}</span>
         </label>
       </div>
 
@@ -481,11 +539,27 @@ function Suitability({
     return null;
   }
   if (suitability.kind === 'module') {
-    return <span data-suitability="module">{moduleSlotText(suitability, translate)}</span>;
+    return (
+      <span className={styles['suitability']} data-suitability="module">
+        <span>{moduleSlotText(suitability, translate)}</span>
+        <span data-module-size={suitability.sizes.join(' ')}>{moduleSizeText(suitability, translate)}</span>
+        {suitability.activeHullAccepts === false ? (
+          <span className={styles['fitMatch']} data-fit-match="sizeRefused">
+            {translate('market.suitability.sizeRefused', { size: translate(`size.${suitability.sizes[0] ?? 'small'}`) })}
+          </span>
+        ) : null}
+      </span>
+    );
   }
   return (
     <span className={styles['suitability']} data-suitability="ammunition">
       <span>{ammunitionUsesText(suitability, translate)}</span>
+      <span>
+        {translate('market.suitability.loads', {
+          size: translate(`size.${suitability.size}`),
+          family: translate(`family.${suitability.family}`),
+        })}
+      </span>
       <span className={styles['fitMatch']} data-fit-match={suitability.currentFit}>
         {suitability.currentFit === 'compatible' ? (
           <span aria-hidden="true" className={styles['fitMark']}>
@@ -511,6 +585,40 @@ function moduleSlotText(
         slot,
         hardpoint: translate(`hardpoint.${suitability.hardpoint}`),
       });
+}
+
+/** A sized module's size, or the hull sizes a non-sized one suits. */
+function moduleSizeText(
+  suitability: Extract<MarketSuitabilityData, { kind: 'module' }>,
+  translate: Translate,
+): string {
+  const names = suitability.sizes.map((entry) => translate(`size.${entry}`));
+  return suitability.sized
+    ? translate('market.suitability.size', { size: names.join(', ') })
+    : translate('size.suits', { sizes: names.join(', ') });
+}
+
+const PURPOSE_FILTERS = ['all', 'weapon', 'defense', 'propulsion', 'capacitor', 'weaponSupport', 'ammunition', 'other'] as const;
+type PurposeFilter = (typeof PURPOSE_FILTERS)[number];
+const SIZE_FILTERS = ['all', 'small', 'medium'] as const;
+type SizeFilter = (typeof SIZE_FILTERS)[number];
+
+function purposeOf(suitability: MarketSuitabilityData | null): PurposeFilter {
+  if (suitability === null) return 'other';
+  return suitability.kind === 'module' ? suitability.purpose : 'ammunition';
+}
+
+function sizesOf(suitability: MarketSuitabilityData | null): readonly string[] {
+  if (suitability === null) return [];
+  return suitability.kind === 'module' ? suitability.sizes : [suitability.size];
+}
+
+/** A module the active hull accepts, or a charge a weapon on the committed fit loads. */
+function fitsActiveShip(suitability: MarketSuitabilityData | null): boolean {
+  if (suitability === null) return false;
+  return suitability.kind === 'module'
+    ? suitability.activeHullAccepts === true
+    : suitability.currentFit === 'compatible';
 }
 
 function ammunitionUsesText(

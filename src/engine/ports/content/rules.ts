@@ -75,6 +75,16 @@ export interface CombatRules {
   readonly reloadSeconds: number;
   /** Turret absolute range is `optimal + this x falloff`. */
   readonly absoluteRangeFalloffMultiples: number;
+  /** A guided impact deals at least this share of listed damage (Functional Specification 9.6). */
+  readonly guidedMinimumDamageMultiplier: number;
+  /** The guided speed factor divides by at least this target speed. */
+  readonly guidedMinimumTargetSpeedKmPerSecond: number;
+  /**
+   * Share of a guided charge's stationary-target flight distance an opponent
+   * treats as its reach, allowing for a target that moves away (Functional
+   * Specification 9.6, 9.10).
+   */
+  readonly npcGuidedReachFraction: number;
   readonly npcWreckLifetimeSeconds: number;
   readonly playerWreckLifetimeSeconds: number;
   /** Independent survival chance of each cargo stack and fitted module. */

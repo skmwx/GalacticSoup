@@ -1,4 +1,4 @@
-import type { ContentRepository, HullDefinition } from '@engine/ports';
+import { isWeaponModule, magazineSizeOf, type ContentRepository, type HullDefinition } from '@engine/ports';
 import type { AmmunitionId, ModuleId } from '@shared';
 
 import { deriveShipAttributes } from '../attributes';
@@ -89,8 +89,8 @@ export function starterReferenceValue(content: ContentRepository): number {
   for (const entry of economy.startingFit) {
     const module = content.requireModule(entry.moduleId as ModuleId);
     total += module.referenceValueCredits;
-    if (entry.ammunitionId !== undefined && module.category === 'turret') {
-      total += content.requireAmmunition(entry.ammunitionId as AmmunitionId).referenceValueCredits * module.turret.magazineSize;
+    if (entry.ammunitionId !== undefined && isWeaponModule(module)) {
+      total += content.requireAmmunition(entry.ammunitionId as AmmunitionId).referenceValueCredits * magazineSizeOf(module);
     }
   }
   return total;

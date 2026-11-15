@@ -13,7 +13,7 @@ This lists the MVP assumptions that the v0.2 slice (FeatureSpec02) invalidates, 
 | No command switches ships, so the active ship changed only through recovery or a shipless purchase | `src/engine/application/economyCommands.ts` (`addPurchasedHull`), `src/engine/simulation/loss.ts` | **Phase 1, done:** `ship.activate` (`src/engine/application/shipCommands.ts`). |
 | Service previews accept any ship ID | `src/engine/projections/economy.ts` (`requireShip`) | **Phase 1, done:** player ships only; a switch makes previews stale through the asset version. |
 | Combat, navigation, encounter, guidance, and notifications read `assets.activeShipId` | `src/engine/simulation/{encounter,guidance,loss,navigation,notifications}.ts`, `src/engine/domain/{combat/state,encounter/*,navigation/*}.ts` | **Correct as is:** only the active ship is ever in space. No change needed. |
-| The ammunition suitability in the market reflects the active ship's committed fit | `src/engine/projections/economy.ts` (`suitabilityOf`) | **Keep.** It is about the ship the player flies. Phase 2 adds family/size compatibility. |
+| The ammunition suitability in the market reflects the active ship's committed fit | `src/engine/projections/economy.ts` (`suitabilityOf`) | **Keep.** It is about the ship the player flies. **Phase 2, done:** suitability also carries the module purpose and size, whether the active hull accepts it, and a charge's family and size; the market filters on them. |
 
 ## 2. Turret-only weapons
 
@@ -29,9 +29,13 @@ The module union (`src/engine/ports/content/definitions.ts`, `MODULE_CATEGORIES`
 
 **Phase 3** adds a `launcher` category with its own magazine, reservation and projectile path. Every branch above must either handle launchers or deliberately exclude them. Hardpoints already distinguish `turret` and `launcher` (`HARDPOINT_KINDS`), and phase 1 gave every player hull launcher hardpoints.
 
+**Phases 2-3, done.** Weapons are `WeaponModuleDefinition` (turret or launcher) everywhere a magazine, charge or reload is involved, through the helpers in `src/engine/ports/content/definitions.ts` (`isWeaponModule`, `magazineSizeOf`, `moduleAcceptsCharge`, `weaponChargeGroupOf`). What a weapon does with a charge on a ship comes from one function, `weaponProfile` (`src/engine/domain/combat/weapons.ts`), read by the fitting summary, the tactical projection, turret shots, launches and the opponent's range choice. A launcher's cycle ends in a launch (`src/engine/simulation/projectiles.ts`); damage is applied on contact through the shared `applyDamageToShip` (`src/engine/simulation/combatDamage.ts`). Recovery, guidance readiness, resupply and reserve warnings count launchers.
+
 ## 3. A single NPC ammunition choice
 
 `NpcProfileDefinition.loadout` has one optional `ammunitionId` and one `reserveRounds` (`definitions.ts`; `schemas/content/npc.profiles.schema.json`). The encounter installer loads that one charge into every weapon (`src/engine/simulation/encounter.ts`), and semantic validation checks reserve rounds against that one charge (`scripts/lib/content/semantic.mjs`, `checkReserveRounds`). **Phase 3** must allow ammunition per weapon group (turret and launcher groups differ) and validate each group's reserve.
+
+**Phase 3, done.** `loadout.ammunition` is a list of `{ ammunitionId, reserveRounds }`; each weapon loads the first entry it accepts and each entry's reserve rides in the hold (`planNpcFit`, `createNpcShip`). `checkNpcAmmunition` requires every weapon to find a charge, every charge to be loaded by a weapon, and the total reserve to fit the hold.
 
 ## 4. Three destinations
 
@@ -49,6 +53,8 @@ Exhaustive `switch` statements over `ModuleDefinition['category']` decide each m
 - `src/engine/simulation/notifications.ts` (starvation triggers).
 
 Content schema `schemas/content/modules.schema.json` is a discriminated union over the same categories. **Phases 2-4** add the shield extender, shield recharge, capacitor recharge, damage enhancers, tracking and guided-application enhancers, launchers and the web. Each needs a schema branch, a TypeScript union member, a modifier operator registered in `shipAttributes.ts`, comparison rows, and semantic validation that rejects an unsupported operator and category combination.
+
+**Phases 2-3, done.** New categories: `launcher`, `resistanceAmplifier` (shield resistance, sharing the plating shape), and four operator categories (`shieldExtender`, `shieldRecharger`, `capacitorRecharger`, `weaponUpgrade`) whose whole effect is a list of registered operators. The registry is `src/engine/domain/attributes/operators.ts` (`OPERATOR_REGISTRY`); semantic validation holds a copy (`OPERATOR_CATEGORIES`) and `tests/unit/engine/modifierOperators.test.ts` keeps them equal. Weapon-scoped bonuses reach `weapon.*` multiplier attributes derived from a base of 1. The web (phase 4) is the one category still to come.
 
 ## 6. Content counts and floors
 
@@ -69,6 +75,8 @@ Content schema `schemas/content/modules.schema.json` is a discriminated union ov
 | Save format | 10 | 11 | `src/engine/ports/persistence/saves.ts`, `schemas/save/save-envelope.schema.json`. Formats below 11 are refused (ADR-V02-01). |
 | Campaign state | 10 | 11 | `src/engine/domain/campaign/state.ts`, `schemas/save/campaign-state.schema.json`. |
 | Content | 0.1.0 | 0.2.0 | `content/manifest.json`, with `compatibleContentVersions` and `contentFloor`. |
-| Hull schema | - | `hullClass` and `moduleSizes` required | `schemas/content/hulls.schema.json`. Fitting enforcement of sizes is phase 2. |
+| Hull schema | - | `hullClass` and `moduleSizes` required | `schemas/content/hulls.schema.json`. **Phase 2, done:** fitting enforces sizes (`sizeNotAccepted`) before and at commit. |
+| Protocol (phase 3) | 19 | 20 | Weapon family/kind and guided flight fields, guided effects per target, projectiles in flight, market purpose/size suitability. |
+| Save format / campaign state (phase 3) | 11 | 12 | Combat state gains `projectiles`. `MIGRATE_11_TO_12` (`src/engine/application/saves/migrations.ts`) adds an empty list; `format-11.json` and `format-12.json` are its before/after fixtures. |
 
 The contract lock (`tests/fixtures/contracts/lock.json`), golden saves (`tests/fixtures/saves/golden/*`), golden replay and balance candidate are re-recorded through their scripts whenever these change.

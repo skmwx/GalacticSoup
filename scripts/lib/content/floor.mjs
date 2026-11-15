@@ -9,7 +9,7 @@
  *
  * The content manifest names the floor profile it claims:
  *
- *   - a development milestone profile (`v0.2-phase-1`, ...) holds what the
+ *   - a development milestone profile (`v0.2-phase-1`, `v0.2-phase-3`, ...) holds what the
  *     completed implementation phases deliver and is honest that the rest of
  *     the v0.2 catalog and ladder are not there yet;
  *   - `v0.2-release` holds the complete v0.2 floor: three hulls, 26 combat
@@ -26,6 +26,7 @@
  * the test run, `npm run validate:content` and the production build.
  */
 import { issue } from './issues.mjs';
+import { acceptsCharge, weaponFamilyOf } from './semantic.mjs';
 
 /** A longer-range turret choice reaches at least this multiple of the shortest. */
 const RANGE_SPREAD = 2;
@@ -34,7 +35,25 @@ const RANGE_SPREAD = 2;
 export const RELEASE_FLOOR_PROFILE = 'v0.2-release';
 
 /** Development milestones, in delivery order, then the release profile. */
-export const FLOOR_PROFILES = ['v0.2-phase-1', RELEASE_FLOOR_PROFILE];
+export const FLOOR_PROFILES = ['v0.2-phase-1', 'v0.2-phase-3', RELEASE_FLOOR_PROFILE];
+
+/**
+ * Profiles that hold the weapon catalog to the v0.2 family and size coverage
+ * delivered by phases 2-3 (FeatureSpec02 5.1, 6.1): projectile and hybrid
+ * turrets and guided launchers in small and medium sizes, and the ammunition
+ * split per family and size.
+ */
+const WEAPON_COVERAGE_PROFILES = new Set(['v0.2-phase-3', RELEASE_FLOOR_PROFILE]);
+
+/** Ammunition each weapon family and size must offer (FeatureSpec02 6.1). */
+const AMMUNITION_COVERAGE = {
+  'small-projectile': 2,
+  'medium-projectile': 2,
+  'small-hybrid': 2,
+  'medium-hybrid': 2,
+  'small-guided': 4,
+  'medium-guided': 4,
+};
 
 /** The v0.2 player lineup (FeatureSpec02 4.1), one hull per class. */
 const PLAYER_HULL_CLASSES = ['frigate', 'destroyer', 'cruiser'];
@@ -83,6 +102,9 @@ export function validateContentFloor(collected) {
     ...checkDangerCoverage(collected),
     ...checkGuidanceCoverage(collected),
   ];
+  if (WEAPON_COVERAGE_PROFILES.has(profile)) {
+    issues.push(...checkWeaponCoverage({ modules, ammunition, sold, where }));
+  }
   if (profile === RELEASE_FLOOR_PROFILE) {
     issues.push(...checkReleaseFloor({ collected, modules, ammunition, profiles, sold, where, stationId }));
   }
@@ -158,8 +180,43 @@ function checkReleaseFloor({ collected, modules, ammunition, profiles, sold, whe
     fail(lootTables[0]?.file ?? '', 'definitions',
       `${String(dropped.size)} module definitions can drop, fewer than ${String(RELEASE_FLOOR.droppableModules)}`);
   }
+  const droppedModules = [...dropped].map((id) => modules.get(id)?.value).filter((module) => module !== undefined);
+  if (!droppedModules.some((module) => module.category === 'launcher')) {
+    fail(lootTables[0]?.file ?? '', 'definitions', 'no launcher can drop (FeatureSpec02 7.2)');
+  }
+  if (!droppedModules.some((module) => module.size === 'medium')) {
+    fail(lootTables[0]?.file ?? '', 'definitions', 'no medium module can drop (FeatureSpec02 7.2)');
+  }
   for (const id of [...modules.keys(), ...ammunition.keys()].sort()) {
     if (!sold.has(id)) fail(where, 'listings', `"${stationId}" does not sell "${id}", so it has no dependable purchase path`);
+  }
+  return issues;
+}
+
+/**
+ * FeatureSpec02 5.1, 6.1: projectile, hybrid and guided weapons in both sizes,
+ * each sold with enough charges that the charge is a real choice, and every
+ * guided size able to deal each of the four damage types.
+ */
+function checkWeaponCoverage({ modules, ammunition, sold, where }) {
+  const issues = [];
+  const fail = (detail) => issues.push(issue('catalogRelationship', where, 'listings', `${detail} (FeatureSpec02 5.1, 6.1)`));
+  const weapons = [...modules.values()].map((entry) => entry.value).filter((module) => weaponFamilyOf(module) !== null);
+  const charges = [...ammunition.values()].map((entry) => entry.value);
+  for (const [group, minimum] of Object.entries(AMMUNITION_COVERAGE)) {
+    const [size, family] = group.split('-');
+    const groupWeapons = weapons.filter((module) => module.size === size && weaponFamilyOf(module) === family && sold.has(module.id));
+    if (groupWeapons.length === 0) fail(`no ${size} ${family} weapon is sold`);
+    const groupCharges = charges.filter((charge) => charge.size === size && charge.family === family && sold.has(charge.id));
+    if (groupCharges.length < minimum) fail(`${String(groupCharges.length)} ${size} ${family} charges are sold, fewer than ${String(minimum)}`);
+    if (family === 'guided') {
+      const types = new Set(groupCharges.flatMap((charge) =>
+        Object.entries(charge.damagePerShot).filter(([, value]) => value > 0).map(([type]) => type)));
+      if (types.size < 4) fail(`${size} guided charges cover ${String(types.size)} damage types, not all four`);
+    }
+    for (const weapon of groupWeapons) {
+      if (!groupCharges.some((charge) => acceptsCharge(weapon, charge))) fail(`"${weapon.id}" has no sold charge`);
+    }
   }
   return issues;
 }
@@ -181,7 +238,7 @@ function checkCatalog({ modules, ammunition, sold, where, stationId }) {
   for (const turret of selling('turret')) {
     const charges = [...ammunition.values()]
       .map((entry) => entry.value)
-      .filter((charge) => charge.group === turret.turret.ammunitionGroup && sold.has(charge.id));
+      .filter((charge) => acceptsCharge(turret, charge) && sold.has(charge.id));
     if (charges.length === 0) missing(`the "${turret.id}" turret but no ammunition for it`);
     for (const charge of charges) reaches.push(turret.turret.optimalRangeKm * charge.optimalRangeMultiplier);
   }
@@ -201,7 +258,7 @@ function checkCatalog({ modules, ammunition, sold, where, stationId }) {
   if (dominant.size < 2) missing('ammunition of only one dominant damage type');
 
   if (selling('shieldBooster').length + selling('armorRepairer').length === 0) missing('no active defensive module');
-  if (selling('resistancePlating').length === 0) missing('no passive resistance module');
+  if (selling('resistancePlating').length + selling('resistanceAmplifier').length === 0) missing('no passive resistance module');
   if (selling('propulsion').length === 0) missing('no propulsion module');
   if (selling('capacitorBattery').length === 0) missing('no capacitor-support module');
   return issues;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { hullAcceptsModuleSize } from '@engine';
 import { marketBuyPreview } from '@engine/projections';
 
 import { CAREERS } from '../../support/balance/career.ts';
@@ -13,11 +14,13 @@ import { fixtureFit, PROGRESSION } from '../../support/progression/fixtures.ts';
  * 4.3, objective 2).
  *
  * The starting credits must permit a meaningful choice but not every desired
- * upgrade. Every module the starting station sells can be bought on its own,
+ * upgrade. Every module the starter ship can fit can be bought on its own,
  * so any direction is open; no two of the modules that change how the ship
  * fights - a weapon or propulsion - can be bought together, so choosing one
  * gives up the others; and the fits that master the loop stay out of reach
- * until it has paid for them.
+ * until it has paid for them. Medium modules belong to the cruiser, a later
+ * purchase, and are deliberately beyond the starting wallet (FeatureSpec02
+ * 4.1, 9).
  */
 
 const content = shippedContent();
@@ -42,17 +45,20 @@ describe('the starting wallet', () => {
       }
     }
 
-    // Every module on sale is within reach on its own...
+    // Every module the starter can fit is within reach on its own...
     const state = newCampaign(seed, content);
+    const starter = content.requireHull(content.rules.economy.starterHullId as never);
     const quote = (itemId: string): number =>
       marketBuyPreview(state, content, { stationId: STATION, itemId, quantity: 1 }).totalCredits;
     const modules = content.listings(STATION)
       .filter((listing) => content.module(listing.itemId) !== undefined)
-      .map((listing) => content.requireModule(listing.itemId as never));
+      .map((listing) => content.requireModule(listing.itemId as never))
+      .filter((module) => hullAcceptsModuleSize(starter, module));
     expect(modules.length).toBeGreaterThan(4);
     for (const module of modules) expect(quote(module.id), module.id).toBeLessThanOrEqual(starting);
     // ...but no two of the modules that change how the ship fights together.
-    const major = modules.filter((module) => module.category === 'turret' || module.category === 'propulsion');
+    const major = modules.filter((module) =>
+      module.category === 'turret' || module.category === 'launcher' || module.category === 'propulsion');
     expect(major.length).toBeGreaterThan(2);
     for (const [index, first] of major.entries()) {
       for (const second of major.slice(index + 1)) {

@@ -29,6 +29,7 @@ import {
 } from '@engine/domain';
 import type { SchedulerEntry } from '@engine/domain';
 import { clearCombat } from './combat';
+import { clearProjectiles } from './projectiles';
 import { abandonEncounter, instantiateEncounter, materializeWrecks } from './encounter';
 import type { SimulationContext } from './context';
 import { cancelBoundary, scheduleBoundary } from './scheduler';
@@ -157,6 +158,7 @@ export function resolveWarpPrepared(context: SimulationContext, entry: Scheduler
   draft.assets.location = location;
   ship.location = location;
   draft.assets.version += 1;
+  clearProjectiles(context);
   draft.navigation.currentSite = null;
   draft.navigation.movementOrders = {};
   const arrival = scheduleBoundary(draft, {
@@ -259,6 +261,7 @@ export function resolveDockComplete(context: SimulationContext, entry: Scheduler
   // This is now where a destroyed pilot is recovered (Functional Specification 9.12).
   draft.assets.lastDockedStationId = station.id;
   draft.assets.version += 1;
+  clearProjectiles(context);
   draft.navigation.currentSite = null;
   draft.navigation.travel = null;
   draft.navigation.movementOrders = {};

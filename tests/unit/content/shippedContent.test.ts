@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { TurretModuleDefinition } from '@engine';
+import { weaponChargeGroupOf, type TurretModuleDefinition } from '@engine';
 
 import { shippedContent } from '../../support/content.ts';
 
@@ -106,7 +106,7 @@ describe('player content floor', () => {
   it('supplies ammunition for every turret it ships [MVP-AC-02, FUNC-9.4]', () => {
     for (const turret of turrets()) {
       expect(
-        content.ammunitionInGroup(turret.turret.ammunitionGroup).length,
+        content.ammunitionInGroup(weaponChargeGroupOf(turret)).length,
         turret.id,
       ).toBeGreaterThan(0);
     }
@@ -114,10 +114,11 @@ describe('player content floor', () => {
 });
 
 describe('encounter content floor', () => {
-  it('ships one repeatable site per tier [MVP-AC-05, MVP-AC-07, MVP-AC-09]', () => {
+  it('ships repeatable sites covering tiers 1, 2 and 3 and no other [MVP-AC-05, MVP-AC-07, MVP-AC-09]', () => {
     const tiers = content.encounters().map((encounter) => encounter.tier);
 
-    expect([...tiers].sort()).toEqual([1, 2, 3]);
+    // v0.2 grows the ladder inside the three bands (FeatureSpec02 8.1).
+    expect([...new Set(tiers)].sort()).toEqual([1, 2, 3]);
     expect(content.encounters().every((encounter) => encounter.repeatable)).toBe(true);
   });
 
@@ -205,7 +206,7 @@ describe('recovery guarantee', () => {
     expect(stockedTurret).toBeDefined();
     expect(
       content
-        .ammunitionInGroup(stockedTurret?.turret.ammunitionGroup ?? '')
+        .ammunitionInGroup(stockedTurret === undefined ? '' : weaponChargeGroupOf(stockedTurret))
         .some((charge) => fixed.includes(charge.id)),
     ).toBe(true);
   });

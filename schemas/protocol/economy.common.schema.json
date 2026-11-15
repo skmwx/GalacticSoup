@@ -44,19 +44,26 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["kind", "slot", "hardpoint"],
+          "required": ["kind", "slot", "hardpoint", "category", "purpose", "sizes", "sized", "activeHullAccepts"],
           "properties": {
             "kind": { "const": "module" },
             "slot": { "enum": ["weapon", "system", "engineering", "utility"] },
-            "hardpoint": { "enum": ["turret", "launcher", "mining", null] }
+            "hardpoint": { "enum": ["turret", "launcher", "mining", null] },
+            "category": { "type": "string", "minLength": 1 },
+            "purpose": { "enum": ["weapon", "defense", "propulsion", "capacitor", "weaponSupport"] },
+            "sizes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["small", "medium"] } },
+            "sized": { "type": "boolean" },
+            "activeHullAccepts": { "type": ["boolean", "null"] }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["kind", "weapons", "currentFit"],
+          "required": ["kind", "family", "size", "weapons", "currentFit"],
           "properties": {
             "kind": { "const": "ammunition" },
+            "family": { "enum": ["projectile", "hybrid", "guided"] },
+            "size": { "enum": ["small", "medium"] },
             "weapons": {
               "type": "array",
               "items": {

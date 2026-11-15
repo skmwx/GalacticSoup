@@ -60,10 +60,23 @@ function refitWeapon(state: CampaignState, moduleId: string | null, ammunitionId
 }
 
 describe('market suitability', () => {
-  it('names the slot and hardpoint a module occupies [FUNC-8.3, FUNC-19.5]', () => {
+  it('names the slot, hardpoint, purpose and size of a module [FUNC-8.3, FUNC-8.4, FUNC-19.5, V02-AC-05]', () => {
     const view = listings(newCampaign());
-    expect(suitability(view, AUTOCANNON)).toEqual({ kind: 'module', slot: 'weapon', hardpoint: 'turret' });
-    expect(suitability(view, PLATING)).toEqual({ kind: 'module', slot: 'engineering', hardpoint: null });
+    expect(suitability(view, AUTOCANNON)).toEqual({
+      kind: 'module', slot: 'weapon', hardpoint: 'turret', category: 'turret', purpose: 'weapon',
+      sizes: ['small'], sized: true, activeHullAccepts: true,
+    });
+    expect(suitability(view, PLATING)).toEqual({
+      kind: 'module', slot: 'engineering', hardpoint: null, category: 'resistancePlating', purpose: 'defense',
+      sizes: ['small'], sized: true, activeHullAccepts: true,
+    });
+    // The starter frigate accepts small modules only (FeatureSpec02 4.1).
+    expect(suitability(view, 'module.turret.railgun.medium')).toMatchObject({
+      sizes: ['medium'], sized: true, activeHullAccepts: false,
+    });
+    expect(suitability(view, 'module.upgrade.tracking')).toMatchObject({
+      purpose: 'weaponSupport', sizes: ['small', 'medium'], sized: false, activeHullAccepts: true,
+    });
     expect(suitability(view, 'hull.independent.starter')).toBeNull();
   });
 
@@ -71,14 +84,24 @@ describe('market suitability', () => {
     let state = withCredits(newCampaign(), 100_000);
     let view = listings(state);
     // The starter fit carries an autocannon: projectile rounds match, hybrid do not.
+    // Small projectile charges load both small projectile turrets.
     expect(suitability(view, FUSION)).toEqual({
       kind: 'ammunition',
-      weapons: [{ definitionId: AUTOCANNON, nameKey: content.module(AUTOCANNON)?.nameKey, fitted: true }],
+      family: 'projectile',
+      size: 'small',
+      weapons: [
+        {
+          definitionId: 'module.turret.artillery.small',
+          nameKey: content.module('module.turret.artillery.small')?.nameKey,
+          fitted: false,
+        },
+        { definitionId: AUTOCANNON, nameKey: content.module(AUTOCANNON)?.nameKey, fitted: true },
+      ],
       currentFit: 'compatible',
     });
     expect(suitability(view, IRON)).toMatchObject({
       kind: 'ammunition',
-      weapons: [{ definitionId: RAILGUN, fitted: false }],
+      weapons: [{ definitionId: 'module.turret.blaster.small', fitted: false }, { definitionId: RAILGUN, fitted: false }],
       currentFit: 'incompatible',
     });
 
@@ -96,10 +119,11 @@ describe('market suitability', () => {
     state = refitWeapon(state, RAILGUN, IRON);
     view = listings(state);
     expect(suitability(view, IRON)).toMatchObject({
-      currentFit: 'compatible', weapons: [{ definitionId: RAILGUN, fitted: true }],
+      currentFit: 'compatible', weapons: [{ definitionId: 'module.turret.blaster.small', fitted: false }, { definitionId: RAILGUN, fitted: true }],
     });
     expect(suitability(view, FUSION)).toMatchObject({
-      currentFit: 'incompatible', weapons: [{ definitionId: AUTOCANNON, fitted: false }],
+      currentFit: 'incompatible',
+      weapons: [{ definitionId: 'module.turret.artillery.small', fitted: false }, { definitionId: AUTOCANNON, fitted: false }],
     });
 
     // With no weapon fitted, no charge matches.

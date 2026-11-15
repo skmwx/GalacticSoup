@@ -37,6 +37,9 @@
         "preferredRangeFraction": 1.15,
         "minimumRangeKm": 8
       }
-    }
+    },
+    "guidedMinimumDamageMultiplier": 0.1,
+    "guidedMinimumTargetSpeedKmPerSecond": 0.1,
+    "npcGuidedReachFraction": 0.7
   }
 }

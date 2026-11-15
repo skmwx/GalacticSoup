@@ -1,12 +1,13 @@
 {
   "kind": "ammunition",
-  "$comment": "Charges for small projectile turrets.",
+  "$comment": "Projectile charges (FeatureSpec02 6.1). Autocannons and artillery of one size share them. Fusion trades range for explosive damage; phased reaches further with thermal damage.",
   "definitions": [
     {
       "id": "ammo.projectile.small.fusion",
       "nameKey": "content.ammo.projectile.small.fusion.name",
       "descriptionKey": "content.ammo.projectile.small.fusion.description",
-      "group": "small-projectile",
+      "family": "projectile",
+      "size": "small",
       "damagePerShot": {
         "electromagnetic": 0,
         "thermal": 0,
@@ -14,8 +15,8 @@
         "explosive": 9
       },
       "optimalRangeMultiplier": 0.75,
-      "falloffMultiplier": 1.0,
-      "trackingMultiplier": 1.0,
+      "falloffMultiplier": 1,
+      "trackingMultiplier": 1,
       "volumeCubicMetres": 0.002,
       "referenceValueCredits": 9
     },
@@ -23,7 +24,8 @@
       "id": "ammo.projectile.small.phased",
       "nameKey": "content.ammo.projectile.small.phased.name",
       "descriptionKey": "content.ammo.projectile.small.phased.description",
-      "group": "small-projectile",
+      "family": "projectile",
+      "size": "small",
       "damagePerShot": {
         "electromagnetic": 0,
         "thermal": 9,
@@ -32,9 +34,45 @@
       },
       "optimalRangeMultiplier": 1.5,
       "falloffMultiplier": 1.2,
-      "trackingMultiplier": 1.0,
+      "trackingMultiplier": 1,
       "volumeCubicMetres": 0.002,
       "referenceValueCredits": 14
+    },
+    {
+      "id": "ammo.projectile.medium.fusion",
+      "nameKey": "content.ammo.projectile.medium.fusion.name",
+      "descriptionKey": "content.ammo.projectile.medium.fusion.description",
+      "family": "projectile",
+      "size": "medium",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 0,
+        "kinetic": 3,
+        "explosive": 9
+      },
+      "optimalRangeMultiplier": 0.75,
+      "falloffMultiplier": 1,
+      "trackingMultiplier": 1,
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 30
+    },
+    {
+      "id": "ammo.projectile.medium.phased",
+      "nameKey": "content.ammo.projectile.medium.phased.name",
+      "descriptionKey": "content.ammo.projectile.medium.phased.description",
+      "family": "projectile",
+      "size": "medium",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 9,
+        "kinetic": 3,
+        "explosive": 0
+      },
+      "optimalRangeMultiplier": 1.5,
+      "falloffMultiplier": 1.2,
+      "trackingMultiplier": 1,
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 45
     }
   ]
 }

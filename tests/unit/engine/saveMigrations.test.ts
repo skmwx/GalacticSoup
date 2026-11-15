@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { migrateSave, OLDEST_SUPPORTED_SAVE_FORMAT_VERSION, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, type SaveMigration } from '@engine';
+import { MIGRATE_11_TO_12 } from '../../../src/engine/application/saves/migrations.ts';
+import { REPO_ROOT } from '../../../config/aliases.mjs';
 
 /**
  * The migration registry and its runner (Technical Specification 11.4).
@@ -22,12 +27,44 @@ const step = (from: number, apply: (save: Record<string, unknown>) => void): Sav
 });
 
 describe('save migrations', () => {
-  it('ships no migration: v0.2 starts at format 11 and refuses v0.1 saves instead [TECH-11.4, V02-AC-13]', () => {
+  it('migrates only from the v0.2 boundary: v0.1 saves are refused, format 11 steps to 12 [TECH-11.4, V02-AC-13]', () => {
     // ADR-V02-01: the v0.1 -> v0.2 transition is a declared compatibility
-    // boundary, so no migration from formats 1-10 exists or is owed.
-    expect(SAVE_MIGRATIONS).toEqual([]);
-    expect(SAVE_FORMAT_VERSION).toBe(11);
+    // boundary, so no migration from formats 1-10 exists or is owed. From
+    // format 11 on, each format change is one migration step.
+    expect(SAVE_MIGRATIONS).toEqual([MIGRATE_11_TO_12]);
+    expect(SAVE_FORMAT_VERSION).toBe(12);
     expect(OLDEST_SUPPORTED_SAVE_FORMAT_VERSION).toBe(11);
+  });
+
+  it('gives a format-11 campaign an empty projectile list and state version 12 [TECH-11.4, V02-AC-13]', () => {
+    const save = {
+      formatVersion: 11,
+      state: { stateVersion: 11, combat: { version: 3, ships: {}, events: [] } },
+    };
+    const result = migrateSave(save, 11);
+
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.applied).toEqual([11]);
+    expect(result.ok && result.save).toEqual({
+      formatVersion: 12,
+      state: { stateVersion: 12, combat: { version: 3, ships: {}, events: [], projectiles: [] } },
+    });
+    // The stored save is never changed by the migration (Technical Specification 11.4).
+    expect(save.state.combat).toEqual({ version: 3, ships: {}, events: [] });
+  });
+
+  it('turns the format-11 golden save into the format-12 golden state, field for field [TECH-11.4, V02-AC-13]', () => {
+    const read = (name: string) => JSON.parse(
+      readFileSync(path.join(REPO_ROOT, 'tests', 'fixtures', 'saves', name), 'utf8'),
+    ) as Record<string, unknown>;
+    const before = read('format-11.json');
+    const after = read('format-12.json');
+    const result = migrateSave(before, 11);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.save['state']).toEqual(after['state']);
+    expect(result.save['formatVersion']).toBe(after['formatVersion']);
   });
 
   it('is a no-op for a save already at the current version [TECH-11.4]', () => {

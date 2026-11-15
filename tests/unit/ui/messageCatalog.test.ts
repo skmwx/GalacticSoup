@@ -28,10 +28,13 @@ import {
   LOCK_STATUSES,
   lockTime,
   TURRET_LIMITING_FACTORS,
+  GUIDED_LIMITING_FACTORS,
+  guidedApplication,
+  WEAPON_MODIFIER_ATTRIBUTES,
   turretAccuracy,
   WEAPON_STOP_REASONS,
 } from '@engine/domain';
-import { DAMAGE_TYPES, DEFENSE_LAYERS } from '@engine/ports';
+import { DAMAGE_TYPES, DEFENSE_LAYERS, MODIFIER_OPERATORS } from '@engine/ports';
 import { combatProjection } from '@engine/projections';
 
 import { combatFixture } from '../../support/combat.ts';
@@ -63,6 +66,12 @@ function combatOperandKeys(): readonly string[] {
     ...combat.modules
       .filter((module) => module.effect.kind === 'repair')
       .map((module) => module.effect.trace),
+    guidedApplication({
+      explosionRadiusMetres: 40,
+      explosionVelocityKmPerSecond: 0.2,
+      targetSignatureMetres: 40,
+      targetSpeedKmPerSecond: 0.3,
+    }, rules).trace,
   ];
   return [...new Set(traces.flatMap((trace) => trace.operands.map((operand) => operand.key)))];
 }
@@ -145,6 +154,7 @@ describe('message catalogue', () => {
       ...['own', 'hostile', 'neutral'].map((attitude) => `tactical.attitude.${attitude}`),
       ...Object.keys(shippedContent().rules.combat.npcRoles).map((role) => `role.${role}`),
       ...TURRET_LIMITING_FACTORS.map((factor) => `tactical.limiting.${factor}`),
+      ...GUIDED_LIMITING_FACTORS.map((factor) => `tactical.limiting.${factor}`),
       ...LOCK_STATUSES.map((status) => `combat.lock.${status}`),
       ...LOCK_STATUSES.map((status) => `tactical.targetingYou.${status}`),
       ...[...WEAPON_STOP_REASONS, ...ACTIVE_MODULE_STOP_REASONS].map((reason) => `combat.stop.${reason}`),
@@ -156,6 +166,10 @@ describe('message catalogue', () => {
       'combat.formula.lockTime',
       'combat.formula.capacitorEndurance',
       'combat.formula.repairRate',
+      'combat.formula.guidedApplication',
+      'combat.formula.passiveModifier',
+      ...MODIFIER_OPERATORS.map((operator) => `stat.modifier.${operator}`),
+      ...WEAPON_MODIFIER_ATTRIBUTES.map((attribute) => `stat.${attribute}`),
       ...combatOperandKeys().map((key) => `operand.${key}`),
     ];
 

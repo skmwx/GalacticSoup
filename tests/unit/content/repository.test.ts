@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { bundleDigest, createContentRepository, parseContentBundle } from '@adapters/content';
-import { ContentIntegrityError, ContentLookupError } from '@engine';
+import { ContentIntegrityError, ContentLookupError, weaponChargeGroupOf } from '@engine';
 import { asDefinitionId } from '@shared';
 
 import { compilePack, fixtureRepository, minimalPack } from '../../support/contentFixtures.ts';
@@ -148,7 +148,7 @@ describe('lookups', () => {
       throw new Error('expected a turret');
     }
 
-    expect(content.ammunitionInGroup(turret.turret.ammunitionGroup).map((entry) => entry.id)).toEqual(
+    expect(content.ammunitionInGroup(weaponChargeGroupOf(turret)).map((entry) => entry.id)).toEqual(
       ['ammo.test.charge'],
     );
     expect(content.ammunitionInGroup('no-such-group')).toEqual([]);

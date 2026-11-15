@@ -276,6 +276,21 @@ function ModuleEffect({ module }: { readonly module: ModuleRuntimeData }): JSX.E
           })}
         </p>
       );
+    case 'passive':
+      // A registered passive operator module: each modifier by name, with its
+      // authored magnitude (FeatureSpec02 5.1). Flat shield is in hit points;
+      // every other operator is a fraction.
+      return (
+        <p className={styles['muted']} data-passive-effect>
+          {translate('tactical.modules.passive.effect', {
+            values: Object.entries(effect.values)
+              .map(([operator, value]) => `${translate(`stat.modifier.${operator}`)} ${
+                operator === 'shieldCapacity' ? `+${formatStat(value, locale)}` : formatPercent(value, locale)
+              }`)
+              .join(' · '),
+          })}
+        </p>
+      );
     case 'resistance':
       return (
         <p className={styles['muted']}>

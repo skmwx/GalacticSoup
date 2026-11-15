@@ -25,6 +25,8 @@ import {
   slotKey,
   stacksIn,
   syncShipDerived,
+  engagementRangeKm,
+  weaponProfile,
   weaponState,
   type CampaignDraft,
   type EncounterInstanceState,
@@ -37,7 +39,14 @@ import {
   type SlotRef,
   type WreckState,
 } from '@engine/domain';
-import type { ContentRepository, HullDefinition, NpcProfileDefinition } from '@engine/ports';
+import {
+  isWeaponModule,
+  magazineSizeOf,
+  moduleAcceptsCharge,
+  type ContentRepository,
+  type HullDefinition,
+  type NpcProfileDefinition,
+} from '@engine/ports';
 import type { AmmunitionId, DefinitionId, ModuleId, SiteId } from '@shared';
 
 import {
@@ -533,11 +542,17 @@ function readSituation(context: SimulationContext, shipId: string): NpcSituation
   for (const fitted of combatant.fit) {
     const module = context.content.module(fitted.moduleId);
     if (module === undefined || !fitted.online) continue;
-    if (module.category === 'turret') {
+    if (isWeaponModule(module)) {
+      // A turret's reach is its optimal range; a launcher's is the flight
+      // distance of its charge, discounted for a target moving away
+      // (Technical Specification 10.3).
       const ammunition =
         fitted.charge === null ? undefined : context.content.ammunition(fitted.charge.ammunitionId);
-      const optimal = module.turret.optimalRangeKm * (ammunition?.optimalRangeMultiplier ?? 1);
-      bestOptimalRangeKm = Math.max(bestOptimalRangeKm ?? 0, optimal);
+      const profile = weaponProfile(module, ammunition, combatant.derived, context.content.rules.combat);
+      const reach = profile.kind === 'turret'
+        ? engagementRangeKm(profile)
+        : engagementRangeKm(profile) * context.content.rules.combat.npcGuidedReachFraction;
+      bestOptimalRangeKm = Math.max(bestOptimalRangeKm ?? 0, reach);
     }
     if (module.category === 'propulsion') hasPropulsion = true;
     if (module.category === 'armorRepairer' || module.category === 'shieldBooster') {
@@ -582,7 +597,7 @@ function apply(
     const key = slotKey(fitted.slot);
     const slot: SlotRef = fitted.slot;
 
-    if (module.category === 'turret') {
+    if (isWeaponModule(module)) {
       const weapon = weaponState(shipCombat(draft, shipId), key);
       if (intent.fire && !weapon.repeating) activateWeapon(context, shipId, slot, targetId);
       continue;
@@ -700,10 +715,12 @@ function createNpcShip(
   }
 
   // Reserve rounds sit in the hold, so the opponent reloads an empty magazine
-  // exactly as the player does (Functional Specification 9.4, 9.10).
-  const reserve = profile.loadout.reserveRounds ?? 0;
-  if (reserve > 0 && profile.loadout.ammunitionId !== undefined) {
-    service.add(cargo, profile.loadout.ammunitionId as DefinitionId, reserve, granted(reserve));
+  // exactly as the player does (Functional Specification 9.4, 9.10). Each
+  // weapon group carries its own authored, finite reserve.
+  for (const supply of profile.loadout.ammunition) {
+    if (supply.reserveRounds > 0) {
+      service.add(cargo, supply.ammunitionId as DefinitionId, supply.reserveRounds, granted(supply.reserveRounds));
+    }
   }
 
   syncShipDerived(draft, context.content, shipId);
@@ -748,8 +765,10 @@ interface PlannedNpcSlot {
 /**
  * Assigns an authored loadout to slots.
  *
- * A turret takes the next weapon slot and every other module takes the next
- * slot of the kind it declares, so an authored loadout never has to name slot
+ * A weapon takes the next weapon slot and loads the first authored charge it
+ * accepts, so turrets and launchers on one hull keep separate charges
+ * (Technical Specification 8.3); every other module takes the next slot of
+ * the kind it declares, so an authored loadout never has to name slot
  * indices that a hull change would invalidate. Content validation has already
  * proved the loadout fits the hull.
  */
@@ -767,13 +786,18 @@ export function planNpcFit(
     next[module.slot] = index + 1;
     if (index >= (hull.slots[module.slot] ?? 0)) continue;
     const slot: SlotRef = { kind: module.slot, index };
-    const ammunitionId = profile.loadout.ammunitionId ?? null;
-    const magazineSize = module.category === 'turret' ? module.turret.magazineSize : 0;
+    const weapon = isWeaponModule(module) ? module : null;
+    const supply = weapon === null
+      ? undefined
+      : profile.loadout.ammunition.find((entry) => {
+          const charge = content.ammunition(entry.ammunitionId);
+          return charge !== undefined && moduleAcceptsCharge(weapon, charge);
+        });
     planned.push({
       slot,
       moduleId,
-      ammunitionId: module.category === 'turret' ? ammunitionId : null,
-      magazineSize,
+      ammunitionId: supply?.ammunitionId ?? null,
+      magazineSize: weapon === null ? 0 : magazineSizeOf(weapon),
     });
   }
   return planned;

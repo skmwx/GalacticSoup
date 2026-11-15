@@ -8,7 +8,14 @@ import {
   type CampaignState,
   type DomainEvent,
 } from '@engine/domain';
-import type { ContentRepository, GuidancePredicate, GuidanceStepDefinition } from '@engine/ports';
+import {
+  isWeaponModule,
+  magazineSizeOf,
+  weaponChargeGroupOf,
+  type ContentRepository,
+  type GuidancePredicate,
+  type GuidanceStepDefinition,
+} from '@engine/ports';
 
 import type { SimulationContext } from './context';
 
@@ -128,8 +135,8 @@ export function shipReady(state: CampaignState, content: ContentRepository, capa
   const fit = shipFit(state.assets, shipId);
   for (const fitted of fit) {
     const module = content.module(fitted.moduleId);
-    if (!fitted.online || module?.category !== 'turret') continue;
-    if (fitted.charge === null || fitted.charge.quantity < module.turret.magazineSize) return false;
+    if (!fitted.online || module === undefined || !isWeaponModule(module)) continue;
+    if (fitted.charge === null || fitted.charge.quantity < magazineSizeOf(module)) return false;
   }
 
   const derived = deriveShipAttributes({ hull, fit, content, conditions: new Set<string>() });
@@ -149,7 +156,7 @@ export function spareRounds(state: CampaignState, content: ContentRepository): n
   const groups = new Set<string>();
   for (const fitted of shipFit(state.assets, shipId)) {
     const module = content.module(fitted.moduleId);
-    if (fitted.online && module?.category === 'turret') groups.add(module.turret.ammunitionGroup);
+    if (fitted.online && module !== undefined && isWeaponModule(module)) groups.add(weaponChargeGroupOf(module));
   }
   let rounds = 0;
   for (const group of groups) rounds += reserveRounds(state.assets, content, shipId, group);

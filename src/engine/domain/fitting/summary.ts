@@ -1,11 +1,15 @@
 import {
   DAMAGE_TYPES,
   DEFENSE_LAYERS,
+  isWeaponModule,
+  magazineSizeOf,
+  weaponFamilyOf,
   type ContentRepository,
   type DamageProfile,
   type DamageType,
   type DefenseLayer,
   type HullDefinition,
+  type WeaponFamily,
 } from '@engine/ports';
 import type { AmmunitionId, ModuleId } from '@shared';
 
@@ -14,6 +18,8 @@ import {
   resistanceAttribute,
   type DerivedShipAttributes,
 } from '../attributes';
+
+import { weaponProfile } from '../combat/weapons';
 
 import type { FitDescription, FitWarning, SlotRef } from './types';
 
@@ -34,6 +40,9 @@ import type { FitDescription, FitWarning, SlotRef } from './types';
 export interface WeaponSummary {
   readonly slot: SlotRef;
   readonly moduleId: ModuleId;
+  /** Turret fields apply to `turret`, flight fields to `guided`; the rest are 0. */
+  readonly kind: 'turret' | 'guided';
+  readonly family: WeaponFamily;
   readonly online: boolean;
   readonly ammunitionId: AmmunitionId | null;
   readonly loadedRounds: number;
@@ -44,9 +53,15 @@ export interface WeaponSummary {
   readonly absoluteRangeKm: number;
   readonly trackingRadiansPerSecond: number;
   readonly signatureResolutionMetres: number;
+  readonly flightSpeedKmPerSecond: number;
+  readonly flightTimeSeconds: number;
+  /** Reach against a stationary target (Functional Specification 9.6). */
+  readonly maximumFlightDistanceKm: number;
+  readonly explosionRadiusMetres: number;
+  readonly explosionVelocityKmPerSecond: number;
   readonly cycleSeconds: number;
   readonly capacitorPerCycle: number;
-  /** Listed damage of one shot, after the turret's own multiplier. */
+  /** Listed damage of one shot, after the weapon's and fitted family multipliers. */
   readonly damagePerShot: DamageProfile;
   readonly volleyDamage: number;
   readonly damagePerSecond: number;
@@ -117,35 +132,41 @@ export function summariseFit(input: FitSummaryInput): FitSummary {
       continue;
     }
 
-    if (module.category !== 'turret') {
+    if (!isWeaponModule(module)) {
       continue;
     }
 
-    const charge = fitted.charge === null ? null : content.ammunition(fitted.charge.ammunitionId);
+    const charge = fitted.charge === null ? undefined : content.ammunition(fitted.charge.ammunitionId);
     if (charge === undefined || fitted.charge === null) {
       warnings.push({ code: 'noAmmunition', slot: fitted.slot, params: { moduleId: module.id } });
     }
 
-    const turret = module.turret;
-    const optimalRangeKm = turret.optimalRangeKm * (charge?.optimalRangeMultiplier ?? 1);
-    const falloffKm = turret.falloffKm * (charge?.falloffMultiplier ?? 1);
+    const profile = weaponProfile(module, charge, derived, content.rules.combat);
     const cycleSeconds = module.activation?.cycleSeconds ?? 0;
-    const damagePerShot = scaledDamage(charge?.damagePerShot, turret.damageMultiplier);
+    const damagePerShot = profile.damagePerShot;
     const volleyDamage = DAMAGE_TYPES.reduce((total, type) => total + damagePerShot[type], 0);
+    const turret = profile.kind === 'turret' ? profile : null;
+    const guided = profile.kind === 'guided' ? profile : null;
 
     weapons.push({
       slot: fitted.slot,
       moduleId: module.id,
+      kind: profile.kind,
+      family: weaponFamilyOf(module),
       online: fitted.online,
       ammunitionId: charge?.id ?? null,
       loadedRounds: fitted.charge?.quantity ?? 0,
-      magazineSize: turret.magazineSize,
-      optimalRangeKm,
-      falloffKm,
-      absoluteRangeKm:
-        optimalRangeKm + content.rules.combat.absoluteRangeFalloffMultiples * falloffKm,
-      trackingRadiansPerSecond: turret.trackingRadiansPerSecond * (charge?.trackingMultiplier ?? 1),
-      signatureResolutionMetres: turret.signatureResolutionMetres,
+      magazineSize: magazineSizeOf(module),
+      optimalRangeKm: turret?.optimalRangeKm ?? 0,
+      falloffKm: turret?.falloffKm ?? 0,
+      absoluteRangeKm: turret?.absoluteRangeKm ?? 0,
+      trackingRadiansPerSecond: turret?.trackingRadiansPerSecond ?? 0,
+      signatureResolutionMetres: turret?.signatureResolutionMetres ?? 0,
+      flightSpeedKmPerSecond: guided?.flightSpeedKmPerSecond ?? 0,
+      flightTimeSeconds: guided?.flightTimeSeconds ?? 0,
+      maximumFlightDistanceKm: guided?.maximumFlightDistanceKm ?? 0,
+      explosionRadiusMetres: guided?.explosionRadiusMetres ?? 0,
+      explosionVelocityKmPerSecond: guided?.explosionVelocityKmPerSecond ?? 0,
       cycleSeconds,
       capacitorPerCycle: module.activation?.capacitorPerCycle ?? 0,
       damagePerShot,
@@ -212,14 +233,6 @@ function uncoveredDamageTypes(derived: DerivedShipAttributes): readonly DamageTy
       (layer) => attributeValue(derived, resistanceAttribute(layer, damageType)) === 0,
     ),
   );
-}
-
-function scaledDamage(profile: DamageProfile | undefined, multiplier: number): DamageProfile {
-  const scaled = {} as Record<DamageType, number>;
-  for (const damageType of DAMAGE_TYPES) {
-    scaled[damageType] = (profile?.[damageType] ?? 0) * multiplier;
-  }
-  return scaled;
 }
 
 function zeroLayers(): Record<DefenseLayer, number> {

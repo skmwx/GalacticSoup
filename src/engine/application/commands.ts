@@ -25,6 +25,10 @@ import {
   scheduleBoundary,
   WARP_ARRIVAL_BOUNDARY,
   WARP_PREPARED_BOUNDARY,
+  PROJECTILE_EXPIRY_BOUNDARY,
+  PROJECTILE_IMPACT_BOUNDARY,
+  resolveProjectileExpiry,
+  resolveProjectileImpact,
   type BoundaryResolvers,
   type ContinuousSystem,
 } from '@engine/simulation';
@@ -65,6 +69,8 @@ export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {
   [MODULE_CYCLE_BOUNDARY]: resolveModuleCycle,
   [WEAPON_CYCLE_BOUNDARY]: resolveWeaponCycle,
   [RELOAD_COMPLETE_BOUNDARY]: resolveReloadComplete,
+  [PROJECTILE_IMPACT_BOUNDARY]: resolveProjectileImpact,
+  [PROJECTILE_EXPIRY_BOUNDARY]: resolveProjectileExpiry,
   [NPC_DECISION_BOUNDARY]: resolveNpcDecision,
   [WRECK_EXPIRE_BOUNDARY]: resolveWreckExpiry,
 };

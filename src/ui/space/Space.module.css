@@ -358,6 +358,26 @@
   stroke-dasharray: 5 5;
 }
 
+.projectileOutgoing {
+  fill: none;
+  stroke: var(--gs-color-accent);
+  stroke-width: 1.5;
+}
+
+.projectileIncoming {
+  fill: var(--gs-color-danger);
+  stroke: var(--gs-color-text);
+  stroke-width: 1;
+}
+
+.range_flight {
+  fill: none;
+  stroke: var(--gs-color-accent);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+  opacity: 0.6;
+}
+
 .fireLine {
   stroke: var(--gs-color-accent);
   stroke-width: 1;

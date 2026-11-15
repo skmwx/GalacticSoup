@@ -25,7 +25,11 @@ export interface NpcSituation {
   readonly targetId: string;
   readonly rangeKm: number;
   readonly maxLockRangeKm: number;
-  /** The longest optimal range among its online turrets, or `null` when unarmed. */
+  /**
+   * The longest engagement range among its online weapons, or `null` when
+   * unarmed: a turret's optimal range, or a launcher's flight distance scaled
+   * by the guided reach fraction (Technical Specification 10.3).
+   */
   readonly bestOptimalRangeKm: number | null;
   readonly hasLock: boolean;
   /** Remaining share of the layer its repair module restores, or `null`. */

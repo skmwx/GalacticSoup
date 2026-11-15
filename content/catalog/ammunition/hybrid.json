@@ -1,12 +1,13 @@
 {
   "kind": "ammunition",
-  "$comment": "Charges for small hybrid turrets.",
+  "$comment": "Hybrid charges (FeatureSpec02 6.1). Blasters and railguns of one size share them. Iron extends range; plasma hits harder at short range and tracks better.",
   "definitions": [
     {
       "id": "ammo.hybrid.small.iron",
       "nameKey": "content.ammo.hybrid.small.iron.name",
       "descriptionKey": "content.ammo.hybrid.small.iron.description",
-      "group": "small-hybrid",
+      "family": "hybrid",
+      "size": "small",
       "damagePerShot": {
         "electromagnetic": 0,
         "thermal": 4,
@@ -14,8 +15,8 @@
         "explosive": 0
       },
       "optimalRangeMultiplier": 1.25,
-      "falloffMultiplier": 1.0,
-      "trackingMultiplier": 1.0,
+      "falloffMultiplier": 1,
+      "trackingMultiplier": 1,
       "volumeCubicMetres": 0.002,
       "referenceValueCredits": 11
     },
@@ -23,7 +24,8 @@
       "id": "ammo.hybrid.small.plasma",
       "nameKey": "content.ammo.hybrid.small.plasma.name",
       "descriptionKey": "content.ammo.hybrid.small.plasma.description",
-      "group": "small-hybrid",
+      "family": "hybrid",
+      "size": "small",
       "damagePerShot": {
         "electromagnetic": 0,
         "thermal": 11,
@@ -31,10 +33,46 @@
         "explosive": 0
       },
       "optimalRangeMultiplier": 0.7,
-      "falloffMultiplier": 1.0,
-      "trackingMultiplier": 1.0,
+      "falloffMultiplier": 1,
+      "trackingMultiplier": 1,
       "volumeCubicMetres": 0.002,
       "referenceValueCredits": 16
+    },
+    {
+      "id": "ammo.hybrid.medium.iron",
+      "nameKey": "content.ammo.hybrid.medium.iron.name",
+      "descriptionKey": "content.ammo.hybrid.medium.iron.description",
+      "family": "hybrid",
+      "size": "medium",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 4,
+        "kinetic": 6,
+        "explosive": 0
+      },
+      "optimalRangeMultiplier": 1.25,
+      "falloffMultiplier": 1,
+      "trackingMultiplier": 1,
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 36
+    },
+    {
+      "id": "ammo.hybrid.medium.plasma",
+      "nameKey": "content.ammo.hybrid.medium.plasma.name",
+      "descriptionKey": "content.ammo.hybrid.medium.plasma.description",
+      "family": "hybrid",
+      "size": "medium",
+      "damagePerShot": {
+        "electromagnetic": 0,
+        "thermal": 11,
+        "kinetic": 2,
+        "explosive": 0
+      },
+      "optimalRangeMultiplier": 0.7,
+      "falloffMultiplier": 1,
+      "trackingMultiplier": 1.15,
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 50
     }
   ]
 }

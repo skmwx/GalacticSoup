@@ -1,9 +1,14 @@
 import {
+  chargeGroupOf,
   DAMAGE_TYPES,
+  MODIFIER_OPERATORS,
+  type ModifierOperator,
   type AmmunitionDefinition,
   type ContentRepository,
+  type GuidedAmmunitionDefinition,
   type ModuleDefinition,
   type TradeableDefinition,
+  type TurretAmmunitionDefinition,
 } from '@engine/ports';
 import { InventoryError, type CampaignState } from '@engine/domain';
 import type { ComparisonData, ComparisonDirection, ComparisonEntryData } from '@protocol';
@@ -22,6 +27,19 @@ import { itemDataOf } from './items';
  *
  * @implements FUNC-19.6
  */
+
+/** The comparison group each passive operator's row belongs to. */
+const OPERATOR_GROUPS: Readonly<Record<ModifierOperator, string>> = {
+  shieldCapacity: 'defense',
+  shieldRechargeTime: 'defense',
+  signatureRadius: 'movement',
+  capacitorRechargeTime: 'capacitor',
+  projectileDamage: 'offense',
+  hybridDamage: 'offense',
+  turretTracking: 'offense',
+  guidedExplosionRadius: 'offense',
+  guidedExplosionVelocity: 'offense',
+};
 
 /** Which way is better for a row, when either way is. */
 type Preference = 'higher' | 'lower' | 'neutral';
@@ -74,7 +92,8 @@ function isComparable(
   const leftCharge = content.ammunition(left.id);
   const rightCharge = content.ammunition(right.id);
   if (leftCharge !== undefined || rightCharge !== undefined) {
-    return leftCharge !== undefined && rightCharge !== undefined && leftCharge.group === rightCharge.group;
+    return leftCharge !== undefined && rightCharge !== undefined &&
+      chargeGroupOf(leftCharge) === chargeGroupOf(rightCharge);
   }
 
   return content.item(left.id) !== undefined && content.item(right.id) !== undefined;
@@ -152,6 +171,12 @@ function moduleRows(modules: readonly ModuleDefinition[]): readonly Row[] {
       turretRow('signatureResolutionMetres', 'offense', 'neutral', (turret) => turret.signatureResolutionMetres),
     );
   }
+  if (categories.has('launcher')) {
+    rows.push(
+      launcherRow('damageMultiplier', 'offense', 'higher', (launcher) => launcher.damageMultiplier),
+      launcherRow('magazineSize', 'offense', 'higher', (launcher) => launcher.magazineSize),
+    );
+  }
   if (categories.has('propulsion')) {
     rows.push(
       {
@@ -184,17 +209,37 @@ function moduleRows(modules: readonly ModuleDefinition[]): readonly Row[] {
       ),
     });
   }
-  if (categories.has('resistancePlating')) {
+  if (categories.has('resistancePlating') || categories.has('resistanceAmplifier')) {
     for (const damageType of DAMAGE_TYPES) {
       rows.push({
         key: `resistanceBonus.${damageType}`,
         group: 'defense',
         preference: 'higher',
         value: moduleValue((module) =>
-          module.category === 'resistancePlating' ? module.resistance.bonuses[damageType] : null,
+          module.category === 'resistancePlating' || module.category === 'resistanceAmplifier'
+            ? module.resistance.bonuses[damageType]
+            : null,
         ),
       });
     }
+  }
+  // Each registered operator is one row, so two modules that share an effect
+  // line up and a different effect is visible as a missing value.
+  for (const operator of MODIFIER_OPERATORS) {
+    if (!modules.some((module) => 'modifiers' in module &&
+      module.modifiers.some((modifier) => modifier.operator === operator))) continue;
+    rows.push({
+      key: `modifier.${operator}`,
+      group: OPERATOR_GROUPS[operator],
+      // A signature increase is a cost; every other operator's authored
+      // magnitude is a benefit.
+      preference: operator === 'signatureRadius' ? 'lower' : 'higher',
+      value: moduleValue((module) =>
+        'modifiers' in module
+          ? module.modifiers.find((modifier) => modifier.operator === operator)?.value ?? null
+          : null,
+      ),
+    });
   }
   if (categories.has('capacitorBattery')) {
     rows.push(
@@ -235,19 +280,45 @@ const AMMUNITION_ROWS: readonly Row[] = [
     key: 'optimalRangeMultiplier',
     group: 'offense',
     preference: 'neutral',
-    value: chargeValue((charge) => charge.optimalRangeMultiplier),
+    value: turretChargeValue((charge) => charge.optimalRangeMultiplier),
   },
   {
     key: 'falloffMultiplier',
     group: 'offense',
     preference: 'neutral',
-    value: chargeValue((charge) => charge.falloffMultiplier),
+    value: turretChargeValue((charge) => charge.falloffMultiplier),
   },
   {
     key: 'trackingMultiplier',
     group: 'offense',
     preference: 'neutral',
-    value: chargeValue((charge) => charge.trackingMultiplier),
+    value: turretChargeValue((charge) => charge.trackingMultiplier),
+  },
+  // Guided application (Functional Specification 9.6): a smaller, faster
+  // explosion applies better; flight speed and time decide the reach.
+  {
+    key: 'flightSpeedKmPerSecond',
+    group: 'offense',
+    preference: 'higher',
+    value: guidedChargeValue((charge) => charge.guided.flightSpeedKmPerSecond),
+  },
+  {
+    key: 'flightTimeSeconds',
+    group: 'offense',
+    preference: 'higher',
+    value: guidedChargeValue((charge) => charge.guided.flightTimeSeconds),
+  },
+  {
+    key: 'explosionRadiusMetres',
+    group: 'offense',
+    preference: 'lower',
+    value: guidedChargeValue((charge) => charge.guided.explosionRadiusMetres),
+  },
+  {
+    key: 'explosionVelocityKmPerSecond',
+    group: 'offense',
+    preference: 'higher',
+    value: guidedChargeValue((charge) => charge.guided.explosionVelocityKmPerSecond),
   },
 ];
 
@@ -303,7 +374,35 @@ function moduleValue(
 function chargeValue(
   read: (charge: AmmunitionDefinition) => number,
 ): (definition: TradeableDefinition) => number | null {
-  return (definition) => ('group' in definition ? read(definition as AmmunitionDefinition) : null);
+  return (definition) => ('damagePerShot' in definition ? read(definition as AmmunitionDefinition) : null);
+}
+
+function turretChargeValue(
+  read: (charge: TurretAmmunitionDefinition) => number,
+): (definition: TradeableDefinition) => number | null {
+  return (definition) =>
+    'damagePerShot' in definition && definition.family !== 'guided' ? read(definition) : null;
+}
+
+function guidedChargeValue(
+  read: (charge: GuidedAmmunitionDefinition) => number,
+): (definition: TradeableDefinition) => number | null {
+  return (definition) =>
+    'damagePerShot' in definition && definition.family === 'guided' ? read(definition) : null;
+}
+
+function launcherRow(
+  key: string,
+  group: string,
+  preference: Preference,
+  read: (launcher: Extract<ModuleDefinition, { category: 'launcher' }>['launcher']) => number,
+): Row {
+  return {
+    key,
+    group,
+    preference,
+    value: moduleValue((module) => (module.category === 'launcher' ? read(module.launcher) : null)),
+  };
 }
 
 function turretRow(

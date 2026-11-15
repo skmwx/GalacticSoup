@@ -327,6 +327,10 @@ function WeaponDetail({ weapon, data, runner, targetId }: WeaponDetailProps): JS
   const { locale } = useLocalizer();
   const effect = targetId === null ? undefined : weapon.effects.find((entry) => entry.targetId === targetId);
 
+  if (weapon.kind === 'guided') {
+    return <GuidedDetail weapon={weapon} data={data} runner={runner} targetId={targetId} />;
+  }
+
   return (
     <>
       <ChargeChoice weapon={weapon} data={data} runner={runner} />
@@ -369,6 +373,85 @@ function WeaponDetail({ weapon, data, runner, targetId }: WeaponDetailProps): JS
           trace={effect.trace}
           label={translate('tactical.weapons.explain')}
           result={formatPercent(effect.hitChance, locale)}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * A launcher's detail (Functional Specification 9.6, 19.3): flight time and the
+ * stationary-target reach, explosion radius and velocity, and against the aimed
+ * target the estimated flight and the application its current signature and
+ * speed would allow, naming the factor that limits it. Application is shown as
+ * a share of listed damage, never as extra damage per second.
+ */
+function GuidedDetail({ weapon, data, runner, targetId }: WeaponDetailProps): JSX.Element {
+  const translate = useTranslate();
+  const { locale } = useLocalizer();
+  const effect = targetId === null ? undefined : weapon.effects.find((entry) => entry.targetId === targetId);
+  const guided = effect?.guided ?? null;
+
+  return (
+    <>
+      <ChargeChoice weapon={weapon} data={data} runner={runner} />
+      <dl className={styles['readouts']}>
+        <dt>{translate('tactical.weapons.flight')}</dt>
+        <dd data-flight-reach={String(weapon.maximumFlightDistanceKm)}>
+          {translate('tactical.weapons.flightValue', {
+            speed: formatStat(weapon.flightSpeedKmPerSecond, locale),
+            seconds: formatStat(weapon.flightTimeSeconds, locale),
+            reach: formatDistanceKm(weapon.maximumFlightDistanceKm, locale),
+          })}
+        </dd>
+        <dt>{translate('tactical.weapons.explosionTerm')}</dt>
+        <dd>
+          {translate('tactical.weapons.explosionValue', {
+            radius: formatStat(Math.round(weapon.explosionRadiusMetres * 10) / 10, locale),
+            velocity: formatStat(Math.round(weapon.explosionVelocityKmPerSecond * 1000) / 1000, locale),
+          })}
+        </dd>
+        {effect === undefined || guided === null ? null : (
+          <>
+            <dt>{translate('tactical.weapons.flightToTarget')}</dt>
+            <dd data-within-flight-range={String(guided.withinFlightRange)}>
+              {guided.withinFlightRange
+                ? translate('tactical.weapons.flightToTargetValue', {
+                    seconds: tenths(guided.estimatedFlightSeconds, locale),
+                  })
+                : translate('tactical.weapons.outOfFlightRange')}
+            </dd>
+            <dt>{translate('tactical.weapons.applicationTerm')}</dt>
+            <dd className={styles['hitChance']} data-application={String(guided.damageMultiplier)}>
+              {formatPercent(guided.damageMultiplier, locale)}
+            </dd>
+            <dt>{translate('tactical.weapons.strainTerm')}</dt>
+            <dd data-limiting={effect.limitingFactor}>
+              {translate(`tactical.limiting.${effect.limitingFactor}`, {
+                signature: formatPercent(guided.signatureFactor, locale),
+                speed: formatPercent(guided.speedFactor, locale),
+                range: formatStat(0, locale),
+                tracking: formatStat(0, locale),
+              })}
+            </dd>
+            <dt>{translate('tactical.weapons.expectedTerm')}</dt>
+            <dd>
+              {translate('tactical.weapons.expected', {
+                expected: formatStat(Math.round(effect.expectedDamagePerShot * 10) / 10, locale),
+                profile: describeProfile(effect.listedDamage, translate, locale),
+              })}
+            </dd>
+          </>
+        )}
+      </dl>
+      <p className={styles['muted']}>{translate('tactical.weapons.guidedNote')}</p>
+      {effect === undefined ? (
+        <p className={styles['muted']}>{translate('tactical.weapons.noEffect')}</p>
+      ) : (
+        <SubstitutedExplanation
+          trace={effect.trace}
+          label={translate('tactical.weapons.explainGuided')}
+          result={formatPercent(guided?.damageMultiplier ?? 0, locale)}
         />
       )}
     </>
@@ -451,6 +534,18 @@ function ChargeChoice({
 function ChargeSummary({ option }: { readonly option: AmmunitionOptionData }): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
+  if (option.maximumFlightDistanceKm > 0) {
+    return (
+      <p className={styles['muted']} data-charge-summary={option.ammunitionId}>
+        {translate('tactical.weapons.chargeSummaryGuided', {
+          profile: describeProfile(option.listedDamage, translate, locale),
+          reach: formatDistanceKm(option.maximumFlightDistanceKm, locale),
+          radius: formatStat(Math.round(option.explosionRadiusMetres * 10) / 10, locale),
+          velocity: formatStat(Math.round(option.explosionVelocityKmPerSecond * 1000) / 1000, locale),
+        })}
+      </p>
+    );
+  }
   return (
     <p className={styles['muted']} data-charge-summary={option.ammunitionId}>
       {translate('tactical.weapons.chargeSummary', {

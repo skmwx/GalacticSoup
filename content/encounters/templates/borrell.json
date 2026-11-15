@@ -1,6 +1,6 @@
 {
   "kind": "encounters",
-  "$comment": "The three repeatable MVP sites. MVP Scope 4.2.",
+  "$comment": "Repeatable sites. The MVP Scout, Patrol and Base, and from v0.2 phase 3 the Missile Picket, the first guided threat (FeatureSpec02 8.1). Phase 5 completes the twelve-site ladder.",
   "definitions": [
     {
       "id": "encounter.borrell.pirate-scout",
@@ -16,6 +16,23 @@
           "npcProfileId": "npc.pirate.scout",
           "count": 1,
           "spawnDistanceKm": 12
+        }
+      ]
+    },
+    {
+      "id": "encounter.borrell.missile-picket",
+      "nameKey": "content.encounter.borrell.missile-picket.name",
+      "descriptionKey": "content.encounter.borrell.missile-picket.description",
+      "rewardSummaryKey": "content.encounter.borrell.missile-picket.reward",
+      "tier": 1,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.signal-spire",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.lancer",
+          "count": 1,
+          "spawnDistanceKm": 14
         }
       ]
     },

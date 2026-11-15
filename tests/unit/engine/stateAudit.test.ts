@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  OLDEST_SUPPORTED_SAVE_FORMAT_VERSION,
   CAMPAIGN_STATE_VERSION,
   campaignDefinitionReferences,
   campaignStateHash,
@@ -251,12 +252,13 @@ describe('what the golden saves cover', () => {
     for (const name of GOLDEN_STATES) {
       for (const entry of (goldens[name].state as unknown as CampaignState).scheduler.entries) held.add(entry.kind);
     }
-    // A lock, a reload, an active-module cycle and the two short preparation
-    // timers are in flight for seconds at a time. Their snapshots are pinned
-    // by the combat, navigation and loss persistence tests instead.
+    // A lock, a reload, an active-module cycle, a guided projectile's contact
+    // and expiry and the two short preparation timers are in flight for
+    // seconds at a time. Their snapshots are pinned by the combat, guided
+    // weapon, navigation and loss persistence tests instead.
     const transient = [
-      'combat.lockComplete', 'combat.moduleCycle', 'combat.reloadComplete',
-      'navigation.dockComplete', 'navigation.warpPrepared',
+      'combat.lockComplete', 'combat.moduleCycle', 'combat.projectileExpiry', 'combat.projectileImpact',
+      'combat.reloadComplete', 'navigation.dockComplete', 'navigation.warpPrepared',
     ];
     expect(Object.keys(INSTALLED_BOUNDARY_RESOLVERS).filter((kind) => !held.has(kind)).sort()).toEqual(transient);
   });
@@ -272,10 +274,10 @@ describe('what the golden saves cover', () => {
 
 describe('the migration runner on a real save', () => {
   /**
-   * No save format has been released, so the shipped registry is empty (MVP
-   * plan section 2, rule 7). The runner and the load pipeline around it are
-   * held here to a fixture registry and a save as large as the MVP produces:
-   * an "older" document in which one part of the state has another name.
+   * The shipped registry holds the real 11 to 12 step; the runner and the load
+   * pipeline around it are also held to a fixture registry and a save as large
+   * as a real campaign produces: an "older" document in which one part of the
+   * state has another name.
    */
   const older = (envelope: SaveEnvelope): Record<string, unknown> => {
     const document = JSON.parse(JSON.stringify(envelope)) as Record<string, unknown>;
@@ -320,7 +322,9 @@ describe('the migration runner on a real save', () => {
     const stored = older(goldens.station);
     const before = JSON.stringify(stored);
 
-    const loaded = loadSave(stored, { content, oldestSupportedFormatVersion: SAVE_FORMAT_VERSION - 1 });
+    const loaded = loadSave(stored, {
+      content, migrations: [], oldestSupportedFormatVersion: SAVE_FORMAT_VERSION - 1,
+    });
 
     expect(loaded.ok).toBe(false);
     expect(!loaded.ok && loaded.error.messageKey).toBe('error.saveLoad.migrationFailed');
@@ -328,7 +332,8 @@ describe('the migration runner on a real save', () => {
   });
 
   it('refuses the earlier release format before any migration is tried [TECH-11.4, V02-AC-13]', () => {
-    const stored = older(goldens.station);
+    // A v0.1 save sits below the release boundary (ADR-V02-01).
+    const stored = { ...older(goldens.station), formatVersion: OLDEST_SUPPORTED_SAVE_FORMAT_VERSION - 1 };
     const before = JSON.stringify(stored);
 
     const loaded = loadSave(stored, { content, migrations: registry });

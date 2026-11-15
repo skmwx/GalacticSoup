@@ -273,7 +273,14 @@
         "capacitorPerCycle",
         "damagePerShot",
         "volleyDamage",
-        "damagePerSecond"
+        "damagePerSecond",
+        "kind",
+        "family",
+        "flightSpeedKmPerSecond",
+        "flightTimeSeconds",
+        "maximumFlightDistanceKm",
+        "explosionRadiusMetres",
+        "explosionVelocityKmPerSecond"
       ],
       "properties": {
         "slot": {
@@ -337,6 +344,39 @@
         },
         "damagePerSecond": {
           "type": "number"
+        },
+        "kind": {
+          "enum": [
+            "turret",
+            "guided"
+          ]
+        },
+        "family": {
+          "enum": [
+            "projectile",
+            "hybrid",
+            "guided"
+          ]
+        },
+        "flightSpeedKmPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flightTimeSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maximumFlightDistanceKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "explosionRadiusMetres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "explosionVelocityKmPerSecond": {
+          "type": "number",
+          "minimum": 0
         }
       }
     },

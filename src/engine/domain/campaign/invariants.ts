@@ -264,6 +264,10 @@ function validateSchedulerOwnership(state: CampaignState, add: Report): void {
     }
     for (const module of Object.values(ship.modules)) own(module.cycle?.boundaryEntryId);
   }
+  for (const projectile of state.combat.projectiles) {
+    own(projectile.expiryBoundaryEntryId);
+    own(projectile.impactBoundaryEntryId);
+  }
   for (const npc of state.encounter.active?.npcs ?? []) own(npc.decisionBoundaryEntryId);
   for (const wreck of Object.values(state.encounter.wrecks)) own(wreck.boundaryEntryId);
 

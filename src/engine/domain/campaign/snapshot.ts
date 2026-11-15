@@ -201,6 +201,9 @@ export function campaignDefinitionReferences(state: CampaignState): readonly Def
       }
     }
   }
+  for (const projectile of state.combat.projectiles) {
+    references.push(projectile.moduleId, projectile.ammunitionId);
+  }
   for (const stepId of Object.keys(state.onboarding.steps)) {
     if (isDefinitionId(stepId)) references.push(stepId);
   }

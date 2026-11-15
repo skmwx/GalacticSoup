@@ -69,6 +69,8 @@ export interface CombatFixtureOptions {
   readonly playerSystemModule?: ModuleId;
   /** Refit the player's first engineering slot before undocking. */
   readonly playerEngineeringModule?: ModuleId;
+  /** The target's weapon; an autocannon with fusion rounds by default. */
+  readonly targetWeapon?: { readonly moduleId: ModuleId; readonly ammunitionId: AmmunitionId; readonly rounds: number };
 }
 
 export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture {
@@ -144,7 +146,9 @@ export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture
     }
   }
 
-  const targetId = options.armTarget === false ? unarmedTarget(draft, content) : armedTarget(draft, content, station.id);
+  const targetId = options.armTarget === false
+    ? unarmedTarget(draft, content)
+    : armedTarget(draft, content, station.id, options.targetWeapon);
 
   const siteId = options.siteId ?? COMBAT_SITE_ID;
   const location: SiteLocation = {
@@ -194,16 +198,17 @@ function armedTarget(
   draft: CampaignDraft,
   content: ContentRepository,
   stationId: StationId,
+  weapon: CombatFixtureOptions['targetWeapon'] = { moduleId: AUTOCANNON, ammunitionId: FUSION, rounds: 20 },
 ): EntityId {
   const shipId = createTargetShip(draft, content, stationId);
   const hangar = hangarOf(draft, stationId);
   const service = inventoryService(draft, content);
-  service.add(hangar, AUTOCANNON, 1, granted(1));
-  service.add(hangar, FUSION, 20, granted(20));
+  service.add(hangar, weapon.moduleId, 1, granted(1));
+  service.add(hangar, weapon.ammunitionId, weapon.rounds, granted(weapon.rounds));
   const missing = applyDraftTo(draft, content, {
     shipId,
     baseRevision: draft.revision,
-    slots: { [FIRST_WEAPON]: { moduleId: AUTOCANNON, online: true, ammunitionId: FUSION } },
+    slots: { [FIRST_WEAPON]: { moduleId: weapon.moduleId, online: true, ammunitionId: weapon.ammunitionId } },
   });
   if (missing.length > 0) throw new Error(`The test target could not be fitted: ${missing[0]?.definitionId ?? ''}`);
   return shipId;

@@ -129,7 +129,12 @@ describe('the golden campaign', () => {
     expect(state('wreck')['encounter'].active.status).toBe('completed');
     expect(Object.keys(state('wreck')['encounter'].wrecks).length).toBeGreaterThan(0);
     const completions = state('completed-progression')['encounter'].completions as Record<string, number>;
-    expect(Object.keys(completions).sort()).toEqual(content.encounters().map((encounter) => encounter.id).sort());
+    // The career flies the three MVP sites; the later ladder is not part of it.
+    expect(Object.keys(completions).sort()).toEqual([
+      'encounter.borrell.pirate-base',
+      'encounter.borrell.pirate-patrol',
+      'encounter.borrell.pirate-scout',
+    ]);
     expect(Object.values(completions).every((count) => count >= 1)).toBe(true);
   });
 

@@ -70,7 +70,10 @@ export function DestinationChooser({
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const stations = data.destinations?.stations ?? [];
-  const encounters = [...(data.destinations?.destinations ?? [])].sort((a, b) => a.tier - b.tier);
+  // Easiest first: by tier, then within a tier by the bounty on offer, so the
+  // onboarding site stays first as the ladder grows (FeatureSpec02 8.2).
+  const encounters = [...(data.destinations?.destinations ?? [])]
+    .sort((a, b) => a.tier - b.tier || a.totalBountyCredits - b.totalBountyCredits);
   const bookmarks = data.destinations?.bookmarks ?? [];
   const choices: readonly Choice[] = [
     ...stations.map((entry): Choice => ({ kind: 'station', key: `station:${entry.stationId}`, entry })),

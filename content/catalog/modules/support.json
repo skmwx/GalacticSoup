@@ -1,0 +1,122 @@
+{
+  "kind": "modules",
+  "$comment": "Passive defence and weapon support (FeatureSpec02 5.1). Each occupies an engineering slot that could otherwise hold tank or capacitor support, so its effect has to earn the slot. Non-sized modules list the hull sizes they suit. Every modifier names a registered operator (Technical Specification 10.2). Statistics are preliminary and tuned in v0.2 phase 6.",
+  "definitions": [
+    {
+      "id": "module.plating.armor.small",
+      "nameKey": "content.module.plating.armor.small.name",
+      "descriptionKey": "content.module.plating.armor.small.description",
+      "slot": "engineering",
+      "size": "small",
+      "fitting": { "powerUse": 1, "processingUse": 5 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 4000,
+      "category": "resistancePlating",
+      "resistance": {
+        "layer": "armor",
+        "bonuses": { "electromagnetic": 0.1, "thermal": 0.1, "kinetic": 0.1, "explosive": 0.1 }
+      }
+    },
+    {
+      "id": "module.amplifier.shield",
+      "nameKey": "content.module.amplifier.shield.name",
+      "descriptionKey": "content.module.amplifier.shield.description",
+      "slot": "engineering",
+      "suitsSizes": ["small", "medium"],
+      "fitting": { "powerUse": 1, "processingUse": 12 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 5500,
+      "category": "resistanceAmplifier",
+      "resistance": {
+        "layer": "shield",
+        "bonuses": { "electromagnetic": 0.15, "thermal": 0.15, "kinetic": 0.1, "explosive": 0.1 }
+      }
+    },
+    {
+      "id": "module.shield.extender",
+      "nameKey": "content.module.shield.extender.name",
+      "descriptionKey": "content.module.shield.extender.description",
+      "slot": "engineering",
+      "suitsSizes": ["small", "medium"],
+      "fitting": { "powerUse": 3, "processingUse": 15 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 6500,
+      "category": "shieldExtender",
+      "modifiers": [
+        { "operator": "shieldCapacity", "value": 150 },
+        { "operator": "signatureRadius", "value": 0.08 }
+      ]
+    },
+    {
+      "id": "module.shield.recharger",
+      "nameKey": "content.module.shield.recharger.name",
+      "descriptionKey": "content.module.shield.recharger.description",
+      "slot": "engineering",
+      "suitsSizes": ["small", "medium"],
+      "fitting": { "powerUse": 1, "processingUse": 12 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 5000,
+      "category": "shieldRecharger",
+      "modifiers": [
+        { "operator": "shieldRechargeTime", "value": 0.3 }
+      ]
+    },
+    {
+      "id": "module.upgrade.damage.projectile",
+      "nameKey": "content.module.upgrade.damage.projectile.name",
+      "descriptionKey": "content.module.upgrade.damage.projectile.description",
+      "slot": "engineering",
+      "suitsSizes": ["small", "medium"],
+      "fitting": { "powerUse": 1, "processingUse": 5 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 7000,
+      "category": "weaponUpgrade",
+      "modifiers": [
+        { "operator": "projectileDamage", "value": 0.1 }
+      ]
+    },
+    {
+      "id": "module.upgrade.damage.hybrid",
+      "nameKey": "content.module.upgrade.damage.hybrid.name",
+      "descriptionKey": "content.module.upgrade.damage.hybrid.description",
+      "slot": "engineering",
+      "suitsSizes": ["small", "medium"],
+      "fitting": { "powerUse": 1, "processingUse": 5 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 7000,
+      "category": "weaponUpgrade",
+      "modifiers": [
+        { "operator": "hybridDamage", "value": 0.1 }
+      ]
+    },
+    {
+      "id": "module.upgrade.tracking",
+      "nameKey": "content.module.upgrade.tracking.name",
+      "descriptionKey": "content.module.upgrade.tracking.description",
+      "slot": "engineering",
+      "suitsSizes": ["small", "medium"],
+      "fitting": { "powerUse": 1, "processingUse": 5 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 6500,
+      "category": "weaponUpgrade",
+      "modifiers": [
+        { "operator": "turretTracking", "value": 0.15 }
+      ]
+    },
+    {
+      "id": "module.upgrade.guided",
+      "nameKey": "content.module.upgrade.guided.name",
+      "descriptionKey": "content.module.upgrade.guided.description",
+      "slot": "engineering",
+      "suitsSizes": ["small", "medium"],
+      "fitting": { "powerUse": 1, "processingUse": 5 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 7000,
+      "category": "weaponUpgrade",
+      "modifiers": [
+        { "operator": "guidedExplosionRadius", "value": 0.1 },
+        { "operator": "guidedExplosionVelocity", "value": 0.1 }
+      ]
+    }
+  ]
+}

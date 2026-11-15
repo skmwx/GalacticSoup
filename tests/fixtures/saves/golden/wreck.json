@@ -1,10 +1,10 @@
 {
  "format": "galactic-soup/save",
- "formatVersion": 11,
- "protocolVersion": 19,
+ "formatVersion": 12,
+ "protocolVersion": 20,
  "engineVersion": "0.2.0",
- "contentVersion": "0.2.0+9f5f4cec9c4a",
- "contentHash": "9f5f4cec9c4ab7c95b5f3ef13a139b8b83bc033822c1121a8dba87957f5d4e54",
+ "contentVersion": "0.2.0+dc9d8e5a2fb4",
+ "contentHash": "dc9d8e5a2fb4cf5e70005fa14731968ab6eabbcabc9cef1073b7d52f26bd2ca2",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
@@ -3374,7 +3374,8 @@
      "shipId": "ce0f36ba8e20edb4ebcba9757-e678",
      "count": 1
     }
-   ]
+   ],
+   "projectiles": []
   },
   "economy": {
    "stations": {
@@ -3399,6 +3400,86 @@
       }
      },
      "listings": {
+      "ammo.guided.medium.em": {
+       "itemId": "ammo.guided.medium.em",
+       "stock": 500,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.guided.medium.explosive": {
+       "itemId": "ammo.guided.medium.explosive",
+       "stock": 500,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.guided.medium.kinetic": {
+       "itemId": "ammo.guided.medium.kinetic",
+       "stock": 500,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.guided.medium.thermal": {
+       "itemId": "ammo.guided.medium.thermal",
+       "stock": 500,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.guided.small.em": {
+       "itemId": "ammo.guided.small.em",
+       "stock": 500,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.guided.small.explosive": {
+       "itemId": "ammo.guided.small.explosive",
+       "stock": 500,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.guided.small.kinetic": {
+       "itemId": "ammo.guided.small.kinetic",
+       "stock": 500,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.guided.small.thermal": {
+       "itemId": "ammo.guided.small.thermal",
+       "stock": 500,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.hybrid.medium.iron": {
+       "itemId": "ammo.hybrid.medium.iron",
+       "stock": 1400,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.hybrid.medium.plasma": {
+       "itemId": "ammo.hybrid.medium.plasma",
+       "stock": 1400,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
       "ammo.hybrid.small.iron": {
        "itemId": "ammo.hybrid.small.iron",
        "stock": 1500,
@@ -3410,6 +3491,22 @@
       "ammo.hybrid.small.plasma": {
        "itemId": "ammo.hybrid.small.plasma",
        "stock": 1100,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.projectile.medium.fusion": {
+       "itemId": "ammo.projectile.medium.fusion",
+       "stock": 1400,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "ammo.projectile.medium.phased": {
+       "itemId": "ammo.projectile.medium.phased",
+       "stock": 1400,
        "stockAccumulator": 0,
        "lastProcessedHour": 0,
        "eventFactor": 1,
@@ -3479,9 +3576,49 @@
        "eventFactor": 1,
        "version": 1
       },
+      "module.amplifier.shield": {
+       "itemId": "module.amplifier.shield",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.capacitor.battery.medium": {
+       "itemId": "module.capacitor.battery.medium",
+       "stock": 5,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
       "module.capacitor.battery.small": {
        "itemId": "module.capacitor.battery.small",
        "stock": 16,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.capacitor.recharger": {
+       "itemId": "module.capacitor.recharger",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.launcher.guided.medium": {
+       "itemId": "module.launcher.guided.medium",
+       "stock": 5,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.launcher.guided.small": {
+       "itemId": "module.launcher.guided.small",
+       "stock": 10,
        "stockAccumulator": 0,
        "lastProcessedHour": 0,
        "eventFactor": 1,
@@ -3495,9 +3632,25 @@
        "eventFactor": 1,
        "version": 1
       },
+      "module.propulsion.afterburner.medium": {
+       "itemId": "module.propulsion.afterburner.medium",
+       "stock": 5,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
       "module.propulsion.afterburner.small": {
        "itemId": "module.propulsion.afterburner.small",
        "stock": 12,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.repair.armor.medium": {
+       "itemId": "module.repair.armor.medium",
+       "stock": 5,
        "stockAccumulator": 0,
        "lastProcessedHour": 0,
        "eventFactor": 1,
@@ -3511,9 +3664,49 @@
        "eventFactor": 1,
        "version": 1
       },
+      "module.shield.booster.medium": {
+       "itemId": "module.shield.booster.medium",
+       "stock": 5,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
       "module.shield.booster.small": {
        "itemId": "module.shield.booster.small",
        "stock": 20,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.shield.extender": {
+       "itemId": "module.shield.extender",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.shield.recharger": {
+       "itemId": "module.shield.recharger",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.turret.artillery.small": {
+       "itemId": "module.turret.artillery.small",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.turret.autocannon.medium": {
+       "itemId": "module.turret.autocannon.medium",
+       "stock": 5,
        "stockAccumulator": 0,
        "lastProcessedHour": 0,
        "eventFactor": 1,
@@ -3527,9 +3720,57 @@
        "eventFactor": 1,
        "version": 1
       },
+      "module.turret.blaster.small": {
+       "itemId": "module.turret.blaster.small",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.turret.railgun.medium": {
+       "itemId": "module.turret.railgun.medium",
+       "stock": 5,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
       "module.turret.railgun.small": {
        "itemId": "module.turret.railgun.small",
        "stock": 9,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.upgrade.damage.hybrid": {
+       "itemId": "module.upgrade.damage.hybrid",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.upgrade.damage.projectile": {
+       "itemId": "module.upgrade.damage.projectile",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.upgrade.guided": {
+       "itemId": "module.upgrade.guided",
+       "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.upgrade.tracking": {
+       "itemId": "module.upgrade.tracking",
+       "stock": 10,
        "stockAccumulator": 0,
        "lastProcessedHour": 0,
        "eventFactor": 1,
@@ -3625,6 +3866,7 @@
    "knownDestinationSiteIds": [
     "site.borrell.derelict-lane",
     "site.borrell.outpost-cradle",
+    "site.borrell.signal-spire",
     "site.borrell.station",
     "site.borrell.verge"
    ],
@@ -4332,7 +4574,7 @@
     }
    }
   },
-  "stateVersion": 11,
+  "stateVersion": 12,
   "campaignId": "ce0f36ba8e20edb4ebcba9757",
   "displayName": "Test Pilot",
   "seed": "bb22cc33dd44ee55ff6677889900aa11",
@@ -4413,5 +4655,5 @@
    "nextInsertionOrdinal": 595
   }
  },
- "checksum": "3f0e5038076fbe8c69995775627958082a0b7f0b2981672543ba7ccffc09ce97"
+ "checksum": "3fedd9c156349880f1a0cc0fc6df654efc0785052b470be25274a41015864a10"
 }

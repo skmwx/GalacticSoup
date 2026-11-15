@@ -1,4 +1,4 @@
-import type { ContentRepository, DamageProfile } from '@engine/ports';
+import { isWeaponModule, moduleAcceptsCharge, type ContentRepository, type DamageProfile } from '@engine/ports';
 import type { MessageKey } from '@shared';
 
 import { stacksIn } from '../assets/inventory';
@@ -108,11 +108,12 @@ export function disablingEffects(
     if (cost > 0 && ship.condition.capacitorCharge + 1e-9 < cost) {
       effects.push({ kind: 'capacitorDepleted', slot: { ...fitted.slot }, moduleId: fitted.moduleId });
     }
-    if (module.category !== 'turret') continue;
+    if (!isWeaponModule(module)) continue;
     const loaded = fitted.charge?.quantity ?? 0;
-    const reloadable = cargo.some((stack) =>
-      stack.state.kind === 'plain' &&
-      content.ammunition(stack.definitionId)?.group === module.turret.ammunitionGroup);
+    const reloadable = cargo.some((stack) => {
+      const charge = content.ammunition(stack.definitionId);
+      return stack.state.kind === 'plain' && charge !== undefined && moduleAcceptsCharge(module, charge);
+    });
     if (loaded === 0 && !reloadable) {
       effects.push({ kind: 'ammunitionExhausted', slot: { ...fitted.slot }, moduleId: fitted.moduleId });
     }

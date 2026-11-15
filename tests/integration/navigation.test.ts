@@ -65,8 +65,8 @@ describe.each(['direct', 'channel'] as const)('phase 9 navigation through %s tra
     await create(client);
 
     const destinations = await ask(client, 'navigation.destinations', {});
-    expect(destinations.destinations).toHaveLength(3);
-    const scout = destinations.destinations.find((entry) => entry.tier === 1);
+    expect(destinations.destinations).toHaveLength(4);
+    const scout = destinations.destinations.find((entry) => entry.encounterId === 'encounter.borrell.pirate-scout');
     expect(scout).toBeDefined();
     if (scout === undefined) throw new Error('No tier-one destination.');
     await ask(client, 'navigation.selectDestination', { encounterId: scout.encounterId });
