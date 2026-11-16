@@ -108,6 +108,12 @@ export interface ActiveModuleCycleState {
   readonly completesAtMs: number;
   readonly boundaryEntryId: EntityId;
   readonly committedCapacitor: number;
+  /**
+   * The target a targeted module (the web) checked when this cycle started;
+   * `null` for a module that acts on its own ship
+   * (Functional Specification 9.9).
+   */
+  readonly targetId: string | null;
 }
 
 export const ACTIVE_MODULE_STOP_REASONS = [
@@ -115,12 +121,22 @@ export const ACTIVE_MODULE_STOP_REASONS = [
   'insufficientCapacitor',
   'destroyed',
   'siteLeft',
+  // A targeted module stops when its target, lock or range fails at a cycle
+  // start (Functional Specification 9.9).
+  'lockLost',
+  'targetMissing',
+  'outOfRange',
 ] as const;
 export type ActiveModuleStopReason = (typeof ACTIVE_MODULE_STOP_REASONS)[number];
 
 export interface ActiveModuleState {
   /** The operator should continue starting cycles until deactivated. */
   readonly repeating: boolean;
+  /**
+   * The locked target a targeted module acts on while repeating, or `null`
+   * for a module that acts on its own ship or is not repeating.
+   */
+  readonly targetId: string | null;
   readonly cycle: ActiveModuleCycleState | null;
   /** A repeating module with no cycle retries after capacitor regeneration. */
   readonly waitingForCapacitor: boolean;
@@ -184,6 +200,26 @@ export interface DestructionCombatEvent {
 }
 
 /**
+ * Speed reductions one source applied to one target, aggregated like damage
+ * (Technical Specification 10.3), so a loss report can name the control
+ * effects that held the ship.
+ */
+export interface ControlCombatEvent {
+  readonly kind: 'control';
+  readonly firstAtMs: number;
+  readonly lastAtMs: number;
+  readonly sourceId: string;
+  readonly targetId: string;
+  readonly slotKey: string;
+  readonly moduleId: string;
+  readonly count: number;
+  /** The factor of the latest application. */
+  readonly speedFactor: number;
+  /** When the latest application expires. */
+  readonly expiresAtMs: number;
+}
+
+/**
  * The bounded, persisted combat recorder (Technical Specification 10.3).
  * Routine repeated damage and repairs are aggregated while the semantic
  * domain events for each individual completion are still published.
@@ -191,7 +227,8 @@ export interface DestructionCombatEvent {
 export type CombatEventRecord =
   | AggregatedDamageEvent
   | AggregatedRepairEvent
-  | DestructionCombatEvent;
+  | DestructionCombatEvent
+  | ControlCombatEvent;
 
 /**
  * A guided projectile in flight (Functional Specification 9.6; Technical
@@ -229,6 +266,39 @@ export interface ProjectileState {
   readonly impactBoundaryEntryId: EntityId | null;
 }
 
+/**
+ * A temporary speed reduction on one ship (Functional Specification 9.9;
+ * Technical Specification 8.2).
+ *
+ * It belongs to its target: it lives only while that ship stays in the
+ * loaded site, and it is removed when that ship leaves or is destroyed. Its
+ * source is a retained attribution - the applying ship's id, the slot and the
+ * module - kept as values, so the effect stays valid for its remaining
+ * duration after the source is destroyed or leaves. One source refreshes its
+ * own effect rather than adding another; effects of different sources
+ * multiply.
+ */
+export interface SpeedEffectState {
+  /** Entity id of the effect; it owns its expiry boundary. */
+  readonly id: EntityId;
+  /** The affected ship. */
+  readonly targetId: EntityId;
+  /** Retained source attribution: the applying ship's entity id. */
+  readonly sourceShipId: EntityId;
+  /** The slot of the source module, so one source is one module. */
+  readonly sourceSlotKey: string;
+  readonly moduleId: ModuleId;
+  /**
+   * The factor the target's maximum normal speed is multiplied by while the
+   * effect lasts, from 0 (exclusive) to 1, resolved when it was applied.
+   */
+  readonly speedFactor: number;
+  /** When the effect was applied or last refreshed. */
+  readonly appliedAtMs: number;
+  readonly expiresAtMs: number;
+  readonly expiryBoundaryEntryId: EntityId;
+}
+
 export interface CombatState {
   /** Changes whenever any combat runtime changes, for projection binding. */
   readonly version: number;
@@ -238,6 +308,8 @@ export interface CombatState {
   readonly events: readonly CombatEventRecord[];
   /** Guided projectiles in flight in the loaded site, in launch order. */
   readonly projectiles: readonly ProjectileState[];
+  /** Temporary speed reductions on ships in the loaded site, in application order. */
+  readonly speedEffects: readonly SpeedEffectState[];
 }
 
 /** One resolved guided impact (Functional Specification 9.6). */
@@ -276,7 +348,7 @@ export interface ShotOutcome {
 /** A fitted module category that has a player-controlled repeating operator. */
 export type OperatedModuleCategory = Extract<
   ModuleCategory,
-  'propulsion' | 'shieldBooster' | 'armorRepairer'
+  'propulsion' | 'shieldBooster' | 'armorRepairer' | 'web'
 >;
 
 /** Applied damage by component is kept structurally complete. */

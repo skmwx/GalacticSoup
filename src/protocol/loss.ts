@@ -37,7 +37,11 @@ export interface LossFinalDamageData {
 }
 
 export interface LossDisablingEffectData {
-  readonly kind: 'capacitorDepleted' | 'ammunitionExhausted';
+  /**
+   * `speedReduced` names a hostile web that was holding the ship; its slot and
+   * module are the source's, not the lost ship's own.
+   */
+  readonly kind: 'capacitorDepleted' | 'ammunitionExhausted' | 'speedReduced';
   readonly slot: SlotRefData;
   readonly moduleId: string;
   readonly moduleNameKey: string;

@@ -197,6 +197,31 @@ function moduleRows(modules: readonly ModuleDefinition[]): readonly Row[] {
       },
     );
   }
+  if (categories.has('web')) {
+    // What a web does to its target (FeatureSpec02 6.3). It is situational
+    // control, never extra damage.
+    rows.push(
+      {
+        key: 'webRangeKm',
+        group: 'movement',
+        preference: 'higher',
+        value: moduleValue((module) => (module.category === 'web' ? module.web.rangeKm : null)),
+      },
+      {
+        key: 'webSpeedReductionFraction',
+        group: 'movement',
+        preference: 'higher',
+        value: moduleValue((module) => (module.category === 'web' ? module.web.speedReductionFraction : null)),
+      },
+      {
+        key: 'webEffectDurationSeconds',
+        group: 'movement',
+        preference: 'higher',
+        value: moduleValue((module) =>
+          module.category === 'web' ? module.web.effectDurationSeconds ?? module.activation.cycleSeconds : null),
+      },
+    );
+  }
   if (categories.has('shieldBooster') || categories.has('armorRepairer')) {
     rows.push({
       key: 'repairHitPoints',

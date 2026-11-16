@@ -853,9 +853,21 @@
         "destroyed",
         "destroyedAtMs",
         "layers",
-        "activeEffects"
+        "activeEffects",
+        "speedEffects",
+        "speed"
       ],
       "properties": {
+        "speedEffects": {
+          "description": "Temporary speed reductions on the ship, each with its source, strength and remaining time (Functional Specification 9.9).",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/speedEffect"
+          }
+        },
+        "speed": {
+          "$ref": "#/$defs/speedLimit"
+        },
         "shipId": {
           "$ref": "#/$defs/entityId"
         },
@@ -887,6 +899,127 @@
           "items": {
             "$ref": "#/$defs/activeEffect"
           }
+        }
+      }
+    },
+    "speedEffect": {
+      "description": "One temporary speed reduction. Its source is a retained attribution and may no longer be present (Functional Specification 9.9).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effectId",
+        "sourceId",
+        "sourceSlot",
+        "sourcePresent",
+        "fromPlayer",
+        "moduleId",
+        "nameKey",
+        "speedFactor",
+        "appliedAtMs",
+        "expiresAtMs",
+        "remainingSeconds"
+      ],
+      "properties": {
+        "effectId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "sourceSlot": {
+          "type": "string"
+        },
+        "sourcePresent": {
+          "type": "boolean"
+        },
+        "fromPlayer": {
+          "type": "boolean"
+        },
+        "moduleId": {
+          "type": "string"
+        },
+        "nameKey": {
+          "type": "string"
+        },
+        "speedFactor": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "appliedAtMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expiresAtMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "remainingSeconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "speedLimit": {
+      "description": "A ship's maximum normal speed with and without the speed effects on it, the floor no effect goes below, and the calculation (Functional Specification 9.9, 19.6).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unaffectedMaximumKmPerSecond",
+        "maximumKmPerSecond",
+        "floorKmPerSecond",
+        "currentKmPerSecond",
+        "atFloor",
+        "trace"
+      ],
+      "properties": {
+        "unaffectedMaximumKmPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maximumKmPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "floorKmPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currentKmPerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "atFloor": {
+          "type": "boolean"
+        },
+        "trace": {
+          "$ref": "#/$defs/formulaTrace"
+        }
+      }
+    },
+    "moduleTarget": {
+      "description": "Whether a targeted module (the web) could act on one locked target now, and why not (Functional Specification 9.9).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetId",
+        "rangeKm",
+        "withinRange",
+        "command"
+      ],
+      "properties": {
+        "targetId": {
+          "$ref": "#/$defs/objectId"
+        },
+        "rangeKm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "withinRange": {
+          "type": "boolean"
+        },
+        "command": {
+          "$ref": "#/$defs/commandAvailability"
         }
       }
     },
@@ -1073,7 +1206,8 @@
         "startedAtMs",
         "completesAtMs",
         "remainingSeconds",
-        "committedCapacitor"
+        "committedCapacitor",
+        "targetId"
       ],
       "properties": {
         "startedAtMs": {
@@ -1091,6 +1225,16 @@
         "committedCapacitor": {
           "type": "number",
           "minimum": 0
+        },
+        "targetId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/objectId"
+            }
+          ]
         }
       }
     },
@@ -1114,7 +1258,8 @@
             "repair",
             "resistance",
             "capacitorSupport",
-            "passive"
+            "passive",
+            "web"
           ]
         },
         "layer": {
@@ -1163,9 +1308,31 @@
         "cycle",
         "stopReason",
         "effect",
-        "commands"
+        "commands",
+        "targeted",
+        "targetId",
+        "targets"
       ],
       "properties": {
+        "targeted": {
+          "type": "boolean"
+        },
+        "targetId": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/objectId"
+            }
+          ]
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/moduleTarget"
+          }
+        },
         "slot": {
           "$ref": "#/$defs/slotRef"
         },
@@ -1363,6 +1530,60 @@
             },
             "count": {
               "const": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "firstAtMs",
+            "lastAtMs",
+            "sourceId",
+            "targetId",
+            "slotKey",
+            "moduleId",
+            "count",
+            "speedFactor",
+            "expiresAtMs"
+          ],
+          "properties": {
+            "kind": {
+              "const": "control"
+            },
+            "firstAtMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "lastAtMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sourceId": {
+              "$ref": "#/$defs/entityId"
+            },
+            "targetId": {
+              "$ref": "#/$defs/entityId"
+            },
+            "slotKey": {
+              "type": "string"
+            },
+            "moduleId": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "speedFactor": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1
+            },
+            "expiresAtMs": {
+              "type": "integer",
+              "minimum": 0
             }
           }
         }

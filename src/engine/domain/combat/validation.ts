@@ -6,6 +6,7 @@ import { isEntityId } from '../campaign/identity';
 import type { CampaignState } from '../campaign/state';
 import { parseSlotKey } from '../fitting/types';
 
+import { isSpeedEffectState, validateSpeedEffects } from './effects';
 import { isProjectileState, validateProjectiles } from './projectiles';
 import { COMBAT_EVENT_LIMIT } from './recorder';
 import { combatantOf } from './state';
@@ -42,8 +43,9 @@ export const RELOAD_COMPLETE_KIND = 'combat.reloadComplete';
 export const MODULE_CYCLE_KIND = 'combat.moduleCycle';
 
 export function isCombatState(value: unknown): value is CombatState {
-  if (!shape(value, ['version', 'ships', 'events', 'projectiles'])) return false;
+  if (!shape(value, ['version', 'ships', 'events', 'projectiles', 'speedEffects'])) return false;
   if (!Array.isArray(value['projectiles']) || !value['projectiles'].every(isProjectileState)) return false;
+  if (!Array.isArray(value['speedEffects']) || !value['speedEffects'].every(isSpeedEffectState)) return false;
   if (!count(value['version']) || value['version'] < 1) return false;
   const ships = value['ships'];
   if (!record(ships)) return false;
@@ -66,6 +68,7 @@ export function validateCombat(
   const fail = (path: string, detail: string) => add('combatConsistency', `combat.${path}`, detail);
   const site = state.navigation.currentSite;
   validateProjectiles(state, fail);
+  validateSpeedEffects(state, fail, content);
   if (content !== undefined) {
     state.combat.projectiles.forEach((projectile, index) => {
       if (content.module(projectile.moduleId)?.category !== 'launcher') {
@@ -171,6 +174,9 @@ export function validateCombat(
       if (module.waitingForCapacitor && (!module.repeating || module.cycle !== null)) {
         fail(path, 'Only a repeating module without a cycle may wait for capacitor.');
       }
+      if (module.targetId !== null && !targets.has(module.targetId)) {
+        fail(path, 'A targeted module may only name a target this ship has locked.');
+      }
       if (module.cycle !== null) {
         if (module.cycle.completesAtMs < module.cycle.startedAtMs) {
           fail(`${path}.cycle`, 'A module cycle cannot complete before it started.');
@@ -195,9 +201,14 @@ export function validateCombat(
           definition?.activation === undefined ||
           (definition.category !== 'propulsion' &&
             definition.category !== 'shieldBooster' &&
-            definition.category !== 'armorRepairer')
+            definition.category !== 'armorRepairer' &&
+            definition.category !== 'web')
         ) {
           fail(path, 'Active-module runtime must belong to an online operated module.');
+        } else if (definition.category === 'web' && module.repeating && module.targetId === null) {
+          fail(path, 'A repeating targeted module names the target it acts on.');
+        } else if (definition.category !== 'web' && (module.targetId !== null || (module.cycle?.targetId ?? null) !== null)) {
+          fail(path, 'Only a targeted module names a target.');
         }
       }
     }
@@ -305,15 +316,17 @@ function reloadState(value: unknown): boolean {
 }
 
 function activeModuleState(value: unknown): value is ActiveModuleState {
-  if (!shape(value, ['repeating', 'cycle', 'waitingForCapacitor', 'stopReason'])) return false;
+  if (!shape(value, ['repeating', 'targetId', 'cycle', 'waitingForCapacitor', 'stopReason'])) return false;
   if (typeof value['repeating'] !== 'boolean' || typeof value['waitingForCapacitor'] !== 'boolean') {
     return false;
   }
+  if (value['targetId'] !== null && typeof value['targetId'] !== 'string') return false;
   const cycle = value['cycle'];
   if (cycle !== null && !(
-    shape(cycle, ['startedAtMs', 'completesAtMs', 'boundaryEntryId', 'committedCapacitor']) &&
+    shape(cycle, ['startedAtMs', 'completesAtMs', 'boundaryEntryId', 'committedCapacitor', 'targetId']) &&
     count(cycle['startedAtMs']) && count(cycle['completesAtMs']) &&
-    isEntityId(cycle['boundaryEntryId']) && nonNegative(cycle['committedCapacitor'])
+    isEntityId(cycle['boundaryEntryId']) && nonNegative(cycle['committedCapacitor']) &&
+    (cycle['targetId'] === null || typeof cycle['targetId'] === 'string')
   )) return false;
   return value['stopReason'] === null ||
     (ACTIVE_MODULE_STOP_REASONS as readonly string[]).includes(value['stopReason'] as string);
@@ -343,6 +356,15 @@ function combatEvent(value: unknown): value is CombatEventRecord {
     case 'destruction':
       return shape(value, ['kind', 'firstAtMs', 'lastAtMs', 'shipId', 'count']) &&
         isEntityId(value['shipId']) && value['count'] === 1;
+    case 'control':
+      return shape(value, [
+        'kind', 'firstAtMs', 'lastAtMs', 'sourceId', 'targetId', 'slotKey', 'moduleId', 'count',
+        'speedFactor', 'expiresAtMs',
+      ]) && isEntityId(value['sourceId']) && isEntityId(value['targetId']) &&
+        typeof value['slotKey'] === 'string' && parseSlotKey(value['slotKey']) !== null &&
+        isDefinitionIdIn(value['moduleId'], 'module') &&
+        nonNegative(value['speedFactor']) && (value['speedFactor'] as number) < 1 &&
+        count(value['expiresAtMs']) && (value['expiresAtMs'] as number) >= (value['lastAtMs'] as number);
     default:
       return false;
   }

@@ -112,7 +112,7 @@ export function describeSubject(
 }
 
 /** The filters the combat log offers (Functional Specification 19.3). */
-export const COMBAT_LOG_FILTERS = ['all', 'incoming', 'outgoing', 'repair', 'destruction'] as const;
+export const COMBAT_LOG_FILTERS = ['all', 'incoming', 'outgoing', 'repair', 'control', 'destruction'] as const;
 
 export type CombatLogFilter = (typeof COMBAT_LOG_FILTERS)[number];
 
@@ -130,6 +130,8 @@ export function matchesFilter(
       return event.kind === 'damage' && event.sourceId === playerShipId;
     case 'repair':
       return event.kind === 'repair';
+    case 'control':
+      return event.kind === 'control';
     case 'destruction':
       return event.kind === 'destruction';
     default:

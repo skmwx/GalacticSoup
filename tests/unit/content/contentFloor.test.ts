@@ -152,17 +152,40 @@ describe('content floor profiles', () => {
     const manifest = JSON.parse(shippedPack().find((file) => file.path === 'content/manifest.json')!.text) as {
       contentFloor?: string;
     };
-    expect(manifest.contentFloor).toBe('v0.2-phase-3');
+    expect(manifest.contentFloor).toBe('v0.2-phase-4');
+    expect(compilePack(shippedPack(), { floor: true }).issues).toEqual([]);
 
     const release = floorIssues(declare('v0.2-release')).map((entry) => entry.detail);
-    // Phase 3 ships 25 of the 26 modules (the web follows in phase 4) and the
-    // full ammunition floor.
-    expect(release.some((detail) => detail.includes('25 combat module definitions, not 26'))).toBe(true);
+    // Phase 4 completes the catalog, the roster and the reference fits; the
+    // twelve-site ladder and the drop coverage follow in phase 5.
+    expect(release.some((detail) => detail.includes('combat module definitions'))).toBe(false);
     expect(release.some((detail) => detail.includes('ammunition definitions, fewer than 16'))).toBe(false);
-    expect(release.some((detail) => detail.includes('NPC profiles, fewer than 10'))).toBe(true);
+    expect(release.some((detail) => detail.includes('NPC profiles state an archetype, fewer than 10'))).toBe(false);
+    expect(release.some((detail) => detail.includes('reference fit'))).toBe(false);
     expect(release.some((detail) => detail.includes('tier 1 encounters, not 4'))).toBe(true);
     expect(release.some((detail) => detail.includes('module definitions can drop, fewer than 10'))).toBe(true);
     expect(release.every((detail) => detail.endsWith('(v0.2 release floor)'))).toBe(true);
+  });
+
+  it('holds the phase-4 catalog to 26 modules, every archetype twice and six covering fits [V02-AC-02, V02-AC-04, V02-AC-08]', () => {
+    const noWeb = floorIssues(editDocument(shippedPack(), 'catalog/modules/defense.json', (document) => {
+      const definitions = document['definitions'] as { id: string }[];
+      document['definitions'] = definitions.filter((definition) => definition.id !== 'module.web.small');
+    })).map((entry) => entry.detail);
+    expect(noWeb.some((detail) => detail.includes('25 combat module definitions, not 26'))).toBe(true);
+
+    const oneController = floorIssues(editDocument(shippedPack(), 'encounters/npcs/pirates.json', (document) => {
+      const definitions = document['definitions'] as { id: string }[];
+      document['definitions'] = definitions.filter((definition) => definition.id !== 'npc.pirate.snare');
+    })).map((entry) => entry.detail);
+    expect(oneController.some((detail) => detail.includes('1 profiles field the controller archetype, fewer than 2'))).toBe(true);
+
+    const noWebFit = floorIssues(editDocument(shippedPack(), 'balance/reference-fits.json', (document) => {
+      const fits = document['fits'] as { id: string }[];
+      document['fits'] = fits.filter((fit) => fit.id !== 'fit.destroyer.blaster-web');
+    })).map((entry) => entry.detail);
+    expect(noWebFit.some((detail) => detail.includes('1 reference fits for "hull.independent.destroyer", fewer than 2'))).toBe(true);
+    expect(noWebFit.some((detail) => detail.includes('no reference fit covers web-assisted turret'))).toBe(true);
   });
 
   it('holds a manifest that names no profile to the release floor, and refuses an unknown one [TECH-6.2]', () => {

@@ -55,12 +55,13 @@ export interface LossFinalDamageRecord {
 }
 
 /**
- * What had stopped working before the end (Functional Specification 9.12).
- * The MVP has no hostile control effects, so the disabling conditions are the
- * ship's own: capacitor too low to run a module, or a weapon with nothing
- * left to load.
+ * What had stopped working before the end (Functional Specification 9.12):
+ * the ship's own conditions - capacitor too low to run a module, a weapon
+ * with nothing left to load - and, from v0.2, a hostile speed reduction that
+ * was holding it. For `speedReduced` the slot and module are the source's
+ * web, not one of the lost ship's own.
  */
-export const LOSS_DISABLING_KINDS = ['capacitorDepleted', 'ammunitionExhausted'] as const;
+export const LOSS_DISABLING_KINDS = ['capacitorDepleted', 'ammunitionExhausted', 'speedReduced'] as const;
 export type LossDisablingKind = (typeof LOSS_DISABLING_KINDS)[number];
 
 export interface LossDisablingEffectRecord {

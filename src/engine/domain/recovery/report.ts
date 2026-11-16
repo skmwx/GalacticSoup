@@ -5,6 +5,7 @@ import { stacksIn } from '../assets/inventory';
 import type { CampaignState } from '../campaign/state';
 import type { AggregatedDamageEvent } from '../combat/types';
 import { shipFit } from '../fitting/fit';
+import { parseSlotKey } from '../fitting/types';
 
 import type {
   LossDamageSourceRecord,
@@ -117,6 +118,19 @@ export function disablingEffects(
     if (loaded === 0 && !reloadable) {
       effects.push({ kind: 'ammunitionExhausted', slot: { ...fitted.slot }, moduleId: fitted.moduleId });
     }
+  }
+  // A hostile web whose latest application was still holding the ship when
+  // it was destroyed (Functional Specification 9.9, 9.12).
+  const destroyedAtMs = state.combat.ships[shipId]?.destroyedAtMs ?? state.time.simulationTimeMs;
+  const seen = new Set<string>();
+  for (const event of state.combat.events) {
+    if (event.kind !== 'control' || event.targetId !== shipId) continue;
+    if (event.firstAtMs > destroyedAtMs || event.expiresAtMs < destroyedAtMs) continue;
+    const slot = parseSlotKey(event.slotKey);
+    const key = `${event.sourceId}|${event.slotKey}`;
+    if (slot === null || seen.has(key) || content.module(event.moduleId)?.category !== 'web') continue;
+    seen.add(key);
+    effects.push({ kind: 'speedReduced', slot, moduleId: event.moduleId as LossDisablingEffectRecord['moduleId'] });
   }
   return effects;
 }

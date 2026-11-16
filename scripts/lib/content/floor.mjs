@@ -35,7 +35,7 @@ const RANGE_SPREAD = 2;
 export const RELEASE_FLOOR_PROFILE = 'v0.2-release';
 
 /** Development milestones, in delivery order, then the release profile. */
-export const FLOOR_PROFILES = ['v0.2-phase-1', 'v0.2-phase-3', RELEASE_FLOOR_PROFILE];
+export const FLOOR_PROFILES = ['v0.2-phase-1', 'v0.2-phase-3', 'v0.2-phase-4', RELEASE_FLOOR_PROFILE];
 
 /**
  * Profiles that hold the weapon catalog to the v0.2 family and size coverage
@@ -43,7 +43,34 @@ export const FLOOR_PROFILES = ['v0.2-phase-1', 'v0.2-phase-3', RELEASE_FLOOR_PRO
  * turrets and guided launchers in small and medium sizes, and the ammunition
  * split per family and size.
  */
-const WEAPON_COVERAGE_PROFILES = new Set(['v0.2-phase-3', RELEASE_FLOOR_PROFILE]);
+const WEAPON_COVERAGE_PROFILES = new Set(['v0.2-phase-3', 'v0.2-phase-4', RELEASE_FLOOR_PROFILE]);
+
+/**
+ * Profiles that hold the combat catalog, the enemy roster and the reference
+ * fits complete (v0.2 Implementation Plan phase 4, item 5): the 26 modules all
+ * purchasable, ten profiles covering the five archetypes, and six reference
+ * fits covering the required approaches. The twelve-site ladder and drop
+ * coverage stay release-only until phase 5.
+ */
+const CATALOG_COMPLETE_PROFILES = new Set(['v0.2-phase-4', RELEASE_FLOOR_PROFILE]);
+
+/** Each archetype is fielded by at least this many profiles (FeatureSpec02 7.1). */
+const PROFILES_PER_ARCHETYPE = 2;
+const ARCHETYPES = ['fastFrigate', 'artillery', 'brawler', 'missile', 'controller'];
+
+/** Reference fits per player hull (FeatureSpec02 5.3). */
+const FITS_PER_HULL = 2;
+
+/** Approaches the six reference fits must cover between them (FeatureSpec02 5.3). */
+const FIT_APPROACHES = {
+  'active shield': (modules) => modules.some((module) => module.category === 'shieldBooster'),
+  'active armour': (modules) => modules.some((module) => module.category === 'armorRepairer'),
+  'passive shield': (modules) => modules.some((module) =>
+    module.category === 'shieldExtender' || module.category === 'shieldRecharger'),
+  'web-assisted turret': (modules) => modules.some((module) => module.category === 'web') &&
+    modules.some((module) => module.category === 'turret'),
+  'guided combat': (modules) => modules.some((module) => module.category === 'launcher'),
+};
 
 /** Ammunition each weapon family and size must offer (FeatureSpec02 6.1). */
 const AMMUNITION_COVERAGE = {
@@ -105,6 +132,9 @@ export function validateContentFloor(collected) {
   if (WEAPON_COVERAGE_PROFILES.has(profile)) {
     issues.push(...checkWeaponCoverage({ modules, ammunition, sold, where }));
   }
+  if (CATALOG_COMPLETE_PROFILES.has(profile)) {
+    issues.push(...checkCompleteCatalog({ collected, modules, ammunition, profiles, hulls, sold, where, stationId }));
+  }
   if (profile === RELEASE_FLOOR_PROFILE) {
     issues.push(...checkReleaseFloor({ collected, modules, ammunition, profiles, sold, where, stationId }));
   }
@@ -141,13 +171,15 @@ function checkHullLineup(hulls, sold, where, stationId) {
 }
 
 /**
- * FeatureSpec02 5.1, 6.1, 7.1-7.2, 8.1: the complete v0.2 quantities. Size,
- * family and archetype coverage join this list as the phases that introduce
- * those fields complete.
+ * FeatureSpec02 5.1, 5.3, 6.1, 7.1: the complete combat catalog. Exactly 26
+ * modules and at least 16 charges, all purchasable at the starting station;
+ * at least ten NPC profiles with every archetype fielded twice; and two
+ * reference fits per player hull that between them cover the required
+ * approaches, with at least one pair per hull differing in weapon family.
  */
-function checkReleaseFloor({ collected, modules, ammunition, profiles, sold, where, stationId }) {
+function checkCompleteCatalog({ collected, modules, ammunition, profiles, hulls, sold, where, stationId }) {
   const issues = [];
-  const fail = (file, path, detail) => issues.push(issue('catalogRelationship', file, path, `${detail} (v0.2 release floor)`));
+  const fail = (file, path, detail) => issues.push(issue('catalogRelationship', file, path, `${detail} (v0.2 complete catalog)`));
   const anyFile = (map) => [...map.values()][0]?.file ?? '';
 
   if (modules.size !== RELEASE_FLOOR.combatModules) {
@@ -158,10 +190,59 @@ function checkReleaseFloor({ collected, modules, ammunition, profiles, sold, whe
     fail(anyFile(ammunition), 'definitions',
       `${String(ammunition.size)} ammunition definitions, fewer than ${String(RELEASE_FLOOR.ammunition)}`);
   }
-  if (profiles.size < RELEASE_FLOOR.npcProfiles) {
+  // At least ten profiles cover the five archetypes (FeatureSpec02 7.1); a
+  // profile that states none does not count towards them.
+  const covering = [...profiles.values()].filter((entry) => entry.value.archetype !== undefined).length;
+  if (covering < RELEASE_FLOOR.npcProfiles) {
     fail(anyFile(profiles), 'definitions',
-      `${String(profiles.size)} NPC profiles, fewer than ${String(RELEASE_FLOOR.npcProfiles)}`);
+      `${String(covering)} NPC profiles state an archetype, fewer than ${String(RELEASE_FLOOR.npcProfiles)}`);
   }
+  for (const archetype of ARCHETYPES) {
+    const fielded = [...profiles.values()].filter((entry) => entry.value.archetype === archetype).length;
+    if (fielded < PROFILES_PER_ARCHETYPE) {
+      fail(anyFile(profiles), 'definitions',
+        `${String(fielded)} profiles field the ${archetype} archetype, fewer than ${String(PROFILES_PER_ARCHETYPE)} (FeatureSpec02 7.1)`);
+    }
+  }
+  for (const id of [...modules.keys(), ...ammunition.keys()].sort()) {
+    if (!sold.has(id)) fail(where, 'listings', `"${stationId}" does not sell "${id}", so it has no dependable purchase path`);
+  }
+
+  const fits = collected.referenceFits ?? [];
+  const fitFile = fits[0]?.file ?? '';
+  const fitModules = (entry) => entry.value.modules
+    .map((slot) => modules.get(slot.moduleId)?.value)
+    .filter((module) => module !== undefined);
+  for (const hull of [...hulls.values()].filter((entry) => entry.value.playerUsable)) {
+    const forHull = fits.filter((entry) => entry.value.hullId === hull.value.id);
+    if (forHull.length < FITS_PER_HULL) {
+      fail(fitFile, 'fits', `${String(forHull.length)} reference fits for "${hull.value.id}", fewer than ${String(FITS_PER_HULL)} (FeatureSpec02 5.3)`);
+      continue;
+    }
+    const families = new Set(forHull.map((entry) => fitModules(entry)
+      .map((module) => weaponFamilyOf(module))
+      .filter((family) => family !== null)
+      .sort()
+      .join('+')));
+    if (families.size < 2) {
+      fail(fitFile, 'fits', `the reference fits for "${hull.value.id}" all use the same weapon family (FeatureSpec02 5.3)`);
+    }
+  }
+  for (const [approach, covers] of Object.entries(FIT_APPROACHES)) {
+    if (!fits.some((entry) => covers(fitModules(entry)))) {
+      fail(fitFile, 'fits', `no reference fit covers ${approach} (FeatureSpec02 5.3)`);
+    }
+  }
+  return issues;
+}
+
+/**
+ * FeatureSpec02 7.2, 8.1: the complete v0.2 ladder and drop coverage, on top
+ * of the complete catalog.
+ */
+function checkReleaseFloor({ collected, modules }) {
+  const issues = [];
+  const fail = (file, path, detail) => issues.push(issue('catalogRelationship', file, path, `${detail} (v0.2 release floor)`));
   const encounters = collected.definitions.encounters;
   const expectedTotal = Object.values(RELEASE_FLOOR.encountersPerTier).reduce((a, b) => a + b, 0);
   for (const [tier, count] of Object.entries(RELEASE_FLOOR.encountersPerTier)) {
@@ -186,9 +267,6 @@ function checkReleaseFloor({ collected, modules, ammunition, profiles, sold, whe
   }
   if (!droppedModules.some((module) => module.size === 'medium')) {
     fail(lootTables[0]?.file ?? '', 'definitions', 'no medium module can drop (FeatureSpec02 7.2)');
-  }
-  for (const id of [...modules.keys(), ...ammunition.keys()].sort()) {
-    if (!sold.has(id)) fail(where, 'listings', `"${stationId}" does not sell "${id}", so it has no dependable purchase path`);
   }
   return issues;
 }

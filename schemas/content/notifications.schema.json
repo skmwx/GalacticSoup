@@ -98,6 +98,19 @@
                 }
               },
               {
+                "description": "A hostile web applies a new speed effect to the player's ship (Functional Specification 9.9).",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "playerSpeedReduced"
+                  }
+                }
+              },
+              {
                 "type": "object",
                 "additionalProperties": false,
                 "required": [

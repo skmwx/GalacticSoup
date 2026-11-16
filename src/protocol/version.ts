@@ -1,6 +1,15 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
+ * Version 21 (v0.2 phase 4) adds speed control: `module.activate` takes an
+ * optional `targetId` for a targeted module (the web); module runtime says
+ * whether it is targeted, what it acts on and which locked targets it could
+ * act on; each ship's defence state lists the speed effects on it with source,
+ * strength and remaining time and its resulting speed limit; the combat
+ * history records control applications; a loss names a web that was holding
+ * the ship; and `moduleOutOfRange` joins the rule violations.
+ * Version 20 (v0.2 phase 3) adds weapon kinds and families, guided flight and
+ * application, and projectiles in flight.
  * Version 19 is the first v0.2 protocol. The resumable save in
  * `campaign.saves` says whether this build can open it (`compatibility`), so a
  * v0.1 save is explained rather than offered; `ship.activate` switches the
@@ -44,7 +53,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 20;
+export const PROTOCOL_VERSION = 21;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

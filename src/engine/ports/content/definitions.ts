@@ -62,6 +62,7 @@ export const MODULE_CATEGORIES = [
   'shieldRecharger',
   'capacitorRecharger',
   'weaponUpgrade',
+  'web',
 ] as const;
 export type ModuleCategory = (typeof MODULE_CATEGORIES)[number];
 
@@ -107,8 +108,21 @@ export function chargeGroupKey(family: WeaponFamily, size: ModuleSize): string {
   return `${size}-${family}`;
 }
 
-export const NPC_ROLES = ['brawler', 'skirmisher', 'sniper'] as const;
+/**
+ * Behaviour roles the selector understands (Functional Specification 9.10).
+ * A tackler positions for its speed-control module rather than its guns.
+ */
+export const NPC_ROLES = ['brawler', 'skirmisher', 'sniper', 'tackler'] as const;
 export type NpcRole = (typeof NPC_ROLES)[number];
+
+/**
+ * The enemy archetypes of the v0.2 roster (FeatureSpec02 7.1). An archetype is
+ * what the player is told to prepare for; it changes no rule. Its behaviour
+ * comes from the role and the loadout, and content validation holds each
+ * archetype to the modules and role that make it observable.
+ */
+export const NPC_ARCHETYPES = ['fastFrigate', 'artillery', 'brawler', 'missile', 'controller'] as const;
+export type NpcArchetype = (typeof NPC_ARCHETYPES)[number];
 
 export const STATION_SERVICES = ['market', 'fitting', 'repair', 'insurance'] as const;
 export type StationService = (typeof STATION_SERVICES)[number];
@@ -258,6 +272,31 @@ export interface RepairModuleDefinition extends ModuleCommon {
   readonly repair: { readonly layer: DefenseLayer; readonly amountHitPoints: number };
 }
 
+/**
+ * A targeted speed-reduction module, the web (Functional Specification 9.9;
+ * FeatureSpec02 6.3). Each completed cycle applies or refreshes one effect on
+ * its locked target that multiplies the target's maximum normal speed by
+ * `1 - speedReductionFraction` for `effectDurationSeconds`, by default one
+ * cycle.
+ */
+export interface WebModuleDefinition extends ModuleCommon {
+  readonly category: 'web';
+  readonly size: ModuleSize;
+  readonly activation: { readonly capacitorPerCycle: number; readonly cycleSeconds: number };
+  readonly web: {
+    readonly rangeKm: number;
+    /** Share of maximum speed removed, above 0 and below 1. */
+    readonly speedReductionFraction: number;
+    /** Absent means one cycle. */
+    readonly effectDurationSeconds?: number;
+  };
+}
+
+/** How long one web application lasts: its stated duration, or one cycle. */
+export function webEffectDurationSeconds(module: WebModuleDefinition): number {
+  return module.web.effectDurationSeconds ?? module.activation.cycleSeconds;
+}
+
 export interface ResistanceModuleDefinition extends ModuleCommon {
   /** Plating hardens armour; an amplifier hardens shields. */
   readonly category: 'resistancePlating' | 'resistanceAmplifier';
@@ -279,7 +318,8 @@ export type ModuleDefinition =
   | RepairModuleDefinition
   | ResistanceModuleDefinition
   | CapacitorModuleDefinition
-  | ModifierModuleDefinition;
+  | ModifierModuleDefinition
+  | WebModuleDefinition;
 
 interface AmmunitionCommon {
   readonly id: AmmunitionId;
@@ -427,6 +467,11 @@ export interface NpcProfileDefinition {
   readonly id: NpcProfileId;
   readonly nameKey: MessageKey;
   readonly role: NpcRole;
+  /**
+   * What the player prepares for (FeatureSpec02 7.1); information only. The
+   * v0.2 content floor requires ten profiles that state one, two of each.
+   */
+  readonly archetype?: NpcArchetype;
   readonly hullId: HullId;
   readonly loadout: {
     readonly modules: readonly ModuleId[];
@@ -513,6 +558,7 @@ export type NotificationRepeat = (typeof NOTIFICATION_REPEATS)[number];
  */
 export type NotificationTrigger =
   | { readonly kind: 'hostileLock' }
+  | { readonly kind: 'playerSpeedReduced' }
   | { readonly kind: 'playerLayerBelow'; readonly layer: DefenseLayer; readonly fraction: number }
   | { readonly kind: 'playerLayerDamaged'; readonly layer: DefenseLayer }
   | { readonly kind: 'playerModuleStarved'; readonly categories: readonly ModuleCategory[] }

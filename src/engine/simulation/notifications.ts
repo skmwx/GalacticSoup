@@ -43,6 +43,7 @@ import type { SimulationContext } from './context';
  * | Trigger | Raised when | Parameters |
  * |---|---|---|
  * | hostileLock | a hostile ship completes a lock on the player | attackerKey |
+ * | playerSpeedReduced | a web starts slowing the player (not its refreshes) | attackerKey |
  * | playerLayerBelow | a defensive layer falls below the fraction | percent |
  * | playerLayerDamaged | a layer loses hit points to a shot | - |
  * | playerModuleStarved | an active module of those categories waits for capacitor | moduleKey |
@@ -159,6 +160,7 @@ function raise(context: SimulationContext, definition: NotificationDefinition, o
 /** The domain event each event-driven trigger listens to; `null` for a state comparison. */
 const EVENT_OF: Readonly<Record<NotificationTriggerKind, DomainEventKind | null>> = {
   hostileLock: 'combat.lockCompleted',
+  playerSpeedReduced: 'combat.speedEffectApplied',
   playerLayerBelow: null,
   playerLayerDamaged: 'combat.damageApplied',
   playerModuleStarved: 'combat.moduleWaiting',
@@ -190,6 +192,13 @@ const OPERATIONS: Partial<Record<NotificationTriggerKind, EventOperation>> = {
     if (reading.player === null || text(event, 'targetId') !== reading.player) return null;
     if (objectAttitude(reading.state, attackerId) !== 'hostile') return null;
     return occurrence(event, '', [attackerId], { attackerKey: objectNameKey(reading, attackerId) });
+  },
+  playerSpeedReduced: (_trigger, event, reading) => {
+    // A refresh of a web already holding the ship is not news; a new source is.
+    if (reading.player === null || text(event, 'targetId') !== reading.player) return null;
+    if (event.params?.['refreshed'] === true) return null;
+    const sourceId = text(event, 'sourceId');
+    return occurrence(event, sourceId, [sourceId], { attackerKey: objectNameKey(reading, sourceId) });
   },
   playerLayerDamaged: (trigger, event, reading) => {
     if (trigger.kind !== 'playerLayerDamaged') return null;

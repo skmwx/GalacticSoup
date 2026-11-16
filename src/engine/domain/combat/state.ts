@@ -14,6 +14,7 @@ import type { EntityId } from '../campaign/identity';
 import type { CampaignDraft, CampaignState } from '../campaign/state';
 import type { SiteObjectState } from '../navigation/types';
 
+import { speedEffectInputs } from './effects';
 import type {
   ActiveModuleState,
   CapacitorTrendState,
@@ -46,6 +47,7 @@ export const IDLE_WEAPON: WeaponState = {
 
 export const IDLE_ACTIVE_MODULE: ActiveModuleState = {
   repeating: false,
+  targetId: null,
   cycle: null,
   waitingForCapacitor: false,
   stopReason: null,
@@ -217,6 +219,7 @@ export function isIdle(weapon: WeaponState): boolean {
 export function isIdleActiveModule(module: ActiveModuleState): boolean {
   return (
     !module.repeating &&
+    module.targetId === null &&
     module.cycle === null &&
     !module.waitingForCapacitor &&
     module.stopReason === null
@@ -275,7 +278,13 @@ export function combatantOf(
     object,
     hull,
     fit,
-    derived: deriveShipAttributes({ hull, fit, content, conditions }),
+    derived: deriveShipAttributes({
+      hull,
+      fit,
+      content,
+      conditions,
+      speedEffects: speedEffectInputs(state, content, shipId),
+    }),
     combat,
   };
 }

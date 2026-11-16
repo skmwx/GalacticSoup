@@ -292,6 +292,18 @@
       "consumptionPerHour": 0
     },
     {
+      "itemId": "module.web.small",
+      "supply": "dynamic",
+      "basePriceCredits": 9000,
+      "regionalPriceFactor": 1,
+      "targetStock": 8,
+      "initialStock": 6,
+      "elasticity": 0.3,
+      "baseSpread": 0.08,
+      "productionPerHour": 0.2,
+      "consumptionPerHour": 0
+    },
+    {
       "itemId": "module.repair.armor.medium",
       "supply": "dynamic",
       "basePriceCredits": 26000,

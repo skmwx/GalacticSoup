@@ -1,8 +1,8 @@
 {
   "$comment": "The closed MVP contracts (MVP Implementation Plan phase 20). Written by npm run contracts:record; do not edit by hand. A schema digest covers requirements only, not titles or descriptions.",
-  "protocolVersion": 20,
-  "saveFormatVersion": 12,
-  "campaignStateVersion": 12,
+  "protocolVersion": 21,
+  "saveFormatVersion": 13,
+  "campaignStateVersion": 13,
   "replayLogVersion": 1,
   "requestTypes": [
     "assets.list",
@@ -93,8 +93,8 @@
     "protocol/campaign.frame.data.schema.json": "3ddc18fc3e1d2ded653ebe496c8c04db8b576ed9ea81c2033a02cd89dcc8eea0",
     "protocol/campaign.saves.data.schema.json": "b4b67c2e7d9dd9d5404882c41e1ee3307aacc6ad825727c3f5ee413c1b93f410",
     "protocol/campaign.session.data.schema.json": "9ec30eab4de71ddcbeae2b1716d5a368fc574fcb43abd560b441a650ff147efb",
-    "protocol/client-request.schema.json": "f2eb2f46684ee7b91dbf7575f5722fdad8e8d636cb8ece204b8bee43e41441d3",
-    "protocol/combat.state.data.schema.json": "6782e61f874764e4ad5ca66ec480100033519c6434ec8c5f212265518140a551",
+    "protocol/client-request.schema.json": "9bb8b38be5d574f64d7284b704f60aa2d3b99dbce6074befbe1e763959853c92",
+    "protocol/combat.state.data.schema.json": "d460b505b9e634ee40a9b7eeb16f90a2ec18a5d4a2862c3d69c7f970501a868f",
     "protocol/command-result.data.schema.json": "aba4dcbb299621a9820e2e171bb9817b3b3bafbf5e45a7deb91b7f1c941cc3cc",
     "protocol/content-issue.schema.json": "6b4ec7ee0590feb51f47c67be7e6e48942ab35dccfc44d37d0a6003be1719f6b",
     "protocol/content.messages.data.schema.json": "422d9a917868c25424e94d62dbcd1bd7f82286c3c189958ca9aac8ab9f639632",
@@ -113,7 +113,7 @@
     "protocol/item.compare.data.schema.json": "8de6c86660daa293e8625883e2bede0d509d663d651b93f0f502887b39162389",
     "protocol/item.inspect.data.schema.json": "05e2dc6f5c4a44014346c80696c3ed27b2be95e14250539db79316607ad66bfa",
     "protocol/loot.contents.data.schema.json": "6b2e53d227a1fb360964501d2ee7c442bc79ce23d3ecb99a0990ade18d6f9a7d",
-    "protocol/loss.report.data.schema.json": "604f174522824a61836cf66cce5fa79f42500bf35aeda5de91cc754dae755c23",
+    "protocol/loss.report.data.schema.json": "93c42afcc25970fb33763279aba415999d9a2ea4a549ec20553ce3c18b185b89",
     "protocol/market.listings.data.schema.json": "f6ed9a864aa4df264264ab2b1691b3fe8946866fc800042cc59c65fda83007bb",
     "protocol/navigation.destinations.data.schema.json": "60e4ee6dd8416ce35bbbc2abbeab425cfbefd79707b916b690acfb000815044d",
     "protocol/navigation.site.data.schema.json": "4054bdda36e686f2210408d569d76a361358a2211678c3566792f137597fb7a8",
@@ -124,11 +124,11 @@
     "protocol/ship.undockValidity.data.schema.json": "05c246435f1871a63a376427aa7fc3183828713c728589357eee7358425adfeb",
     "protocol/ships.list.data.schema.json": "7ceb7863e106f8f7309455f9361bc6f60e584ec1ac050edf5fde8492162da5cb",
     "protocol/station.services.data.schema.json": "916f275842024c599882fdac73ee352a7ed55aa62d629f1a7d02a5686a0cb42b",
-    "protocol/system.capabilities.data.schema.json": "f21eab5f1a137c055a407eee5519b42b94ab0aabce226445a0a56dec24146f34",
-    "protocol/system.health.data.schema.json": "fbb17650e12508a722f473373a51bea56b447a9c478a0b439a6be057723764ad",
+    "protocol/system.capabilities.data.schema.json": "1524f5cd6638b48288f40c356abedb6b21beac45a8c9d43648aabfc275469d3f",
+    "protocol/system.health.data.schema.json": "a83392cec201182c3ba8c8c08c855244eb67dd89df06870eba43185d19448ea2",
     "protocol/transaction-preview.data.schema.json": "5649e2eea2f2d8675f1cb99641cafad00f9bf77744130ac07168255b16571c19",
     "protocol/wallet.get.data.schema.json": "d1ffd8a9ce85c433c5ff5109921862e77135e49316be443a148219f9012814e1",
-    "save/campaign-state.schema.json": "a07f2c7883de4b6598a4bf70c3fc97deb93f3166595e8fdc83caf71439e8a5aa",
-    "save/save-envelope.schema.json": "5116fb179e72ed6b59a43de7a967dbbf88fded1770885c4426ed5f65c8bfbed7"
+    "save/campaign-state.schema.json": "d0698470a5e26737d7d727d6f2a3abba32ed4aebeb0ed284bd0fa94ecab8fffb",
+    "save/save-envelope.schema.json": "9874a9b7170847da59def28606f91ea3bf144cdb8bb30ef96be3a37eeee8cd8c"
   }
 }

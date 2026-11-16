@@ -61,6 +61,11 @@ function contentWithoutCutter(): ContentRepository {
       { npcProfileId: 'npc.pirate.marksman', count: 1, spawnDistanceKm: 30 },
     ];
   });
+  // Nine profiles no longer meet the phase-4 roster floor; the earlier
+  // milestone is declared so the structural change itself is what is tested.
+  files = editDocument(files, 'content/manifest.json', (document) => {
+    document['contentFloor'] = 'v0.2-phase-3';
+  });
   return compile(files);
 }
 

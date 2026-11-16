@@ -29,7 +29,7 @@
   ],
   "properties": {
     "stateVersion": {
-      "const": 12
+      "const": 13
     },
     "campaignId": {
       "type": "string",
@@ -1173,14 +1173,15 @@
       ]
     },
     "combat": {
-      "description": "Locks, weapon cycles, reloads and guided projectiles in flight (Functional Specification 9.2, 9.4, 9.6).",
+      "description": "Locks, weapon cycles, reloads, guided projectiles in flight and temporary speed effects (Functional Specification 9.2, 9.4, 9.6, 9.9).",
       "type": "object",
       "additionalProperties": false,
       "required": [
         "version",
         "ships",
         "events",
-        "projectiles"
+        "projectiles",
+        "speedEffects"
       ],
       "properties": {
         "version": {
@@ -1209,6 +1210,13 @@
           "maxItems": 4096,
           "items": {
             "$ref": "#/$defs/projectileState"
+          }
+        },
+        "speedEffects": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/speedEffectState"
           }
         }
       }
@@ -2118,7 +2126,8 @@
         "startedAtMs",
         "completesAtMs",
         "boundaryEntryId",
-        "committedCapacitor"
+        "committedCapacitor",
+        "targetId"
       ],
       "properties": {
         "startedAtMs": {
@@ -2137,6 +2146,13 @@
         "committedCapacitor": {
           "type": "number",
           "minimum": 0
+        },
+        "targetId": {
+          "description": "The target a targeted module checked when this cycle started; null for a module that acts on its own ship.",
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
@@ -2145,6 +2161,7 @@
       "additionalProperties": false,
       "required": [
         "repeating",
+        "targetId",
         "cycle",
         "waitingForCapacitor",
         "stopReason"
@@ -2152,6 +2169,13 @@
       "properties": {
         "repeating": {
           "type": "boolean"
+        },
+        "targetId": {
+          "description": "The locked target a repeating targeted module (the web) acts on.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "cycle": {
           "anyOf": [
@@ -2176,7 +2200,10 @@
                 "deactivated",
                 "insufficientCapacitor",
                 "destroyed",
-                "siteLeft"
+                "siteLeft",
+                "lockLost",
+                "targetMissing",
+                "outOfRange"
               ]
             }
           ]
@@ -2337,8 +2364,113 @@
               "const": 1
             }
           }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "firstAtMs",
+            "lastAtMs",
+            "sourceId",
+            "targetId",
+            "slotKey",
+            "moduleId",
+            "count",
+            "speedFactor",
+            "expiresAtMs"
+          ],
+          "properties": {
+            "kind": {
+              "const": "control"
+            },
+            "firstAtMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "lastAtMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sourceId": {
+              "$ref": "#/$defs/entityId"
+            },
+            "targetId": {
+              "$ref": "#/$defs/entityId"
+            },
+            "slotKey": {
+              "type": "string"
+            },
+            "moduleId": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "speedFactor": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1
+            },
+            "expiresAtMs": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
         }
       ]
+    },
+    "speedEffectState": {
+      "description": "A temporary speed reduction on a ship in the loaded site (Functional Specification 9.9). Its source is a retained attribution; it owns its expiry boundary.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "targetId",
+        "sourceShipId",
+        "sourceSlotKey",
+        "moduleId",
+        "speedFactor",
+        "appliedAtMs",
+        "expiresAtMs",
+        "expiryBoundaryEntryId"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/entityId"
+        },
+        "targetId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "sourceShipId": {
+          "$ref": "#/$defs/entityId"
+        },
+        "sourceSlotKey": {
+          "type": "string"
+        },
+        "moduleId": {
+          "type": "string"
+        },
+        "speedFactor": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "appliedAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "expiresAtMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "expiryBoundaryEntryId": {
+          "$ref": "#/$defs/entityId"
+        }
+      }
     },
     "shipCombatState": {
       "type": "object",
@@ -2883,7 +3015,8 @@
         "kind": {
           "enum": [
             "capacitorDepleted",
-            "ammunitionExhausted"
+            "ammunitionExhausted",
+            "speedReduced"
           ]
         },
         "slot": {

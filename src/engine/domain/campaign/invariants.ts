@@ -268,6 +268,7 @@ function validateSchedulerOwnership(state: CampaignState, add: Report): void {
     own(projectile.expiryBoundaryEntryId);
     own(projectile.impactBoundaryEntryId);
   }
+  for (const effect of state.combat.speedEffects) own(effect.expiryBoundaryEntryId);
   for (const npc of state.encounter.active?.npcs ?? []) own(npc.decisionBoundaryEntryId);
   for (const wreck of Object.values(state.encounter.wrecks)) own(wreck.boundaryEntryId);
 

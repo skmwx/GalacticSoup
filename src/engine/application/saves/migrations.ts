@@ -52,10 +52,48 @@ export const MIGRATE_11_TO_12: SaveMigration = {
 };
 
 /**
+ * Format 12 to 13 (v0.2 phase 4): combat state gains speed effects, and every
+ * operated module and its cycle gain the target a targeted module acts on. A
+ * format-12 campaign had no web to fit, so it gains an empty effect list and
+ * a `null` target on every module and cycle; nothing else changes.
+ */
+export const MIGRATE_12_TO_13: SaveMigration = {
+  from: 12,
+  to: 13,
+  describe: 'Combat state gains speed effects and module targets; format-12 campaigns have none.',
+  migrate(save) {
+    const state = save['state'];
+    if (!isRecord(state)) return save;
+    const combat = state['combat'];
+    if (isRecord(combat)) {
+      combat['speedEffects'] = [];
+      const ships = combat['ships'];
+      if (isRecord(ships)) {
+        for (const ship of Object.values(ships)) {
+          const modules = isRecord(ship) ? ship['modules'] : undefined;
+          if (!isRecord(modules)) continue;
+          for (const module of Object.values(modules)) {
+            if (!isRecord(module)) continue;
+            module['targetId'] = null;
+            if (isRecord(module['cycle'])) module['cycle']['targetId'] = null;
+          }
+        }
+      }
+    }
+    state['stateVersion'] = 13;
+    return save;
+  },
+};
+
+/**
  * The release boundary is format 11 (ADR-V02-01); every format from there on
  * migrates forward one step at a time.
  */
-export const SAVE_MIGRATIONS: readonly SaveMigration[] = [MIGRATE_11_TO_12];
+export const SAVE_MIGRATIONS: readonly SaveMigration[] = [MIGRATE_11_TO_12, MIGRATE_12_TO_13];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 export type MigrationResult =
   | {

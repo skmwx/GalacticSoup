@@ -31,6 +31,7 @@ import type { MessageKey } from '@shared';
 
 import { clearCombat } from './combat';
 import { clearProjectiles } from './projectiles';
+import { clearSpeedEffects } from './speedEffects';
 import type { SimulationContext } from './context';
 import { abandonEncounter, WRECK_EXPIRE_BOUNDARY } from './encounter';
 import { cancelBoundariesOwnedBy, scheduleBoundary } from './scheduler';
@@ -160,6 +161,7 @@ function resolvePlayerDestruction(context: SimulationContext, shipId: EntityId):
   delete (draft.assets.ships as Record<string, unknown>)[shipId];
   if (draft.fitting?.shipId === shipId) draft.fitting = null;
   clearProjectiles(context);
+  clearSpeedEffects(context);
   draft.navigation.currentSite = null;
   draft.navigation.travel = null;
   draft.navigation.movementOrders = {};

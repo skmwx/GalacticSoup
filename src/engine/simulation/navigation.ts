@@ -20,6 +20,7 @@ import {
   shipFit,
   shipCombat,
   siteDefinitionPosition,
+  speedEffectInputs,
   subtract,
   deriveShipAttributes,
   type CampaignDraft,
@@ -30,6 +31,7 @@ import {
 import type { SchedulerEntry } from '@engine/domain';
 import { clearCombat } from './combat';
 import { clearProjectiles } from './projectiles';
+import { clearSpeedEffects } from './speedEffects';
 import { abandonEncounter, instantiateEncounter, materializeWrecks } from './encounter';
 import type { SimulationContext } from './context';
 import { cancelBoundary, scheduleBoundary } from './scheduler';
@@ -159,6 +161,7 @@ export function resolveWarpPrepared(context: SimulationContext, entry: Scheduler
   ship.location = location;
   draft.assets.version += 1;
   clearProjectiles(context);
+  clearSpeedEffects(context);
   draft.navigation.currentSite = null;
   draft.navigation.movementOrders = {};
   const arrival = scheduleBoundary(draft, {
@@ -262,6 +265,7 @@ export function resolveDockComplete(context: SimulationContext, entry: Scheduler
   draft.assets.lastDockedStationId = station.id;
   draft.assets.version += 1;
   clearProjectiles(context);
+  clearSpeedEffects(context);
   draft.navigation.currentSite = null;
   draft.navigation.travel = null;
   draft.navigation.movementOrders = {};
@@ -349,11 +353,16 @@ function movementAttributes(context: SimulationContext, draft: CampaignDraft, sh
   const ship = draft.assets.ships[shipId];
   if (ship === undefined) throw new TypeError(`Ship "${shipId}" does not exist.`);
   const fit = shipFit(draft.assets, ship.id);
+  // Speed effects lower the cap the controllers steer to, so a slowed ship
+  // brakes down through its normal braking rather than stopping in place
+  // (Functional Specification 9.9). Warp alignment is measured against the
+  // same lowered cap, so a web never prevents warp.
   const derived = deriveShipAttributes({
     hull: context.content.requireHull(ship.hullId),
     fit,
     content: context.content,
     conditions: activeAttributeConditions(fit, context.content, shipCombat(draft, ship.id)),
+    speedEffects: speedEffectInputs(draft, context.content, ship.id),
   });
   return {
     maxSpeedKmPerSecond: attributeValue(derived, 'maxSpeedKmPerSecond'),

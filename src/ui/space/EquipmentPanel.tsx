@@ -7,7 +7,7 @@ import { useTranslate } from '../localization';
 import type { PlayData } from '../frame/usePlayData';
 import { ModulesPanel } from './ModulesPanel';
 import styles from './Space.module.css';
-import type { FireAvailability } from './tactical';
+import { describeSubject, subjectName, type FireAvailability } from './tactical';
 import { WeaponsPanel } from './WeaponsPanel';
 
 /**
@@ -68,7 +68,13 @@ export function EquipmentPanel({
         fire={fire}
         onFire={onFire}
       />
-      <ModulesPanel data={data} runner={runner} modules={combat?.modules ?? []} />
+      <ModulesPanel
+        data={data}
+        runner={runner}
+        modules={combat?.modules ?? []}
+        targetId={targetId}
+        nameOf={(id) => describeSubject(subjectName(id, site, encounter, combat?.shipId ?? null), translate)}
+      />
     </section>
   );
 }

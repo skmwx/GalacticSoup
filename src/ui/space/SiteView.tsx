@@ -609,10 +609,43 @@ function effects(
     );
   }
 
+  // Webs holding a ship (Functional Specification 9.9, 19.2): a dashed tether
+  // from the source to the slowed ship, ending in a small bar across the line,
+  // so a web reads by shape as well as colour. An effect whose source has gone
+  // keeps running out its time but draws no tether.
+  for (const defense of [combat.defenses, ...combat.targetDefenses]) {
+    if (defense === null) continue;
+    const slowed = objects.get(defense.shipId);
+    if (slowed === undefined) continue;
+    for (const effect of defense.speedEffects) {
+      const source = objects.get(effect.sourceId);
+      if (source === undefined || !effect.sourcePresent) continue;
+      const a = worldToScreen(camera, viewport, positionOf(source));
+      const b = worldToScreen(camera, viewport, positionOf(slowed));
+      drawn.push(
+        <g
+          key={`web-${effect.effectId}`}
+          className={effect.fromPlayer ? styles['webOutgoing'] : styles['webIncoming']}
+          data-effect="web"
+          data-direction={effect.fromPlayer ? 'outgoing' : 'incoming'}
+        >
+          <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
+          <circle cx={b.x} cy={b.y} r={9} />
+          <title>
+            {translate('tactical.web.label', {
+              percent: Math.round((1 - effect.speedFactor) * 100),
+              seconds: formatStat(Math.round(effect.remainingSeconds * 10) / 10, locale),
+            })}
+          </title>
+        </g>,
+      );
+    }
+  }
+
   const since = combat.simulationTimeMs - EFFECT_WINDOW_MS;
   const offsets = new Map<string, number>();
   for (const event of combat.events) {
-    if (event.lastAtMs < since || event.kind === 'destruction') continue;
+    if (event.lastAtMs < since || event.kind === 'destruction' || event.kind === 'control') continue;
     const subjectId = event.kind === 'damage' ? event.targetId : event.shipId;
     const subject = objects.get(subjectId);
     if (subject === undefined) continue;

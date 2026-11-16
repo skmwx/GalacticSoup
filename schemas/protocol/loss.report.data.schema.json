@@ -373,7 +373,8 @@
         "kind": {
           "enum": [
             "capacitorDepleted",
-            "ammunitionExhausted"
+            "ammunitionExhausted",
+            "speedReduced"
           ]
         },
         "slot": {

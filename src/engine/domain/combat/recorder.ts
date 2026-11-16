@@ -95,6 +95,60 @@ export function recordRepairEvent(
   trim(events);
 }
 
+/**
+ * Records one web application. It joins the most recent record of the same
+ * source and target that is still within the aggregation window, so a web
+ * that keeps cycling is one entry rather than one per cycle.
+ */
+export function recordControlEvent(
+  draft: CampaignDraft,
+  event: {
+    readonly sourceId: string;
+    readonly targetId: string;
+    readonly slotKey: string;
+    readonly moduleId: string;
+    readonly speedFactor: number;
+    readonly expiresAtMs: number;
+  },
+): void {
+  const now = draft.time.simulationTimeMs;
+  const events = mutableEvents(draft);
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const previous = events[index];
+    if (previous === undefined || now - previous.lastAtMs > COMBAT_EVENT_AGGREGATION_WINDOW_MS + 60_000) break;
+    if (
+      previous.kind === 'control' &&
+      previous.sourceId === event.sourceId &&
+      previous.targetId === event.targetId &&
+      previous.slotKey === event.slotKey &&
+      previous.moduleId === event.moduleId &&
+      now <= previous.expiresAtMs + COMBAT_EVENT_AGGREGATION_WINDOW_MS
+    ) {
+      events[index] = {
+        ...previous,
+        lastAtMs: now,
+        count: previous.count + 1,
+        speedFactor: event.speedFactor,
+        expiresAtMs: event.expiresAtMs,
+      };
+      return;
+    }
+  }
+  events.push({
+    kind: 'control',
+    firstAtMs: now,
+    lastAtMs: now,
+    sourceId: event.sourceId,
+    targetId: event.targetId,
+    slotKey: event.slotKey,
+    moduleId: event.moduleId,
+    count: 1,
+    speedFactor: event.speedFactor,
+    expiresAtMs: event.expiresAtMs,
+  });
+  trim(events);
+}
+
 export function recordDestructionEvent(draft: CampaignDraft, shipId: string): void {
   const now = draft.time.simulationTimeMs;
   const events = mutableEvents(draft);

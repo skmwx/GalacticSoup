@@ -1,12 +1,14 @@
 import type { JSX, ReactNode } from 'react';
 
-import type { CombatData, EncounterData, SiteObjectData } from '@protocol';
+import type { CombatData, EncounterData, SiteData, SiteObjectData } from '@protocol';
 
 import { SubstitutedExplanation } from '../common/Explanation';
 import { formatCredits, formatDistanceKm, formatSpeedKmPerSecond, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { DefenseLayers } from './DefenseLayers';
+import { SpeedEffects } from './SpeedEffects';
 import styles from './Space.module.css';
+import { describeSubject, subjectName } from './tactical';
 
 /**
  * What is selected, and what is known about it
@@ -28,11 +30,14 @@ export interface SelectedObjectPanelProps {
   readonly object: SiteObjectData | null;
   readonly combat: CombatData | null;
   readonly encounter: EncounterData | null;
+  readonly site?: SiteData | null;
 }
 
-export function SelectedObjectPanel({ object, combat, encounter }: SelectedObjectPanelProps): JSX.Element {
+export function SelectedObjectPanel({ object, combat, encounter, site = null }: SelectedObjectPanelProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
+  const nameOf = (id: string): string =>
+    describeSubject(subjectName(id, site, encounter, combat?.shipId ?? null), translate);
 
   if (object === null) {
     return (
@@ -68,10 +73,13 @@ export function SelectedObjectPanel({ object, combat, encounter }: SelectedObjec
 
       {/* 1. Shield, armour and hull. */}
       {defenses !== null ? (
-        <DefenseLayers
-          defenses={defenses}
-          label={translate('tactical.selected.resistances', { name })}
-        />
+        <>
+          <DefenseLayers
+            defenses={defenses}
+            label={translate('tactical.selected.resistances', { name })}
+          />
+          <SpeedEffects defenses={defenses} nameOf={nameOf} own={false} />
+        </>
       ) : !object.player ? (
         <dl className={styles['readouts']}>
           <Row label={translate('space.selected.defenses')}>{translate('space.selected.unknown')}</Row>

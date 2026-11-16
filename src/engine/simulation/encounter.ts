@@ -17,6 +17,7 @@ import {
   lockOn,
   mutableEncounter,
   objectiveComplete,
+  operatedModuleRefusal,
   removeSiteObject,
   rollLoot,
   selectNpcIntent,
@@ -537,6 +538,7 @@ function readSituation(context: SimulationContext, shipId: string): NpcSituation
   if (shipCombat(draft, targetId).destroyedAtMs !== null) return null;
 
   let bestOptimalRangeKm: number | null = null;
+  let controlRangeKm: number | null = null;
   let hasPropulsion = false;
   let repairLayerFraction: number | null = null;
   for (const fitted of combatant.fit) {
@@ -555,6 +557,7 @@ function readSituation(context: SimulationContext, shipId: string): NpcSituation
       bestOptimalRangeKm = Math.max(bestOptimalRangeKm ?? 0, reach);
     }
     if (module.category === 'propulsion') hasPropulsion = true;
+    if (module.category === 'web') controlRangeKm = Math.max(controlRangeKm ?? 0, module.web.rangeKm);
     if (module.category === 'armorRepairer' || module.category === 'shieldBooster') {
       const layer = module.repair.layer;
       const maximum = attributeValue(combatant.derived, `${layer}HitPoints`);
@@ -563,16 +566,23 @@ function readSituation(context: SimulationContext, shipId: string): NpcSituation
     }
   }
 
+  const capacity = attributeValue(combatant.derived, 'capacitorCapacity');
   return {
     role: context.content.requireNpcProfile(npcProfileOf(draft, shipId)).role,
     targetId,
     rangeKm: distance(combatant.object.position, target.position),
     maxLockRangeKm: attributeValue(combatant.derived, 'maxLockRangeKm'),
     bestOptimalRangeKm,
+    controlRangeKm,
     hasLock: hasCompletedLock(combatant.combat, targetId),
     repairLayerFraction,
     hasPropulsion,
+    capacitorFraction: capacity <= 0 ? 0 : clampFraction(combatant.ship.condition.capacitorCharge / capacity),
   };
+}
+
+function clampFraction(value: number): number {
+  return Math.max(0, Math.min(1, value));
 }
 
 /** Issues the intent as the ordinary commands a player would use. */
@@ -580,7 +590,13 @@ function apply(
   context: SimulationContext,
   shipId: string,
   movement: MovementOrder,
-  intent: { readonly lock: boolean; readonly fire: boolean; readonly propulsion: boolean; readonly repair: boolean },
+  intent: {
+    readonly lock: boolean;
+    readonly fire: boolean;
+    readonly propulsion: boolean;
+    readonly repair: boolean;
+    readonly control: boolean;
+  },
 ): void {
   const draft = context.draft;
   orderMovement(context, shipId, movement);
@@ -608,7 +624,38 @@ function apply(
     }
     if (module.category === 'armorRepairer' || module.category === 'shieldBooster') {
       operate(context, shipId, slot, key, intent.repair);
+      continue;
     }
+    if (module.category === 'web') {
+      control(context, shipId, slot, key, targetId, intent.control);
+    }
+  }
+}
+
+/**
+ * Keeps a web on the target while the intent asks for it. The opponent asks
+ * the same availability predicate the player's command does, so it issues
+ * only a command the rules would accept (Technical Specification 10.3).
+ */
+function control(
+  context: SimulationContext,
+  shipId: string,
+  slot: SlotRef,
+  key: string,
+  targetId: string,
+  wanted: boolean,
+): void {
+  const runtime = activeModuleState(shipCombat(context.draft, shipId), key);
+  if (!wanted) {
+    if (runtime.repeating) deactivateModule(context, shipId, slot);
+    return;
+  }
+  if (runtime.repeating && runtime.targetId === targetId) return;
+  const combatant = combatantOf(context.draft, context.content, shipId);
+  if (combatant === null) return;
+  const input = { state: context.draft, content: context.content };
+  if (operatedModuleRefusal(input, combatant, slot, targetId) === null) {
+    activateModule(context, shipId, slot, targetId);
   }
 }
 

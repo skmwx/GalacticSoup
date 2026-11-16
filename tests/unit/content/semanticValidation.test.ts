@@ -4,6 +4,7 @@ import {
   compilePack,
   editDocument,
   minimalPack,
+  shippedPack,
   type ContentFile,
   type ContentIssue,
 } from '../../support/contentFixtures.ts';
@@ -783,5 +784,68 @@ describe('reference fits (FeatureSpec02 5.3)', () => {
   ])('rejects a reference fit with %s [TECH-6.2, V02-AC-04]', (_label, edit, detail) => {
     const issues = issuesFor(withFit(edit));
     expect(issues.some((entry) => entry.detail.includes(detail)), JSON.stringify(issues)).toBe(true);
+  });
+});
+
+describe('speed control and archetypes (FeatureSpec02 6.3, 7.1)', () => {
+  const editWeb = (edit: (web: Record<string, unknown>) => void): ContentFile[] =>
+    editDocument(shippedPack(), 'catalog/modules/defense.json', (document) => {
+      const web = definitionsOf(document).find((definition) => definition['id'] === 'module.web.small');
+      if (web === undefined) throw new Error('The shipped content has no web.');
+      edit(web);
+    });
+  const editProfile = (id: string, edit: (profile: Record<string, unknown>) => void): ContentFile[] =>
+    editDocument(shippedPack(), 'encounters/npcs/pirates.json', (document) => {
+      const profile = definitionsOf(document).find((definition) => definition['id'] === id);
+      if (profile === undefined) throw new Error(`The shipped content has no ${id}.`);
+      edit(profile);
+    });
+
+  it('accepts the shipped web and roster [FUNC-9.9, V02-AC-07, V02-AC-08]', () => {
+    expect(compilePack(shippedPack()).issues).toEqual([]);
+  });
+
+  it('keeps the web in a system slot [FUNC-8.3, FUNC-9.9]', () => {
+    const issues = issuesFor(editWeb((web) => {
+      web['slot'] = 'engineering';
+    }));
+    expect(issues.some((entry) => entry.detail.includes('a web module occupies a system slot'))).toBe(true);
+  });
+
+  it('refuses a web effect shorter than its cycle, which would leave gaps [FUNC-9.9]', () => {
+    const issues = issuesFor(editWeb((web) => {
+      (web['web'] as Record<string, unknown>)['effectDurationSeconds'] = 2;
+    }));
+    expect(issues.some((entry) => entry.path.endsWith('.web.effectDurationSeconds'))).toBe(true);
+  });
+
+  it('refuses a web that removes all speed or none [FUNC-9.9]', () => {
+    for (const fraction of [0, 1]) {
+      expect(compilePack(editWeb((web) => {
+        (web['web'] as Record<string, unknown>)['speedReductionFraction'] = fraction;
+      })).ok).toBe(false);
+    }
+  });
+
+  it('holds a controller to its web and a tackler role [FUNC-9.10, V02-AC-08]', () => {
+    const noWeb = issuesFor(editProfile('npc.pirate.binder', (profile) => {
+      const loadout = profile['loadout'] as { modules: string[] };
+      loadout.modules = loadout.modules.filter((moduleId) => moduleId !== 'module.web.small');
+    }));
+    expect(noWeb.some((entry) => entry.detail.includes('lacks the modules that make it one'))).toBe(true);
+    expect(noWeb.some((entry) => entry.detail.includes('a tackler positions for its web'))).toBe(true);
+  });
+
+  it('holds a brawler to the brawler role, resistance and active repair [FUNC-9.10, V02-AC-08]', () => {
+    const wrongRole = issuesFor(editProfile('npc.pirate.warden', (profile) => {
+      profile['role'] = 'sniper';
+    }));
+    expect(wrongRole.some((entry) => entry.detail.includes('takes the brawler role, not sniper'))).toBe(true);
+
+    const noRepair = issuesFor(editProfile('npc.pirate.warden', (profile) => {
+      const loadout = profile['loadout'] as { modules: string[] };
+      loadout.modules = loadout.modules.filter((moduleId) => moduleId !== 'module.repair.armor.small');
+    }));
+    expect(noRepair.some((entry) => entry.detail.includes('lacks the modules that make it one'))).toBe(true);
   });
 });

@@ -381,7 +381,7 @@ export function SpaceScreen({
       </div>
 
       <aside className={styles['shipRail']} aria-label={translate('tactical.status.heading')}>
-        <ShipStatusPanel combat={combat} />
+        <ShipStatusPanel combat={combat} site={site} encounter={encounter} />
         <FlightReadouts data={data} />
       </aside>
       <div className={styles['stage']} ref={stage}>
@@ -485,7 +485,7 @@ export function SpaceScreen({
 
       {renderSidebar(
         <div className={`${styles['aside']} ${sidebar === null ? '' : styles['externalAside']}`}  role="region" aria-label={translate('cockpit.objects')} tabIndex={0}>
-        <SelectedObjectPanel object={selected} combat={combat} encounter={encounter} />
+        <SelectedObjectPanel object={selected} combat={combat} encounter={encounter} site={site} />
         {selected?.kind === 'wreck' ? (
           <LootPanel
             data={data}

@@ -395,6 +395,42 @@
   stroke-dasharray: 8 6;
 }
 
+/* Speed effects on a ship and its resulting limit (Functional Specification 9.9). */
+.speedEffects {
+  margin-top: 0.25rem;
+  padding-left: 0.5rem;
+  border-left: 2px dashed currentColor;
+}
+
+/*
+ * A web's tether: a short-dash line and a ring around the slowed ship, so it
+ * differs from a lock line by shape as well as colour (Functional
+ * Specification 19.2). Incoming webs use the danger colour, the player's own
+ * the accent colour.
+ */
+.webIncoming line,
+.webOutgoing line {
+  stroke-width: 2;
+  stroke-dasharray: 2 4;
+}
+
+.webIncoming circle,
+.webOutgoing circle {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+
+.webIncoming line,
+.webIncoming circle {
+  stroke: var(--gs-color-danger);
+}
+
+.webOutgoing line,
+.webOutgoing circle {
+  stroke: var(--gs-color-accent);
+}
+
 .damageEffect path {
   fill: var(--gs-color-danger);
 }

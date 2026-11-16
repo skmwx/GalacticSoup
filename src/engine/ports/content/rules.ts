@@ -85,6 +85,17 @@ export interface CombatRules {
    * Specification 9.6, 9.10).
    */
   readonly npcGuidedReachFraction: number;
+  /**
+   * A speed reduction never takes a ship below this share of its hull's
+   * unmodified maximum speed (Functional Specification 9.9).
+   */
+  readonly speedReductionFloorFraction: number;
+  /**
+   * Capacitor share below which an opponent carrying a control module stops
+   * burning its propulsion, so it keeps charge for the module its archetype
+   * depends on (Functional Specification 9.10).
+   */
+  readonly npcControlCapacitorReserveFraction: number;
   readonly npcWreckLifetimeSeconds: number;
   readonly playerWreckLifetimeSeconds: number;
   /** Independent survival chance of each cargo stack and fitted module. */
@@ -106,7 +117,8 @@ export interface CombatRules {
  *
  * The preferred range is a fraction of the opponent's own best turret optimal
  * range, so a role stays a behaviour rather than a distance in kilometres that
- * would have to be retuned for every weapon.
+ * would have to be retuned for every weapon. A tackler takes it from its
+ * control module's range instead.
  */
 export interface NpcRoleRules {
   readonly movement: 'approach' | 'orbit' | 'keepRange';

@@ -29,6 +29,43 @@ const CATEGORY_SLOTS = {
   shieldRecharger: 'engineering',
   capacitorRecharger: 'engineering',
   weaponUpgrade: 'engineering',
+  web: 'system',
+};
+
+/**
+ * What makes each enemy archetype observable (FeatureSpec02 7.1): the role
+ * its movement comes from and the modules it must carry. An archetype is
+ * information for the player; this keeps the label honest.
+ */
+const ARCHETYPE_RULES = {
+  fastFrigate: {
+    roles: ['skirmisher'],
+    describe: 'orbits fast with short-range turrets and propulsion',
+    holds: (modules) => modules.some((module) => module.category === 'turret') &&
+      modules.some((module) => module.category === 'propulsion'),
+  },
+  artillery: {
+    roles: ['sniper'],
+    describe: 'keeps long range with turrets',
+    holds: (modules) => modules.some((module) => module.category === 'turret'),
+  },
+  brawler: {
+    roles: ['brawler'],
+    describe: 'holds close range with resistance and active repair',
+    holds: (modules) =>
+      modules.some((module) => module.category === 'armorRepairer' || module.category === 'shieldBooster') &&
+      modules.some((module) => module.category === 'resistancePlating' || module.category === 'resistanceAmplifier'),
+  },
+  missile: {
+    roles: ['sniper', 'skirmisher'],
+    describe: 'keeps its flight range with guided launchers',
+    holds: (modules) => modules.some((module) => module.category === 'launcher'),
+  },
+  controller: {
+    roles: ['tackler'],
+    describe: 'holds inside its web range with a web',
+    holds: (modules) => modules.some((module) => module.category === 'web'),
+  },
 };
 
 /** Hardpoint each weapon category needs (Functional Specification 8.3). */
@@ -349,6 +386,13 @@ function checkModules(collected, ammunition) {
       fail('.resistance.layer', `a ${module.category} hardens the ${resistanceLayer} layer`);
     }
 
+    // A web that keeps cycling keeps its effect in place only when one
+    // application lasts at least one cycle (Functional Specification 9.9).
+    if (module.category === 'web' && module.web.effectDurationSeconds !== undefined &&
+        module.web.effectDurationSeconds < module.activation.cycleSeconds) {
+      fail('.web.effectDurationSeconds', 'a web effect lasts at least one cycle, or a cycling web would leave gaps', 'invalidValue');
+    }
+
     if (module.modifiers !== undefined) {
       const seen = new Set();
       for (const [index, modifier] of module.modifiers.entries()) {
@@ -419,8 +463,45 @@ function checkNpcProfiles(collected, { hulls, modules, ammunition, lootTables })
       issues.push(...checkFitValidity(entry, hull, fitted, `${entry.path}.loadout.modules`));
     }
     issues.push(...checkNpcAmmunition(entry, hull, fitted, ammunition));
+    issues.push(...checkNpcArchetype(entry, hull, fitted));
   }
 
+  return issues;
+}
+
+/**
+ * FeatureSpec02 7.1: an archetype's role and modules make it observable, and
+ * an opponent that depends on a web can pay for at least one cycle of it from
+ * a full capacitor, so its pressure is real rather than a label.
+ */
+function checkNpcArchetype(entry, hull, fitted) {
+  const issues = [];
+  const profile = entry.value;
+  const rule = ARCHETYPE_RULES[profile.archetype];
+  if (rule === undefined) return issues;
+  if (!rule.roles.includes(profile.role)) {
+    issues.push(issue('catalogRelationship', entry.file, `${entry.path}.role`,
+      `a ${profile.archetype} ${rule.describe}, so it takes the ${rule.roles.join(' or ')} role, not ${profile.role}`));
+  }
+  if (!rule.holds(fitted)) {
+    issues.push(issue('catalogRelationship', entry.file, `${entry.path}.loadout.modules`,
+      `a ${profile.archetype} ${rule.describe}; this loadout lacks the modules that make it one`));
+  }
+  if (profile.role === 'tackler' && !fitted.some((module) => module.category === 'web')) {
+    issues.push(issue('catalogRelationship', entry.file, `${entry.path}.role`,
+      'a tackler positions for its web, so it carries one'));
+  }
+  if (hull !== undefined) {
+    const capacity = hull.capacitor.capacity + fitted
+      .filter((module) => module.category === 'capacitorBattery')
+      .reduce((total, module) => total + module.capacitorSupport.capacityBonus, 0);
+    for (const web of fitted.filter((module) => module.category === 'web')) {
+      if (web.activation.capacitorPerCycle > capacity) {
+        issues.push(issue('catalogRelationship', entry.file, `${entry.path}.loadout.modules`,
+          `"${web.id}" costs ${String(web.activation.capacitorPerCycle)} capacitor a cycle, more than "${hull.id}" can hold`));
+      }
+    }
+  }
   return issues;
 }
 

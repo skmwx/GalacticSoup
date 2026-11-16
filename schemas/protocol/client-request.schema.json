@@ -13,7 +13,7 @@
   ],
   "properties": {
     "protocolVersion": {
-      "const": 20
+      "const": 21
     },
     "requestId": {
       "type": "string",
@@ -123,7 +123,6 @@
         "properties": {
           "type": {
             "enum": [
-              "module.activate",
               "module.deactivate"
             ]
           }
@@ -136,6 +135,27 @@
         "properties": {
           "payload": {
             "$ref": "#/$defs/moduleSlotPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "module.activate"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/activateModulePayload"
           }
         }
       }
@@ -1928,6 +1948,28 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 15
+        }
+      }
+    },
+    "activateModulePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slotKind",
+        "slotIndex"
+      ],
+      "properties": {
+        "slotKind": {
+          "const": "system"
+        },
+        "slotIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "targetId": {
+          "$ref": "#/$defs/siteObjectId",
+          "description": "The locked target of a targeted module (the web); other modules take none."
         }
       }
     },

@@ -19,6 +19,7 @@ export {
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_REPEATS,
   NOTIFICATION_SEVERITIES,
+  NPC_ARCHETYPES,
   NPC_ROLES,
   SITE_KINDS,
   SLOT_KINDS,
@@ -37,6 +38,7 @@ export {
   weaponChargeGroupOf,
   weaponDamageMultiplierOf,
   weaponFamilyOf,
+  webEffectDurationSeconds,
 } from './content/definitions.ts';
 export type {
   AmmunitionDefinition,
@@ -74,6 +76,7 @@ export type {
   NotificationTrigger,
   NotificationTriggerKind,
   NpcProfileDefinition,
+  NpcArchetype,
   NpcRole,
   PropulsionModuleDefinition,
   RepairModuleDefinition,
@@ -99,6 +102,7 @@ export type {
   TurretFamily,
   WeaponFamily,
   WeaponModuleDefinition,
+  WebModuleDefinition,
 } from './content/definitions.ts';
 export { ContentIntegrityError, ContentLookupError } from './content/repository.ts';
 export {

@@ -62,6 +62,8 @@ export const DOMAIN_EVENT_KINDS = [
   'combat.moduleWaiting',
   'combat.moduleCycleStarted',
   'combat.moduleCycleCompleted',
+  'combat.speedEffectApplied',
+  'combat.speedEffectExpired',
   'combat.shipDestroyed',
   'encounter.started',
   'encounter.opponentDestroyed',

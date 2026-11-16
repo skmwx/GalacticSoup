@@ -2,7 +2,10 @@ import {
   activeModuleState,
   activateModuleRefusal,
   activateRefusal,
+  activeAttributeConditions,
   activeCombatant,
+  isDestroyed,
+  speedEffectsOn,
   attributeValue,
   CAPACITOR_TREND_WINDOW_MS,
   capacitorPerCycle,
@@ -63,8 +66,11 @@ import type {
   LockData,
   ModuleEffectData,
   ModuleRuntimeData,
+  ModuleTargetData,
   ObjectLockAvailabilityData,
   ProjectileData,
+  SpeedEffectData,
+  SpeedLimitData,
   TargetMotionData,
   WeaponEffectData,
   WeaponRuntimeData,
@@ -271,7 +277,96 @@ function defenseData(rules: CombatRuleInput, combatant: CombatantContext): Defen
       };
     }),
     activeEffects: activeEffects(rules, combatant),
+    speedEffects: speedEffectData(rules, combatant),
+    speed: speedLimitData(rules, combatant),
   };
+}
+
+/**
+ * The speed effects on one ship, each with its source, strength and the time
+ * it has left (Functional Specification 9.9, 19.3).
+ */
+function speedEffectData(rules: CombatRuleInput, combatant: CombatantContext): readonly SpeedEffectData[] {
+  const now = rules.state.time.simulationTimeMs;
+  const site = rules.state.navigation.currentSite;
+  const playerId = rules.state.assets.activeShipId;
+  return speedEffectsOn(rules.state, combatant.shipId).map((effect) => ({
+    effectId: effect.id,
+    sourceId: effect.sourceShipId,
+    sourceSlot: effect.sourceSlotKey,
+    sourcePresent: site?.objects[effect.sourceShipId] !== undefined && !isDestroyed(rules.state, effect.sourceShipId),
+    fromPlayer: effect.sourceShipId === playerId,
+    moduleId: effect.moduleId,
+    nameKey: rules.content.module(effect.moduleId)?.nameKey ?? effect.moduleId,
+    speedFactor: effect.speedFactor,
+    appliedAtMs: effect.appliedAtMs,
+    expiresAtMs: effect.expiresAtMs,
+    remainingSeconds: Math.max(0, effect.expiresAtMs - now) / 1000,
+  }));
+}
+
+/**
+ * The resulting speed limit, beside what it would be without the effects and
+ * the floor no effect goes below (Functional Specification 9.9, 19.6). The
+ * trace is the pipeline's own: each effect is a step named by its module.
+ */
+function speedLimitData(rules: CombatRuleInput, combatant: CombatantContext): SpeedLimitData {
+  const derived = combatant.derived.attributes['maxSpeedKmPerSecond'];
+  const unaffected = deriveShipAttributes({
+    hull: combatant.hull,
+    fit: combatant.fit,
+    content: rules.content,
+    conditions: activeAttributeConditions(combatant.fit, rules.content, combatant.combat),
+  });
+  const floor = combatant.hull.movement.maxSpeedKmPerSecond * rules.content.rules.combat.speedReductionFloorFraction;
+  const effects = speedEffectsOn(rules.state, combatant.shipId);
+  const unaffectedValue = attributeValue(unaffected, 'maxSpeedKmPerSecond');
+  const factor = effects.reduce((product, effect) => product * effect.speedFactor, 1);
+  const maximum = derived?.value ?? 0;
+  return {
+    unaffectedMaximumKmPerSecond: unaffectedValue,
+    maximumKmPerSecond: maximum,
+    floorKmPerSecond: floor,
+    currentKmPerSecond: magnitude(combatant.object.velocity),
+    atFloor: effects.length > 0 && (derived?.clamped ?? false),
+    trace: {
+      formulaKey: 'combat.formula.speedLimit',
+      operands: [
+        { key: 'unaffectedSpeed', value: unaffectedValue },
+        { key: 'combinedSpeedFactor', value: Math.round(factor * 1e6) / 1e6 },
+        { key: 'speedFloor', value: Math.round(floor * 1e6) / 1e6 },
+      ],
+      unroundedResult: maximum,
+      displayResult: Math.round(maximum * 1000) / 1000,
+    },
+  };
+}
+
+/**
+ * Each completed lock, and whether a targeted module could act on it now
+ * (Functional Specification 9.9). The availability is the command handler's.
+ */
+function moduleTargets(
+  rules: CombatRuleInput,
+  combatant: CombatantContext,
+  entry: ProjectedModule,
+): readonly ModuleTargetData[] {
+  const module = entry.module;
+  if (module.category !== 'web') return [];
+  const site = rules.state.navigation.currentSite;
+  return combatant.combat.locks
+    .filter((lock) => lock.status === 'locked')
+    .sort((a, b) => a.targetId.localeCompare(b.targetId))
+    .map((lock): ModuleTargetData => {
+      const target = site?.objects[lock.targetId];
+      const rangeKm = target === undefined ? 0 : relativeMotion(combatant.object, target).rangeKm;
+      return {
+        targetId: lock.targetId,
+        rangeKm,
+        withinRange: target !== undefined && rangeKm <= module.web.rangeKm,
+        command: availability('module.activate', activateModuleRefusal(rules, entry.fitted.slot, lock.targetId)),
+      };
+    });
 }
 
 function capacitorData(
@@ -376,6 +471,7 @@ function moduleData(
       completesAtMs: runtime.cycle.completesAtMs,
       remainingSeconds: Math.max(0, runtime.cycle.completesAtMs - rules.state.time.simulationTimeMs) / 1000,
       committedCapacitor: runtime.cycle.committedCapacitor,
+      targetId: runtime.cycle.targetId,
     },
     stopReason: runtime.stopReason,
     effect: moduleEffect(rules, combatant, entry),
@@ -383,6 +479,9 @@ function moduleData(
       availability('module.activate', activateModuleRefusal(rules, entry.fitted.slot)),
       availability('module.deactivate', deactivateModuleRefusal(rules, entry.fitted.slot)),
     ],
+    targeted: entry.module.category === 'web',
+    targetId: runtime.targetId,
+    targets: moduleTargets(rules, combatant, entry),
   };
 }
 
@@ -428,6 +527,29 @@ function moduleEffect(
     const values = Object.fromEntries(DAMAGE_TYPES.map((type) => [type, module.resistance.bonuses[type]]));
     return effect('resistance', module.resistance.layer, 0, 0, 0, 0, values, {
       formulaKey: 'combat.formula.resistanceModifier', operands: [], unroundedResult: 0, displayResult: 0,
+    });
+  }
+  if (module.category === 'web') {
+    // What one application does to a target: its maximum speed times the
+    // factor, never below the floor. It is situational, never extra damage
+    // (FeatureSpec02 5.2, 6.3).
+    const cycleSeconds = module.activation.cycleSeconds;
+    const durationSeconds = module.web.effectDurationSeconds ?? cycleSeconds;
+    const factor = 1 - module.web.speedReductionFraction;
+    return effect('web', null, 0, 0, 1, factor, {
+      rangeKm: module.web.rangeKm,
+      speedReductionFraction: module.web.speedReductionFraction,
+      speedFactor: factor,
+      effectDurationSeconds: durationSeconds,
+      floorFraction: rules.content.rules.combat.speedReductionFloorFraction,
+    }, {
+      formulaKey: 'combat.formula.webSpeedFactor',
+      operands: [
+        { key: 'speedReductionFraction', value: module.web.speedReductionFraction },
+        { key: 'floorFraction', value: rules.content.rules.combat.speedReductionFloorFraction },
+      ],
+      unroundedResult: factor,
+      displayResult: Math.round(factor * 100) / 100,
     });
   }
   if (module.category === 'capacitorBattery') {

@@ -24,6 +24,7 @@ import {
   requestReload,
 } from '@engine/simulation';
 import type {
+  ActivateModulePayload,
   ActivateWeaponPayload,
   ChangeAmmunitionPayload,
   TargetPayloadData,
@@ -73,9 +74,9 @@ export function handleCombatCommand(
     case 'weapon.changeAmmunition':
       return changeAmmunition(transaction, rules, payload as ChangeAmmunitionPayload);
     case 'module.activate':
-      return operateModule(transaction, rules, payload as WeaponSlotPayload, true);
+      return operateModule(transaction, rules, payload as ActivateModulePayload, true);
     case 'module.deactivate':
-      return operateModule(transaction, rules, payload as WeaponSlotPayload, false);
+      return operateModule(transaction, rules, payload as ActivateModulePayload, false);
     default:
       return assertUnreachable(type);
   }
@@ -179,21 +180,44 @@ function changeAmmunition(
     : reject('weaponSlotUnavailable');
 }
 
+/**
+ * Starts or stops an operated module. A targeted module (the web) needs the
+ * locked target it acts on: the one named, or, when none is named, the only
+ * locked target it can reach, so a single obvious target needs no choice
+ * (Functional Specification 9.9).
+ */
 function operateModule(
   transaction: Transaction,
   rules: CombatRuleInput,
-  payload: WeaponSlotPayload,
+  payload: ActivateModulePayload,
   activate: boolean,
 ): CommandOutcome {
   const slot: SlotRef = { kind: payload.slotKind as SlotRef['kind'], index: payload.slotIndex };
-  const refused = refuse(
-    activate ? activateModuleRefusal(rules, slot) : deactivateModuleRefusal(rules, slot),
-  );
+  if (!activate) {
+    const refused = refuse(deactivateModuleRefusal(rules, slot));
+    if (refused !== null) return refused;
+    return deactivateModule(transaction.simulation(), shipOf(rules), slot)
+      ? APPLIED
+      : reject('moduleSlotUnavailable');
+  }
+  const targetId = payload.targetId ?? defaultModuleTarget(rules, slot);
+  const refused = refuse(activateModuleRefusal(rules, slot, targetId));
   if (refused !== null) return refused;
-  const applied = activate
-    ? activateModule(transaction.simulation(), shipOf(rules), slot)
-    : deactivateModule(transaction.simulation(), shipOf(rules), slot);
-  return applied ? APPLIED : reject('moduleSlotUnavailable');
+  // A web with several reachable targets and none named cannot guess one.
+  return activateModule(transaction.simulation(), shipOf(rules), slot, targetId)
+    ? APPLIED
+    : reject(targetId === null ? 'lockNotHeld' : 'moduleSlotUnavailable');
+}
+
+/** The single reachable locked target of a targeted module, if exactly one. */
+function defaultModuleTarget(rules: CombatRuleInput, slot: SlotRef): string | null {
+  const combatant = activeCombatant(rules.state, rules.content);
+  if (combatant === null) return null;
+  const reachable = combatant.combat.locks
+    .filter((lock) => lock.status === 'locked')
+    .map((lock) => lock.targetId)
+    .filter((targetId) => activateModuleRefusal(rules, slot, targetId) === null);
+  return reachable.length === 1 ? reachable[0] ?? null : null;
 }
 
 /** The charge a plain reload refills with: the loaded one, or the last one. */

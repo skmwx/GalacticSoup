@@ -86,7 +86,9 @@ export function CombatLog({ combat, site, encounter }: CombatLogProps): JSX.Elem
 }
 
 function eventSubject(event: CombatEventData): string {
-  return event.kind === 'damage' ? `${event.sourceId}>${event.targetId}:${event.slotKey}` : event.shipId;
+  return event.kind === 'damage' || event.kind === 'control'
+    ? `${event.sourceId}>${event.targetId}:${event.slotKey}`
+    : event.shipId;
 }
 
 interface LogEntryProps {
@@ -117,6 +119,22 @@ function LogEntry({ event, site, encounter, shipId }: LogEntryProps): JSX.Elemen
           types: damageBreakdown(event.appliedDamage)
             .map((entry) => `${translate(`damage.${entry.damageType}`)} ${formatStat(Math.round(entry.amount * 10) / 10, locale)}`)
             .join(' · '),
+        })}
+      </li>
+    );
+  }
+  if (event.kind === 'control') {
+    // A web: who slowed whom, how often, and by how much. It slows; it never
+    // stops warp (Functional Specification 9.9).
+    const incoming = event.targetId === shipId;
+    return (
+      <li data-event="control" data-direction={incoming ? 'incoming' : 'outgoing'} className={incoming ? styles['warning'] : undefined}>
+        {translate(incoming ? 'tactical.log.controlIncoming' : 'tactical.log.control', {
+          at,
+          source: name(event.sourceId),
+          target: name(event.targetId),
+          count: event.count,
+          percent: Math.round((1 - event.speedFactor) * 100),
         })}
       </li>
     );

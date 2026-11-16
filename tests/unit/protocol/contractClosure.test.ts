@@ -42,6 +42,9 @@ const OPTIONAL_BY_SPECIFICATION: Readonly<Record<string, readonly string[]>> = {
     '/$defs/repairPreviewPayload#scope',
     // Technical Specification 12.5: absent asks for the default locale.
     '/$defs/contentMessagesPayload#locale',
+    // Functional Specification 9.9: only a targeted module (the web) takes a
+    // target; with none named the engine uses the only one in reach.
+    '/$defs/activateModulePayload#targetId',
   ],
   // Technical Specification 7.1: a failure reports a revision when one exists.
   'engine-response.schema.json': ['/$defs/failure#revision'],

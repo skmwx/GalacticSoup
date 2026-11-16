@@ -6,6 +6,7 @@ import {
   type PropulsionModuleDefinition,
   type RepairModuleDefinition,
   type WeaponModuleDefinition,
+  type WebModuleDefinition,
 } from '@engine/ports';
 import type { AmmunitionId } from '@shared';
 
@@ -75,6 +76,7 @@ export const COMBAT_REFUSALS = [
   'weaponUnloadNoSpace',
   'moduleAlreadyActive',
   'moduleNotActive',
+  'moduleOutOfRange',
   'moduleSlotUnavailable',
   'shipDestroyed',
 ] as const;
@@ -102,7 +104,10 @@ export interface WeaponContext {
   readonly availableRounds: number;
 }
 
-export type OperatedModuleDefinition = PropulsionModuleDefinition | RepairModuleDefinition;
+export type OperatedModuleDefinition =
+  | PropulsionModuleDefinition
+  | RepairModuleDefinition
+  | WebModuleDefinition;
 
 export interface ActiveModuleContext {
   readonly slot: SlotRef;
@@ -125,7 +130,8 @@ export function activeModuleContext(
     module === undefined ||
     (module.category !== 'propulsion' &&
       module.category !== 'shieldBooster' &&
-      module.category !== 'armorRepairer') ||
+      module.category !== 'armorRepairer' &&
+      module.category !== 'web') ||
     module.activation === undefined
   ) {
     return null;
@@ -366,19 +372,68 @@ export function changeAmmunitionRefusal(
   return unloadFits(input, combatant, weapon) ? null : 'weaponUnloadNoSpace';
 }
 
-/** Refuses starting an operated module, using the same predicate as the UI. */
+/**
+ * Refuses starting an operated module, using the same predicate as the UI.
+ *
+ * A targeted module (the web) needs a completed lock on its target and the
+ * target within its range (Functional Specification 9.9). `targetId` is
+ * `null` when the caller asks whether it could act on any locked target,
+ * which is what a module control needs before the player chooses one.
+ */
 export function activateModuleRefusal(
   input: CombatRuleInput,
   slot: SlotRef,
+  targetId: string | null = null,
 ): CombatCommandRefusal {
   const combatant = activeCombatant(input.state, input.content);
   if (combatant === null) return 'combatUnavailable';
+  return operatedModuleRefusal(input, combatant, slot, targetId);
+}
+
+/**
+ * The same predicate for any ship, so an opponent's controller asks exactly
+ * what the player's command handler asks (Technical Specification 10.3).
+ */
+export function operatedModuleRefusal(
+  input: CombatRuleInput,
+  combatant: CombatantContext,
+  slot: SlotRef,
+  targetId: string | null,
+): CombatCommandRefusal {
   if (combatant.combat.destroyedAtMs !== null) return 'shipDestroyed';
   const module = activeModuleContext(input, combatant, slot);
   if (module === null) return 'moduleSlotUnavailable';
-  return activeModuleState(combatant.combat, module.key).repeating
-    ? 'moduleAlreadyActive'
-    : null;
+  const runtime = activeModuleState(combatant.combat, module.key);
+  const web = module.module;
+  if (web.category !== 'web') {
+    return runtime.repeating ? 'moduleAlreadyActive' : null;
+  }
+  if (runtime.repeating && (targetId === null || runtime.targetId === targetId)) {
+    return 'moduleAlreadyActive';
+  }
+  const candidates = targetId === null
+    ? combatant.combat.locks.filter((lock) => lock.status === 'locked').map((lock) => lock.targetId)
+    : hasCompletedLock(combatant.combat, targetId) ? [targetId] : [];
+  if (candidates.length === 0) return 'lockNotHeld';
+  return candidates.some((candidate) => webTargetInRange(input, combatant, web, candidate))
+    ? null
+    : 'moduleOutOfRange';
+}
+
+/**
+ * Whether a web's target is present and within its range
+ * (Functional Specification 9.9). Checked when a cycle starts and again when
+ * it completes.
+ */
+export function webTargetInRange(
+  input: CombatRuleInput,
+  combatant: CombatantContext,
+  module: WebModuleDefinition,
+  targetId: string,
+): boolean {
+  const target = input.state.navigation.currentSite?.objects[targetId];
+  if (target === undefined || isDestroyed(input.state, targetId)) return false;
+  return distance(combatant.object.position, target.position) <= module.web.rangeKm;
 }
 
 /** Refuses stopping an operated module which is not repeating. */

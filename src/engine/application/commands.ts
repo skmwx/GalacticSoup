@@ -29,6 +29,8 @@ import {
   PROJECTILE_IMPACT_BOUNDARY,
   resolveProjectileExpiry,
   resolveProjectileImpact,
+  resolveSpeedEffectExpiry,
+  SPEED_EFFECT_EXPIRY_BOUNDARY,
   type BoundaryResolvers,
   type ContinuousSystem,
 } from '@engine/simulation';
@@ -71,6 +73,7 @@ export const INSTALLED_BOUNDARY_RESOLVERS: BoundaryResolvers = {
   [RELOAD_COMPLETE_BOUNDARY]: resolveReloadComplete,
   [PROJECTILE_IMPACT_BOUNDARY]: resolveProjectileImpact,
   [PROJECTILE_EXPIRY_BOUNDARY]: resolveProjectileExpiry,
+  [SPEED_EFFECT_EXPIRY_BOUNDARY]: resolveSpeedEffectExpiry,
   [NPC_DECISION_BOUNDARY]: resolveNpcDecision,
   [WRECK_EXPIRE_BOUNDARY]: resolveWreckExpiry,
 };

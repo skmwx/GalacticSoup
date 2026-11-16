@@ -67,10 +67,14 @@ export interface CombatFixtureOptions {
   };
   /** Refit the player's first system slot before undocking. */
   readonly playerSystemModule?: ModuleId;
+  /** Refit the player's system slots in order, from the first. */
+  readonly playerSystemModules?: readonly ModuleId[];
   /** Refit the player's first engineering slot before undocking. */
   readonly playerEngineeringModule?: ModuleId;
   /** The target's weapon; an autocannon with fusion rounds by default. */
   readonly targetWeapon?: { readonly moduleId: ModuleId; readonly ammunitionId: AmmunitionId; readonly rounds: number };
+  /** A module for the target's first system slot, such as a web. */
+  readonly targetSystemModule?: ModuleId;
 }
 
 export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture {
@@ -100,6 +104,7 @@ export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture
   if (
     options.playerTurret !== undefined ||
     options.playerSystemModule !== undefined ||
+    options.playerSystemModules !== undefined ||
     options.playerEngineeringModule !== undefined
   ) {
     const slots = Object.fromEntries(shipFit(draft.assets, playerId).map((fitted) => [
@@ -128,6 +133,10 @@ export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture
         ammunitionId: null,
       };
     }
+    for (const [index, moduleId] of (options.playerSystemModules ?? []).entries()) {
+      service.add(hangar, moduleId, 1, granted(1));
+      slots[slotKey({ kind: 'system', index })] = { moduleId, online: true, ammunitionId: null };
+    }
     if (options.playerEngineeringModule !== undefined) {
       service.add(hangar, options.playerEngineeringModule, 1, granted(1));
       slots[FIRST_ENGINEERING] = {
@@ -148,7 +157,7 @@ export function combatFixture(options: CombatFixtureOptions = {}): CombatFixture
 
   const targetId = options.armTarget === false
     ? unarmedTarget(draft, content)
-    : armedTarget(draft, content, station.id, options.targetWeapon);
+    : armedTarget(draft, content, station.id, options.targetWeapon, options.targetSystemModule);
 
   const siteId = options.siteId ?? COMBAT_SITE_ID;
   const location: SiteLocation = {
@@ -199,16 +208,23 @@ function armedTarget(
   content: ContentRepository,
   stationId: StationId,
   weapon: CombatFixtureOptions['targetWeapon'] = { moduleId: AUTOCANNON, ammunitionId: FUSION, rounds: 20 },
+  systemModule?: ModuleId,
 ): EntityId {
   const shipId = createTargetShip(draft, content, stationId);
   const hangar = hangarOf(draft, stationId);
   const service = inventoryService(draft, content);
   service.add(hangar, weapon.moduleId, 1, granted(1));
   service.add(hangar, weapon.ammunitionId, weapon.rounds, granted(weapon.rounds));
+  if (systemModule !== undefined) service.add(hangar, systemModule, 1, granted(1));
   const missing = applyDraftTo(draft, content, {
     shipId,
     baseRevision: draft.revision,
-    slots: { [FIRST_WEAPON]: { moduleId: weapon.moduleId, online: true, ammunitionId: weapon.ammunitionId } },
+    slots: {
+      [FIRST_WEAPON]: { moduleId: weapon.moduleId, online: true, ammunitionId: weapon.ammunitionId },
+      ...(systemModule === undefined
+        ? {}
+        : { [FIRST_SYSTEM]: { moduleId: systemModule, online: true, ammunitionId: null } }),
+    },
   });
   if (missing.length > 0) throw new Error(`The test target could not be fitted: ${missing[0]?.definitionId ?? ''}`);
   return shipId;

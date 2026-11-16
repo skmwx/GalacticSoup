@@ -127,6 +127,7 @@ export const RULE_VIOLATION_REASONS = [
   'weaponUnloadNoSpace',
   'moduleAlreadyActive',
   'moduleNotActive',
+  'moduleOutOfRange',
   'moduleSlotUnavailable',
   'shipDestroyed',
   'lootUnavailable',

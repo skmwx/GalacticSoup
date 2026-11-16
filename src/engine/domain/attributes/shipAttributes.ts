@@ -6,6 +6,8 @@ import {
   type ModuleDefinition,
 } from '@engine/ports';
 
+import type { MessageKey } from '@shared';
+
 import type { FitDescription } from '../fitting/types';
 
 import { operatorModifiers, WEAPON_MODIFIER_ATTRIBUTES } from './operators';
@@ -48,6 +50,21 @@ export interface ShipAttributeInput {
   readonly content: ContentRepository;
   /** Activation assumptions the preview is taken under. */
   readonly conditions?: ReadonlySet<string>;
+  /** Temporary speed reductions on the ship (Functional Specification 9.9). */
+  readonly speedEffects?: readonly SpeedEffectInput[];
+}
+
+/**
+ * One temporary speed reduction as the pipeline applies it: a hostile effect,
+ * not a fitted modifier, so it is undiminished and effects of different
+ * sources multiply (Functional Specification 9.9).
+ */
+export interface SpeedEffectInput {
+  /** Definition id of the module that applied it, for the trace. */
+  readonly sourceId: string;
+  readonly sourceKey: MessageKey;
+  /** The factor maximum speed is multiplied by, above 0 and below 1. */
+  readonly speedFactor: number;
 }
 
 export function deriveShipAttributes(input: ShipAttributeInput): DerivedShipAttributes {
@@ -66,13 +83,20 @@ export function deriveShipAttributes(input: ShipAttributeInput): DerivedShipAttr
 
   const resistanceMaximum = content.rules.combat.resistanceMaximum;
   const requests: AttributeRequest[] = [];
+  const effects = input.speedEffects ?? [];
 
   for (const attribute of SHIP_ATTRIBUTES) {
+    const slowed = attribute === 'maxSpeedKmPerSecond' && effects.length > 0;
     requests.push({
       attribute,
       base: baseAttribute(hull, attribute),
-      modifiers,
-      minimum: 0,
+      modifiers: slowed ? [...modifiers, ...speedEffectModifiers(effects)] : modifiers,
+      // A speed reduction never takes a ship below its floor: a share of the
+      // hull's unmodified maximum (Functional Specification 9.9). The floor
+      // only exists while something is slowing the ship.
+      minimum: slowed
+        ? hull.movement.maxSpeedKmPerSecond * content.rules.combat.speedReductionFloorFraction
+        : 0,
       ...(WHOLE_ATTRIBUTES.has(attribute) ? { whole: true } : {}),
       ...(input.conditions === undefined ? {} : { conditions: input.conditions }),
     });
@@ -104,6 +128,21 @@ export function deriveShipAttributes(input: ShipAttributeInput): DerivedShipAttr
   }
 
   return { hull, attributes: evaluateAttributes(requests), modifiers };
+}
+
+/**
+ * Speed effects as intrinsic multipliers: applied after every fitted
+ * modifier, undiminished, one step per source so the trace names each.
+ */
+function speedEffectModifiers(effects: readonly SpeedEffectInput[]): readonly AttributeModifier[] {
+  return effects.map((effect) => ({
+    attribute: 'maxSpeedKmPerSecond',
+    operation: 'percent' as const,
+    value: effect.speedFactor - 1,
+    stage: 'intrinsic' as const,
+    sourceId: effect.sourceId,
+    sourceKey: effect.sourceKey,
+  }));
 }
 
 /** The derived value of one attribute, or the fallback when it is absent. */
@@ -230,6 +269,7 @@ function moduleModifiers(module: ModuleDefinition): readonly AttributeModifier[]
     case 'launcher':
     case 'shieldBooster':
     case 'armorRepairer':
+    case 'web':
       // These act through their own operation rather than by changing a ship
       // attribute; the fitting summary derives what they do.
       return [];

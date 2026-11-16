@@ -29,7 +29,7 @@
       "const": "galactic-soup/save"
     },
     "formatVersion": {
-      "const": 12
+      "const": 13
     },
     "protocolVersion": {
       "type": "integer",

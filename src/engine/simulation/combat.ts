@@ -42,6 +42,9 @@ import {
   weaponContext,
   weaponProfile,
   weaponState,
+  webTargetInRange,
+  type ActiveModuleContext,
+  type ActiveModuleStopReason,
   type CampaignDraft,
   type CombatantContext,
   type LockState,
@@ -53,7 +56,12 @@ import {
   type WeaponState,
   type WeaponStopReason,
 } from '@engine/domain';
-import { DAMAGE_TYPES, DEFENSE_LAYERS, magazineSizeOf } from '@engine/ports';
+import {
+  DAMAGE_TYPES,
+  DEFENSE_LAYERS,
+  magazineSizeOf,
+  type WebModuleDefinition,
+} from '@engine/ports';
 import type { AmmunitionId } from '@shared';
 
 import { applyDamageToShip } from './combatDamage';
@@ -64,6 +72,7 @@ import {
   removeProjectilesTargeting,
 } from './projectiles';
 import { cancelBoundary, scheduleBoundary } from './scheduler';
+import { applySpeedEffect, removeSpeedEffectsOn } from './speedEffects';
 
 /**
  * Locking, turret cycles and reloads in simulation time
@@ -381,6 +390,7 @@ export function resolveModuleCycle(context: SimulationContext, entry: SchedulerE
     );
     if (operated === null) return;
 
+    const cycleTargetId = runtime.cycle.targetId;
     setActiveModule(context.draft, ownerId, key, { ...runtime, cycle: null });
     if (
       operated.module.category === 'shieldBooster' ||
@@ -388,6 +398,24 @@ export function resolveModuleCycle(context: SimulationContext, entry: SchedulerE
     ) {
       applyModuleRepair(context, ownerId, key, operated.module.repair.layer,
         operated.module.repair.amountHitPoints);
+    }
+    if (operated.module.category === 'web') {
+      // Target, lock and range are checked again at completion. A failed
+      // check applies nothing and refunds nothing (Functional Specification 9.9).
+      const web = operated.module;
+      const applied =
+        cycleTargetId !== null &&
+        hasLockOn(combatant, cycleTargetId) &&
+        webTargetInRange({ state: context.draft, content: context.content }, combatant, web, cycleTargetId);
+      if (applied) applySpeedEffect(context, combatant, { ...operated, module: web }, cycleTargetId);
+      context.publish('combat.moduleCycleCompleted', {
+        shipId: ownerId,
+        slot: key,
+        moduleId: operated.module.id,
+        applied,
+      });
+      touch(context, ownerId);
+      return;
     }
     context.publish('combat.moduleCycleCompleted', {
       shipId: ownerId,
@@ -557,11 +585,15 @@ export function requestReload(
   return true;
 }
 
-/** Starts a repeating non-weapon module operator. */
+/**
+ * Starts a repeating non-weapon module operator. A targeted module (the web)
+ * names the locked target it acts on; any other module ignores `targetId`.
+ */
 export function activateModule(
   context: SimulationContext,
   shipId: string,
   slot: SlotRef,
+  targetId: string | null = null,
 ): boolean {
   const combatant = combatantOf(context.draft, context.content, shipId);
   if (combatant === null) return false;
@@ -571,10 +603,21 @@ export function activateModule(
     slot,
   );
   if (operated === null) return false;
+  const targeted = operated.module.category === 'web';
+  if (targeted && targetId === null) return false;
+
+  const runtime = activeModuleState(combatant.combat, operated.key);
+  if (targeted && runtime.cycle !== null && runtime.cycle.targetId !== targetId) {
+    // Re-aiming abandons the running cycle; the capacitor it spent is not
+    // refunded (Functional Specification 9.9, 22.11).
+    cancelBoundary(context.draft, runtime.cycle.boundaryEntryId);
+    setActiveModule(context.draft, shipId, operated.key, { ...runtime, cycle: null });
+  }
 
   setActiveModule(context.draft, shipId, operated.key, {
-    ...activeModuleState(combatant.combat, operated.key),
+    ...activeModuleState(shipCombatOf(context.draft, shipId), operated.key),
     repeating: true,
+    targetId: targeted ? targetId : null,
     waitingForCapacitor: false,
     stopReason: null,
   });
@@ -582,6 +625,7 @@ export function activateModule(
     shipId,
     slot: operated.key,
     moduleId: operated.module.id,
+    ...(targeted && targetId !== null ? { targetId } : {}),
   });
   startNextModuleCycle(context, shipId, slot);
   touch(context, shipId);
@@ -606,6 +650,7 @@ export function deactivateModule(
   setActiveModule(context.draft, shipId, operated.key, {
     ...runtime,
     repeating: false,
+    targetId: null,
     waitingForCapacitor: false,
     stopReason: 'deactivated',
   });
@@ -639,8 +684,11 @@ export function clearCombat(context: SimulationContext, shipId: string): void {
   }
   delete (context.draft.combat.ships as Record<string, unknown>)[shipId];
   // Projectiles following a ship that leaves are removed; those it launched
-  // fly on (Technical Specification 10.1).
+  // fly on (Technical Specification 10.1). Effects on it end; effects it
+  // applied keep their attribution until they expire (Functional
+  // Specification 9.9).
   removeProjectilesTargeting(context, shipId);
+  removeSpeedEffectsOn(context, shipId);
   combatChanged(context.draft);
   context.invalidate('combat');
   context.invalidate('frame');
@@ -761,6 +809,17 @@ function startNextModuleCycle(
   const runtime = activeModuleState(combatant.combat, operated.key);
   if (!runtime.repeating || runtime.cycle !== null) return;
 
+  // A targeted module checks its target, lock and range before it pays: a
+  // cycle that cannot start spends nothing (Functional Specification 9.9).
+  const targetId = operated.module.category === 'web' ? runtime.targetId : null;
+  if (operated.module.category === 'web') {
+    const failure = webStartFailure(context, combatant, operated.module, targetId);
+    if (failure !== null) {
+      stopModule(context, shipId, operated, failure);
+      return;
+    }
+  }
+
   const ship = context.draft.assets.ships[shipId];
   if (ship === undefined) return;
   const payment = payCapacitor(
@@ -806,6 +865,7 @@ function startNextModuleCycle(
       completesAtMs: dueAtMs,
       boundaryEntryId: boundary.entryId,
       committedCapacitor: payment.committed,
+      targetId,
     },
     waitingForCapacitor: false,
     stopReason: null,
@@ -815,6 +875,7 @@ function startNextModuleCycle(
     slot: operated.key,
     moduleId: operated.module.id,
     committedCapacitor: payment.committed,
+    ...(targetId === null ? {} : { targetId }),
   });
   context.invalidate('ship');
   context.invalidate('navigation');
@@ -832,6 +893,72 @@ function retryWaitingModules(context: SimulationContext, atMs: number): void {
         startNextModuleCycle(context, shipId, slot, atMs);
       }
     }
+  }
+}
+
+/** Why a web cycle cannot start against its target, or `null` when it can. */
+function webStartFailure(
+  context: SimulationContext,
+  combatant: CombatantContext,
+  module: WebModuleDefinition,
+  targetId: string | null,
+): ActiveModuleStopReason | null {
+  const target = targetId === null ? undefined : context.draft.navigation.currentSite?.objects[targetId];
+  if (targetId === null || target === undefined || shipCombatOf(context.draft, targetId).destroyedAtMs !== null) {
+    return 'targetMissing';
+  }
+  if (!hasLockOn(combatant, targetId)) return 'lockLost';
+  return webTargetInRange({ state: context.draft, content: context.content }, combatant, module, targetId)
+    ? null
+    : 'outOfRange';
+}
+
+function hasLockOn(combatant: CombatantContext, targetId: string): boolean {
+  return combatant.combat.locks.some((lock) => lock.targetId === targetId && lock.status === 'locked');
+}
+
+/** Stops a repeating module and says why; a running cycle is left to finish. */
+function stopModule(
+  context: SimulationContext,
+  shipId: string,
+  operated: ActiveModuleContext,
+  reason: ActiveModuleStopReason,
+): void {
+  setActiveModule(context.draft, shipId, operated.key, {
+    ...activeModuleState(shipCombatOf(context.draft, shipId), operated.key),
+    repeating: false,
+    targetId: null,
+    waitingForCapacitor: false,
+    stopReason: reason,
+  });
+  context.publish('combat.moduleStopped', {
+    shipId,
+    slot: operated.key,
+    moduleId: operated.module.id,
+    reason,
+  });
+  touch(context, shipId);
+}
+
+/**
+ * Stops the targeted modules aimed at a target the ship no longer holds a
+ * lock on. A cycle already paid for runs to completion, where its own check
+ * fails and nothing is applied (Functional Specification 9.9).
+ */
+function stopModulesTargeting(
+  context: SimulationContext,
+  shipId: string,
+  targetId: string,
+  reason: ActiveModuleStopReason,
+): void {
+  const combatant = combatantOf(context.draft, context.content, shipId);
+  if (combatant === null) return;
+  for (const key of Object.keys(combatant.combat.modules).sort()) {
+    const runtime = combatant.combat.modules[key];
+    const slot = parseSlotKey(key);
+    if (runtime === undefined || slot === null || runtime.targetId !== targetId) continue;
+    const operated = activeModuleContext({ state: context.draft, content: context.content }, combatant, slot);
+    if (operated !== null) stopModule(context, shipId, operated, reason);
   }
 }
 
@@ -1074,8 +1201,9 @@ function finalizeDestruction(context: SimulationContext): void {
     stopAllOperationsForDestruction(context, shipId);
     setDestroyedAt(context.draft, shipId, context.draft.time.simulationTimeMs);
     // Projectiles still following it are removed without damage or refund
-    // (Functional Specification 9.6).
+    // (Functional Specification 9.6), and every effect on it ends (9.9).
     removeProjectilesTargeting(context, shipId);
+    removeSpeedEffectsOn(context, shipId);
     for (const attackerId of Object.keys(context.draft.combat.ships).sort()) {
       if (attackerId !== shipId) stopLocksTargetingDestroyed(context, attackerId, shipId);
     }
@@ -1118,6 +1246,7 @@ function stopAllOperationsForDestruction(context: SimulationContext, shipId: str
     mutable.modules[key] = {
       ...mutable.modules[key]!,
       repeating: false,
+      targetId: null,
       cycle: null,
       waitingForCapacitor: false,
       stopReason: 'destroyed',
@@ -1201,6 +1330,9 @@ function stopWeaponsTargeting(
   targetId: string,
   reason: WeaponStopReason,
 ): void {
+  // Webs aimed at the same target stop with the same reason; they need the
+  // lock to start another cycle (Functional Specification 9.9).
+  stopModulesTargeting(context, shipId, targetId, reason === 'targetMissing' ? 'targetMissing' : 'lockLost');
   const combat = shipCombatOf(context.draft, shipId);
   for (const key of Object.keys(combat.weapons).sort()) {
     const weapon = combat.weapons[key];

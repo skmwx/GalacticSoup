@@ -1,6 +1,6 @@
 {
   "kind": "modules",
-  "$comment": "Active defence, propulsion and capacitor modules (FeatureSpec02 5.1). Small and medium variants trade fitting cost for output; medium modules fit only hulls that accept them. Statistics are preliminary and tuned in v0.2 phase 6.",
+  "$comment": "Active defence, propulsion, speed control and capacitor modules (FeatureSpec02 5.1). Small and medium variants trade fitting cost for output; medium modules fit only hulls that accept them. Statistics are preliminary and tuned in v0.2 phase 6.",
   "definitions": [
     {
       "id": "module.propulsion.afterburner.small",
@@ -27,6 +27,20 @@
       "category": "propulsion",
       "activation": { "capacitorPerCycle": 12, "cycleSeconds": 10 },
       "propulsion": { "speedBonusFraction": 0.6, "signatureRadiusPenaltyFraction": 0 }
+    },
+    {
+      "id": "module.web.small",
+      "$comment": "The web (FeatureSpec02 6.3): a system slot spent on slowing one locked target within 10 km instead of on the ship's own speed or repair. Each completed cycle applies or refreshes a halving of the target's maximum speed for one cycle; it never prevents warp.",
+      "nameKey": "content.module.web.small.name",
+      "descriptionKey": "content.module.web.small.description",
+      "slot": "system",
+      "size": "small",
+      "fitting": { "powerUse": 4, "processingUse": 18 },
+      "volumeCubicMetres": 0.005,
+      "referenceValueCredits": 9000,
+      "category": "web",
+      "activation": { "capacitorPerCycle": 5, "cycleSeconds": 5 },
+      "web": { "rangeKm": 10, "speedReductionFraction": 0.5 }
     },
     {
       "id": "module.repair.armor.small",

@@ -14,6 +14,17 @@
       "trigger": { "kind": "hostileLock" }
     },
     {
+      "id": "notify.combat.webbed",
+      "category": "combat",
+      "severity": "warning",
+      "messageKey": "content.notify.combat.webbed",
+      "cueId": "cue.alert.warning",
+      "hideable": true,
+      "repeat": "oncePerSite",
+      "groupWindowSeconds": 10,
+      "trigger": { "kind": "playerSpeedReduced" }
+    },
+    {
       "id": "notify.combat.shield-low",
       "category": "combat",
       "severity": "danger",

@@ -1,13 +1,15 @@
 import type { JSX } from 'react';
 
-import type { CombatData } from '@protocol';
+import type { CombatData, EncounterData, SiteData } from '@protocol';
 
 import { SubstitutedExplanation } from '../common/Explanation';
 import { useTooltip } from '../common/Tooltip';
 import { formatPercent, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { DefenseLayers } from './DefenseLayers';
+import { SpeedEffects } from './SpeedEffects';
 import styles from './Space.module.css';
+import { describeSubject, subjectName } from './tactical';
 
 /**
  * The player's own ship in a fight
@@ -25,12 +27,16 @@ import styles from './Space.module.css';
 
 export interface ShipStatusPanelProps {
   readonly combat: CombatData | null;
+  readonly site?: SiteData | null;
+  readonly encounter?: EncounterData | null;
 }
 
-export function ShipStatusPanel({ combat }: ShipStatusPanelProps): JSX.Element {
+export function ShipStatusPanel({ combat, site = null, encounter = null }: ShipStatusPanelProps): JSX.Element {
   const translate = useTranslate();
   const { locale } = useLocalizer();
   const capacitor = combat?.capacitor ?? null;
+  const nameOf = (id: string): string =>
+    describeSubject(subjectName(id, site, encounter, combat?.shipId ?? null), translate);
 
   return (
     <section className={styles['panel']} aria-labelledby="status-heading" data-panel="status">
@@ -41,7 +47,10 @@ export function ShipStatusPanel({ combat }: ShipStatusPanelProps): JSX.Element {
       {combat?.defenses === null || combat === null ? (
         <p className={styles['muted']}>{translate('tactical.status.none')}</p>
       ) : (
-        <div data-readout="defenses"><DefenseLayers defenses={combat.defenses} label={translate('tactical.status.resistances')} /></div>
+        <div data-readout="defenses">
+          <DefenseLayers defenses={combat.defenses} label={translate('tactical.status.resistances')} />
+          <SpeedEffects defenses={combat.defenses} nameOf={nameOf} own />
+        </div>
       )}
 
       {capacitor === null ? null : (

@@ -23,6 +23,113 @@
       "items": {
         "oneOf": [
           {
+            "description": "A targeted speed-reduction module, the web (Functional Specification 9.9; FeatureSpec02 6.3).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "activation",
+              "category",
+              "descriptionKey",
+              "fitting",
+              "id",
+              "nameKey",
+              "referenceValueCredits",
+              "size",
+              "slot",
+              "volumeCubicMetres",
+              "web"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/moduleId"
+              },
+              "nameKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "descriptionKey": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
+              },
+              "slot": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/slotKind"
+              },
+              "size": {
+                "enum": [
+                  "small",
+                  "medium"
+                ],
+                "description": "The module size (Functional Specification 8.4)."
+              },
+              "fitting": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "powerUse",
+                  "processingUse"
+                ],
+                "properties": {
+                  "powerUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "processingUse": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  }
+                }
+              },
+              "activation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "capacitorPerCycle",
+                  "cycleSeconds"
+                ],
+                "properties": {
+                  "capacitorPerCycle": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                  },
+                  "cycleSeconds": {
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "volumeCubicMetres": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/cubicMetres"
+              },
+              "referenceValueCredits": {
+                "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/credits"
+              },
+              "category": {
+                "const": "web"
+              },
+              "web": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "rangeKm",
+                  "speedReductionFraction"
+                ],
+                "properties": {
+                  "rangeKm": {
+                    "description": "The target must be within this range when a cycle starts and when it completes.",
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  },
+                  "speedReductionFraction": {
+                    "description": "Share of the target's maximum normal speed removed while the effect lasts; above 0 and below 1.",
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "exclusiveMaximum": 1
+                  },
+                  "effectDurationSeconds": {
+                    "description": "How long one application lasts. Absent means one cycle.",
+                    "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                  }
+                }
+              },
+              "$comment": {
+                "type": "string"
+              }
+            }
+          },
+          {
             "type": "object",
             "additionalProperties": false,
             "required": [

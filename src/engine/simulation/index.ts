@@ -36,6 +36,13 @@ export {
   resolveProjectileExpiry,
   resolveProjectileImpact,
 } from './projectiles';
+export {
+  applySpeedEffect,
+  clearSpeedEffects,
+  removeSpeedEffectsOn,
+  resolveSpeedEffectExpiry,
+  SPEED_EFFECT_EXPIRY_BOUNDARY,
+} from './speedEffects';
 export { resolveEconomyHour } from './economy';
 export {
   abandonEncounter,

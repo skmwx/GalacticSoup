@@ -121,6 +121,30 @@ describe('immediate danger (Functional Specification 19.7)', () => {
     expect(entry()?.subjectIds).toEqual([attackerId]);
   });
 
+  it('warns, audibly and once per source, when a web starts slowing the player; refreshes stay quiet [FUNC-9.9, FUNC-19.7, V02-AC-07]', () => {
+    const fixture = encounterFixture();
+    const attackerId = opponentIds(fixture)[0]!;
+    const context = testSimulation(fixture.draft, fixture.content);
+    const webbed = (refreshed: boolean) => event(fixture.draft, 'combat.speedEffectApplied', {
+      sourceId: attackerId, targetId: fixture.playerId, slot: 'system:0',
+      moduleId: 'module.web.small', speedFactor: 0.5, expiresAtMs: 5000, refreshed,
+    });
+
+    raiseNotifications(context, [webbed(false), webbed(true), webbed(true)], null);
+    const entries = fixture.draft.notifications.entries.filter((record) => record.definitionId === 'notify.combat.webbed');
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.params['attackerKey']).toBe('content.npc.pirate.scout.name');
+    expect(definition('notify.combat.webbed').cueId).not.toBeNull();
+
+    // The player's own web on an opponent is not a warning.
+    raiseNotifications(context, [event(fixture.draft, 'combat.speedEffectApplied', {
+      sourceId: fixture.playerId, targetId: attackerId, slot: 'system:0',
+      moduleId: 'module.web.small', speedFactor: 0.5, expiresAtMs: 5000, refreshed: false,
+    })], null);
+    expect(fixture.draft.notifications.entries.filter((record) => record.definitionId === 'notify.combat.webbed'))
+      .toHaveLength(1);
+  });
+
   it('ignores the player locking an opponent [FUNC-19.7]', () => {
     const fixture = combatFixture();
     raiseNotifications(testSimulation(fixture.draft, fixture.content),

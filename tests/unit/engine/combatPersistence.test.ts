@@ -9,6 +9,7 @@ import {
   readCampaignState,
   RELOAD_COMPLETE_KIND,
   shipCombat,
+  SPEED_EFFECT_EXPIRY_KIND,
   validateCampaign,
   WEAPON_CYCLE_KIND,
   weaponState,
@@ -25,6 +26,7 @@ import {
   MODULE_CYCLE_BOUNDARY,
   RELOAD_COMPLETE_BOUNDARY,
   requestReload,
+  SPEED_EFFECT_EXPIRY_BOUNDARY,
   WEAPON_CYCLE_BOUNDARY,
 } from '@engine/simulation';
 import { RULE_VIOLATION_REASONS } from '@protocol';
@@ -213,5 +215,6 @@ describe('combat vocabularies', () => {
     expect(WEAPON_CYCLE_KIND).toBe(WEAPON_CYCLE_BOUNDARY);
     expect(RELOAD_COMPLETE_KIND).toBe(RELOAD_COMPLETE_BOUNDARY);
     expect(MODULE_CYCLE_KIND).toBe(MODULE_CYCLE_BOUNDARY);
+    expect(SPEED_EFFECT_EXPIRY_KIND).toBe(SPEED_EFFECT_EXPIRY_BOUNDARY);
   });
 });

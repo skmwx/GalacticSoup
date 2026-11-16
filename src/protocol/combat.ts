@@ -26,6 +26,14 @@ export interface ActivateWeaponPayload extends WeaponSlotPayload {
   readonly targetId: string;
 }
 
+/**
+ * Starts an operated module. A targeted module (the web) names the locked
+ * target it acts on; any other module takes no target.
+ */
+export interface ActivateModulePayload extends WeaponSlotPayload {
+  readonly targetId?: string;
+}
+
 export interface ChangeAmmunitionPayload extends WeaponSlotPayload {
   readonly ammunitionId: string;
 }
@@ -164,6 +172,52 @@ export interface DefenseStateData {
   readonly layers: readonly DefenseLayerData[];
   /** Modules the ship is cycling, in slot order. */
   readonly activeEffects: readonly ActiveEffectData[];
+  /** Temporary speed reductions on the ship, in application order. */
+  readonly speedEffects: readonly SpeedEffectData[];
+  readonly speed: SpeedLimitData;
+}
+
+/**
+ * One temporary speed reduction on a ship (Functional Specification 9.9).
+ * Its source is a retained attribution: `sourcePresent` is false once that
+ * ship has been destroyed or has left, and the effect still runs out its time.
+ */
+export interface SpeedEffectData {
+  readonly effectId: string;
+  readonly sourceId: string;
+  readonly sourceSlot: string;
+  readonly sourcePresent: boolean;
+  /** True when the player's own ship applied it. */
+  readonly fromPlayer: boolean;
+  readonly moduleId: string;
+  readonly nameKey: string;
+  /** Maximum speed is multiplied by this while it lasts. */
+  readonly speedFactor: number;
+  readonly appliedAtMs: number;
+  readonly expiresAtMs: number;
+  readonly remainingSeconds: number;
+}
+
+/**
+ * A ship's maximum normal speed with and without the effects on it
+ * (Functional Specification 9.9, 19.6). `atFloor` says the floor - a share of
+ * the hull's unmodified maximum - held the result up.
+ */
+export interface SpeedLimitData {
+  readonly unaffectedMaximumKmPerSecond: number;
+  readonly maximumKmPerSecond: number;
+  readonly floorKmPerSecond: number;
+  readonly currentKmPerSecond: number;
+  readonly atFloor: boolean;
+  readonly trace: FormulaTraceData;
+}
+
+/** Whether a targeted module could act on one locked target now (Functional Specification 9.9). */
+export interface ModuleTargetData {
+  readonly targetId: string;
+  readonly rangeKm: number;
+  readonly withinRange: boolean;
+  readonly command: CommandAvailabilityData;
 }
 
 /**
@@ -221,10 +275,12 @@ export interface ActiveModuleCycleData {
   readonly completesAtMs: number;
   readonly remainingSeconds: number;
   readonly committedCapacitor: number;
+  /** The target a targeted module's cycle acts on; `null` otherwise. */
+  readonly targetId: string | null;
 }
 
 export interface ModuleEffectData {
-  readonly kind: 'propulsion' | 'repair' | 'resistance' | 'capacitorSupport' | 'passive';
+  readonly kind: 'propulsion' | 'repair' | 'resistance' | 'capacitorSupport' | 'passive' | 'web';
   readonly layer: string | null;
   readonly amountPerCycle: number;
   readonly sustainedPerSecond: number;
@@ -250,6 +306,12 @@ export interface ModuleRuntimeData {
   readonly stopReason: string | null;
   readonly effect: ModuleEffectData;
   readonly commands: readonly CommandAvailabilityData[];
+  /** True for a module that acts on a locked target (the web). */
+  readonly targeted: boolean;
+  /** The target it is repeating on, or `null`. */
+  readonly targetId: string | null;
+  /** For a targeted module: each completed lock and whether it could act on it. */
+  readonly targets: readonly ModuleTargetData[];
 }
 
 export type CombatEventData =
@@ -282,6 +344,19 @@ export type CombatEventData =
       readonly lastAtMs: number;
       readonly shipId: string;
       readonly count: number;
+    }
+  | {
+      /** Web applications by one source on one target (Functional Specification 9.9). */
+      readonly kind: 'control';
+      readonly firstAtMs: number;
+      readonly lastAtMs: number;
+      readonly sourceId: string;
+      readonly targetId: string;
+      readonly slotKey: string;
+      readonly moduleId: string;
+      readonly count: number;
+      readonly speedFactor: number;
+      readonly expiresAtMs: number;
     };
 
 export interface WeaponRuntimeData {

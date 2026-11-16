@@ -67,11 +67,13 @@ describe('the requirement registry', () => {
       'FUNC-6.3',
       // v0.2 phase 3: guided weapons.
       'FUNC-9.6',
+      // v0.2 phase 4: speed reduction (the web); other control effects stay deferred.
+      'FUNC-9.9',
     ]) {
       expect(scopeOf(id), id).toBe('included');
     }
     for (const id of [
-      'FUNC-9.9', 'FUNC-11.4', 'FUNC-12.2', 'FUNC-13.1', 'FUNC-14.3', 'FUNC-15.2',
+      'FUNC-11.4', 'FUNC-12.2', 'FUNC-13.1', 'FUNC-14.3', 'FUNC-15.2',
       'FUNC-16.3', 'FUNC-17.2', 'FUNC-19.4', 'TECH-8.4', 'TECH-10.5', 'TECH-10.7', 'TECH-10.8',
     ]) {
       expect(scopeOf(id), id).toBe('deferred');
@@ -89,9 +91,11 @@ describe('the v0.2 acceptance criteria', () => {
       expect(['planned', 'included'], entry.id).toContain(entry.scope);
       expect((entry as { phases?: number[] }).phases?.length ?? 0, entry.id).toBeGreaterThan(0);
     }
-    // Phases 0-3 are delivered; the criteria they complete are included.
+    // Phases 0-4 are delivered; the criteria they complete are included.
     const included = v02.filter((entry) => entry.scope === 'included').map((entry) => entry.id);
-    expect(included).toEqual(['V02-AC-01', 'V02-AC-03', 'V02-AC-05', 'V02-AC-06', 'V02-AC-12', 'V02-AC-13']);
+    expect(included).toEqual([
+      'V02-AC-01', 'V02-AC-02', 'V02-AC-03', 'V02-AC-05', 'V02-AC-06', 'V02-AC-07', 'V02-AC-08', 'V02-AC-12', 'V02-AC-13',
+    ]);
   });
 
   it('holds a planned criterion to no coverage, but an included one to an integration or browser test [TECH-15.2]', () => {

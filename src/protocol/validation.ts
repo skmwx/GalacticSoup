@@ -261,10 +261,15 @@ export function validatePayload(type: RequestType, payload: unknown): EngineErro
 
     case 'module.activate':
     case 'module.deactivate': {
-      const unexpected = unexpectedField(fields, ['slotKind', 'slotIndex']);
+      const allowed = type === 'module.activate'
+        ? ['slotKind', 'slotIndex', 'targetId']
+        : ['slotKind', 'slotIndex'];
+      const unexpected = unexpectedField(fields, allowed);
       if (unexpected !== null) return payloadField(type, unexpected, 'unexpectedField');
       if (fields['slotKind'] !== 'system') return payloadField(type, 'slotKind', 'format');
-      return isIndex(fields['slotIndex']) ? null : payloadField(type, 'slotIndex', 'format');
+      if (!isIndex(fields['slotIndex'])) return payloadField(type, 'slotIndex', 'format');
+      return fields['targetId'] === undefined || isSiteObjectId(fields['targetId'])
+        ? null : payloadField(type, 'targetId', 'format');
     }
 
     case 'loot.contents': {

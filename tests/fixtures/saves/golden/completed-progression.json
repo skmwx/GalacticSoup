@@ -1,10 +1,10 @@
 {
  "format": "galactic-soup/save",
- "formatVersion": 12,
- "protocolVersion": 20,
+ "formatVersion": 13,
+ "protocolVersion": 21,
  "engineVersion": "0.2.0",
- "contentVersion": "0.2.0+dc9d8e5a2fb4",
- "contentHash": "dc9d8e5a2fb4cf5e70005fa14731968ab6eabbcabc9cef1073b7d52f26bd2ca2",
+ "contentVersion": "0.2.0+e8cda2f4198a",
+ "contentHash": "e8cda2f4198a9dbe910effa4e7ed5430b024d338c8e2641d491288adca5b8cdf",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
@@ -3471,7 +3471,8 @@
      "count": 1
     }
    ],
-   "projectiles": []
+   "projectiles": [],
+   "speedEffects": []
   },
   "economy": {
    "stations": {
@@ -3867,6 +3868,14 @@
       "module.upgrade.tracking": {
        "itemId": "module.upgrade.tracking",
        "stock": 10,
+       "stockAccumulator": 0,
+       "lastProcessedHour": 0,
+       "eventFactor": 1,
+       "version": 1
+      },
+      "module.web.small": {
+       "itemId": "module.web.small",
+       "stock": 6,
        "stockAccumulator": 0,
        "lastProcessedHour": 0,
        "eventFactor": 1,
@@ -5277,7 +5286,7 @@
     }
    }
   },
-  "stateVersion": 12,
+  "stateVersion": 13,
   "campaignId": "ce0f36ba8e20edb4ebcba9757",
   "displayName": "Test Pilot",
   "seed": "bb22cc33dd44ee55ff6677889900aa11",
@@ -5446,5 +5455,5 @@
    "nextInsertionOrdinal": 3395
   }
  },
- "checksum": "9999d4635391c0c7b248fe4521815928db52391706f9f4b1e03d82296d31568f"
+ "checksum": "4e75f869dd608976018f4c0df5eadba7837e9bf929a0327a29b84243bf8047cc"
 }

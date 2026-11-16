@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { draftOf, type CampaignState } from '@engine';
-import { shipFit } from '@engine/domain';
+import { deriveShipAttributes, PROPULSION_ACTIVE, shipFit } from '@engine/domain';
 import { fittingDraftProjection, shipProjection } from '@engine/projections';
 
 import { REPO_ROOT } from '../../config/aliases.mjs';
@@ -86,11 +86,50 @@ function assemble(fit: ReferenceFit): { readonly state: CampaignState; readonly 
   return { state, shipId };
 }
 
+describe('the complete catalog (FeatureSpec02 5.1, 6.1)', () => {
+  it('ships three player hulls, 26 combat modules and 16 charges, every one on sale [V02-AC-02]', () => {
+    expect(content.hulls().filter((hull) => hull.playerUsable).map((hull) => hull.hullClass).sort())
+      .toEqual(['cruiser', 'destroyer', 'frigate']);
+    expect(content.modules()).toHaveLength(26);
+    expect(content.ammunitions().length).toBeGreaterThanOrEqual(16);
+    const station = content.rules.economy.startingStationId;
+    const sold = new Set(content.listings(station).map((listing) => listing.itemId));
+    for (const definition of [...content.modules(), ...content.ammunitions()]) expect(sold.has(definition.id)).toBe(true);
+  });
+
+  it('gives every module an effect it executes, none a catalog placeholder [V02-AC-02, V02-AC-05, V02-AC-07]', () => {
+    const cruiser = content.requireHull('hull.independent.cruiser' as never);
+    const bare = deriveShipAttributes({ hull: cruiser, fit: [], content, conditions: new Set([PROPULSION_ACTIVE]) });
+    for (const module of content.modules()) {
+      const fit = [{ slot: { kind: module.slot, index: 0 }, moduleId: module.id, online: true, charge: null }];
+      const fitted = deriveShipAttributes({ hull: cruiser, fit: fit as never, content, conditions: new Set([PROPULSION_ACTIVE]) });
+      const changesShip = Object.keys(bare.attributes).some((attribute) =>
+        Math.abs((fitted.attributes[attribute]?.value ?? 0) - (bare.attributes[attribute]?.value ?? 0)) > 1e-9);
+      // Weapons, repairers and the web act through their own operation; every
+      // other module must change a derived attribute.
+      const operates =
+        (module.category === 'turret' && module.turret.damageMultiplier > 0) ||
+        (module.category === 'launcher' && module.launcher.damageMultiplier > 0) ||
+        ((module.category === 'shieldBooster' || module.category === 'armorRepairer') && module.repair.amountHitPoints > 0) ||
+        (module.category === 'web' && module.web.speedReductionFraction > 0 && module.web.rangeKm > 0);
+      expect({ module: module.id, effective: changesShip || operates }).toEqual({ module: module.id, effective: true });
+    }
+  });
+});
+
 describe('reference fits (FeatureSpec02 5.3)', () => {
-  it('declares a turret fit for every hull and the guided fits delivered so far [V02-AC-04, V02-AC-05]', () => {
+  it('declares two fits per hull that cover every required approach [V02-AC-04, V02-AC-05]', () => {
     const hulls = new Set(REFERENCE_FITS.map((fit) => fit.hullId));
     expect(hulls).toEqual(new Set(['hull.independent.starter', 'hull.independent.destroyer', 'hull.independent.cruiser']));
-    expect(REFERENCE_FITS.map((fit) => fit.id)).toEqual(expect.arrayContaining(['fit.frigate.guided', 'fit.cruiser.guided']));
+    expect(REFERENCE_FITS).toHaveLength(6);
+    for (const hull of hulls) expect(REFERENCE_FITS.filter((fit) => fit.hullId === hull)).toHaveLength(2);
+    const categories = (fit: ReferenceFit) => new Set(fit.modules.map((slot) => content.requireModule(slot.moduleId as never).category));
+    const covered = (predicate: (set: ReadonlySet<string>) => boolean) => REFERENCE_FITS.some((fit) => predicate(categories(fit)));
+    expect(covered((set) => set.has('shieldBooster'))).toBe(true);
+    expect(covered((set) => set.has('armorRepairer'))).toBe(true);
+    expect(covered((set) => set.has('shieldExtender') || set.has('shieldRecharger'))).toBe(true);
+    expect(covered((set) => set.has('web') && set.has('turret'))).toBe(true);
+    expect(covered((set) => set.has('launcher'))).toBe(true);
   });
 
   it.each(REFERENCE_FITS.map((fit) => [fit.id, fit] as const))(

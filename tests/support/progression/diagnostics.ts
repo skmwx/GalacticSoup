@@ -232,6 +232,16 @@ function npcModel(content: ContentRepository, profile: NpcProfileDefinition): Sh
   return shipModel(content, hull, fit);
 }
 
+/** The longest web range in a profile's loadout, or null without one. */
+function webRangeKm(content: ContentRepository, profile: NpcProfileDefinition): number | null {
+  let range: number | null = null;
+  for (const moduleId of profile.loadout.modules) {
+    const module = content.module(moduleId);
+    if (module?.category === 'web') range = Math.max(range ?? 0, module.web.rangeKm);
+  }
+  return range;
+}
+
 function diagnoseOpponent(
   content: ContentRepository,
   profile: NpcProfileDefinition,
@@ -249,9 +259,11 @@ function diagnoseOpponent(
     rangeKm: 0,
     maxLockRangeKm: attributeValue(npc.derived, 'maxLockRangeKm'),
     bestOptimalRangeKm: weapons.length === 0 ? null : Math.max(...weapons.map((weapon) => weapon.optimalRangeKm)),
+    controlRangeKm: webRangeKm(content, profile),
     hasLock: false,
     repairLayerFraction: null,
     hasPropulsion: false,
+    capacitorFraction: 1,
   }, rules);
   const npcSpeed = attributeValue(npc.derived, 'maxSpeedKmPerSecond');
   // A faster player fights where the tactics say; a slower one where the opponent wants.

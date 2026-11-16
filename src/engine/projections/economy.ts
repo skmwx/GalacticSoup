@@ -273,6 +273,9 @@ function modulePurpose(module: ModuleDefinition): MarketModulePurpose {
     case 'shieldRecharger':
       return 'defense';
     case 'propulsion':
+    case 'web':
+      // FeatureSpec02 5.1 groups the web with propulsion: speed and range
+      // control, one's own or the target's.
       return 'propulsion';
     case 'capacitorBattery':
     case 'capacitorRecharger':

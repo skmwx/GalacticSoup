@@ -40,10 +40,22 @@
             "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/messageKey"
           },
           "role": {
+            "description": "Behaviour the selector applies (Functional Specification 9.10). A tackler holds inside its control module's range.",
             "enum": [
               "brawler",
               "skirmisher",
-              "sniper"
+              "sniper",
+              "tackler"
+            ]
+          },
+          "archetype": {
+            "description": "What the player prepares for (FeatureSpec02 7.1). Information only; the v0.2 floor requires ten profiles that state one, two per archetype; semantic validation holds each archetype to the role and modules that make it observable.",
+            "enum": [
+              "fastFrigate",
+              "artillery",
+              "brawler",
+              "missile",
+              "controller"
             ]
           },
           "hullId": {

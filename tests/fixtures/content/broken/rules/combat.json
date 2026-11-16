@@ -36,10 +36,17 @@
         "movement": "keepRange",
         "preferredRangeFraction": 1.15,
         "minimumRangeKm": 8
+      },
+      "tackler": {
+        "movement": "orbit",
+        "preferredRangeFraction": 0.6,
+        "minimumRangeKm": 2
       }
     },
     "guidedMinimumDamageMultiplier": 0.1,
     "guidedMinimumTargetSpeedKmPerSecond": 0.1,
-    "npcGuidedReachFraction": 0.7
+    "npcGuidedReachFraction": 0.7,
+    "speedReductionFloorFraction": 0.1,
+    "npcControlCapacitorReserveFraction": 0.35
   }
 }

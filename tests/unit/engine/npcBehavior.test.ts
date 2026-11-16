@@ -20,9 +20,11 @@ function situation(overrides: Partial<NpcSituation> = {}): NpcSituation {
     rangeKm: 20,
     maxLockRangeKm: 30,
     bestOptimalRangeKm: 10,
+    controlRangeKm: null,
     hasLock: false,
     repairLayerFraction: null,
     hasPropulsion: false,
+    capacitorFraction: 1,
     ...overrides,
   };
 }
@@ -86,10 +88,13 @@ describe('npc behaviour', () => {
   });
 
   it('reads nothing about the player beyond range, so losing grants no bonus [FUNC-9.10]', () => {
-    // The situation carries the target's id and its range and nothing else.
+    // The situation carries the target's id and its range, and otherwise only
+    // the opponent's own loadout and condition (FeatureSpec02 7.1).
     const keys = Object.keys(situation()).sort();
     expect(keys).toEqual([
       'bestOptimalRangeKm',
+      'capacitorFraction',
+      'controlRangeKm',
       'hasLock',
       'hasPropulsion',
       'maxLockRangeKm',
@@ -98,5 +103,31 @@ describe('npc behaviour', () => {
       'role',
       'targetId',
     ]);
+  });
+
+  it('sends a tackler to orbit inside its web range, not its gun range [FUNC-9.10, V02-AC-08]', () => {
+    const intent = selectNpcIntent(situation({ role: 'tackler', bestOptimalRangeKm: 2, controlRangeKm: 10 }), rules);
+    expect(intent.movement.kind).toBe('orbit');
+    expect(intent.desiredRangeKm).toBeCloseTo(10 * rules.npcRoles.tackler.preferredRangeFraction, 6);
+    expect(intent.desiredRangeKm).toBeLessThan(10);
+  });
+
+  it('runs its web only on a held lock within web range [FUNC-9.9, FUNC-9.10, V02-AC-07, V02-AC-08]', () => {
+    const base = { role: 'tackler' as const, controlRangeKm: 10 };
+    expect(selectNpcIntent(situation({ ...base, hasLock: true, rangeKm: 8 }), rules).control).toBe(true);
+    expect(selectNpcIntent(situation({ ...base, hasLock: false, rangeKm: 8 }), rules).control).toBe(false);
+    expect(selectNpcIntent(situation({ ...base, hasLock: true, rangeKm: 12 }), rules).control).toBe(false);
+    expect(selectNpcIntent(situation({ hasLock: true, rangeKm: 8 }), rules).control).toBe(false);
+  });
+
+  it('keeps a capacitor reserve for its web instead of burning propulsion dry [FUNC-9.10, V02-AC-08]', () => {
+    const outside = { rangeKm: 40, hasPropulsion: true };
+    const reserve = rules.npcControlCapacitorReserveFraction;
+    expect(selectNpcIntent(situation({ ...outside, controlRangeKm: 10, capacitorFraction: reserve - 0.01 }), rules).propulsion)
+      .toBe(false);
+    expect(selectNpcIntent(situation({ ...outside, controlRangeKm: 10, capacitorFraction: reserve + 0.01 }), rules).propulsion)
+      .toBe(true);
+    // An opponent without a web keeps the MVP behaviour.
+    expect(selectNpcIntent(situation({ ...outside, capacitorFraction: 0 }), rules).propulsion).toBe(true);
   });
 });

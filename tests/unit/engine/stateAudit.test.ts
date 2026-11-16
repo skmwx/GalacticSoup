@@ -253,12 +253,13 @@ describe('what the golden saves cover', () => {
       for (const entry of (goldens[name].state as unknown as CampaignState).scheduler.entries) held.add(entry.kind);
     }
     // A lock, a reload, an active-module cycle, a guided projectile's contact
-    // and expiry and the two short preparation timers are in flight for
-    // seconds at a time. Their snapshots are pinned by the combat, guided
-    // weapon, navigation and loss persistence tests instead.
+    // and expiry, a web's speed effect and the two short preparation timers
+    // are in flight for seconds at a time. Their snapshots are pinned by the
+    // combat, guided weapon, web, navigation and loss persistence tests
+    // instead.
     const transient = [
       'combat.lockComplete', 'combat.moduleCycle', 'combat.projectileExpiry', 'combat.projectileImpact',
-      'combat.reloadComplete', 'navigation.dockComplete', 'navigation.warpPrepared',
+      'combat.reloadComplete', 'combat.speedEffectExpiry', 'navigation.dockComplete', 'navigation.warpPrepared',
     ];
     expect(Object.keys(INSTALLED_BOUNDARY_RESOLVERS).filter((kind) => !held.has(kind)).sort()).toEqual(transient);
   });

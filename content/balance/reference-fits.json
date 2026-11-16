@@ -1,6 +1,6 @@
 {
   "kind": "reference.fits",
-  "$comment": "Complete, legally obtainable reference fits (FeatureSpec02 5.3). Authoring-only: validated with the content and used by tests and balance work, never granted to the player and not compiled into the runtime bundle. Phase 2 adds the turret fits, phase 3 the guided fits; the web-assisted destroyer fit follows with the web in phase 4.",
+  "$comment": "Complete, legally obtainable reference fits (FeatureSpec02 5.3). Authoring-only: validated with the content and used by tests and balance work, never granted to the player and not compiled into the runtime bundle. Phase 2 added the turret fits, phase 3 the guided fits and phase 4 the web-assisted destroyer fit, completing two fits per hull. Across the six they cover active shield, active armour, passive shield, a web-assisted turret fit and guided combat; semantic validation holds them to that coverage.",
   "fits": [
     {
       "id": "fit.frigate.autocannon",
@@ -53,6 +53,27 @@
       "reserve": [
         { "ammunitionId": "ammo.projectile.small.phased", "quantity": 120 },
         { "ammunitionId": "ammo.projectile.small.fusion", "quantity": 60 }
+      ]
+    },
+    {
+      "id": "fit.destroyer.blaster-web",
+      "hullId": "hull.independent.destroyer",
+      "approach": "Short-range blasters held on target by a web, with an afterburner to close and active armour repair; a battery, plating and a hybrid damage enhancer support them.",
+      "modules": [
+        { "moduleId": "module.turret.blaster.small", "ammunitionId": "ammo.hybrid.small.plasma" },
+        { "moduleId": "module.turret.blaster.small", "ammunitionId": "ammo.hybrid.small.plasma" },
+        { "moduleId": "module.turret.blaster.small", "ammunitionId": "ammo.hybrid.small.plasma" },
+        { "moduleId": "module.turret.blaster.small", "ammunitionId": "ammo.hybrid.small.plasma" },
+        { "moduleId": "module.web.small" },
+        { "moduleId": "module.propulsion.afterburner.small" },
+        { "moduleId": "module.repair.armor.small" },
+        { "moduleId": "module.capacitor.battery.small" },
+        { "moduleId": "module.plating.armor.small" },
+        { "moduleId": "module.upgrade.damage.hybrid" }
+      ],
+      "reserve": [
+        { "ammunitionId": "ammo.hybrid.small.plasma", "quantity": 240 },
+        { "ammunitionId": "ammo.hybrid.small.iron", "quantity": 80 }
       ]
     },
     {

@@ -21,10 +21,12 @@ import type { StructuralLimits } from '@shared';
  * Shape version of the save envelope (Technical Specification 11.2).
  *
  * Format 11 is the first v0.2 (Combat Progression Alpha) format. Format 12
- * (v0.2 phase 3) adds guided projectiles in flight to combat state; its
- * payload is campaign state version 12, and format-11 saves migrate to it.
+ * (v0.2 phase 3) adds guided projectiles in flight to combat state. Format 13
+ * (v0.2 phase 4) adds speed effects, the target of a targeted module and its
+ * cycle, and control records in the combat history; its payload is campaign
+ * state version 13, and format-11 and format-12 saves migrate to it.
  */
-export const SAVE_FORMAT_VERSION = 12;
+export const SAVE_FORMAT_VERSION = 13;
 
 /**
  * The oldest save format this release opens (Technical Specification 11.4,

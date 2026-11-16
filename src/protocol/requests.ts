@@ -30,6 +30,7 @@ import type {
   StationServicesData,
 } from './economy';
 import type {
+  ActivateModulePayload,
   ActivateWeaponPayload,
   ChangeAmmunitionPayload,
   CombatData,
@@ -343,7 +344,7 @@ export interface ProtocolContract {
   'onboarding.skipStep': { payload: SkipGuidanceStepPayload; data: CommandResultData };
   'notifications.list': { payload: EmptyPayload; data: NotificationsData };
   'audio.cues': { payload: EmptyPayload; data: AudioCuesData };
-  'module.activate': { payload: WeaponSlotPayload; data: CommandResultData };
+  'module.activate': { payload: ActivateModulePayload; data: CommandResultData };
   'module.deactivate': { payload: WeaponSlotPayload; data: CommandResultData };
   'targeting.lock': { payload: TargetPayloadData; data: CommandResultData };
   'targeting.unlock': { payload: TargetPayloadData; data: CommandResultData };

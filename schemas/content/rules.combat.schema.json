@@ -35,6 +35,7 @@
         "lockTimeMaximumSeconds",
         "lockTimeMinimumSeconds",
         "npcDecisionIntervalSeconds",
+        "npcControlCapacitorReserveFraction",
         "npcGuidedReachFraction",
         "npcRangeToleranceFraction",
         "npcRepairThresholdFraction",
@@ -43,6 +44,7 @@
         "playerWreckLifetimeSeconds",
         "reloadSeconds",
         "resistanceMaximum",
+        "speedReductionFloorFraction",
         "wreckAccessRangeKm"
       ],
       "properties": {
@@ -107,7 +109,8 @@
           "required": [
             "brawler",
             "skirmisher",
-            "sniper"
+            "sniper",
+            "tackler"
           ],
           "properties": {
             "brawler": {
@@ -181,6 +184,31 @@
                   "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
                 }
               }
+            },
+            "tackler": {
+              "description": "Holds a fraction of its control module's range rather than its weapons' range.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "movement",
+                "preferredRangeFraction",
+                "minimumRangeKm"
+              ],
+              "properties": {
+                "movement": {
+                  "enum": [
+                    "approach",
+                    "orbit",
+                    "keepRange"
+                  ]
+                },
+                "preferredRangeFraction": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
+                },
+                "minimumRangeKm": {
+                  "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/nonNegativeNumber"
+                }
+              }
             }
           }
         },
@@ -197,6 +225,14 @@
           "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/positiveNumber"
         },
         "npcGuidedReachFraction": {
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "speedReductionFloorFraction": {
+          "description": "A speed reduction never takes a ship below this share of its hull's unmodified maximum speed (Functional Specification 9.9).",
+          "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
+        },
+        "npcControlCapacitorReserveFraction": {
+          "description": "Capacitor share below which an opponent carrying a control module stops burning its propulsion (Functional Specification 9.10).",
           "$ref": "https://galactic-soup.local/schemas/content/common.schema.json#/$defs/fraction"
         }
       }

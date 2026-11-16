@@ -517,14 +517,23 @@
     {
       "id": "FUNC-9.9",
       "title": "Electronic and movement-control effects",
-      "scope": "deferred",
-      "reason": "MVP Scope 8: electronic warfare and movement-control effects."
+      "scope": "included",
+      "extent": "Speed reduction (the web, FeatureSpec02 6.3): lock, range and capacitor at cycle start and completion, same-source refresh before expiry, different sources multiplying above the 10% floor, retained source attribution, effects ending when the target leaves or is destroyed, never preventing warp. Warp disruption, capacitor drain, signature amplification and targeting interference stay deferred (FeatureSpec02 2).",
+      "content": [
+        "content/catalog/modules",
+        "content/rules/combat.json"
+      ],
+      "requests": [
+        "combat.state",
+        "module.activate",
+        "module.deactivate"
+      ]
     },
     {
       "id": "FUNC-9.10",
       "title": "NPC behavior",
       "scope": "included",
-      "extent": "Brawler, skirmisher and sniper roles; tacklers and support ships are deferred.",
+      "extent": "Brawler, skirmisher, sniper and tackler roles, and the five v0.2 archetypes (fast frigate, artillery, brawler, missile ship, web controller); support ships are deferred.",
       "content": [
         "content/encounters/npcs",
         "content/encounters/templates"
@@ -1292,7 +1301,7 @@
     {
       "id": "V02-AC-02",
       "title": "Three hulls, 26 functional modules and the ammunition floor",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         0,
         2,
@@ -1302,7 +1311,7 @@
       "content": [
         "content/catalog"
       ],
-      "extent": "Phases 0-3: three hulls, 25 of the 26 combat modules (the web follows in phase 4), the 16-charge ammunition floor with family and size coverage, schema, reference, localization, compatibility and availability checks."
+      "extent": "Three hulls, all 26 combat modules (the web completed in phase 4), the 16-charge ammunition floor with family and size coverage, schema, reference, localization, compatibility and availability checks; the v0.2-phase-4 content floor holds the complete catalog."
     },
     {
       "id": "V02-AC-03",
@@ -1336,7 +1345,7 @@
         4,
         6
       ],
-      "extent": "Phases 2-3: five of the six reference fits are authored and validated as legal and obtainable (turret fits for each hull, guided fits for frigate and cruiser). The web-assisted destroyer fit follows in phase 4 and the measured reversals in phase 6."
+      "extent": "Phases 2-4: all six reference fits are authored and validated as legal and obtainable, two per hull with different weapon families, covering active shield, active armour, passive shield, a web-assisted turret fit and guided combat. The measured same-hull preference reversals follow in phase 6."
     },
     {
       "id": "V02-AC-05",
@@ -1384,17 +1393,37 @@
     {
       "id": "V02-AC-07",
       "title": "Player and NPC webs",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         4
+      ],
+      "extent": "Lock, range and capacitor at start and completion; refresh at the expiry instant; multiplying sources and the floor; braking through the movement controller; source destruction, target destruction and departure; starvation, pause and mid-effect resume; the same rules for the opponent's web; projection, tactical tether, notification and loss-report explanation.",
+      "content": [
+        "content/catalog/modules",
+        "content/encounters/npcs",
+        "content/rules/combat.json"
+      ],
+      "requests": [
+        "combat.state",
+        "module.activate",
+        "module.deactivate"
       ]
     },
     {
       "id": "V02-AC-08",
       "title": "Ten NPC profiles across five archetypes",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         4
+      ],
+      "extent": "Ten profiles, two per archetype, each held by content validation to its role and archetype-defining modules; small integration encounters show each archetype's observable behaviour through the shared opponent adapter. Their placement in the twelve-site ladder follows in phase 5.",
+      "content": [
+        "content/encounters/npcs",
+        "content/rules/combat.json"
+      ],
+      "requests": [
+        "encounter.state",
+        "combat.state"
       ]
     },
     {
@@ -1443,7 +1472,7 @@
         3,
         4
       ],
-      "extent": "Phases 0-1: multi-ship resume, v0.1/future/undeclared-content rejection without alteration, explicit reset and replace confirmation. Phase 3: format 12 with guided projectiles in flight, the format 11 to 12 migration, and mid-flight resume reproducing the uninterrupted result. Mid-effect (web) resume arrives with phase 4.",
+      "extent": "Phases 0-1: multi-ship resume, v0.1/future/undeclared-content rejection without alteration, explicit reset and replace confirmation. Phase 3: format 12 with guided projectiles in flight, the format 11 to 12 migration, and mid-flight resume reproducing the uninterrupted result. Phase 4: format 13 with speed effects and module targets, the format 12 to 13 migration, and mid-effect, mid-cycle resume reproducing the uninterrupted result.",
       "requests": [
         "campaign.saves",
         "campaign.resume",

@@ -1,11 +1,11 @@
 {
   "format": "galactic-soup/replay",
   "formatVersion": 1,
-  "protocolVersion": 20,
+  "protocolVersion": 21,
   "engineVersion": "0.2.0",
-  "saveFormatVersion": 12,
-  "contentVersion": "0.2.0+dc9d8e5a2fb4",
-  "contentHash": "dc9d8e5a2fb4cf5e70005fa14731968ab6eabbcabc9cef1073b7d52f26bd2ca2",
+  "saveFormatVersion": 13,
+  "contentVersion": "0.2.0+e8cda2f4198a",
+  "contentHash": "e8cda2f4198a9dbe910effa4e7ed5430b024d338c8e2641d491288adca5b8cdf",
   "campaign": {
     "displayName": "Test Pilot",
     "seed": "bb22cc33dd44ee55ff6677889900aa11",
@@ -281,15 +281,15 @@
     {"type":"market.confirmBuy","payload":{"token":{"action":"market.buy","canonicalParameters":"{\"destinationInventoryId\":\"ce0f36ba8e20edb4ebcba9757-e667\",\"itemId\":\"ammo.projectile.small.phased\",\"quantity\":272,\"stationId\":\"station.borrell.harbour\"}","campaignRevision":7142,"relevantVersions":{"assets":4805,"service:station.borrell.harbour:market":1,"listing:station.borrell.harbour:ammo.projectile.small.phased":6},"valuesHash":"f192e9e9f569663447d661a24d99552b9565b54e9edd6ffee2bace0edf2d8508"}},"error":null}
   ],
   "checkpoints": [
-    {"afterStep":4,"label":"station","revision":5,"simulationTimeMs":0,"stateHash":"99bde8dc9413de31e4b6a0017a3221115859cddd8badfe8abcb58daa22ef0c12"},
-    {"afterStep":16,"label":"travel","revision":47,"simulationTimeMs":8750,"stateHash":"106c7399119e9d5381b198514ef1dfc512881f3bc36888394fa09fcb240e44a7"},
-    {"afterStep":25,"label":"combat","revision":83,"simulationTimeMs":16250,"stateHash":"482e15e4fede7b6e11f23fcd09edb8dc8a381bd4e94f061c10c2259c4075cc90"},
-    {"afterStep":28,"label":"post-destruction","revision":324,"simulationTimeMs":76250,"stateHash":"5a38e572fa12eb8c7af1212f7fe8b75db6168fc4ce6a90854a7d23c08359a420"},
-    {"afterStep":53,"label":"wreck","revision":941,"simulationTimeMs":227500,"stateHash":"591c76a7b34fa5bcfe6869d649ced5c46af4bd404fa4bf40ae3b0bd635eae07e"},
-    {"afterStep":139,"label":null,"revision":2934,"simulationTimeMs":712250,"stateHash":"123c7fa47628d08a80199ff9ce437b40ae12019c624720f3b640fc5552540842"},
-    {"afterStep":222,"label":null,"revision":4928,"simulationTimeMs":1196750,"stateHash":"d98838c359dd73b62de2f1318282eb092211a9112bdc62a4094bd355f8ca25f9"},
-    {"afterStep":255,"label":null,"revision":6928,"simulationTimeMs":1691750,"stateHash":"8178f547dc0e62d93cf5ec0d2255eff9930fcef9a0fb677fef1d42b2b5a45a67"},
-    {"afterStep":261,"label":"completed-progression","revision":7137,"simulationTimeMs":1743250,"stateHash":"5ace8026edb03d048cb99ed5976de54f6965ff8c0bee982531cad102c637741a"},
-    {"afterStep":267,"label":"end","revision":7143,"simulationTimeMs":1743500,"stateHash":"e0f3627635049985f43de9a179f2ae8793f81f9bf1b69781c073aa581876c06e"}
+    {"afterStep":4,"label":"station","revision":5,"simulationTimeMs":0,"stateHash":"6f3180991249c4db178573da86d1a31537b4ec82aaa54be62abbefaaadbf8e3f"},
+    {"afterStep":16,"label":"travel","revision":47,"simulationTimeMs":8750,"stateHash":"38506da26701f408e54d9674572959e886cc108dd1f0a2068802b0297ad43996"},
+    {"afterStep":25,"label":"combat","revision":83,"simulationTimeMs":16250,"stateHash":"a797ebae5abe9dee20a57d45f64396edbb605ddad5d1f59adeb70150b690f97d"},
+    {"afterStep":28,"label":"post-destruction","revision":324,"simulationTimeMs":76250,"stateHash":"20d6a0e911b62e296278a76cba7561c0fcaab8ad1f6f1d292df4eff3c8d69b49"},
+    {"afterStep":53,"label":"wreck","revision":941,"simulationTimeMs":227500,"stateHash":"eae64d53d8b275f9d31332f140c65885ac71fc81de46bb91847c188e2aede656"},
+    {"afterStep":139,"label":null,"revision":2934,"simulationTimeMs":712250,"stateHash":"9913f102b3b277cab265acb70634d56620a104e6d9c70d94b2df04bc80302f41"},
+    {"afterStep":222,"label":null,"revision":4928,"simulationTimeMs":1196750,"stateHash":"aba2ba06361f382613d2e92770fb73395ec06900ced44251a53d194c9333748f"},
+    {"afterStep":255,"label":null,"revision":6928,"simulationTimeMs":1691750,"stateHash":"e17626bbde7b738ec44ec5be7b277a4c1810085a42ddfd797b24d414dbf9fc2b"},
+    {"afterStep":261,"label":"completed-progression","revision":7137,"simulationTimeMs":1743250,"stateHash":"987498d82a608d783226b5d3faebfa54a2f4f2203b4e76255b50064cacf43a00"},
+    {"afterStep":267,"label":"end","revision":7143,"simulationTimeMs":1743500,"stateHash":"5c177ad9f01ec4f2f5981271bdb3960ccdac79a0e7c98df86f9420c6d9a5eec0"}
   ]
 }
