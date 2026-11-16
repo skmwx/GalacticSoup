@@ -23,7 +23,7 @@
       "size": "medium",
       "fitting": { "powerUse": 20, "processingUse": 30 },
       "volumeCubicMetres": 0.01,
-      "referenceValueCredits": 28000,
+      "referenceValueCredits": 18000,
       "category": "propulsion",
       "activation": { "capacitorPerCycle": 12, "cycleSeconds": 10 },
       "propulsion": { "speedBonusFraction": 0.6, "signatureRadiusPenaltyFraction": 0 }
@@ -63,7 +63,7 @@
       "size": "medium",
       "fitting": { "powerUse": 16, "processingUse": 40 },
       "volumeCubicMetres": 0.01,
-      "referenceValueCredits": 26000,
+      "referenceValueCredits": 17000,
       "category": "armorRepairer",
       "activation": { "capacitorPerCycle": 36, "cycleSeconds": 8 },
       "repair": { "layer": "armor", "amountHitPoints": 140 }
@@ -89,7 +89,7 @@
       "size": "medium",
       "fitting": { "powerUse": 18, "processingUse": 45 },
       "volumeCubicMetres": 0.01,
-      "referenceValueCredits": 27000,
+      "referenceValueCredits": 18000,
       "category": "shieldBooster",
       "activation": { "capacitorPerCycle": 40, "cycleSeconds": 5 },
       "repair": { "layer": "shield", "amountHitPoints": 120 }
@@ -114,7 +114,7 @@
       "size": "medium",
       "fitting": { "powerUse": 2, "processingUse": 14 },
       "volumeCubicMetres": 0.01,
-      "referenceValueCredits": 17000,
+      "referenceValueCredits": 11000,
       "category": "capacitorBattery",
       "capacitorSupport": { "capacityBonus": 320, "rechargeBonusFraction": 0 }
     },

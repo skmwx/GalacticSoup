@@ -4,6 +4,8 @@ import path from 'node:path';
 import { REPO_ROOT } from '../../../config/aliases.mjs';
 import type { ScenarioSummary } from '../progression/expectations.ts';
 
+import type { CellSummary, MatrixClaim } from './matrix.ts';
+
 import type { CareerFixture, CareerSeedRun, SortieEntry } from './career.ts';
 
 /**
@@ -39,7 +41,23 @@ export interface CareerSection {
   readonly careers: readonly CareerSummary[];
 }
 
-export type BalanceSection = ScenarioSection | CareerSection;
+export interface MatrixSection {
+  readonly kind: 'matrix';
+  readonly title: string;
+  readonly encounterId: string;
+  readonly cells: readonly CellSummary[];
+  readonly verdicts: readonly (MatrixClaim & { readonly holds: boolean; readonly evidence: string })[];
+}
+
+/** Labelled figures a balance check measured, for evidence that is neither a scenario nor a career. */
+export interface FiguresSection {
+  readonly kind: 'figures';
+  readonly title: string;
+  readonly description: string;
+  readonly rows: readonly { readonly label: string; readonly value: string }[];
+}
+
+export type BalanceSection = ScenarioSection | CareerSection | MatrixSection | FiguresSection;
 
 export function writeBalanceSection(name: string, section: BalanceSection): void {
   fs.mkdirSync(BALANCE_SECTIONS_DIR, { recursive: true });
@@ -56,7 +74,44 @@ export function careerSummary(career: CareerFixture, runs: readonly CareerSeedRu
 /* -------------------------------------------------------------------------- */
 
 export function renderSection(section: BalanceSection): string {
-  return section.kind === 'scenarios' ? renderScenarios(section) : renderCareers(section);
+  return section.kind === 'scenarios' ? renderScenarios(section)
+    : section.kind === 'matrix' ? renderMatrix(section)
+    : section.kind === 'figures' ? renderFigures(section)
+    : renderCareers(section);
+}
+
+function renderFigures(section: FiguresSection): string {
+  const lines = [`## ${section.title}`, '', section.description, '', '| Measure | Value |', '|---|---|'];
+  for (const row of section.rows) lines.push(`| ${row.label} | ${row.value} |`);
+  lines.push('');
+  return `${lines.join('\n')}\n`;
+}
+
+function renderMatrix(section: MatrixSection): string {
+  const lines = [
+    `## ${section.title}`,
+    '',
+    '| Fit | Package | Won / retreated / lost / timed out | Median fight | Damage taken (shield/armour/hull) | Capacitor-starved sorties | Rounds | Median repair | Median repair + rounds | Mean net credits |',
+    '|---|---|---|---|---|---|---|---|---|---|',
+  ];
+  for (const cell of section.cells) {
+    const damage = cell.meanDamageTaken;
+    lines.push(`| ${cell.fitId} | ${credits(cell.packageCredits)} | ` +
+      `${String(cell.completed)} / ${String(cell.retreated)} / ${String(cell.lost)} / ${String(cell.timedOut)} | ` +
+      `${cell.medianFightSeconds === null ? '-' : seconds(cell.medianFightSeconds)} | ` +
+      `${whole(damage.shield)} / ${whole(damage.armor)} / ${whole(damage.hull)} | ` +
+      `${String(cell.starvedSorties)} (${cell.meanCapacitorStarvedSeconds.toFixed(0)} s mean) | ${cell.meanRoundsFired.toFixed(0)} | ` +
+      `${cell.repairBurden === null ? '-' : credits(cell.repairBurden)} | ${cell.runningCost === null ? '-' : credits(cell.runningCost)} | ` +
+      `${credits(cell.meanNetCredits)} |`);
+  }
+  if (section.verdicts.length > 0) {
+    lines.push('', '| Claim | Better | Worse | Metric | Holds | Evidence |', '|---|---|---|---|---|---|');
+    for (const verdict of section.verdicts) {
+      lines.push(`| ${verdict.id} | ${verdict.better} | ${verdict.worse} | ${verdict.metric} | ${verdict.holds ? 'yes' : '**no**'} | ${verdict.evidence} |`);
+    }
+  }
+  lines.push('');
+  return `${lines.join('\n')}\n`;
 }
 
 function renderScenarios(section: ScenarioSection): string {
@@ -87,7 +142,8 @@ function renderScenarios(section: ScenarioSection): string {
 function renderCareers(section: CareerSection): string {
   const lines = [`## ${section.title}`, ''];
   for (const career of section.careers) {
-    lines.push(`### ${career.careerId} (MVP Scope ${career.objectives.join(', ')})`, '', career.description, '');
+    const scope = career.objectives.every((objective) => objective.startsWith('V02-')) ? 'FeatureSpec02' : 'MVP Scope';
+    lines.push(`### ${career.careerId} (${scope} ${career.objectives.join(', ')})`, '', career.description, '');
     lines.push(
       '| Seed | Result | Sorties | Simulated time | Upgrades (after sorties) | Final credits | Income | Running costs |',
       '|---|---|---|---|---|---|---|---|',

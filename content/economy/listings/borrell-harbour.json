@@ -30,7 +30,7 @@
     {
       "itemId": "hull.independent.cruiser",
       "supply": "dynamic",
-      "basePriceCredits": 140000,
+      "basePriceCredits": 110000,
       "regionalPriceFactor": 1,
       "targetStock": 2,
       "initialStock": 2,
@@ -222,7 +222,7 @@
     {
       "itemId": "module.turret.autocannon.medium",
       "supply": "dynamic",
-      "basePriceCredits": 38000,
+      "basePriceCredits": 24000,
       "regionalPriceFactor": 1,
       "targetStock": 6,
       "initialStock": 5,
@@ -246,7 +246,7 @@
     {
       "itemId": "module.turret.railgun.medium",
       "supply": "dynamic",
-      "basePriceCredits": 52000,
+      "basePriceCredits": 30000,
       "regionalPriceFactor": 1,
       "targetStock": 6,
       "initialStock": 5,
@@ -270,7 +270,7 @@
     {
       "itemId": "module.launcher.guided.medium",
       "supply": "dynamic",
-      "basePriceCredits": 48000,
+      "basePriceCredits": 28000,
       "regionalPriceFactor": 1,
       "targetStock": 6,
       "initialStock": 5,
@@ -282,7 +282,7 @@
     {
       "itemId": "module.propulsion.afterburner.medium",
       "supply": "dynamic",
-      "basePriceCredits": 28000,
+      "basePriceCredits": 18000,
       "regionalPriceFactor": 1,
       "targetStock": 6,
       "initialStock": 5,
@@ -306,7 +306,7 @@
     {
       "itemId": "module.repair.armor.medium",
       "supply": "dynamic",
-      "basePriceCredits": 26000,
+      "basePriceCredits": 17000,
       "regionalPriceFactor": 1,
       "targetStock": 6,
       "initialStock": 5,
@@ -318,7 +318,7 @@
     {
       "itemId": "module.shield.booster.medium",
       "supply": "dynamic",
-      "basePriceCredits": 27000,
+      "basePriceCredits": 18000,
       "regionalPriceFactor": 1,
       "targetStock": 6,
       "initialStock": 5,
@@ -330,7 +330,7 @@
     {
       "itemId": "module.capacitor.battery.medium",
       "supply": "dynamic",
-      "basePriceCredits": 17000,
+      "basePriceCredits": 11000,
       "regionalPriceFactor": 1,
       "targetStock": 6,
       "initialStock": 5,

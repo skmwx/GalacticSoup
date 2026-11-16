@@ -36,6 +36,14 @@ export interface FightResult {
   readonly endedAtMs: number;
   /** The smallest share of the ship's total hit points seen at a decision, or zero after a loss. */
   readonly lowestHitPointsShare: number;
+  /**
+   * Decisions (simulated seconds) at which a module was waiting for capacitor
+   * or a weapon had stopped for want of it: capacitor starvation
+   * (Functional Specification 9.8; FeatureSpec02 11).
+   */
+  readonly capacitorStarvedSeconds: number;
+  /** The smallest share of the capacitor seen at a decision. */
+  readonly lowestCapacitorShare: number;
 }
 
 /** Real time between decisions; the pilot reconsiders once a simulated second at 1x. */
@@ -48,8 +56,15 @@ export async function fightEncounter(
 ): Promise<FightResult> {
   const startedAtMs = session.simulationTimeMs;
   let lowest = 1;
+  let starved = 0;
+  let lowestCapacitor = 1;
   const result = (status: FightStatus): FightResult => ({
-    status, startedAtMs, endedAtMs: session.simulationTimeMs, lowestHitPointsShare: status === 'lost' ? 0 : lowest,
+    status,
+    startedAtMs,
+    endedAtMs: session.simulationTimeMs,
+    lowestHitPointsShare: status === 'lost' ? 0 : lowest,
+    capacitorStarvedSeconds: starved,
+    lowestCapacitorShare: lowestCapacitor,
   });
   for (let step = 0; step < budgetSeconds * (1_000 / DECISION_MS); step += 1) {
     const site = await session.data<SiteData>('navigation.site');
@@ -61,6 +76,8 @@ export async function fightEncounter(
     const encounter = await session.data<EncounterData>('encounter.state');
     const combat = await session.data<CombatData>('combat.state');
     lowest = Math.min(lowest, hitPointsShare(combat));
+    lowestCapacitor = Math.min(lowestCapacitor, capacitorShare(combat));
+    if (starving(combat)) starved += 1;
     if (encounter.instance?.status === 'completed') return result('completed');
 
     const hull = layerFraction(combat, 'hull');
@@ -69,7 +86,13 @@ export async function fightEncounter(
       return result('retreated');
     }
 
-    const alive = (encounter.instance?.npcs ?? []).filter((npc) => !npc.destroyed);
+    const npcs = encounter.instance?.npcs ?? [];
+    if (tactics.leaveOnceKilled !== undefined && leaveNow(npcs, tactics.leaveOnceKilled)) {
+      await session.data('navigation.retreat');
+      return result('retreated');
+    }
+
+    const alive = npcs.filter((npc) => !npc.destroyed);
     const engaged = combat.weapons.find((weapon) => weapon.repeating)?.targetId ?? null;
     const target = chooseTarget(alive, tactics, combat.maxLockRangeKm, engaged);
     if (target !== null) {
@@ -253,6 +276,26 @@ async function operate(session: ScenarioSession, module: ModuleRuntimeData, want
   const payload = { slotKind: module.slot.kind, slotIndex: module.slot.index };
   if (wanted && !module.repeating) await session.ask('module.activate', payload);
   if (!wanted && module.repeating) await session.ask('module.deactivate', payload);
+}
+
+/**
+ * A selective pilot leaves once every opponent of the named profiles is dead
+ * and something else still lives (FeatureSpec02 8.2: selective kills followed
+ * by retreat).
+ */
+function leaveNow(npcs: readonly EncounterNpcData[], profiles: readonly string[]): boolean {
+  const named = npcs.filter((npc) => profiles.includes(npc.profileId));
+  return named.length > 0 && named.every((npc) => npc.destroyed) && npcs.some((npc) => !npc.destroyed);
+}
+
+function capacitorShare(combat: CombatData): number {
+  const capacitor = combat.capacitor;
+  return capacitor === null || capacitor.capacity <= 0 ? 1 : capacitor.charge / capacitor.capacity;
+}
+
+function starving(combat: CombatData): boolean {
+  return combat.modules.some((module) => module.waitingForCapacitor) ||
+    combat.weapons.some((weapon) => weapon.stopReason === 'insufficientCapacitor');
 }
 
 /** Share of the ship's total hit points it has now. */

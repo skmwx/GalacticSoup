@@ -91,12 +91,12 @@ describe('the v0.2 acceptance criteria', () => {
       expect(['planned', 'included'], entry.id).toContain(entry.scope);
       expect((entry as { phases?: number[] }).phases?.length ?? 0, entry.id).toBeGreaterThan(0);
     }
-    // Phases 0-5 are delivered; the criteria they complete are included.
-    // V02-AC-10 waits for phase 6's no-lucky-drop career.
+    // Phases 0-6 are delivered; the criteria they complete are included.
+    // V02-AC-15 waits for the human playtest, which no automated result replaces.
     const included = v02.filter((entry) => entry.scope === 'included').map((entry) => entry.id);
     expect(included).toEqual([
-      'V02-AC-01', 'V02-AC-02', 'V02-AC-03', 'V02-AC-05', 'V02-AC-06', 'V02-AC-07', 'V02-AC-08', 'V02-AC-09',
-      'V02-AC-12', 'V02-AC-13', 'V02-AC-14',
+      'V02-AC-01', 'V02-AC-02', 'V02-AC-03', 'V02-AC-04', 'V02-AC-05', 'V02-AC-06', 'V02-AC-07', 'V02-AC-08',
+      'V02-AC-09', 'V02-AC-10', 'V02-AC-11', 'V02-AC-12', 'V02-AC-13', 'V02-AC-14',
     ]);
   });
 

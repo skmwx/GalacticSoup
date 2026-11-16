@@ -48,6 +48,11 @@ const RUNS: readonly { readonly name: string; readonly from: string; readonly pi
   { name: 'the golden wreck save', from: 'wreck', pilot: 3 },
   { name: 'the golden combat save', from: 'combat', pilot: 4 },
   { name: 'the golden completed-progression save', from: 'completed-progression', pilot: 5 },
+  // The run that loses a ship, so destruction and recovery run under every
+  // check. Before v0.2 phase 6 that rested on one late loss in the wreck run
+  // (step 2,895 of 4,000), which the faster fast-frigate orbit removed; this
+  // pilot loses the combat save's ship within the first 500 steps.
+  { name: 'the golden combat save, fought to a loss', from: 'combat', pilot: 6 },
 ];
 const STEPS = 4_000;
 /** A snapshot is taken, loaded and checked this often. */

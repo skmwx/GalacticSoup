@@ -1,14 +1,18 @@
 {
   "$comment": "The candidate tuning bundle for release-candidate comparison (MVP Implementation Plan phase 17). Written by npm run balance:record; do not edit by hand. tuningDigest covers rules, definitions and listings; a tuning change makes this record stale until it is recorded again.",
-  "contentVersion": "0.2.0+f434e326a565",
-  "contentHash": "f434e326a565c77b37cbb10cc424ab6d9e3c2901843f8e8f87b9a6eb9d995dbf",
-  "tuningDigest": "685cca7cf8c831abbe744bc5c4b797ccb3a00810584cde681a79b2b3a0c8a81b",
+  "contentVersion": "0.2.0+d168547388ff",
+  "contentHash": "d168547388ffc4586fac7c80aee29f2c2633828c6b59d167cbb2ea4889ad278c",
+  "tuningDigest": "5da105a5d78af0b32a8991d1842e1a9b489db2be8c4138c6600b6e7ebdfce8bf",
   "seeds": [
     "0123456789abcdef0123456789abcdef",
     "0badf00d0badf00d0badf00d0badf00d",
     "1234abcd1234abcd1234abcd1234abcd",
+    "5eed5eed5eed5eed5eed5eed5eed5eed",
+    "9a8b7c6d5e4f30219a8b7c6d5e4f3021",
+    "a1a1a1a1b2b2b2b2c3c3c3c3d4d4d4d4",
     "bb22cc33dd44ee55ff6677889900aa11",
     "c0ffee00c0ffee00c0ffee00c0ffee00",
+    "deadbeefcafef00ddeadbeefcafef00d",
     "fedcba9876543210fedcba9876543210"
   ],
   "headline": {
@@ -16,64 +20,64 @@
       "scout.starter": {
         "completed": 6,
         "planned": 6,
-        "medianFightSeconds": 115,
-        "hitPointsLost": 0.006,
-        "damageTaken": 111,
+        "medianFightSeconds": 107,
+        "hitPointsLost": 0.001,
+        "damageTaken": 129,
         "outcomes": [
-          "bb22cc33#1 completed 100s",
-          "bb22cc33#2 completed 105s",
-          "01234567#1 completed 95s",
-          "01234567#2 completed 115s",
-          "fedcba98#1 completed 120s",
-          "fedcba98#2 completed 117s"
+          "bb22cc33#1 completed 107s",
+          "bb22cc33#2 completed 140s",
+          "01234567#1 completed 100s",
+          "01234567#2 completed 97s",
+          "fedcba98#1 completed 142s",
+          "fedcba98#2 completed 95s"
         ]
       },
       "scout.folly": {
         "completed": 3,
         "planned": 3,
-        "medianFightSeconds": 100,
-        "hitPointsLost": 0.011,
-        "damageTaken": 109,
+        "medianFightSeconds": 107,
+        "hitPointsLost": 0,
+        "damageTaken": 127,
         "outcomes": [
-          "bb22cc33#1 completed 100s",
-          "01234567#1 completed 95s",
-          "fedcba98#1 completed 120s"
+          "bb22cc33#1 completed 107s",
+          "01234567#1 completed 100s",
+          "fedcba98#1 completed 142s"
         ]
       },
       "scout.intermediate": {
         "completed": 3,
         "planned": 3,
-        "medianFightSeconds": 52,
-        "hitPointsLost": 0.026,
-        "damageTaken": 112,
+        "medianFightSeconds": 45,
+        "hitPointsLost": 0.051,
+        "damageTaken": 94,
         "outcomes": [
-          "bb22cc33#1 completed 42s",
-          "01234567#1 completed 52s",
+          "bb22cc33#1 completed 45s",
+          "01234567#1 completed 45s",
           "fedcba98#1 completed 52s"
         ]
       },
       "scout.mastery": {
         "completed": 3,
         "planned": 3,
-        "medianFightSeconds": 52,
-        "hitPointsLost": 0.026,
-        "damageTaken": 112,
+        "medianFightSeconds": 45,
+        "hitPointsLost": 0.051,
+        "damageTaken": 94,
         "outcomes": [
-          "bb22cc33#1 completed 42s",
-          "01234567#1 completed 52s",
+          "bb22cc33#1 completed 45s",
+          "01234567#1 completed 45s",
           "fedcba98#1 completed 52s"
         ]
       },
       "scout.lancer": {
         "completed": 3,
         "planned": 3,
-        "medianFightSeconds": 76,
+        "medianFightSeconds": 83,
         "hitPointsLost": 0,
-        "damageTaken": 111,
+        "damageTaken": 124,
         "outcomes": [
-          "bb22cc33#1 completed 60s",
-          "01234567#1 completed 76s",
-          "fedcba98#1 completed 94s"
+          "bb22cc33#1 completed 66s",
+          "01234567#1 completed 83s",
+          "fedcba98#1 completed 88s"
         ]
       },
       "patrol.starter": {
@@ -81,9 +85,9 @@
         "planned": 3,
         "medianFightSeconds": null,
         "hitPointsLost": 1,
-        "damageTaken": 1912,
+        "damageTaken": 1960,
         "outcomes": [
-          "bb22cc33#1 lost 121s",
+          "bb22cc33#1 lost 163s",
           "01234567#1 lost 123s",
           "fedcba98#1 lost 108s"
         ]
@@ -91,52 +95,52 @@
       "patrol.intermediate": {
         "completed": 6,
         "planned": 6,
-        "medianFightSeconds": 187,
-        "hitPointsLost": 0.117,
-        "damageTaken": 1351,
+        "medianFightSeconds": 188,
+        "hitPointsLost": 0.078,
+        "damageTaken": 1292,
         "outcomes": [
-          "bb22cc33#1 completed 160s",
-          "bb22cc33#2 completed 188s",
-          "01234567#1 completed 198s",
-          "01234567#2 completed 186s",
-          "fedcba98#1 completed 178s",
-          "fedcba98#2 completed 187s"
+          "bb22cc33#1 completed 163s",
+          "bb22cc33#2 completed 175s",
+          "01234567#1 completed 193s",
+          "01234567#2 completed 180s",
+          "fedcba98#1 completed 188s",
+          "fedcba98#2 completed 188s"
         ]
       },
       "patrol.intermediate-marksman-first": {
         "completed": 1,
         "planned": 3,
         "medianFightSeconds": 160,
-        "hitPointsLost": 0.947,
-        "damageTaken": 1798,
+        "hitPointsLost": 0.911,
+        "damageTaken": 1751,
         "outcomes": [
-          "bb22cc33#1 lost 103s",
+          "bb22cc33#1 lost 93s",
           "01234567#1 completed 160s",
-          "fedcba98#1 lost 91s"
+          "fedcba98#1 lost 93s"
         ]
       },
       "patrol.mastery": {
         "completed": 3,
         "planned": 3,
-        "medianFightSeconds": 178,
+        "medianFightSeconds": 188,
         "hitPointsLost": 0.038,
-        "damageTaken": 1345,
+        "damageTaken": 1290,
         "outcomes": [
-          "bb22cc33#1 completed 160s",
-          "01234567#1 completed 198s",
-          "fedcba98#1 completed 178s"
+          "bb22cc33#1 completed 163s",
+          "01234567#1 completed 193s",
+          "fedcba98#1 completed 188s"
         ]
       },
       "patrol.lancer": {
         "completed": 1,
         "planned": 3,
         "medianFightSeconds": 192,
-        "hitPointsLost": 0.976,
-        "damageTaken": 1886,
+        "hitPointsLost": 0.982,
+        "damageTaken": 1890,
         "outcomes": [
-          "bb22cc33#1 lost 137s",
+          "bb22cc33#1 lost 138s",
           "01234567#1 completed 192s",
-          "fedcba98#1 lost 142s"
+          "fedcba98#1 lost 138s"
         ]
       },
       "base.starter": {
@@ -214,8 +218,8 @@
         "bb22cc33dd44ee55ff6677889900aa11": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 29,
-          "finalCredits": 84014,
+          "simulationMinutes": 30.5,
+          "finalCredits": 83663,
           "upgrades": [
             "starter@0",
             "intermediate@2",
@@ -225,8 +229,8 @@
         "0123456789abcdef0123456789abcdef": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 31.4,
-          "finalCredits": 105475,
+          "simulationMinutes": 31.9,
+          "finalCredits": 105316,
           "upgrades": [
             "starter@0",
             "intermediate@2",
@@ -236,8 +240,8 @@
         "fedcba9876543210fedcba9876543210": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 33.1,
-          "finalCredits": 78020,
+          "simulationMinutes": 31.7,
+          "finalCredits": 78470,
           "upgrades": [
             "starter@0",
             "intermediate@2",
@@ -249,8 +253,8 @@
         "bb22cc33dd44ee55ff6677889900aa11": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 64.9,
-          "finalCredits": 98089,
+          "simulationMinutes": 65.2,
+          "finalCredits": 97925,
           "upgrades": [
             "intermediate@0",
             "mastery@1",
@@ -260,8 +264,8 @@
         "0123456789abcdef0123456789abcdef": {
           "finished": true,
           "sorties": 4,
-          "simulationMinutes": 56.3,
-          "finalCredits": 91116,
+          "simulationMinutes": 55.7,
+          "finalCredits": 91503,
           "upgrades": [
             "intermediate@0",
             "mastery@1",
@@ -271,8 +275,8 @@
         "fedcba9876543210fedcba9876543210": {
           "finished": true,
           "sorties": 5,
-          "simulationMinutes": 58.9,
-          "finalCredits": 106416,
+          "simulationMinutes": 59.2,
+          "finalCredits": 106540,
           "upgrades": [
             "intermediate@0",
             "mastery@2",
@@ -284,8 +288,8 @@
         "bb22cc33dd44ee55ff6677889900aa11": {
           "finished": true,
           "sorties": 4,
-          "simulationMinutes": 12.8,
-          "finalCredits": 20136,
+          "simulationMinutes": 12.3,
+          "finalCredits": 20468,
           "upgrades": [
             "folly@0",
             "intermediate@3"
@@ -294,8 +298,8 @@
         "0123456789abcdef0123456789abcdef": {
           "finished": true,
           "sorties": 4,
-          "simulationMinutes": 10.4,
-          "finalCredits": 24918,
+          "simulationMinutes": 11.3,
+          "finalCredits": 24615,
           "upgrades": [
             "folly@0",
             "intermediate@3"
@@ -305,7 +309,7 @@
           "finished": true,
           "sorties": 5,
           "simulationMinutes": 16,
-          "finalCredits": 19649,
+          "finalCredits": 19600,
           "upgrades": [
             "folly@0",
             "intermediate@4"
@@ -316,8 +320,8 @@
         "bb22cc33dd44ee55ff6677889900aa11": {
           "finished": true,
           "sorties": 4,
-          "simulationMinutes": 12.6,
-          "finalCredits": 20052,
+          "simulationMinutes": 11.5,
+          "finalCredits": 20451,
           "upgrades": [
             "intermediate@0",
             "starter@1",
@@ -327,8 +331,8 @@
         "0123456789abcdef0123456789abcdef": {
           "finished": true,
           "sorties": 3,
-          "simulationMinutes": 7.7,
-          "finalCredits": 26410,
+          "simulationMinutes": 8.6,
+          "finalCredits": 26295,
           "upgrades": [
             "intermediate@0",
             "starter@1",
@@ -338,15 +342,244 @@
         "fedcba9876543210fedcba9876543210": {
           "finished": true,
           "sorties": 3,
-          "simulationMinutes": 9.2,
-          "finalCredits": 24315,
+          "simulationMinutes": 10.3,
+          "finalCredits": 24084,
           "upgrades": [
             "intermediate@0",
             "starter@1",
             "intermediate@2"
           ]
         }
+      },
+      "v02-hull-ladder": {
+        "bb22cc33dd44ee55ff6677889900aa11": {
+          "finished": true,
+          "sorties": 24,
+          "simulationMinutes": 76.2,
+          "finalCredits": 65445,
+          "upgrades": [
+            "intermediate@0",
+            "fit.frigate.autocannon@2",
+            "fit.destroyer.blaster-web@9",
+            "fit.cruiser.railgun@22"
+          ]
+        },
+        "0123456789abcdef0123456789abcdef": {
+          "finished": true,
+          "sorties": 24,
+          "simulationMinutes": 75.5,
+          "finalCredits": 71330,
+          "upgrades": [
+            "intermediate@0",
+            "fit.frigate.autocannon@1",
+            "fit.destroyer.blaster-web@9",
+            "fit.cruiser.railgun@22"
+          ]
+        },
+        "fedcba9876543210fedcba9876543210": {
+          "finished": true,
+          "sorties": 25,
+          "simulationMinutes": 83.6,
+          "finalCredits": 93340,
+          "upgrades": [
+            "intermediate@0",
+            "fit.frigate.autocannon@2",
+            "fit.destroyer.blaster-web@9",
+            "fit.cruiser.railgun@23"
+          ]
+        }
+      },
+      "v02-no-module-drops": {
+        "bb22cc33dd44ee55ff6677889900aa11": {
+          "finished": true,
+          "sorties": 28,
+          "simulationMinutes": 89.4,
+          "finalCredits": 69194,
+          "upgrades": [
+            "intermediate@0",
+            "fit.frigate.autocannon@2",
+            "fit.destroyer.blaster-web@11",
+            "fit.cruiser.railgun@26"
+          ]
+        },
+        "0123456789abcdef0123456789abcdef": {
+          "finished": true,
+          "sorties": 28,
+          "simulationMinutes": 87.4,
+          "finalCredits": 82327,
+          "upgrades": [
+            "intermediate@0",
+            "fit.frigate.autocannon@2",
+            "fit.destroyer.blaster-web@10",
+            "fit.cruiser.railgun@26"
+          ]
+        },
+        "fedcba9876543210fedcba9876543210": {
+          "finished": true,
+          "sorties": 28,
+          "simulationMinutes": 92.2,
+          "finalCredits": 72628,
+          "upgrades": [
+            "intermediate@0",
+            "fit.frigate.autocannon@2",
+            "fit.destroyer.blaster-web@10",
+            "fit.cruiser.railgun@26"
+          ]
+        }
+      },
+      "v02-destroyer-loss": {
+        "bb22cc33dd44ee55ff6677889900aa11": {
+          "finished": true,
+          "sorties": 9,
+          "simulationMinutes": 42.1,
+          "finalCredits": 35503,
+          "upgrades": [
+            "intermediate@0",
+            "destroyer.folly@4",
+            "rebuild@5",
+            "intermediate@7"
+          ]
+        },
+        "0123456789abcdef0123456789abcdef": {
+          "finished": true,
+          "sorties": 7,
+          "simulationMinutes": 31.5,
+          "finalCredits": 30922,
+          "upgrades": [
+            "intermediate@0",
+            "destroyer.folly@3",
+            "rebuild@4",
+            "intermediate@5"
+          ]
+        },
+        "fedcba9876543210fedcba9876543210": {
+          "finished": true,
+          "sorties": 8,
+          "simulationMinutes": 36.1,
+          "finalCredits": 31537,
+          "upgrades": [
+            "intermediate@0",
+            "destroyer.folly@3",
+            "rebuild@4",
+            "intermediate@6"
+          ]
+        }
+      },
+      "v02-cruiser-loss": {
+        "bb22cc33dd44ee55ff6677889900aa11": {
+          "finished": true,
+          "sorties": 26,
+          "simulationMinutes": 75.7,
+          "finalCredits": 109498,
+          "upgrades": [
+            "intermediate@0",
+            "fit.frigate.autocannon@2",
+            "fit.destroyer.blaster-web@9",
+            "fit.cruiser.railgun@22",
+            "fit.destroyer.blaster-web@23"
+          ]
+        },
+        "0123456789abcdef0123456789abcdef": {
+          "finished": true,
+          "sorties": 26,
+          "simulationMinutes": 72.6,
+          "finalCredits": 119524,
+          "upgrades": [
+            "intermediate@0",
+            "fit.frigate.autocannon@1",
+            "fit.destroyer.blaster-web@9",
+            "fit.cruiser.railgun@22",
+            "fit.destroyer.blaster-web@23"
+          ]
+        },
+        "fedcba9876543210fedcba9876543210": {
+          "finished": true,
+          "sorties": 27,
+          "simulationMinutes": 80.2,
+          "finalCredits": 125379,
+          "upgrades": [
+            "intermediate@0",
+            "fit.frigate.autocannon@2",
+            "fit.destroyer.blaster-web@9",
+            "fit.cruiser.railgun@23",
+            "fit.destroyer.blaster-web@24"
+          ]
+        }
       }
+    },
+    "matrix": {
+      "fit.frigate.autocannon@pirate-scout": "10/0/0/0 60s net 3491",
+      "fit.frigate.guided@pirate-scout": "10/0/0/0 119s net 2472",
+      "fit.destroyer.artillery@pirate-scout": "10/0/0/0 63s net 3167",
+      "fit.destroyer.blaster-web@pirate-scout": "10/0/0/0 27s net 3576",
+      "fit.cruiser.railgun@pirate-scout": "2/0/0/8 443s net -11320",
+      "fit.cruiser.guided@pirate-scout": "10/0/0/0 122s net -2175",
+      "fit.frigate.autocannon@knife-fight": "10/0/0/0 60s net 4481",
+      "fit.frigate.guided@knife-fight": "10/0/0/0 124s net 3587",
+      "fit.destroyer.artillery@knife-fight": "10/0/0/0 48s net 4320",
+      "fit.destroyer.blaster-web@knife-fight": "10/0/0/0 30s net 4681",
+      "fit.cruiser.railgun@knife-fight": "4/0/0/6 233s net -8175",
+      "fit.cruiser.guided@knife-fight": "10/0/0/0 114s net -384",
+      "fit.frigate.autocannon@longshot-picket": "10/0/0/0 153s net 5316",
+      "fit.frigate.guided@longshot-picket": "10/0/0/0 103s net 5114",
+      "fit.destroyer.artillery@longshot-picket": "10/0/0/0 40s net 5808",
+      "fit.destroyer.blaster-web@longshot-picket": "10/0/0/0 349s net 5413",
+      "fit.cruiser.railgun@longshot-picket": "10/0/0/0 44s net 5223",
+      "fit.cruiser.guided@longshot-picket": "10/0/0/0 96s net 2491",
+      "fit.frigate.autocannon@missile-picket": "10/0/0/0 122s net 7021",
+      "fit.frigate.guided@missile-picket": "10/0/0/0 137s net 5820",
+      "fit.destroyer.artillery@missile-picket": "10/0/0/0 42s net 7290",
+      "fit.destroyer.blaster-web@missile-picket": "10/0/0/0 87s net 7203",
+      "fit.cruiser.railgun@missile-picket": "10/0/0/0 33s net 6754",
+      "fit.cruiser.guided@missile-picket": "10/0/0/0 81s net 3749",
+      "fit.frigate.autocannon@pirate-patrol": "9/1/0/0 238s net 15430",
+      "fit.frigate.guided@pirate-patrol": "0/7/3/0 - net -18524",
+      "fit.destroyer.artillery@pirate-patrol": "9/1/0/0 113s net 14649",
+      "fit.destroyer.blaster-web@pirate-patrol": "10/0/0/0 358s net 17025",
+      "fit.cruiser.railgun@pirate-patrol": "0/0/0/10 - net -14311",
+      "fit.cruiser.guided@pirate-patrol": "10/0/0/0 232s net 7010",
+      "fit.frigate.autocannon@armored-hold": "0/4/6/0 - net -22933",
+      "fit.frigate.guided@armored-hold": "0/4/6/0 - net -32736",
+      "fit.destroyer.artillery@armored-hold": "10/0/0/0 92s net 28354",
+      "fit.destroyer.blaster-web@armored-hold": "10/0/0/0 59s net 28916",
+      "fit.cruiser.railgun@armored-hold": "10/0/0/0 53s net 28203",
+      "fit.cruiser.guided@armored-hold": "10/0/0/0 194s net 19485",
+      "fit.frigate.autocannon@range-check": "10/0/0/0 115s net 13620",
+      "fit.frigate.guided@range-check": "10/0/0/0 202s net 12136",
+      "fit.destroyer.artillery@range-check": "10/0/0/0 83s net 13508",
+      "fit.destroyer.blaster-web@range-check": "10/0/0/0 74s net 13686",
+      "fit.cruiser.railgun@range-check": "1/0/0/9 373s net -6114",
+      "fit.cruiser.guided@range-check": "10/0/0/0 175s net 5750",
+      "fit.frigate.autocannon@crossfire": "10/0/0/0 190s net 18609",
+      "fit.frigate.guided@crossfire": "10/0/0/0 168s net 17967",
+      "fit.destroyer.artillery@crossfire": "10/0/0/0 72s net 19141",
+      "fit.destroyer.blaster-web@crossfire": "10/0/0/0 148s net 18992",
+      "fit.cruiser.railgun@crossfire": "10/0/0/0 53s net 18258",
+      "fit.cruiser.guided@crossfire": "10/0/0/0 160s net 12514",
+      "fit.frigate.autocannon@pirate-base": "0/4/6/0 - net -24357",
+      "fit.frigate.guided@pirate-base": "0/5/5/0 - net -27459",
+      "fit.destroyer.artillery@pirate-base": "7/2/1/0 137s net 20408",
+      "fit.destroyer.blaster-web@pirate-base": "10/0/0/0 361s net 42324",
+      "fit.cruiser.railgun@pirate-base": "10/0/0/0 78s net 42948",
+      "fit.cruiser.guided@pirate-base": "10/0/0/0 325s net 32150",
+      "fit.frigate.autocannon@bombardment-line": "10/0/0/0 313s net 32229",
+      "fit.frigate.guided@bombardment-line": "0/0/0/10 - net 9190",
+      "fit.destroyer.artillery@bombardment-line": "10/0/0/0 122s net 32821",
+      "fit.destroyer.blaster-web@bombardment-line": "10/0/0/0 197s net 31885",
+      "fit.cruiser.railgun@bombardment-line": "10/0/0/0 118s net 30539",
+      "fit.cruiser.guided@bombardment-line": "10/0/0/0 297s net 22105",
+      "fit.frigate.autocannon@screened-battery": "7/2/1/0 203s net 10265",
+      "fit.frigate.guided@screened-battery": "0/1/9/0 - net -53469",
+      "fit.destroyer.artillery@screened-battery": "6/4/0/0 128s net 12033",
+      "fit.destroyer.blaster-web@screened-battery": "10/0/0/0 357s net 20591",
+      "fit.cruiser.railgun@screened-battery": "0/0/0/10 - net -15453",
+      "fit.cruiser.guided@screened-battery": "10/0/0/0 240s net 9388",
+      "fit.frigate.autocannon@command-group": "0/3/7/0 - net -24860",
+      "fit.frigate.guided@command-group": "0/3/7/0 - net -41956",
+      "fit.destroyer.artillery@command-group": "9/1/0/0 112s net 30365",
+      "fit.destroyer.blaster-web@command-group": "10/0/0/0 320s net 32306",
+      "fit.cruiser.railgun@command-group": "10/0/0/0 118s net 30166",
+      "fit.cruiser.guided@command-group": "9/1/0/0 225s net 19755"
     }
   }
 }

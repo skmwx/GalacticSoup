@@ -10,7 +10,11 @@
  *   - `tests/integration/progression*.test.ts` sets every representative fit
  *     against every encounter (scenario sections);
  *   - `tests/integration/balance/career*.test.ts` flies whole campaigns from
- *     their first day (career sections).
+ *     their first day (career sections);
+ *   - `tests/integration/balance/matrix/*.test.ts` flies every v0.2 reference
+ *     fit at every ladder site over fixed seeds and judges the comparisons
+ *     declared in `tests/fixtures/balance/matrix.json` (matrix sections; v0.2
+ *     Implementation Plan phase 6).
  *
  * With `--record`, the report's headline figures, the content identity, the
  * tuning digest and every seed used are written to
@@ -33,6 +37,7 @@ const SECTIONS_DIR = path.join(REPO_ROOT, 'reports', 'balance');
 const CANDIDATE = path.join(REPO_ROOT, 'tests', 'fixtures', 'balance', 'candidate.json');
 const PROGRESSION = path.join(REPO_ROOT, 'tests', 'fixtures', 'scenarios', 'progression.json');
 const CAREERS = path.join(REPO_ROOT, 'tests', 'fixtures', 'balance', 'careers.json');
+const MATRIX = path.join(REPO_ROOT, 'tests', 'fixtures', 'balance', 'matrix.json');
 const record = process.argv.includes('--record');
 
 const compiled = compileContent(readContentFiles(), { floor: true });
@@ -48,23 +53,28 @@ const identity = {
 
 const progression = readJson(PROGRESSION);
 const careerFixtures = readJson(CAREERS);
+const matrixFixture = readJson(MATRIX);
 const sections = fs.existsSync(SECTIONS_DIR)
   ? fs.readdirSync(SECTIONS_DIR).filter((file) => file.endsWith('.json')).sort()
   : [];
 const scenarios = new Map();
 const careers = new Map();
+const matrix = new Map();
 for (const file of sections) {
   const section = readJson(path.join(SECTIONS_DIR, file));
   if (section.kind === 'scenarios') {
     for (const scenario of section.scenarios) scenarios.set(scenario.scenarioId, scenario);
   } else if (section.kind === 'careers') {
     for (const career of section.careers) careers.set(career.careerId, career);
+  } else if (section.kind === 'matrix') {
+    matrix.set(section.encounterId, section);
   }
 }
 
 const missing = [
   ...progression.scenarios.map((scenario) => scenario.id).filter((id) => !scenarios.has(id)),
   ...careerFixtures.careers.map((career) => career.id).filter((id) => !careers.has(id)),
+  ...Object.keys(matrixFixture.sites).filter((id) => !matrix.has(id)).map((id) => `matrix ${id}`),
 ];
 if (missing.length > 0) {
   process.stderr.write(`Balance report: no measurement for ${missing.join(', ')}. Run the balance simulations first (npm run balance).\n`);
@@ -75,6 +85,7 @@ const headline = headlineFigures();
 const seeds = [...new Set([
   ...progression.scenarios.flatMap((scenario) => scenario.seeds),
   ...careerFixtures.careers.flatMap((career) => career.seeds),
+  ...matrixFixture.seeds,
 ])].sort();
 const candidate = fs.existsSync(CANDIDATE) ? readJson(CANDIDATE) : null;
 const differences = record || candidate === null ? [] : compare(candidate, identity, headline);
@@ -96,7 +107,7 @@ if (record) {
 }
 
 process.stdout.write(
-  `Balance report: ${String(scenarios.size)} scenarios, ${String(careers.size)} careers, tuning ${identity.tuningDigest.slice(0, 12)}` +
+  `Balance report: ${String(scenarios.size)} scenarios, ${String(careers.size)} careers, ${String(matrix.size)} matrix sites, tuning ${identity.tuningDigest.slice(0, 12)}` +
     `${record ? ', candidate recorded' : candidate === null ? ', no candidate recorded yet' : `, ${String(differences.length)} differences from the candidate`}.\n`,
 );
 
@@ -131,7 +142,15 @@ function headlineFigures() {
       upgrades: run.entries.filter((entry) => entry.kind === 'equip').map((entry) => `${entry.fitId}@${String(entry.afterSorties)}`),
     }]));
   }
-  return { scenarios: scenarioFigures, careers: careerFigures };
+  const matrixFigures = {};
+  for (const encounterId of Object.keys(matrixFixture.sites)) {
+    for (const cell of matrix.get(encounterId).cells) {
+      matrixFigures[`${cell.fitId}@${encounterId.replace('encounter.borrell.', '')}`] =
+        `${String(cell.completed)}/${String(cell.retreated)}/${String(cell.lost)}/${String(cell.timedOut)} ` +
+        `${cell.medianFightSeconds === null ? '-' : `${cell.medianFightSeconds.toFixed(0)}s`} net ${String(cell.meanNetCredits)}`;
+    }
+  }
+  return { scenarios: scenarioFigures, careers: careerFigures, matrix: matrixFigures };
 }
 
 function compare(previous, current, figures) {
@@ -165,6 +184,7 @@ function renderMarkdown() {
     '',
     ...objectives(),
     ...dominance(),
+    ...v02Progression(),
   ];
   if (!record) {
     lines.push('## Compared with the recorded candidate', '');
@@ -173,7 +193,9 @@ function renderMarkdown() {
     else lines.push(...differences.map((entry) => `- ${entry}`), '');
   }
   for (const name of ['scenarios-early', 'scenarios-mastery',
-    ...careerFixtures.careers.map((career) => `career-${career.id}`)]) {
+    ...careerFixtures.careers.map((career) => `career-${career.id}`),
+    'selective-kills',
+    ...Object.keys(matrixFixture.sites).map((id) => `matrix-${id.replace('encounter.borrell.', '')}`)]) {
     const file = path.join(SECTIONS_DIR, `${name}.md`);
     if (fs.existsSync(file)) lines.push(fs.readFileSync(file, 'utf8').trimEnd(), '');
   }
@@ -212,6 +234,52 @@ function objectives() {
     `| 6. The hard site through the intended loop | From a new campaign to two Pirate Base clears in ${range(runs('scout-first').map((run) => run.sorties))} sorties and ${minutes('scout-first')} simulated minutes, every credit earned in play. |`,
     '',
   ];
+}
+
+/**
+ * The v0.2 evidence: the declared comparisons as the matrix judged them, the
+ * pacing of the hull-ladder careers against FeatureSpec02 9's hypotheses, and
+ * what losing a larger hull cost.
+ */
+function v02Progression() {
+  const verdicts = [...matrix.values()].flatMap((section) => section.verdicts);
+  const lines = [
+    '## v0.2 fit and hull progression (FeatureSpec02 5.3, 9, 11)',
+    '',
+    `The fit matrix flies ${String(Object.keys(matrixFixture.policies).length)} reference fits at ${String(matrix.size)} sites over ` +
+      `${String(matrixFixture.seeds.length)} fixed seeds each. Its declared comparisons:`,
+    '',
+    '| Claim | Kind | Site | Better | Worse | Metric | Holds | Evidence |',
+    '|---|---|---|---|---|---|---|---|',
+    ...verdicts.map((verdict) => `| ${verdict.id} | ${verdict.kind} | ${verdict.encounterId.replace('encounter.borrell.', '')} | ` +
+      `${verdict.better} | ${verdict.worse} | ${verdict.metric} | ${verdict.holds ? 'yes' : '**no**'} | ${verdict.evidence} |`),
+    '',
+    `Same-hull reversals: ${matrixFixture.reversals.map((reversal) => `${reversal.hullId.replace('hull.independent.', '')} (${reversal.claims.join(' / ')})`).join('; ')}.`,
+    '',
+  ];
+  const pacing = careerFixtures.careers.filter((career) => career.id === 'v02-hull-ladder' || career.id === 'v02-no-module-drops');
+  if (pacing.length > 0) {
+    lines.push(
+      '| Career | Seed | First fit purchase (sorties) | Reference frigate | Destroyer package | Cruiser package (further sorties) | Simulated time to cruiser | Total sorties |',
+      '|---|---|---|---|---|---|---|---|',
+    );
+    for (const fixture of pacing) {
+      for (const run of careers.get(fixture.id).runs) {
+        const equips = run.entries.filter((entry) => entry.kind === 'equip');
+        const at = (hullId, fitPrefix) => equips.find((entry) => entry.hullId === hullId && entry.fitId.startsWith(fitPrefix));
+        const first = equips.find((entry) => entry.costCredits > 0);
+        const frigate = at('hull.independent.starter', 'fit.');
+        const destroyer = at('hull.independent.destroyer', 'fit.');
+        const cruiser = at('hull.independent.cruiser', 'fit.');
+        const show = (entry) => entry === undefined ? '-' : String(entry.afterSorties);
+        lines.push(`| ${fixture.id} | ${run.seed.slice(0, 6)} | ${show(first)} | ${show(frigate)} | ${show(destroyer)} | ` +
+          `${cruiser === undefined || destroyer === undefined ? '-' : `${String(cruiser.afterSorties)} (${String(cruiser.afterSorties - destroyer.afterSorties)})`} | ` +
+          `${cruiser === undefined ? '-' : `${(cruiser.simulationSeconds / 60).toFixed(0)} min`} | ${String(run.sorties)} |`);
+      }
+    }
+    lines.push('', 'FeatureSpec02 9 hypotheses: a meaningful fitting purchase within 1-3 entry sorties; a usable destroyer package within 6-10 profitable sorties; a usable cruiser package after 8-15 further sorties.', '');
+  }
+  return lines;
 }
 
 /** Why no representative fit is the best choice everywhere. */

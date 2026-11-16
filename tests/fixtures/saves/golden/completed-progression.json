@@ -3,21 +3,21 @@
  "formatVersion": 13,
  "protocolVersion": 22,
  "engineVersion": "0.2.0",
- "contentVersion": "0.2.0+f434e326a565",
- "contentHash": "f434e326a565c77b37cbb10cc424ab6d9e3c2901843f8e8f87b9a6eb9d995dbf",
+ "contentVersion": "0.2.0+d168547388ff",
+ "contentHash": "d168547388ffc4586fac7c80aee29f2c2633828c6b59d167cbb2ea4889ad278c",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
  "displayName": "Test Pilot",
  "kind": "auto",
  "sequence": 1,
- "revision": 7137,
- "simulationTimeMs": 1743250,
+ "revision": 7008,
+ "simulationTimeMs": 1711750,
  "savedAtRealMs": 1700000600000,
  "state": {
   "assets": {
-   "version": 4795,
-   "credits": 30841,
+   "version": 4742,
+   "credits": 30863,
    "location": {
     "kind": "station",
     "stationId": "station.borrell.harbour",
@@ -40,7 +40,7 @@
      "condition": {
       "damage": {
        "shield": 0,
-       "armor": 18.924986,
+       "armor": 0,
        "hull": 0
       },
       "capacitorCharge": 370
@@ -94,121 +94,121 @@
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e934": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e934",
+    "ce0f36ba8e20edb4ebcba9757-e921": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e921",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e933"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e920"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e1153": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e1153",
+    "ce0f36ba8e20edb4ebcba9757-e1167": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1167",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e1152"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e1166"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e1510": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e1510",
+    "ce0f36ba8e20edb4ebcba9757-e1483": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1483",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e1509"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e1482"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e1747": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e1747",
+    "ce0f36ba8e20edb4ebcba9757-e1721": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1721",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e1746"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e1720"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e2033": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2033",
+    "ce0f36ba8e20edb4ebcba9757-e1929": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1929",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e2032"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e1928"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e2457": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2457",
+    "ce0f36ba8e20edb4ebcba9757-e2410": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2410",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e2456"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e2409"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e2692": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2692",
+    "ce0f36ba8e20edb4ebcba9757-e2631": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2631",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e2691"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e2630"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e2950": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2950",
+    "ce0f36ba8e20edb4ebcba9757-e2943": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2943",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e2949"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e2942"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e3663": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e3663",
+    "ce0f36ba8e20edb4ebcba9757-e3551": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e3551",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e3662"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e3550"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e4426": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e4426",
+    "ce0f36ba8e20edb4ebcba9757-e4278": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e4278",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e4425"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e4277"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e5023": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e5023",
+    "ce0f36ba8e20edb4ebcba9757-e4920": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e4920",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e5022"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e4919"
      },
      "capacity": {
       "kind": "unlimited"
      }
     },
-    "ce0f36ba8e20edb4ebcba9757-e5186": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e5186",
+    "ce0f36ba8e20edb4ebcba9757-e5077": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e5077",
      "location": {
       "kind": "wreck",
-      "wreckId": "ce0f36ba8e20edb4ebcba9757-e5185"
+      "wreckId": "ce0f36ba8e20edb4ebcba9757-e5076"
      },
      "capacity": {
       "kind": "unlimited"
@@ -295,14 +295,14 @@
       "kind": "plain"
      },
      "provenance": {
-      "grantedQuantity": 21,
-      "purchasedQuantity": 79,
-      "purchaseCostCredits": 711
+      "grantedQuantity": 23,
+      "purchasedQuantity": 77,
+      "purchaseCostCredits": 693
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e1082": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e1082",
+    "ce0f36ba8e20edb4ebcba9757-e1150": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1150",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2",
      "definitionId": "ammo.projectile.small.fusion",
      "quantity": 20,
@@ -310,14 +310,14 @@
       "kind": "plain"
      },
      "provenance": {
-      "grantedQuantity": 5,
-      "purchasedQuantity": 15,
-      "purchaseCostCredits": 135
+      "grantedQuantity": 2,
+      "purchasedQuantity": 18,
+      "purchaseCostCredits": 162
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e1165": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e1165",
+    "ce0f36ba8e20edb4ebcba9757-e1179": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1179",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e668",
      "definitionId": "module.turret.autocannon.small",
      "quantity": 1,
@@ -336,8 +336,8 @@
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e1164": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e1164",
+    "ce0f36ba8e20edb4ebcba9757-e1178": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1178",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e667",
      "definitionId": "ammo.projectile.small.phased",
      "quantity": 60,
@@ -347,12 +347,12 @@
      "provenance": {
       "grantedQuantity": 0,
       "purchasedQuantity": 60,
-      "purchaseCostCredits": 1046
+      "purchaseCostCredits": 1044
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e2978": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2978",
+    "ce0f36ba8e20edb4ebcba9757-e2971": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2971",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e668",
      "definitionId": "module.plating.armor.small",
      "quantity": 1,
@@ -371,8 +371,8 @@
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e2977": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2977",
+    "ce0f36ba8e20edb4ebcba9757-e2970": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2970",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e668",
      "definitionId": "module.capacitor.battery.small",
      "quantity": 1,
@@ -391,8 +391,8 @@
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e2979": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2979",
+    "ce0f36ba8e20edb4ebcba9757-e2972": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2972",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e668",
      "definitionId": "module.propulsion.afterburner.small",
      "quantity": 1,
@@ -411,11 +411,11 @@
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e5089": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e5089",
+    "ce0f36ba8e20edb4ebcba9757-e5032": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e5032",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e668",
      "definitionId": "ammo.projectile.small.phased",
-     "quantity": 4,
+     "quantity": 13,
      "state": {
       "kind": "charge",
       "slot": {
@@ -425,16 +425,16 @@
      },
      "provenance": {
       "grantedQuantity": 0,
-      "purchasedQuantity": 4,
-      "purchaseCostCredits": 72
+      "purchasedQuantity": 13,
+      "purchaseCostCredits": 228
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e5090": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e5090",
+    "ce0f36ba8e20edb4ebcba9757-e5033": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e5033",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e668",
      "definitionId": "ammo.projectile.small.phased",
-     "quantity": 4,
+     "quantity": 13,
      "state": {
       "kind": "charge",
       "slot": {
@@ -444,13 +444,13 @@
      },
      "provenance": {
       "grantedQuantity": 0,
-      "purchasedQuantity": 4,
-      "purchaseCostCredits": 72
+      "purchasedQuantity": 13,
+      "purchaseCostCredits": 229
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e3664": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e3664",
+    "ce0f36ba8e20edb4ebcba9757-e3552": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e3552",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e667",
      "definitionId": "item.salvage.circuitry",
      "quantity": 4,
@@ -464,8 +464,8 @@
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e4427": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e4427",
+    "ce0f36ba8e20edb4ebcba9757-e4279": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e4279",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e667",
      "definitionId": "item.salvage.alloy",
      "quantity": 3,
@@ -479,8 +479,8 @@
      },
      "recoveryGrant": false
     },
-    "ce0f36ba8e20edb4ebcba9757-e4428": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e4428",
+    "ce0f36ba8e20edb4ebcba9757-e4280": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e4280",
      "inventoryId": "ce0f36ba8e20edb4ebcba9757-e667",
      "definitionId": "module.plating.armor.small",
      "quantity": 1,
@@ -497,65 +497,13 @@
    }
   },
   "combat": {
-   "version": 2461,
+   "version": 2376,
    "ships": {},
    "events": [
     {
-     "kind": "damage",
-     "firstAtMs": 1312150,
-     "lastAtMs": 1312150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:0",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 10.896358828,
-      "kinetic": 3.632119609,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 8.717087062,
-      "kinetic": 2.179271765,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 10.896358827,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1312150,
-     "lastAtMs": 1312150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 16.673868415,
-      "kinetic": 5.557956138,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 13.339094732,
-      "kinetic": 3.334773683,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 16.673868415,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
      "kind": "repair",
-     "firstAtMs": 1313500,
-     "lastAtMs": 1313500,
+     "firstAtMs": 1300500,
+     "lastAtMs": 1300500,
      "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "system:0",
      "layer": "shield",
@@ -564,166 +512,176 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1313500,
-     "lastAtMs": 1313500,
+     "firstAtMs": 1301500,
+     "lastAtMs": 1301500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 10.540498897,
-      "kinetic": 3.513499632,
+      "thermal": 12.034663733,
+      "kinetic": 4.011554578,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.432399118,
-      "kinetic": 2.108099779,
+      "thermal": 6.570214025,
+      "kinetic": 2.469314625,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 10.540498897,
-      "armor": 0,
+      "shield": 0.5357,
+      "armor": 8.50382865,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1313500,
-     "lastAtMs": 1313500,
+     "firstAtMs": 1301500,
+     "lastAtMs": 1301500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 14.072712315,
-      "kinetic": 4.690904105,
+      "thermal": 12.042599348,
+      "kinetic": 4.014199783,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 11.258169852,
-      "kinetic": 2.814542463,
+      "thermal": 6.432012525,
+      "kinetic": 2.473850971,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 14.072712315,
+      "shield": 0,
+      "armor": 8.905863496,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1302150,
+     "lastAtMs": 1302150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 10.59099315,
+      "kinetic": 3.53033105,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 8.47279452,
+      "kinetic": 2.11819863,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 10.59099315,
       "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1314650,
-     "lastAtMs": 1314650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1304000,
+     "lastAtMs": 1304000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 11.325432548,
+      "kinetic": 3.775144183,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 6.191410103,
+      "kinetic": 2.323620809,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0.5357,
+      "armor": 7.979330912,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "repair",
+     "firstAtMs": 1304500,
+     "lastAtMs": 1304500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "system:0",
+     "layer": "shield",
+     "count": 1,
+     "repairedHitPoints": 40
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1304650,
+     "lastAtMs": 1304650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 12.756786168,
+      "kinetic": 4.252262056,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 10.205428934,
+      "kinetic": 2.551357234,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 12.756786168,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1306500,
+     "lastAtMs": 1306500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 15.743476245,
-      "kinetic": 5.247825415,
+      "thermal": 16.134073019,
+      "kinetic": 5.37802434,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.594780996,
-      "kinetic": 3.148695249,
+      "thermal": 8.759729021,
+      "kinetic": 3.311435777,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 15.743476245,
-      "armor": 0,
+      "shield": 0.5357,
+      "armor": 11.535464798,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1314650,
-     "lastAtMs": 1314650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 14.263579662,
-      "kinetic": 4.754526554,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 11.41086373,
-      "kinetic": 2.852715932,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 14.263579662,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1315150,
-     "lastAtMs": 1315150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2985",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 13.21132232,
-      "kinetic": 4.403774107,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 10.569057856,
-      "kinetic": 2.642264464,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 13.21132232,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1316000,
-     "lastAtMs": 1316000,
+     "firstAtMs": 1306500,
+     "lastAtMs": 1306500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 13.588740824,
-      "kinetic": 4.529580275,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 8.820400362,
-      "kinetic": 2.75958597,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 5.876703,
-      "armor": 5.703283332,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1317150,
-     "lastAtMs": 1317150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -734,31 +692,21 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 13.18464547,
-      "kinetic": 3.296161367,
+      "thermal": 8.802481336,
+      "kinetic": 3.385569744,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 16.480806837,
-      "armor": 0,
+      "shield": 0,
+      "armor": 12.18805108,
       "hull": 0
      }
     },
     {
-     "kind": "repair",
-     "firstAtMs": 1317500,
-     "lastAtMs": 1317500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "system:0",
-     "layer": "shield",
-     "count": 1,
-     "repairedHitPoints": 40
-    },
-    {
      "kind": "damage",
-     "firstAtMs": 1317650,
-     "lastAtMs": 1317650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "firstAtMs": 1307150,
+     "lastAtMs": 1307150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:0",
      "count": 1,
@@ -782,164 +730,34 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1318500,
-     "lastAtMs": 1318500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:0",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 12.152647317,
-      "kinetic": 4.050882439,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 6.633229647,
-      "kinetic": 2.493551402,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0.5357,
-      "armor": 8.591081049,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1318500,
-     "lastAtMs": 1318500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 11.577436705,
-      "kinetic": 3.859145568,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 6.183566831,
-      "kinetic": 2.378294935,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0,
-      "armor": 8.561861766,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1319650,
-     "lastAtMs": 1319650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:0",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 12.437013922,
-      "kinetic": 4.145671307,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 9.949611138,
-      "kinetic": 2.487402784,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 12.437013922,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1319650,
-     "lastAtMs": 1319650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1307150,
+     "lastAtMs": 1307150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 15.607012248,
-      "kinetic": 5.202337416,
+      "thermal": 15.798220456,
+      "kinetic": 5.266073485,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.485609798,
-      "kinetic": 3.12140245,
+      "thermal": 12.638576365,
+      "kinetic": 3.159644091,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 15.607012248,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1320150,
-     "lastAtMs": 1320150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2985",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:0",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 10.757446059,
-      "kinetic": 3.585815353,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 8.605956847,
-      "kinetic": 2.151489212,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 10.757446059,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1320150,
-     "lastAtMs": 1320150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2985",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 10.849921292,
-      "kinetic": 3.616640431,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 8.679937034,
-      "kinetic": 2.169984259,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 10.849921293,
+      "shield": 15.798220456,
       "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "repair",
-     "firstAtMs": 1321500,
-     "lastAtMs": 1321500,
+     "firstAtMs": 1308500,
+     "lastAtMs": 1308500,
      "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "system:0",
      "layer": "shield",
@@ -948,62 +766,212 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1322150,
-     "lastAtMs": 1322150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:1",
+     "firstAtMs": 1309000,
+     "lastAtMs": 1309000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 10.774620211,
-      "kinetic": 3.59154007,
+      "thermal": 11.643679148,
+      "kinetic": 3.881226383,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.619696169,
-      "kinetic": 2.154924042,
+      "thermal": 6.361387203,
+      "kinetic": 2.388996616,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 10.774620211,
+      "shield": 0.5357,
+      "armor": 8.214683819,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1309000,
+     "lastAtMs": 1309000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 15.71068247,
+      "kinetic": 5.236894157,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 8.391154061,
+      "kinetic": 3.227366947,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0,
+      "armor": 11.618521008,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1309650,
+     "lastAtMs": 1309650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 11.459780356,
+      "kinetic": 3.819926785,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 9.167824285,
+      "kinetic": 2.291956071,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 11.459780356,
       "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1323500,
-     "lastAtMs": 1323500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:0",
+     "firstAtMs": 1309650,
+     "lastAtMs": 1309650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 13.994109081,
-      "kinetic": 4.664703027,
+      "thermal": 10.587426254,
+      "kinetic": 3.529142085,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 7.759203534,
-      "kinetic": 2.868927513,
+      "thermal": 8.469941003,
+      "kinetic": 2.117485251,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 1.0714,
-      "armor": 9.556731047,
+      "shield": 10.587426254,
+      "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1324650,
-     "lastAtMs": 1324650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1311500,
+     "lastAtMs": 1311500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 15.750865499,
+      "kinetic": 5.2502885,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 8.555055969,
+      "kinetic": 3.232715373,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0.5357,
+      "armor": 11.252071342,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1312150,
+     "lastAtMs": 1312150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 14.61530241,
+      "kinetic": 4.87176747,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 11.692241928,
+      "kinetic": 2.923060482,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 14.61530241,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1312150,
+     "lastAtMs": 1312150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 14.775121371,
+      "kinetic": 4.925040457,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 11.820097097,
+      "kinetic": 2.955024274,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 14.775121371,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "repair",
+     "firstAtMs": 1312500,
+     "lastAtMs": 1312500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "system:0",
+     "layer": "shield",
+     "count": 1,
+     "repairedHitPoints": 40
+    },
+    {
+     "kind": "repair",
+     "firstAtMs": 1313650,
+     "lastAtMs": 1313650,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "system:0",
+     "layer": "armor",
+     "count": 1,
+     "repairedHitPoints": 45
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1314000,
+     "lastAtMs": 1314000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1014,20 +982,72 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.491583414,
-      "kinetic": 2.122895854,
+      "thermal": 5.811686401,
+      "kinetic": 2.177573231,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 10.614479268,
+      "shield": 0.5357,
+      "armor": 7.453559632,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1314650,
+     "lastAtMs": 1314650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 11.294399286,
+      "kinetic": 3.764799762,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 9.035519429,
+      "kinetic": 2.258879857,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 11.294399286,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1314650,
+     "lastAtMs": 1314650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 13.611125725,
+      "kinetic": 4.537041908,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 10.88890058,
+      "kinetic": 2.722225145,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 13.611125725,
       "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "repair",
-     "firstAtMs": 1325500,
-     "lastAtMs": 1325500,
+     "firstAtMs": 1316500,
+     "lastAtMs": 1316500,
      "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "system:0",
      "layer": "shield",
@@ -1036,114 +1056,36 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1326000,
-     "lastAtMs": 1326000,
+     "firstAtMs": 1316500,
+     "lastAtMs": 1316500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 11.767488204,
-      "kinetic": 3.922496068,
+      "thermal": 10.725033741,
+      "kinetic": 3.575011247,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 6.427514239,
-      "kinetic": 2.414430092,
+      "thermal": 5.870734098,
+      "kinetic": 2.200283884,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 8.306244331,
+      "armor": 7.535317982,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1326000,
-     "lastAtMs": 1326000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 11.858605098,
-      "kinetic": 3.952868366,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 6.333740276,
-      "kinetic": 2.436053952,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0,
-      "armor": 8.769794228,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1327150,
-     "lastAtMs": 1327150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1317150,
+     "lastAtMs": 1317150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 10.284487833,
-      "kinetic": 3.428162611,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 8.227590266,
-      "kinetic": 2.056897567,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 10.284487833,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1327650,
-     "lastAtMs": 1327650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2985",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:0",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 16.844747965,
-      "kinetic": 5.614915988,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 13.475798372,
-      "kinetic": 3.368949593,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 16.844747965,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1328500,
-     "lastAtMs": 1328500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1154,22 +1096,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 6.938156988,
-      "kinetic": 2.610831149,
+      "thermal": 10.178848034,
+      "kinetic": 2.544712009,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0.5357,
-      "armor": 9.013288137,
+      "shield": 12.723560043,
+      "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1328500,
-     "lastAtMs": 1328500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1317150,
+     "lastAtMs": 1317150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1180,32 +1122,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 7.922113848,
-      "kinetic": 3.046966865,
+      "thermal": 11.86600215,
+      "kinetic": 2.966500538,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0,
-      "armor": 10.969080713,
+      "shield": 14.832502688,
+      "armor": 0,
       "hull": 0
      }
     },
     {
-     "kind": "repair",
-     "firstAtMs": 1329500,
-     "lastAtMs": 1329500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "system:0",
-     "layer": "shield",
-     "count": 1,
-     "repairedHitPoints": 40
-    },
-    {
      "kind": "damage",
-     "firstAtMs": 1329650,
-     "lastAtMs": 1329650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "firstAtMs": 1319000,
+     "lastAtMs": 1319000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1216,21 +1148,21 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 11.311660171,
-      "kinetic": 2.827915043,
+      "thermal": 7.694457771,
+      "kinetic": 2.901716066,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 14.139575214,
-      "armor": 0,
+      "shield": 0.5357,
+      "armor": 10.060473837,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1330150,
-     "lastAtMs": 1330150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "firstAtMs": 1319150,
+     "lastAtMs": 1319150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
@@ -1253,11 +1185,21 @@
      }
     },
     {
+     "kind": "repair",
+     "firstAtMs": 1319650,
+     "lastAtMs": 1319650,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "system:0",
+     "layer": "armor",
+     "count": 1,
+     "repairedHitPoints": 45
+    },
+    {
      "kind": "damage",
-     "firstAtMs": 1331000,
-     "lastAtMs": 1331000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1319650,
+     "lastAtMs": 1319650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1268,22 +1210,32 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 6.123522266,
-      "kinetic": 2.297510102,
+      "thermal": 8.958661408,
+      "kinetic": 2.239665352,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0.5357,
-      "armor": 7.885332368,
+      "shield": 11.19832676,
+      "armor": 0,
       "hull": 0
      }
     },
     {
+     "kind": "repair",
+     "firstAtMs": 1320500,
+     "lastAtMs": 1320500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "system:0",
+     "layer": "shield",
+     "count": 1,
+     "repairedHitPoints": 40
+    },
+    {
      "kind": "damage",
-     "firstAtMs": 1332150,
-     "lastAtMs": 1332150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "firstAtMs": 1321500,
+     "lastAtMs": 1321500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1294,32 +1246,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.623722644,
-      "kinetic": 3.155930661,
+      "thermal": 8.57043168,
+      "kinetic": 3.238629107,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 15.779653305,
-      "armor": 0,
+      "shield": 0.5357,
+      "armor": 11.273360787,
       "hull": 0
      }
     },
     {
-     "kind": "repair",
-     "firstAtMs": 1333500,
-     "lastAtMs": 1333500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "system:0",
-     "layer": "shield",
-     "count": 1,
-     "repairedHitPoints": 40
-    },
-    {
      "kind": "damage",
-     "firstAtMs": 1333500,
-     "lastAtMs": 1333500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1322150,
+     "lastAtMs": 1322150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1330,22 +1272,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 7.911093558,
-      "kinetic": 2.985037522,
+      "thermal": 11.636144363,
+      "kinetic": 2.909036091,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0.5357,
-      "armor": 10.36043108,
+      "shield": 14.545180454,
+      "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1333500,
-     "lastAtMs": 1333500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1322150,
+     "lastAtMs": 1322150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1356,48 +1298,94 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 7.070499305,
-      "kinetic": 2.71942281,
+      "thermal": 10.590425935,
+      "kinetic": 2.647606484,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0,
-      "armor": 9.789922115,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1334650,
-     "lastAtMs": 1337150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "weapon:0",
-     "count": 2,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 23.567018616,
-      "kinetic": 7.855672872,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 18.853614893,
-      "kinetic": 4.713403723,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 23.567018616,
+      "shield": 13.238032419,
       "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1337150,
-     "lastAtMs": 1337150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "firstAtMs": 1324000,
+     "lastAtMs": 1324000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 10.8113254,
+      "kinetic": 3.603775133,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 5.916822904,
+      "kinetic": 2.218010347,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0.5357,
+      "armor": 7.599133251,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "repair",
+     "firstAtMs": 1324500,
+     "lastAtMs": 1324500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "system:0",
+     "layer": "shield",
+     "count": 1,
+     "repairedHitPoints": 40
+    },
+    {
+     "kind": "repair",
+     "firstAtMs": 1325650,
+     "lastAtMs": 1325650,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "system:0",
+     "layer": "armor",
+     "count": 1,
+     "repairedHitPoints": 45
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1326500,
+     "lastAtMs": 1326500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 12.755693216,
+      "kinetic": 4.251897739,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 6.955319477,
+      "kinetic": 2.617432106,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0.5357,
+      "armor": 9.037051583,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1326500,
+     "lastAtMs": 1326500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1408,31 +1396,21 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.266775781,
-      "kinetic": 3.066693945,
+      "thermal": 8.189682848,
+      "kinetic": 3.149878018,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 15.333469726,
-      "armor": 0,
+      "shield": 0,
+      "armor": 11.339560866,
       "hull": 0
      }
     },
     {
-     "kind": "repair",
-     "firstAtMs": 1337500,
-     "lastAtMs": 1337500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "system:0",
-     "layer": "shield",
-     "count": 1,
-     "repairedHitPoints": 40
-    },
-    {
      "kind": "damage",
-     "firstAtMs": 1337650,
-     "lastAtMs": 1337650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "firstAtMs": 1326650,
+     "lastAtMs": 1326650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
@@ -1455,21 +1433,11 @@
      }
     },
     {
-     "kind": "repair",
-     "firstAtMs": 1338150,
-     "lastAtMs": 1338150,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "system:0",
-     "layer": "armor",
-     "count": 1,
-     "repairedHitPoints": 45
-    },
-    {
      "kind": "damage",
-     "firstAtMs": 1338500,
-     "lastAtMs": 1338500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1327150,
+     "lastAtMs": 1327150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1480,22 +1448,32 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 5.991896749,
-      "kinetic": 2.189194134,
+      "thermal": 8.548157154,
+      "kinetic": 2.137039288,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 1.0714,
-      "armor": 7.109690883,
+      "shield": 10.685196442,
+      "armor": 0,
       "hull": 0
      }
     },
     {
+     "kind": "repair",
+     "firstAtMs": 1328500,
+     "lastAtMs": 1328500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "system:0",
+     "layer": "shield",
+     "count": 1,
+     "repairedHitPoints": 40
+    },
+    {
      "kind": "damage",
-     "firstAtMs": 1339650,
-     "lastAtMs": 1339650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "firstAtMs": 1329000,
+     "lastAtMs": 1329000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1506,22 +1484,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.330149958,
-      "kinetic": 3.08253749,
+      "thermal": 8.374433381,
+      "kinetic": 3.163245147,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 15.412687448,
-      "armor": 0,
+      "shield": 0.5357,
+      "armor": 11.001978528,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1339650,
-     "lastAtMs": 1339650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "firstAtMs": 1329000,
+     "lastAtMs": 1329000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1532,22 +1510,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 11.521887725,
-      "kinetic": 2.880471931,
+      "thermal": 7.692372304,
+      "kinetic": 2.958604732,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 14.402359656,
-      "armor": 0,
+      "shield": 0,
+      "armor": 10.650977036,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1341000,
-     "lastAtMs": 1341000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1329650,
+     "lastAtMs": 1329650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1558,32 +1536,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 7.646454562,
-      "kinetic": 2.883253293,
+      "thermal": 11.23975939,
+      "kinetic": 2.809939847,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0.5357,
-      "armor": 9.994007855,
+      "shield": 14.049699237,
+      "armor": 0,
       "hull": 0
      }
     },
     {
-     "kind": "repair",
-     "firstAtMs": 1341500,
-     "lastAtMs": 1341500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "system:0",
-     "layer": "shield",
-     "count": 1,
-     "repairedHitPoints": 40
-    },
-    {
      "kind": "damage",
-     "firstAtMs": 1342150,
-     "lastAtMs": 1342150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "firstAtMs": 1331500,
+     "lastAtMs": 1331500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1594,22 +1562,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.703598817,
-      "kinetic": 3.175899704,
+      "thermal": 8.623759509,
+      "kinetic": 3.259139811,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 15.879498521,
-      "armor": 0,
+      "shield": 0.5357,
+      "armor": 11.34719932,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1342150,
-     "lastAtMs": 1342150,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "firstAtMs": 1331500,
+     "lastAtMs": 1331500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1620,22 +1588,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.507045647,
-      "kinetic": 3.126761412,
+      "thermal": 8.350094519,
+      "kinetic": 3.211574815,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 15.633807059,
-      "armor": 0,
+      "shield": 0,
+      "armor": 11.561669334,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1343500,
-     "lastAtMs": 1343500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1332150,
+     "lastAtMs": 1332150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1646,22 +1614,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 6.213284011,
-      "kinetic": 2.33203385,
+      "thermal": 9.093109497,
+      "kinetic": 2.273277374,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0.5357,
-      "armor": 8.009617861,
+      "shield": 11.366386871,
+      "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1343500,
-     "lastAtMs": 1343500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1332150,
+     "lastAtMs": 1332150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1672,32 +1640,32 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.700073714,
-      "kinetic": 3.346182197,
+      "thermal": 13.031255972,
+      "kinetic": 3.257813993,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0,
-      "armor": 12.046255911,
+      "shield": 16.289069965,
+      "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "repair",
-     "firstAtMs": 1344150,
-     "lastAtMs": 1344150,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1332500,
+     "lastAtMs": 1332500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "system:0",
-     "layer": "armor",
+     "layer": "shield",
      "count": 1,
-     "repairedHitPoints": 45
+     "repairedHitPoints": 40
     },
     {
      "kind": "damage",
-     "firstAtMs": 1344650,
-     "lastAtMs": 1344650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "firstAtMs": 1334000,
+     "lastAtMs": 1334000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1708,118 +1676,72 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 13.087040733,
-      "kinetic": 3.271760183,
+      "thermal": 8.879757315,
+      "kinetic": 3.357600506,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 16.358800916,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "repair",
-     "firstAtMs": 1345500,
-     "lastAtMs": 1349500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "system:0",
-     "layer": "shield",
-     "count": 2,
-     "repairedHitPoints": 80
-    },
-    {
-     "kind": "repair",
-     "firstAtMs": 1350150,
-     "lastAtMs": 1350150,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "system:0",
-     "layer": "armor",
-     "count": 1,
-     "repairedHitPoints": 44.666622
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1351000,
-     "lastAtMs": 1351000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:0",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 11.375558015,
-      "kinetic": 3.791852672,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 6.503062268,
-      "kinetic": 2.328105488,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 1.6071,
-      "armor": 7.224067756,
+      "shield": 0.5357,
+      "armor": 11.701657821,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1351000,
-     "lastAtMs": 1351000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 10.538363243,
-      "kinetic": 3.512787748,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 5.6285925,
-      "kinetic": 2.164843269,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0,
-      "armor": 7.793435769,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1352650,
-     "lastAtMs": 1352650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "firstAtMs": 1334650,
+     "lastAtMs": 1334650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 15.560456452,
-      "kinetic": 5.186818817,
+      "thermal": 15.204965719,
+      "kinetic": 5.068321906,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.448365162,
-      "kinetic": 3.11209129,
+      "thermal": 12.163972575,
+      "kinetic": 3.040993144,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 15.560456452,
+      "shield": 15.204965719,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1334650,
+     "lastAtMs": 1334650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 11.630371273,
+      "kinetic": 3.876790424,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 9.304297018,
+      "kinetic": 2.326074254,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 11.630371272,
       "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "repair",
-     "firstAtMs": 1353500,
-     "lastAtMs": 1353500,
+     "firstAtMs": 1336500,
+     "lastAtMs": 1336500,
      "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "system:0",
      "layer": "shield",
@@ -1828,10 +1750,62 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1353500,
-     "lastAtMs": 1353500,
+     "firstAtMs": 1336500,
+     "lastAtMs": 1336500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 16.801644854,
+      "kinetic": 5.600548285,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 9.116282476,
+      "kinetic": 3.448571722,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0.5357,
+      "armor": 12.029154198,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1336500,
+     "lastAtMs": 1336500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 13.838818248,
+      "kinetic": 4.612939416,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 7.39138202,
+      "kinetic": 2.842839239,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0,
+      "armor": 10.234221259,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1337150,
+     "lastAtMs": 1337150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -1842,22 +1816,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.028592269,
-      "kinetic": 3.030229334,
+      "thermal": 11.812137789,
+      "kinetic": 2.953034447,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0.5357,
-      "armor": 10.523121603,
+      "shield": 14.765172236,
+      "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1353500,
-     "lastAtMs": 1353500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1337150,
+     "lastAtMs": 1337150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -1868,146 +1842,192 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.00996029,
-      "kinetic": 3.080753957,
+      "thermal": 11.997581434,
+      "kinetic": 2.999395358,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0,
-      "armor": 11.090714247,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1356000,
-     "lastAtMs": 1356000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:0",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 11.858514676,
-      "kinetic": 3.952838225,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 6.476131933,
-      "kinetic": 2.433129204,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0.5357,
-      "armor": 8.373561137,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1356000,
-     "lastAtMs": 1356000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 11.364385165,
-      "kinetic": 3.788128388,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 6.069774939,
-      "kinetic": 2.334528822,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0,
-      "armor": 8.404303761,
+      "shield": 14.996976792,
+      "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "repair",
-     "firstAtMs": 1357500,
-     "lastAtMs": 1357500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "firstAtMs": 1337650,
+     "lastAtMs": 1337650,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "system:0",
-     "layer": "shield",
+     "layer": "armor",
      "count": 1,
-     "repairedHitPoints": 40
+     "repairedHitPoints": 45
     },
     {
      "kind": "damage",
-     "firstAtMs": 1358500,
-     "lastAtMs": 1358500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:0",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 13.841630985,
-      "kinetic": 4.613876995,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 7.535324269,
-      "kinetic": 2.840510872,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0.5357,
-      "armor": 9.840135141,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1358500,
-     "lastAtMs": 1358500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 11.952159877,
-      "kinetic": 3.984053292,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 6.383708351,
-      "kinetic": 2.455272443,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0,
-      "armor": 8.838980794,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "repair",
-     "firstAtMs": 1361500,
-     "lastAtMs": 1361500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "slotKey": "system:0",
-     "layer": "shield",
-     "count": 1,
-     "repairedHitPoints": 40
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1362650,
-     "lastAtMs": 1362650,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "firstAtMs": 1339150,
+     "lastAtMs": 1339150,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 16.620706637,
+      "kinetic": 5.540235546,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 13.29656531,
+      "kinetic": 3.324141328,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 16.620706638,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1339650,
+     "lastAtMs": 1339650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 16.655946314,
+      "kinetic": 5.551982105,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 13.324757051,
+      "kinetic": 3.331189263,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 16.655946314,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1339650,
+     "lastAtMs": 1339650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 15.034418028,
+      "kinetic": 5.011472676,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 12.027534422,
+      "kinetic": 3.006883606,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 15.034418028,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "repair",
+     "firstAtMs": 1340500,
+     "lastAtMs": 1340500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "system:0",
+     "layer": "shield",
+     "count": 1,
+     "repairedHitPoints": 40
+    },
+    {
+     "kind": "repair",
+     "firstAtMs": 1343650,
+     "lastAtMs": 1343650,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "system:0",
+     "layer": "armor",
+     "count": 1,
+     "repairedHitPoints": 45
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1344000,
+     "lastAtMs": 1344000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 14.708694191,
+      "kinetic": 4.902898064,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 8.283306965,
+      "kinetic": 3.012814987,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 1.6071,
+      "armor": 9.689021952,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1344000,
+     "lastAtMs": 1344000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 16.236284339,
+      "kinetic": 5.41209478,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 8.671880647,
+      "kinetic": 3.335338711,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0,
+      "armor": 12.007219358,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "repair",
+     "firstAtMs": 1344500,
+     "lastAtMs": 1344500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "system:0",
+     "layer": "shield",
+     "count": 1,
+     "repairedHitPoints": 40
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1346500,
+     "lastAtMs": 1346500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -2018,56 +2038,20 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.239240588,
-      "kinetic": 2.059810147,
+      "thermal": 5.643214444,
+      "kinetic": 2.112776325,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 10.299050735,
-      "armor": 0,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1363500,
-     "lastAtMs": 1363500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 14.19700947,
-      "kinetic": 4.73233649,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 7.867573646,
-      "kinetic": 2.910608326,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 1.0714,
-      "armor": 9.706781972,
+      "shield": 0.5357,
+      "armor": 7.220290769,
       "hull": 0
      }
     },
     {
      "kind": "repair",
-     "firstAtMs": 1365150,
-     "lastAtMs": 1365150,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "system:0",
-     "layer": "armor",
-     "count": 1,
-     "repairedHitPoints": 45
-    },
-    {
-     "kind": "repair",
-     "firstAtMs": 1365500,
-     "lastAtMs": 1365500,
+     "firstAtMs": 1348500,
+     "lastAtMs": 1348500,
      "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "system:0",
      "layer": "shield",
@@ -2076,62 +2060,88 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1366000,
-     "lastAtMs": 1366000,
+     "firstAtMs": 1349000,
+     "lastAtMs": 1349000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 13.820834664,
-      "kinetic": 4.606944888,
+      "thermal": 13.967932744,
+      "kinetic": 4.655977581,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 7.52421685,
-      "kinetic": 2.836238788,
+      "thermal": 7.60278267,
+      "kinetic": 2.866456411,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 9.824755638,
+      "armor": 9.933539081,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1368500,
-     "lastAtMs": 1368500,
+     "firstAtMs": 1351500,
+     "lastAtMs": 1351500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 12.469463569,
-      "kinetic": 4.156487856,
+      "thermal": 14.387066579,
+      "kinetic": 4.79568886,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 6.802442791,
-      "kinetic": 2.558633381,
+      "thermal": 7.826644147,
+      "kinetic": 2.952556979,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 8.825376172,
+      "armor": 10.243501126,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1368500,
-     "lastAtMs": 1368500,
+     "firstAtMs": 1351500,
+     "lastAtMs": 1351500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 10.257537121,
+      "kinetic": 3.41917904,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 5.478601864,
+      "kinetic": 2.107154563,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0,
+      "armor": 7.585756427,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1351650,
+     "lastAtMs": 1351650,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e2978",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2142,32 +2152,58 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.02473116,
-      "kinetic": 3.086435061,
+      "thermal": 12.019705728,
+      "kinetic": 3.004926432,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0,
-      "armor": 11.111166221,
+      "shield": 15.02463216,
+      "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "repair",
-     "firstAtMs": 1369500,
-     "lastAtMs": 1369500,
+     "firstAtMs": 1352500,
+     "lastAtMs": 1352500,
      "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "system:0",
      "layer": "shield",
      "count": 1,
-     "repairedHitPoints": 28.364148
+     "repairedHitPoints": 40
     },
     {
      "kind": "damage",
-     "firstAtMs": 1371000,
-     "lastAtMs": 1371000,
+     "firstAtMs": 1354000,
+     "lastAtMs": 1354000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 14.786967363,
+      "kinetic": 4.928989121,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 8.040233155,
+      "kinetic": 3.034706598,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0.5357,
+      "armor": 10.539239753,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1354000,
+     "lastAtMs": 1354000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2178,32 +2214,32 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 6.299965349,
-      "kinetic": 2.365372827,
+      "thermal": 6.157525398,
+      "kinetic": 2.368278999,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0.5357,
-      "armor": 8.129638176,
+      "shield": 0,
+      "armor": 8.525804397,
       "hull": 0
      }
     },
     {
      "kind": "repair",
-     "firstAtMs": 1371150,
-     "lastAtMs": 1371150,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1356500,
+     "lastAtMs": 1356500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
      "slotKey": "system:0",
-     "layer": "armor",
+     "layer": "shield",
      "count": 1,
-     "repairedHitPoints": 45
+     "repairedHitPoints": 40
     },
     {
      "kind": "damage",
-     "firstAtMs": 1373500,
-     "lastAtMs": 1373500,
+     "firstAtMs": 1356500,
+     "lastAtMs": 1356500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -2226,10 +2262,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1373500,
-     "lastAtMs": 1373500,
+     "firstAtMs": 1356500,
+     "lastAtMs": 1356500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2252,36 +2288,72 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1376000,
-     "lastAtMs": 1378500,
+     "firstAtMs": 1359000,
+     "lastAtMs": 1359000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
-     "count": 2,
+     "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 26.70043689,
-      "kinetic": 8.90014563,
+      "thermal": 13.396529721,
+      "kinetic": 4.465509907,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 14.545716748,
-      "kinetic": 5.479124902,
+      "thermal": 7.297593458,
+      "kinetic": 2.749075945,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 1.0714,
-      "armor": 18.95344165,
+      "shield": 0.5357,
+      "armor": 9.510969403,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "repair",
+     "firstAtMs": 1360500,
+     "lastAtMs": 1360500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "slotKey": "system:0",
+     "layer": "shield",
+     "count": 1,
+     "repairedHitPoints": 15.148438
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1361500,
+     "lastAtMs": 1361500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 13.303907169,
+      "kinetic": 4.434635723,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 7.24812329,
+      "kinetic": 2.730048957,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 0.5357,
+      "armor": 9.442472247,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1378500,
-     "lastAtMs": 1378500,
+     "firstAtMs": 1361500,
+     "lastAtMs": 1361500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2304,10 +2376,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1381000,
-     "lastAtMs": 1386000,
+     "firstAtMs": 1364000,
+     "lastAtMs": 1369000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 3,
      "rawDamage": {
@@ -2330,10 +2402,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1386000,
-     "lastAtMs": 1386000,
+     "firstAtMs": 1369000,
+     "lastAtMs": 1369000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2344,22 +2416,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.848744286,
-      "kinetic": 3.403363187,
+      "thermal": 14.439890296,
+      "kinetic": 4.938374655,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0,
-      "armor": 12.252107473,
-      "hull": 0
+      "armor": 3.377103,
+      "hull": 16.001161951
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1388500,
-     "lastAtMs": 1388500,
+     "firstAtMs": 1371500,
+     "lastAtMs": 1371500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -2370,22 +2442,32 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 9.110419627,
-      "kinetic": 3.446316779,
+      "thermal": 16.683527894,
+      "kinetic": 5.525462631,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 12.021036406,
-      "hull": 0
+      "armor": 0,
+      "hull": 21.673290525
      }
     },
     {
+     "kind": "repair",
+     "firstAtMs": 1373650,
+     "lastAtMs": 1373650,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e3003",
+     "slotKey": "system:0",
+     "layer": "armor",
+     "count": 1,
+     "repairedHitPoints": 45
+    },
+    {
      "kind": "damage",
-     "firstAtMs": 1391000,
-     "lastAtMs": 1391000,
+     "firstAtMs": 1374000,
+     "lastAtMs": 1374000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2408,10 +2490,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1393500,
-     "lastAtMs": 1393500,
+     "firstAtMs": 1376500,
+     "lastAtMs": 1376500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -2433,73 +2515,37 @@
      }
     },
     {
-     "kind": "repair",
-     "firstAtMs": 1398150,
-     "lastAtMs": 1398150,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "system:0",
-     "layer": "armor",
-     "count": 1,
-     "repairedHitPoints": 45
-    },
-    {
      "kind": "damage",
-     "firstAtMs": 1398500,
-     "lastAtMs": 1398500,
+     "firstAtMs": 1381500,
+     "lastAtMs": 1384000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
-     "count": 1,
+     "count": 2,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 11.109326509,
-      "kinetic": 3.703108836,
+      "thermal": 26.880781684,
+      "kinetic": 8.960260561,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 6.218426738,
-      "kinetic": 2.276321053,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 1.0714,
-      "armor": 7.423347791,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1406000,
-     "lastAtMs": 1406000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 15.771455175,
-      "kinetic": 5.257151725,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 8.850932921,
-      "kinetic": 3.231132662,
+      "thermal": 14.784479756,
+      "kinetic": 5.51326606,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 1.6071,
-      "armor": 10.474965583,
+      "armor": 18.690645816,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1408500,
-     "lastAtMs": 1408500,
+     "firstAtMs": 1386500,
+     "lastAtMs": 1386500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -2510,22 +2556,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.176891394,
-      "kinetic": 3.087267459,
+      "thermal": 8.914383563,
+      "kinetic": 3.289740965,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 10.728458853,
-      "hull": 0
+      "armor": 9.557814,
+      "hull": 2.110610528
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1411000,
-     "lastAtMs": 1411000,
+     "firstAtMs": 1389000,
+     "lastAtMs": 1389000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2536,22 +2582,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.704631879,
-      "kinetic": 3.290244569,
+      "thermal": 15.923775133,
+      "kinetic": 5.272211711,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 11.459176448,
-      "hull": 0
+      "armor": 0,
+      "hull": 20.660286844
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1413500,
-     "lastAtMs": 1413500,
+     "firstAtMs": 1391500,
+     "lastAtMs": 1391500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -2562,22 +2608,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.730185013,
-      "kinetic": 3.300072697,
+      "thermal": 15.971618037,
+      "kinetic": 5.288159345,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 11.49455771,
-      "hull": 0
+      "armor": 0,
+      "hull": 20.724077382
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1413500,
-     "lastAtMs": 1413500,
+     "firstAtMs": 1391500,
+     "lastAtMs": 1391500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2588,22 +2634,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 5.509139186,
-      "kinetic": 2.118899687,
+      "thermal": 10.314711875,
+      "kinetic": 3.438237292,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0,
-      "armor": 7.628038873,
-      "hull": 0
+      "armor": 0,
+      "hull": 13.752949167
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1416000,
-     "lastAtMs": 1418500,
+     "firstAtMs": 1399000,
+     "lastAtMs": 1401500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:0",
      "count": 2,
      "rawDamage": {
@@ -2614,22 +2660,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 15.478041993,
-      "kinetic": 5.837711535,
+      "thermal": 20.522456965,
+      "kinetic": 6.697965655,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 1.0714,
-      "armor": 20.244353528,
-      "hull": 0
+      "shield": 2.1428,
+      "armor": 0,
+      "hull": 25.07762262
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1418500,
-     "lastAtMs": 1418500,
+     "firstAtMs": 1401500,
+     "lastAtMs": 1401500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2640,133 +2686,133 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 15.8243199,
-      "kinetic": 5.324220004,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0,
-      "armor": 1.335061,
-      "hull": 19.813478904
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1421000,
-     "lastAtMs": 1421000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:0",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 13.156918531,
-      "kinetic": 4.38563951,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 13.049778531,
-      "kinetic": 4.314212843,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0.5357,
-      "armor": 0,
-      "hull": 16.828291374
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1421000,
-     "lastAtMs": 1421000,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 10.480954996,
-      "kinetic": 3.493651665,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 10.480954996,
-      "kinetic": 3.493651665,
+      "thermal": 0,
+      "kinetic": 0,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0,
       "armor": 0,
-      "hull": 13.974606661
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1423500,
-     "lastAtMs": 1428500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:0",
-     "count": 3,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 43.771260357,
-      "kinetic": 14.590420119,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 43.449840357,
-      "kinetic": 14.376140118,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 1.6071,
-      "armor": 0,
-      "hull": 56.218880475
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1428500,
-     "lastAtMs": 1428500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e3010",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 16.032190784,
-      "kinetic": 5.344063595,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 9.87355725,
-      "kinetic": 3.29118575,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 0,
-      "armor": 0,
-      "hull": 13.164743
+      "hull": 0
      }
     },
     {
      "kind": "destruction",
-     "firstAtMs": 1428500,
-     "lastAtMs": 1428500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e3010",
+     "firstAtMs": 1401500,
+     "lastAtMs": 1401500,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e3003",
      "count": 1
     },
     {
      "kind": "damage",
-     "firstAtMs": 1431000,
-     "lastAtMs": 1431000,
+     "firstAtMs": 1404000,
+     "lastAtMs": 1406500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
+     "slotKey": "weapon:1",
+     "count": 2,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 25.758907248,
+      "kinetic": 8.586302416,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 20.607125798,
+      "kinetic": 5.15178145,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 25.758907248,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1409000,
+     "lastAtMs": 1409000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 12.00095204,
+      "kinetic": 4.000317347,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 9.600761632,
+      "kinetic": 2.400190408,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 12.00095204,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1414000,
+     "lastAtMs": 1414000,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
+     "slotKey": "weapon:1",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 13.968626596,
+      "kinetic": 4.656208865,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 11.174901277,
+      "kinetic": 2.793725319,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 13.968626596,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1416500,
+     "lastAtMs": 1416500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
+     "slotKey": "weapon:0",
+     "count": 1,
+     "rawDamage": {
+      "electromagnetic": 0,
+      "thermal": 12.85672653,
+      "kinetic": 4.28557551,
+      "explosive": 0
+     },
+     "appliedDamage": {
+      "electromagnetic": 0,
+      "thermal": 10.285381224,
+      "kinetic": 2.571345306,
+      "explosive": 0
+     },
+     "layerDamage": {
+      "shield": 12.85672653,
+      "armor": 0,
+      "hull": 0
+     }
+    },
+    {
+     "kind": "damage",
+     "firstAtMs": 1416500,
+     "lastAtMs": 1416500,
+     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2789,36 +2835,36 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1438500,
-     "lastAtMs": 1438500,
+     "firstAtMs": 1419000,
+     "lastAtMs": 1421500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
-     "count": 1,
+     "count": 2,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 15.62830558,
-      "kinetic": 5.209435193,
+      "thermal": 27.556413776,
+      "kinetic": 9.185471258,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.502644464,
-      "kinetic": 3.125661116,
+      "thermal": 22.045131021,
+      "kinetic": 5.511282755,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 15.62830558,
+      "shield": 27.556413776,
       "armor": 0,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1438500,
-     "lastAtMs": 1438500,
+     "firstAtMs": 1421500,
+     "lastAtMs": 1421500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2841,10 +2887,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1441000,
-     "lastAtMs": 1441000,
+     "firstAtMs": 1424000,
+     "lastAtMs": 1424000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -2867,10 +2913,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1441000,
-     "lastAtMs": 1441000,
+     "firstAtMs": 1424000,
+     "lastAtMs": 1424000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2893,10 +2939,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1443500,
-     "lastAtMs": 1443500,
+     "firstAtMs": 1426500,
+     "lastAtMs": 1426500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -2919,10 +2965,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1443500,
-     "lastAtMs": 1443500,
+     "firstAtMs": 1426500,
+     "lastAtMs": 1426500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2933,22 +2979,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.199333536,
-      "kinetic": 2.049833384,
+      "thermal": 6.604614698,
+      "kinetic": 2.235265807,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 10.24916692,
-      "armor": 0,
+      "shield": 2.83187,
+      "armor": 6.008010505,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1446000,
-     "lastAtMs": 1448500,
+     "firstAtMs": 1429000,
+     "lastAtMs": 1431500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 2,
      "rawDamage": {
@@ -2959,22 +3005,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 30.62426432,
-      "kinetic": 7.65606608,
+      "thermal": 22.624344284,
+      "kinetic": 8.58628934,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 38.2803304,
-      "armor": 0,
+      "shield": 1.0714,
+      "armor": 30.139233624,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1448500,
-     "lastAtMs": 1448500,
+     "firstAtMs": 1431500,
+     "lastAtMs": 1431500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -2985,22 +3031,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.517475893,
-      "kinetic": 2.129368973,
+      "thermal": 6.228404247,
+      "kinetic": 2.395540095,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 10.646844866,
-      "armor": 0,
+      "shield": 0,
+      "armor": 8.623944342,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1451000,
-     "lastAtMs": 1451000,
+     "firstAtMs": 1434000,
+     "lastAtMs": 1434000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -3011,22 +3057,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 13.054624646,
-      "kinetic": 3.263656162,
+      "thermal": 9.661369772,
+      "kinetic": 3.658220682,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 16.318280808,
-      "armor": 0,
+      "shield": 0.5357,
+      "armor": 12.783890454,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1451000,
-     "lastAtMs": 1451000,
+     "firstAtMs": 1434000,
+     "lastAtMs": 1434000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -3037,22 +3083,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 9.27766048,
-      "kinetic": 3.211345169,
+      "thermal": 8.56496386,
+      "kinetic": 3.294216869,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 3.314868,
-      "armor": 9.174137649,
+      "shield": 0,
+      "armor": 11.859180729,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1453500,
-     "lastAtMs": 1453500,
+     "firstAtMs": 1436500,
+     "lastAtMs": 1436500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -3075,62 +3121,36 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1453500,
-     "lastAtMs": 1453500,
+     "firstAtMs": 1436500,
+     "lastAtMs": 1439000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
-     "count": 1,
+     "count": 2,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 14.03117203,
-      "kinetic": 4.677057343,
+      "thermal": 30.347384012,
+      "kinetic": 10.11579467,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 8.208235638,
-      "kinetic": 3.157013707,
+      "thermal": 17.868395147,
+      "kinetic": 6.814768903,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0,
-      "armor": 11.365249345,
+      "shield": 0.5357,
+      "armor": 24.14746405,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1461000,
-     "lastAtMs": 1461000,
+     "firstAtMs": 1441500,
+     "lastAtMs": 1446500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
-     "slotKey": "weapon:1",
-     "count": 1,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 16.316211982,
-      "kinetic": 5.438737327,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 9.890510509,
-      "kinetic": 3.630970196,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 1.6071,
-      "armor": 11.914380705,
-      "hull": 0
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1463500,
-     "lastAtMs": 1468500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 3,
      "rawDamage": {
@@ -3153,10 +3173,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1468500,
-     "lastAtMs": 1468500,
+     "firstAtMs": 1446500,
+     "lastAtMs": 1446500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -3179,10 +3199,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1471000,
-     "lastAtMs": 1471000,
+     "firstAtMs": 1454000,
+     "lastAtMs": 1454000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -3193,22 +3213,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 7.752473048,
-      "kinetic": 2.924029634,
+      "thermal": 7.982824048,
+      "kinetic": 2.897244634,
       "explosive": 0
      },
      "layerDamage": {
-      "shield": 0.5357,
-      "armor": 10.140802682,
+      "shield": 1.6071,
+      "armor": 9.272968682,
       "hull": 0
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1471000,
-     "lastAtMs": 1471000,
+     "firstAtMs": 1454000,
+     "lastAtMs": 1454000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -3231,10 +3251,10 @@
     },
     {
      "kind": "damage",
-     "firstAtMs": 1473500,
-     "lastAtMs": 1476000,
+     "firstAtMs": 1456500,
+     "lastAtMs": 1459000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 2,
      "rawDamage": {
@@ -3245,22 +3265,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 15.339178667,
-      "kinetic": 5.784302564,
+      "thermal": 16.64758432,
+      "kinetic": 6.12585424,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 1.0714,
-      "armor": 20.052081231,
-      "hull": 0
+      "armor": 17.498325619,
+      "hull": 4.203712941
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1476000,
-     "lastAtMs": 1478500,
+     "firstAtMs": 1459000,
+     "lastAtMs": 1461500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 2,
      "rawDamage": {
@@ -3271,22 +3291,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 16.757851961,
-      "kinetic": 6.387636908,
+      "thermal": 28.341879592,
+      "kinetic": 9.411579864,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 22.609788869,
-      "hull": 0
+      "armor": 0,
+      "hull": 37.217759456
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1481000,
-     "lastAtMs": 1481000,
+     "firstAtMs": 1464000,
+     "lastAtMs": 1464000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -3297,22 +3317,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 7.126160819,
-      "kinetic": 2.683140315,
+      "thermal": 11.877450289,
+      "kinetic": 3.923436763,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 9.273601134,
-      "hull": 0
+      "armor": 0,
+      "hull": 15.265187052
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1481000,
-     "lastAtMs": 1481000,
+     "firstAtMs": 1464000,
+     "lastAtMs": 1464000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -3323,22 +3343,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 9.802031259,
-      "kinetic": 3.770012023,
+      "thermal": 16.75560899,
+      "kinetic": 5.585202997,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0,
-      "armor": 13.572043282,
-      "hull": 0
+      "armor": 0,
+      "hull": 22.340811987
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1483500,
-     "lastAtMs": 1483500,
+     "firstAtMs": 1466500,
+     "lastAtMs": 1466500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:0",
      "count": 1,
      "rawDamage": {
@@ -3349,22 +3369,22 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 6.449636201,
-      "kinetic": 2.422938539,
+      "thermal": 10.720997951,
+      "kinetic": 3.53795265,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
-      "armor": 8.33687474,
-      "hull": 0
+      "armor": 0,
+      "hull": 13.723250601
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1483500,
-     "lastAtMs": 1483500,
+     "firstAtMs": 1466500,
+     "lastAtMs": 1466500,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "slotKey": "weapon:1",
      "count": 1,
      "rawDamage": {
@@ -3375,99 +3395,47 @@
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 12.003135363,
-      "kinetic": 4.145269492,
+      "thermal": 13.998239153,
+      "kinetic": 4.666079718,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0,
-      "armor": 3.894058,
-      "hull": 12.254346855
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1486000,
-     "lastAtMs": 1488500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
-     "slotKey": "weapon:0",
-     "count": 2,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 25.458074896,
-      "kinetic": 8.486024965,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 25.243794896,
-      "kinetic": 8.343171631,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 1.0714,
       "armor": 0,
-      "hull": 32.515566527
+      "hull": 18.664318871
      }
     },
     {
      "kind": "damage",
-     "firstAtMs": 1488500,
-     "lastAtMs": 1491000,
+     "firstAtMs": 1469000,
+     "lastAtMs": 1469000,
      "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
-     "slotKey": "weapon:1",
-     "count": 2,
+     "targetId": "ce0f36ba8e20edb4ebcba9757-e2978",
+     "slotKey": "weapon:0",
+     "count": 1,
      "rawDamage": {
       "electromagnetic": 0,
-      "thermal": 26.569642057,
-      "kinetic": 8.856547352,
+      "thermal": 10.592180199,
+      "kinetic": 3.530726733,
       "explosive": 0
      },
      "appliedDamage": {
       "electromagnetic": 0,
-      "thermal": 26.462502057,
-      "kinetic": 8.785120685,
+      "thermal": 6.86727925,
+      "kinetic": 2.25337975,
       "explosive": 0
      },
      "layerDamage": {
       "shield": 0.5357,
       "armor": 0,
-      "hull": 34.711922742
-     }
-    },
-    {
-     "kind": "damage",
-     "firstAtMs": 1493500,
-     "lastAtMs": 1498500,
-     "sourceId": "ce0f36ba8e20edb4ebcba9757-e666",
-     "targetId": "ce0f36ba8e20edb4ebcba9757-e2985",
-     "slotKey": "weapon:0",
-     "count": 3,
-     "rawDamage": {
-      "electromagnetic": 0,
-      "thermal": 40.851426395,
-      "kinetic": 13.617142132,
-      "explosive": 0
-     },
-     "appliedDamage": {
-      "electromagnetic": 0,
-      "thermal": 31.674302899,
-      "kinetic": 10.450960966,
-      "explosive": 0
-     },
-     "layerDamage": {
-      "shield": 1.6071,
-      "armor": 0,
-      "hull": 40.518163865
+      "hull": 8.584959
      }
     },
     {
      "kind": "destruction",
-     "firstAtMs": 1498500,
-     "lastAtMs": 1498500,
-     "shipId": "ce0f36ba8e20edb4ebcba9757-e2985",
+     "firstAtMs": 1469000,
+     "lastAtMs": 1469000,
+     "shipId": "ce0f36ba8e20edb4ebcba9757-e2978",
      "count": 1
     }
    ],
@@ -3619,7 +3587,7 @@
       },
       "ammo.projectile.small.phased": {
        "itemId": "ammo.projectile.small.phased",
-       "stock": 590,
+       "stock": 596,
        "stockAccumulator": 0,
        "lastProcessedHour": 0,
        "eventFactor": 1,
@@ -3906,209 +3874,209 @@
      "expiresAtMs": 7276150,
      "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e665"
     },
-    "ce0f36ba8e20edb4ebcba9757-e933": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e933",
+    "ce0f36ba8e20edb4ebcba9757-e920": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e920",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.verge",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e934",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e921",
      "hullId": "hull.pirate.scout",
      "nameKey": "content.hull.pirate.scout.name",
      "position": {
-      "x": -2.191381682110359,
-      "y": 3.518688964367213
+      "x": -2.1483314056682516,
+      "y": 2.4902616761841916
      },
      "radiusKm": 0.0165,
-     "createdAtMs": 227500,
-     "expiresAtMs": 2027500,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e936"
+     "createdAtMs": 217500,
+     "expiresAtMs": 2017500,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e923"
     },
-    "ce0f36ba8e20edb4ebcba9757-e1152": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e1152",
+    "ce0f36ba8e20edb4ebcba9757-e1166": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1166",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.verge",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e1153",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e1167",
      "hullId": "hull.pirate.scout",
      "nameKey": "content.hull.pirate.scout.name",
      "position": {
-      "x": -10.312375566916224,
-      "y": 1.4534289079198688
+      "x": -10.612752124862203,
+      "y": 1.226528474986661
      },
      "radiusKm": 0.0165,
-     "createdAtMs": 357500,
-     "expiresAtMs": 2157500,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e1156"
+     "createdAtMs": 371500,
+     "expiresAtMs": 2171500,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e1170"
     },
-    "ce0f36ba8e20edb4ebcba9757-e1509": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e1509",
+    "ce0f36ba8e20edb4ebcba9757-e1482": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1482",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.derelict-lane",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e1510",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e1483",
      "hullId": "hull.pirate.scout",
      "nameKey": "content.hull.pirate.scout.name",
      "position": {
-      "x": -8.899446404171155,
-      "y": -7.261011858904994
+      "x": -9.58618570630783,
+      "y": -6.520206648571005
      },
      "radiusKm": 0.0165,
-     "createdAtMs": 425000,
-     "expiresAtMs": 2225000,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e1513"
+     "createdAtMs": 433500,
+     "expiresAtMs": 2233500,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e1486"
     },
-    "ce0f36ba8e20edb4ebcba9757-e1746": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e1746",
+    "ce0f36ba8e20edb4ebcba9757-e1720": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1720",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.derelict-lane",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e1747",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e1721",
      "hullId": "hull.pirate.scout",
      "nameKey": "content.hull.pirate.scout.name",
      "position": {
-      "x": -9.88936976730039,
-      "y": -8.125491874499161
+      "x": -9.289622974499485,
+      "y": -4.725796450802281
      },
      "radiusKm": 0.0165,
-     "createdAtMs": 470000,
-     "expiresAtMs": 2270000,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e1748"
+     "createdAtMs": 478500,
+     "expiresAtMs": 2278500,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e1722"
     },
-    "ce0f36ba8e20edb4ebcba9757-e2032": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2032",
+    "ce0f36ba8e20edb4ebcba9757-e1928": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e1928",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.derelict-lane",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2033",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e1929",
      "hullId": "hull.pirate.scout",
      "nameKey": "content.hull.pirate.scout.name",
      "position": {
-      "x": 14.615630338123022,
-      "y": 0.9236506645784659
+      "x": 13.845056899601472,
+      "y": -6.909466064344661
      },
      "radiusKm": 0.0165,
-     "createdAtMs": 570000,
-     "expiresAtMs": 2370000,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e2035"
+     "createdAtMs": 548500,
+     "expiresAtMs": 2348500,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e1931"
     },
-    "ce0f36ba8e20edb4ebcba9757-e2456": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2456",
+    "ce0f36ba8e20edb4ebcba9757-e2409": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2409",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.derelict-lane",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2457",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2410",
      "hullId": "hull.pirate.scout",
      "nameKey": "content.hull.pirate.scout.name",
      "position": {
-      "x": -3.0340103318068543,
-      "y": -6.5282372984248225
+      "x": -4.140179021247043,
+      "y": -9.045314712711537
      },
      "radiusKm": 0.0165,
-     "createdAtMs": 805000,
-     "expiresAtMs": 2605000,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e2459"
+     "createdAtMs": 770000,
+     "expiresAtMs": 2570000,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e2412"
     },
-    "ce0f36ba8e20edb4ebcba9757-e2691": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2691",
+    "ce0f36ba8e20edb4ebcba9757-e2630": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2630",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.derelict-lane",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2692",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2631",
      "hullId": "hull.pirate.scout",
      "nameKey": "content.hull.pirate.scout.name",
      "position": {
-      "x": -1.6377448462108257,
-      "y": -7.224841231795003
+      "x": -3.992903791607325,
+      "y": -5.346258474644463
      },
      "radiusKm": 0.0165,
-     "createdAtMs": 850500,
-     "expiresAtMs": 2650500,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e2693"
+     "createdAtMs": 810500,
+     "expiresAtMs": 2610500,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e2632"
     },
-    "ce0f36ba8e20edb4ebcba9757-e2949": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e2949",
+    "ce0f36ba8e20edb4ebcba9757-e2942": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e2942",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.derelict-lane",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2950",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e2943",
      "hullId": "hull.pirate.scout",
      "nameKey": "content.hull.pirate.scout.name",
      "position": {
-      "x": -25.842434952540316,
-      "y": -18.1453834270423
+      "x": -27.937280640306163,
+      "y": -20.816796153525015
      },
      "radiusKm": 0.0165,
-     "createdAtMs": 940500,
-     "expiresAtMs": 2740500,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e2952"
+     "createdAtMs": 918000,
+     "expiresAtMs": 2718000,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e2945"
     },
-    "ce0f36ba8e20edb4ebcba9757-e3662": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e3662",
+    "ce0f36ba8e20edb4ebcba9757-e3550": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e3550",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.outpost-cradle",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e3663",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e3551",
      "hullId": "hull.pirate.scout",
      "nameKey": "content.hull.pirate.scout.name",
      "position": {
-      "x": 65.95891893195208,
-      "y": -20.742943785697577
+      "x": 60.94760487527842,
+      "y": -19.669465129469266
      },
      "radiusKm": 0.0165,
-     "createdAtMs": 1198500,
-     "expiresAtMs": 2998500,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e3665"
+     "createdAtMs": 1181000,
+     "expiresAtMs": 2981000,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e3553"
     },
-    "ce0f36ba8e20edb4ebcba9757-e4425": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e4425",
+    "ce0f36ba8e20edb4ebcba9757-e4277": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e4277",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.outpost-cradle",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e4426",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e4278",
      "hullId": "hull.pirate.raider",
      "nameKey": "content.hull.pirate.raider.name",
      "position": {
-      "x": 60.473037251606954,
-      "y": -17.712068241879393
+      "x": 52.49356221455302,
+      "y": -16.368090070353443
      },
      "radiusKm": 0.023,
-     "createdAtMs": 1298500,
-     "expiresAtMs": 3098500,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e4429"
+     "createdAtMs": 1271000,
+     "expiresAtMs": 3071000,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e4281"
     },
-    "ce0f36ba8e20edb4ebcba9757-e5022": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e5022",
+    "ce0f36ba8e20edb4ebcba9757-e4919": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e4919",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.outpost-cradle",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e5023",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e4920",
      "hullId": "hull.pirate.raider",
      "nameKey": "content.hull.pirate.raider.name",
      "position": {
-      "x": 105.8517402703834,
-      "y": -18.85149405788708
+      "x": 96.1554248197807,
+      "y": -27.609171345654747
      },
      "radiusKm": 0.023,
-     "createdAtMs": 1428500,
-     "expiresAtMs": 3228500,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e5025"
+     "createdAtMs": 1401500,
+     "expiresAtMs": 3201500,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e4922"
     },
-    "ce0f36ba8e20edb4ebcba9757-e5185": {
-     "id": "ce0f36ba8e20edb4ebcba9757-e5185",
+    "ce0f36ba8e20edb4ebcba9757-e5076": {
+     "id": "ce0f36ba8e20edb4ebcba9757-e5076",
      "owner": "npc",
      "systemId": "system.borrell",
      "siteId": "site.borrell.outpost-cradle",
-     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e5186",
+     "inventoryId": "ce0f36ba8e20edb4ebcba9757-e5077",
      "hullId": "hull.pirate.raider",
      "nameKey": "content.hull.pirate.raider.name",
      "position": {
-      "x": 124.99494163054092,
-      "y": -15.386448164307193
+      "x": 114.24702596079825,
+      "y": -32.775083570489464
      },
      "radiusKm": 0.023,
-     "createdAtMs": 1498500,
-     "expiresAtMs": 3298500,
-     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e5187"
+     "createdAtMs": 1469000,
+     "expiresAtMs": 3269000,
+     "boundaryEntryId": "ce0f36ba8e20edb4ebcba9757-e5078"
     }
    },
    "completions": {
@@ -4119,7 +4087,7 @@
    "lastOutcome": {
     "encounterId": "encounter.borrell.pirate-base",
     "status": "completed",
-    "resolvedAtMs": 1498500,
+    "resolvedAtMs": 1469000,
     "bountyCreditsPaid": 26000,
     "npcsDestroyed": 4,
     "npcsTotal": 4
@@ -4127,7 +4095,7 @@
   },
   "fitting": null,
   "navigation": {
-   "version": 35954,
+   "version": 35269,
    "knownDestinationSiteIds": [
     "site.borrell.ashfall-line",
     "site.borrell.battery-rock",
@@ -4151,23 +4119,36 @@
    "lastCancellation": {
     "orderKind": "dock",
     "reason": "docked",
-    "simulationTimeMs": 1743050
+    "simulationTimeMs": 1711550
    }
   },
   "notifications": {
-   "sequence": 159,
+   "sequence": 154,
    "entries": [
+    {
+     "id": 63,
+     "sequence": 63,
+     "definitionId": "notify.encounter.bounty",
+     "groupKey": "notify.encounter.bounty",
+     "subjectIds": [],
+     "params": {
+      "credits": 4000
+     },
+     "firstAtMs": 433500,
+     "lastAtMs": 433500,
+     "count": 1
+    },
     {
      "id": 64,
      "sequence": 64,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e1746"
+      "ce0f36ba8e20edb4ebcba9757-e1720"
      ],
      "params": {},
-     "firstAtMs": 470000,
-     "lastAtMs": 470000,
+     "firstAtMs": 478500,
+     "lastAtMs": 478500,
      "count": 1
     },
     {
@@ -4179,78 +4160,52 @@
      "params": {
       "credits": 4000
      },
-     "firstAtMs": 470000,
-     "lastAtMs": 470000,
+     "firstAtMs": 478500,
+     "lastAtMs": 478500,
      "count": 1
     },
     {
      "id": 66,
      "sequence": 66,
-     "definitionId": "notify.combat.defense-starved",
-     "groupKey": "notify.combat.defense-starved|system:0",
-     "subjectIds": [],
-     "params": {
-      "moduleKey": "content.module.shield.booster.small.name"
-     },
-     "firstAtMs": 490000,
-     "lastAtMs": 490000,
+     "definitionId": "notify.encounter.wreck",
+     "groupKey": "notify.encounter.wreck",
+     "subjectIds": [
+      "ce0f36ba8e20edb4ebcba9757-e1928"
+     ],
+     "params": {},
+     "firstAtMs": 548500,
+     "lastAtMs": 548500,
      "count": 1
     },
     {
      "id": 67,
-     "sequence": 69,
-     "definitionId": "notify.combat.defense-starved",
-     "groupKey": "notify.combat.defense-starved|system:0",
-     "subjectIds": [],
-     "params": {
-      "moduleKey": "content.module.shield.booster.small.name"
-     },
-     "firstAtMs": 525000,
-     "lastAtMs": 558000,
-     "count": 3
-    },
-    {
-     "id": 70,
-     "sequence": 70,
-     "definitionId": "notify.encounter.wreck",
-     "groupKey": "notify.encounter.wreck",
-     "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e2032"
-     ],
-     "params": {},
-     "firstAtMs": 570000,
-     "lastAtMs": 570000,
-     "count": 1
-    },
-    {
-     "id": 71,
-     "sequence": 71,
+     "sequence": 67,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
      "params": {
       "credits": 5000
      },
-     "firstAtMs": 570000,
-     "lastAtMs": 570000,
+     "firstAtMs": 548500,
+     "lastAtMs": 548500,
      "count": 1
     },
     {
-     "id": 72,
-     "sequence": 72,
+     "id": 68,
+     "sequence": 68,
      "definitionId": "notify.encounter.completed",
      "groupKey": "notify.encounter.completed|encounter.borrell.pirate-patrol",
      "subjectIds": [],
      "params": {
       "encounterKey": "content.encounter.borrell.pirate-patrol.name"
      },
-     "firstAtMs": 570000,
-     "lastAtMs": 570000,
+     "firstAtMs": 548500,
+     "lastAtMs": 548500,
      "count": 1
     },
     {
-     "id": 73,
-     "sequence": 73,
+     "id": 69,
+     "sequence": 69,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.alloy",
      "subjectIds": [],
@@ -4258,13 +4213,13 @@
       "itemKey": "content.item.salvage.alloy.name",
       "quantity": 1
      },
-     "firstAtMs": 649500,
-     "lastAtMs": 649500,
+     "firstAtMs": 610500,
+     "lastAtMs": 610500,
      "count": 1
     },
     {
-     "id": 74,
-     "sequence": 74,
+     "id": 70,
+     "sequence": 70,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|ammo.projectile.small.phased",
      "subjectIds": [],
@@ -4272,13 +4227,13 @@
       "itemKey": "content.ammo.projectile.small.phased.name",
       "quantity": 40
      },
-     "firstAtMs": 649500,
-     "lastAtMs": 649500,
+     "firstAtMs": 610500,
+     "lastAtMs": 610500,
      "count": 1
     },
     {
-     "id": 75,
-     "sequence": 75,
+     "id": 71,
+     "sequence": 71,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|ammo.hybrid.small.iron",
      "subjectIds": [],
@@ -4286,39 +4241,39 @@
       "itemKey": "content.ammo.hybrid.small.iron.name",
       "quantity": 39
      },
-     "firstAtMs": 730500,
-     "lastAtMs": 730500,
+     "firstAtMs": 686500,
+     "lastAtMs": 686500,
      "count": 1
     },
     {
-     "id": 76,
-     "sequence": 76,
+     "id": 72,
+     "sequence": 72,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
      "params": {
       "siteKey": "content.site.borrell.station.name"
      },
-     "firstAtMs": 743300,
-     "lastAtMs": 743300,
+     "firstAtMs": 698400,
+     "lastAtMs": 698400,
      "count": 1
     },
     {
-     "id": 77,
-     "sequence": 77,
+     "id": 73,
+     "sequence": 73,
      "definitionId": "notify.navigation.docked",
      "groupKey": "notify.navigation.docked",
      "subjectIds": [],
      "params": {
       "stationKey": "content.station.borrell.harbour.name"
      },
-     "firstAtMs": 746550,
-     "lastAtMs": 746550,
+     "firstAtMs": 701550,
+     "lastAtMs": 701550,
      "count": 1
     },
     {
-     "id": 78,
-     "sequence": 78,
+     "id": 74,
+     "sequence": 74,
      "definitionId": "notify.station.sold",
      "groupKey": "notify.station.sold",
      "subjectIds": [],
@@ -4327,13 +4282,13 @@
       "quantity": 1,
       "credits": 1404
      },
-     "firstAtMs": 747000,
-     "lastAtMs": 747000,
+     "firstAtMs": 702000,
+     "lastAtMs": 702000,
      "count": 1
     },
     {
-     "id": 79,
-     "sequence": 79,
+     "id": 75,
+     "sequence": 75,
      "definitionId": "notify.station.sold",
      "groupKey": "notify.station.sold",
      "subjectIds": [],
@@ -4342,107 +4297,81 @@
       "quantity": 39,
       "credits": 390
      },
-     "firstAtMs": 747000,
-     "lastAtMs": 747000,
+     "firstAtMs": 702000,
+     "lastAtMs": 702000,
      "count": 1
     },
     {
-     "id": 80,
-     "sequence": 80,
+     "id": 76,
+     "sequence": 76,
      "definitionId": "notify.station.resupplied",
      "groupKey": "notify.station.resupplied",
      "subjectIds": [],
      "params": {
       "credits": 0,
-      "rounds": 16
+      "rounds": 32
      },
-     "firstAtMs": 747000,
-     "lastAtMs": 747000,
+     "firstAtMs": 702000,
+     "lastAtMs": 702000,
      "count": 1
     },
     {
-     "id": 81,
-     "sequence": 81,
+     "id": 77,
+     "sequence": 77,
      "definitionId": "notify.station.bought",
      "groupKey": "notify.station.bought",
      "subjectIds": [],
      "params": {
       "itemKey": "content.ammo.projectile.small.phased.name",
-      "quantity": 96,
-      "credits": 1632
+      "quantity": 72,
+      "credits": 1224
      },
-     "firstAtMs": 747000,
-     "lastAtMs": 747000,
+     "firstAtMs": 702000,
+     "lastAtMs": 702000,
      "count": 1
     },
     {
-     "id": 82,
-     "sequence": 82,
+     "id": 78,
+     "sequence": 78,
      "definitionId": "notify.navigation.undocked",
      "groupKey": "notify.navigation.undocked",
      "subjectIds": [],
      "params": {},
-     "firstAtMs": 747000,
-     "lastAtMs": 747000,
+     "firstAtMs": 702000,
+     "lastAtMs": 702000,
      "count": 1
     },
     {
-     "id": 83,
-     "sequence": 83,
+     "id": 79,
+     "sequence": 79,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
      "params": {
       "siteKey": "content.site.borrell.derelict-lane.name"
      },
-     "firstAtMs": 755100,
-     "lastAtMs": 755100,
+     "firstAtMs": 710100,
+     "lastAtMs": 710100,
      "count": 1
     },
     {
-     "id": 84,
-     "sequence": 84,
+     "id": 80,
+     "sequence": 80,
      "definitionId": "notify.combat.hostile-lock",
      "groupKey": "notify.combat.hostile-lock",
      "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e2050"
+      "ce0f36ba8e20edb4ebcba9757-e1947"
      ],
      "params": {
       "attackerKey": "content.npc.pirate.cutter.name"
      },
-     "firstAtMs": 756651,
-     "lastAtMs": 756651,
+     "firstAtMs": 711651,
+     "lastAtMs": 711651,
      "count": 1
     },
     {
-     "id": 86,
-     "sequence": 86,
-     "definitionId": "notify.encounter.wreck",
-     "groupKey": "notify.encounter.wreck",
-     "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e2456"
-     ],
-     "params": {},
-     "firstAtMs": 805000,
-     "lastAtMs": 805000,
-     "count": 1
-    },
-    {
-     "id": 87,
-     "sequence": 87,
-     "definitionId": "notify.encounter.bounty",
-     "groupKey": "notify.encounter.bounty",
-     "subjectIds": [],
-     "params": {
-      "credits": 4000
-     },
-     "firstAtMs": 805000,
-     "lastAtMs": 805000,
-     "count": 1
-    },
-    {
-     "id": 85,
-     "sequence": 95,
+     "id": 81,
+     "sequence": 83,
      "definitionId": "notify.combat.shield-low",
      "groupKey": "notify.combat.shield-low",
      "subjectIds": [
@@ -4451,78 +4380,132 @@
      "params": {
       "percent": 25
      },
-     "firstAtMs": 803000,
-     "lastAtMs": 848250,
-     "count": 9
+     "firstAtMs": 753250,
+     "lastAtMs": 758250,
+     "count": 3
     },
     {
-     "id": 96,
-     "sequence": 96,
-     "definitionId": "notify.encounter.wreck",
-     "groupKey": "notify.encounter.wreck",
+     "id": 84,
+     "sequence": 84,
+     "definitionId": "notify.combat.armor-damaged",
+     "groupKey": "notify.combat.armor-damaged",
      "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e2691"
+      "ce0f36ba8e20edb4ebcba9757-e1965"
      ],
      "params": {},
-     "firstAtMs": 850500,
-     "lastAtMs": 850500,
+     "firstAtMs": 764300,
+     "lastAtMs": 764300,
      "count": 1
     },
     {
-     "id": 97,
-     "sequence": 97,
+     "id": 85,
+     "sequence": 85,
+     "definitionId": "notify.encounter.wreck",
+     "groupKey": "notify.encounter.wreck",
+     "subjectIds": [
+      "ce0f36ba8e20edb4ebcba9757-e2409"
+     ],
+     "params": {},
+     "firstAtMs": 770000,
+     "lastAtMs": 770000,
+     "count": 1
+    },
+    {
+     "id": 86,
+     "sequence": 86,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
      "params": {
       "credits": 4000
      },
-     "firstAtMs": 850500,
-     "lastAtMs": 850500,
+     "firstAtMs": 770000,
+     "lastAtMs": 770000,
      "count": 1
     },
     {
-     "id": 105,
-     "sequence": 105,
+     "id": 87,
+     "sequence": 87,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e2949"
+      "ce0f36ba8e20edb4ebcba9757-e2630"
      ],
      "params": {},
-     "firstAtMs": 940500,
-     "lastAtMs": 940500,
+     "firstAtMs": 810500,
+     "lastAtMs": 810500,
      "count": 1
     },
     {
-     "id": 106,
-     "sequence": 106,
+     "id": 88,
+     "sequence": 88,
+     "definitionId": "notify.encounter.bounty",
+     "groupKey": "notify.encounter.bounty",
+     "subjectIds": [],
+     "params": {
+      "credits": 4000
+     },
+     "firstAtMs": 810500,
+     "lastAtMs": 810500,
+     "count": 1
+    },
+    {
+     "id": 89,
+     "sequence": 89,
+     "definitionId": "notify.combat.shield-low",
+     "groupKey": "notify.combat.shield-low",
+     "subjectIds": [
+      "ce0f36ba8e20edb4ebcba9757-e666"
+     ],
+     "params": {
+      "percent": 25
+     },
+     "firstAtMs": 811000,
+     "lastAtMs": 811000,
+     "count": 1
+    },
+    {
+     "id": 98,
+     "sequence": 98,
+     "definitionId": "notify.encounter.wreck",
+     "groupKey": "notify.encounter.wreck",
+     "subjectIds": [
+      "ce0f36ba8e20edb4ebcba9757-e2942"
+     ],
+     "params": {},
+     "firstAtMs": 918000,
+     "lastAtMs": 918000,
+     "count": 1
+    },
+    {
+     "id": 99,
+     "sequence": 99,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
      "params": {
       "credits": 5000
      },
-     "firstAtMs": 940500,
-     "lastAtMs": 940500,
+     "firstAtMs": 918000,
+     "lastAtMs": 918000,
      "count": 1
     },
     {
-     "id": 107,
-     "sequence": 107,
+     "id": 100,
+     "sequence": 100,
      "definitionId": "notify.encounter.completed",
      "groupKey": "notify.encounter.completed|encounter.borrell.pirate-patrol",
      "subjectIds": [],
      "params": {
       "encounterKey": "content.encounter.borrell.pirate-patrol.name"
      },
-     "firstAtMs": 940500,
-     "lastAtMs": 940500,
+     "firstAtMs": 918000,
+     "lastAtMs": 918000,
      "count": 1
     },
     {
-     "id": 114,
-     "sequence": 114,
+     "id": 108,
+     "sequence": 108,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.alloy",
      "subjectIds": [],
@@ -4530,26 +4513,26 @@
       "itemKey": "content.item.salvage.alloy.name",
       "quantity": 1
      },
-     "firstAtMs": 1013500,
-     "lastAtMs": 1013500,
+     "firstAtMs": 1005000,
+     "lastAtMs": 1005000,
      "count": 1
     },
     {
-     "id": 98,
-     "sequence": 121,
+     "id": 90,
+     "sequence": 116,
      "definitionId": "notify.combat.defense-starved",
      "groupKey": "notify.combat.defense-starved|system:0",
      "subjectIds": [],
      "params": {
       "moduleKey": "content.module.shield.booster.small.name"
      },
-     "firstAtMs": 867500,
-     "lastAtMs": 1091500,
-     "count": 20
+     "firstAtMs": 829500,
+     "lastAtMs": 1089500,
+     "count": 23
     },
     {
-     "id": 122,
-     "sequence": 122,
+     "id": 117,
+     "sequence": 117,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.circuitry",
      "subjectIds": [],
@@ -4557,39 +4540,39 @@
       "itemKey": "content.item.salvage.circuitry.name",
       "quantity": 1
      },
-     "firstAtMs": 1096500,
-     "lastAtMs": 1096500,
+     "firstAtMs": 1091500,
+     "lastAtMs": 1091500,
      "count": 1
     },
     {
-     "id": 123,
-     "sequence": 123,
+     "id": 118,
+     "sequence": 118,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
      "params": {
       "siteKey": "content.site.borrell.station.name"
      },
-     "firstAtMs": 1101550,
-     "lastAtMs": 1101550,
+     "firstAtMs": 1096550,
+     "lastAtMs": 1096550,
      "count": 1
     },
     {
-     "id": 124,
-     "sequence": 124,
+     "id": 119,
+     "sequence": 119,
      "definitionId": "notify.navigation.docked",
      "groupKey": "notify.navigation.docked",
      "subjectIds": [],
      "params": {
       "stationKey": "content.station.borrell.harbour.name"
      },
-     "firstAtMs": 1105050,
-     "lastAtMs": 1105050,
+     "firstAtMs": 1100050,
+     "lastAtMs": 1100050,
      "count": 1
     },
     {
-     "id": 125,
-     "sequence": 125,
+     "id": 120,
+     "sequence": 120,
      "definitionId": "notify.station.sold",
      "groupKey": "notify.station.sold",
      "subjectIds": [],
@@ -4598,13 +4581,13 @@
       "quantity": 1,
       "credits": 1394
      },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
      "count": 1
     },
     {
-     "id": 126,
-     "sequence": 126,
+     "id": 121,
+     "sequence": 121,
      "definitionId": "notify.station.sold",
      "groupKey": "notify.station.sold",
      "subjectIds": [],
@@ -4613,22 +4596,95 @@
       "quantity": 1,
       "credits": 2484
      },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
      "count": 1
     },
     {
-     "id": 127,
-     "sequence": 127,
+     "id": 122,
+     "sequence": 122,
+     "definitionId": "notify.station.repaired",
+     "groupKey": "notify.station.repaired",
+     "subjectIds": [],
+     "params": {
+      "credits": 77
+     },
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
+     "count": 1
+    },
+    {
+     "id": 123,
+     "sequence": 123,
      "definitionId": "notify.station.resupplied",
      "groupKey": "notify.station.resupplied",
      "subjectIds": [],
      "params": {
       "credits": 0,
-      "rounds": 14
+      "rounds": 32
      },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
+     "count": 1
+    },
+    {
+     "id": 124,
+     "sequence": 124,
+     "definitionId": "notify.station.bought",
+     "groupKey": "notify.station.bought",
+     "subjectIds": [],
+     "params": {
+      "itemKey": "content.ammo.projectile.small.phased.name",
+      "quantity": 152,
+      "credits": 2600
+     },
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
+     "count": 1
+    },
+    {
+     "id": 125,
+     "sequence": 125,
+     "definitionId": "notify.station.bought",
+     "groupKey": "notify.station.bought",
+     "subjectIds": [],
+     "params": {
+      "itemKey": "content.ammo.projectile.small.phased.name",
+      "quantity": 100,
+      "credits": 1800
+     },
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
+     "count": 1
+    },
+    {
+     "id": 126,
+     "sequence": 126,
+     "definitionId": "notify.station.bought",
+     "groupKey": "notify.station.bought",
+     "subjectIds": [],
+     "params": {
+      "itemKey": "content.module.capacitor.battery.small.name",
+      "quantity": 1,
+      "credits": 6696
+     },
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
+     "count": 1
+    },
+    {
+     "id": 127,
+     "sequence": 127,
+     "definitionId": "notify.station.bought",
+     "groupKey": "notify.station.bought",
+     "subjectIds": [],
+     "params": {
+      "itemKey": "content.module.plating.armor.small.name",
+      "quantity": 1,
+      "credits": 4428
+     },
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
      "count": 1
     },
     {
@@ -4638,150 +4694,116 @@
      "groupKey": "notify.station.bought",
      "subjectIds": [],
      "params": {
-      "itemKey": "content.ammo.projectile.small.phased.name",
-      "quantity": 134,
-      "credits": 2300
+      "itemKey": "content.module.propulsion.afterburner.small.name",
+      "quantity": 1,
+      "credits": 10700
      },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
      "count": 1
     },
     {
      "id": 129,
      "sequence": 129,
-     "definitionId": "notify.station.bought",
-     "groupKey": "notify.station.bought",
+     "definitionId": "notify.station.fitted",
+     "groupKey": "notify.station.fitted",
      "subjectIds": [],
-     "params": {
-      "itemKey": "content.ammo.projectile.small.phased.name",
-      "quantity": 100,
-      "credits": 1800
-     },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
+     "params": {},
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
      "count": 1
     },
     {
      "id": 130,
      "sequence": 130,
-     "definitionId": "notify.station.bought",
-     "groupKey": "notify.station.bought",
-     "subjectIds": [],
-     "params": {
-      "itemKey": "content.module.capacitor.battery.small.name",
-      "quantity": 1,
-      "credits": 6696
-     },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
-     "count": 1
-    },
-    {
-     "id": 131,
-     "sequence": 131,
-     "definitionId": "notify.station.bought",
-     "groupKey": "notify.station.bought",
-     "subjectIds": [],
-     "params": {
-      "itemKey": "content.module.plating.armor.small.name",
-      "quantity": 1,
-      "credits": 4428
-     },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
-     "count": 1
-    },
-    {
-     "id": 132,
-     "sequence": 132,
-     "definitionId": "notify.station.bought",
-     "groupKey": "notify.station.bought",
-     "subjectIds": [],
-     "params": {
-      "itemKey": "content.module.propulsion.afterburner.small.name",
-      "quantity": 1,
-      "credits": 10700
-     },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
-     "count": 1
-    },
-    {
-     "id": 133,
-     "sequence": 133,
-     "definitionId": "notify.station.fitted",
-     "groupKey": "notify.station.fitted",
-     "subjectIds": [],
-     "params": {},
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
-     "count": 1
-    },
-    {
-     "id": 134,
-     "sequence": 134,
      "definitionId": "notify.station.repaired",
      "groupKey": "notify.station.repaired",
      "subjectIds": [],
      "params": {
       "credits": 0
      },
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
      "count": 1
     },
     {
-     "id": 135,
-     "sequence": 135,
+     "id": 131,
+     "sequence": 131,
      "definitionId": "notify.navigation.undocked",
      "groupKey": "notify.navigation.undocked",
      "subjectIds": [],
      "params": {},
-     "firstAtMs": 1105500,
-     "lastAtMs": 1105500,
+     "firstAtMs": 1100500,
+     "lastAtMs": 1100500,
      "count": 1
     },
     {
-     "id": 136,
-     "sequence": 136,
+     "id": 132,
+     "sequence": 132,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
      "params": {
       "siteKey": "content.site.borrell.outpost-cradle.name"
      },
-     "firstAtMs": 1116150,
-     "lastAtMs": 1116150,
+     "firstAtMs": 1111150,
+     "lastAtMs": 1111150,
      "count": 1
     },
     {
-     "id": 137,
-     "sequence": 137,
+     "id": 133,
+     "sequence": 133,
      "definitionId": "notify.combat.hostile-lock",
      "groupKey": "notify.combat.hostile-lock",
      "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e3003"
+      "ce0f36ba8e20edb4ebcba9757-e2996"
      ],
      "params": {
       "attackerKey": "content.npc.pirate.marksman.name"
      },
-     "firstAtMs": 1117701,
-     "lastAtMs": 1117701,
+     "firstAtMs": 1112701,
+     "lastAtMs": 1112701,
      "count": 1
     },
     {
-     "id": 138,
-     "sequence": 138,
+     "id": 134,
+     "sequence": 134,
      "definitionId": "notify.combat.lock-out-of-range",
-     "groupKey": "notify.combat.lock-out-of-range|ce0f36ba8e20edb4ebcba9757-e2994",
+     "groupKey": "notify.combat.lock-out-of-range|ce0f36ba8e20edb4ebcba9757-e2987",
      "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e2994"
+      "ce0f36ba8e20edb4ebcba9757-e2987"
      ],
      "params": {
       "targetKey": "content.npc.pirate.gunner.name"
      },
-     "firstAtMs": 1183750,
-     "lastAtMs": 1183750,
+     "firstAtMs": 1178750,
+     "lastAtMs": 1178750,
+     "count": 1
+    },
+    {
+     "id": 135,
+     "sequence": 135,
+     "definitionId": "notify.encounter.wreck",
+     "groupKey": "notify.encounter.wreck",
+     "subjectIds": [
+      "ce0f36ba8e20edb4ebcba9757-e3550"
+     ],
+     "params": {},
+     "firstAtMs": 1181000,
+     "lastAtMs": 1181000,
+     "count": 1
+    },
+    {
+     "id": 136,
+     "sequence": 136,
+     "definitionId": "notify.encounter.bounty",
+     "groupKey": "notify.encounter.bounty",
+     "subjectIds": [],
+     "params": {
+      "credits": 5000
+     },
+     "firstAtMs": 1181000,
+     "lastAtMs": 1181000,
      "count": 1
     },
     {
@@ -4790,11 +4812,11 @@
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e3662"
+      "ce0f36ba8e20edb4ebcba9757-e4277"
      ],
      "params": {},
-     "firstAtMs": 1198500,
-     "lastAtMs": 1198500,
+     "firstAtMs": 1271000,
+     "lastAtMs": 1271000,
      "count": 1
     },
     {
@@ -4804,14 +4826,14 @@
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
      "params": {
-      "credits": 5000
+      "credits": 6000
      },
-     "firstAtMs": 1198500,
-     "lastAtMs": 1198500,
+     "firstAtMs": 1271000,
+     "lastAtMs": 1271000,
      "count": 1
     },
     {
-     "id": 141,
+     "id": 137,
      "sequence": 143,
      "definitionId": "notify.combat.shield-low",
      "groupKey": "notify.combat.shield-low",
@@ -4821,132 +4843,78 @@
      "params": {
       "percent": 25
      },
-     "firstAtMs": 1264250,
-     "lastAtMs": 1269750,
-     "count": 3
+     "firstAtMs": 1259750,
+     "lastAtMs": 1292250,
+     "count": 5
     },
     {
      "id": 144,
      "sequence": 144,
-     "definitionId": "notify.combat.armor-damaged",
-     "groupKey": "notify.combat.armor-damaged",
+     "definitionId": "notify.encounter.wreck",
+     "groupKey": "notify.encounter.wreck",
      "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e2994"
+      "ce0f36ba8e20edb4ebcba9757-e4919"
      ],
      "params": {},
-     "firstAtMs": 1276650,
-     "lastAtMs": 1276650,
+     "firstAtMs": 1401500,
+     "lastAtMs": 1401500,
      "count": 1
     },
     {
      "id": 145,
      "sequence": 145,
-     "definitionId": "notify.encounter.wreck",
-     "groupKey": "notify.encounter.wreck",
-     "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e4425"
-     ],
-     "params": {},
-     "firstAtMs": 1298500,
-     "lastAtMs": 1298500,
-     "count": 1
-    },
-    {
-     "id": 146,
-     "sequence": 146,
-     "definitionId": "notify.encounter.bounty",
-     "groupKey": "notify.encounter.bounty",
-     "subjectIds": [],
-     "params": {
-      "credits": 6000
-     },
-     "firstAtMs": 1298500,
-     "lastAtMs": 1298500,
-     "count": 1
-    },
-    {
-     "id": 147,
-     "sequence": 148,
-     "definitionId": "notify.combat.shield-low",
-     "groupKey": "notify.combat.shield-low",
-     "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e666"
-     ],
-     "params": {
-      "percent": 25
-     },
-     "firstAtMs": 1320250,
-     "lastAtMs": 1324750,
-     "count": 2
-    },
-    {
-     "id": 149,
-     "sequence": 149,
-     "definitionId": "notify.encounter.wreck",
-     "groupKey": "notify.encounter.wreck",
-     "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e5022"
-     ],
-     "params": {},
-     "firstAtMs": 1428500,
-     "lastAtMs": 1428500,
-     "count": 1
-    },
-    {
-     "id": 150,
-     "sequence": 150,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
      "params": {
       "credits": 9000
      },
-     "firstAtMs": 1428500,
-     "lastAtMs": 1428500,
+     "firstAtMs": 1401500,
+     "lastAtMs": 1401500,
      "count": 1
     },
     {
-     "id": 151,
-     "sequence": 151,
+     "id": 146,
+     "sequence": 146,
      "definitionId": "notify.encounter.wreck",
      "groupKey": "notify.encounter.wreck",
      "subjectIds": [
-      "ce0f36ba8e20edb4ebcba9757-e5185"
+      "ce0f36ba8e20edb4ebcba9757-e5076"
      ],
      "params": {},
-     "firstAtMs": 1498500,
-     "lastAtMs": 1498500,
+     "firstAtMs": 1469000,
+     "lastAtMs": 1469000,
      "count": 1
     },
     {
-     "id": 152,
-     "sequence": 152,
+     "id": 147,
+     "sequence": 147,
      "definitionId": "notify.encounter.bounty",
      "groupKey": "notify.encounter.bounty",
      "subjectIds": [],
      "params": {
       "credits": 6000
      },
-     "firstAtMs": 1498500,
-     "lastAtMs": 1498500,
+     "firstAtMs": 1469000,
+     "lastAtMs": 1469000,
      "count": 1
     },
     {
-     "id": 153,
-     "sequence": 153,
+     "id": 148,
+     "sequence": 148,
      "definitionId": "notify.encounter.completed",
      "groupKey": "notify.encounter.completed|encounter.borrell.pirate-base",
      "subjectIds": [],
      "params": {
       "encounterKey": "content.encounter.borrell.pirate-base.name"
      },
-     "firstAtMs": 1498500,
-     "lastAtMs": 1498500,
+     "firstAtMs": 1469000,
+     "lastAtMs": 1469000,
      "count": 1
     },
     {
-     "id": 154,
-     "sequence": 154,
+     "id": 149,
+     "sequence": 149,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.circuitry",
      "subjectIds": [],
@@ -4954,13 +4922,13 @@
       "itemKey": "content.item.salvage.circuitry.name",
       "quantity": 1
      },
-     "firstAtMs": 1632500,
-     "lastAtMs": 1632500,
+     "firstAtMs": 1594500,
+     "lastAtMs": 1594500,
      "count": 1
     },
     {
-     "id": 155,
-     "sequence": 155,
+     "id": 150,
+     "sequence": 150,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.alloy",
      "subjectIds": [],
@@ -4968,13 +4936,13 @@
       "itemKey": "content.item.salvage.alloy.name",
       "quantity": 3
      },
-     "firstAtMs": 1644500,
-     "lastAtMs": 1644500,
+     "firstAtMs": 1611500,
+     "lastAtMs": 1611500,
      "count": 1
     },
     {
-     "id": 156,
-     "sequence": 156,
+     "id": 151,
+     "sequence": 151,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|module.plating.armor.small",
      "subjectIds": [],
@@ -4982,13 +4950,13 @@
       "itemKey": "content.module.plating.armor.small.name",
       "quantity": 1
      },
-     "firstAtMs": 1644500,
-     "lastAtMs": 1644500,
+     "firstAtMs": 1611500,
+     "lastAtMs": 1611500,
      "count": 1
     },
     {
-     "id": 157,
-     "sequence": 157,
+     "id": 152,
+     "sequence": 152,
      "definitionId": "notify.encounter.loot",
      "groupKey": "notify.encounter.loot|item.salvage.circuitry",
      "subjectIds": [],
@@ -4996,34 +4964,34 @@
       "itemKey": "content.item.salvage.circuitry.name",
       "quantity": 3
      },
-     "firstAtMs": 1734000,
-     "lastAtMs": 1734000,
+     "firstAtMs": 1702000,
+     "lastAtMs": 1702000,
      "count": 1
     },
     {
-     "id": 158,
-     "sequence": 158,
+     "id": 153,
+     "sequence": 153,
      "definitionId": "notify.navigation.arrived",
      "groupKey": "notify.navigation.arrived",
      "subjectIds": [],
      "params": {
       "siteKey": "content.site.borrell.station.name"
      },
-     "firstAtMs": 1739550,
-     "lastAtMs": 1739550,
+     "firstAtMs": 1708450,
+     "lastAtMs": 1708450,
      "count": 1
     },
     {
-     "id": 159,
-     "sequence": 159,
+     "id": 154,
+     "sequence": 154,
      "definitionId": "notify.navigation.docked",
      "groupKey": "notify.navigation.docked",
      "subjectIds": [],
      "params": {
       "stationKey": "content.station.borrell.harbour.name"
      },
-     "firstAtMs": 1743050,
-     "lastAtMs": 1743050,
+     "firstAtMs": 1711550,
+     "lastAtMs": 1711550,
      "count": 1
     }
    ],
@@ -5071,27 +5039,27 @@
     },
     "guide.loop.clear": {
      "outcome": "completed",
-     "atMs": 227500
+     "atMs": 217500
     },
     "guide.loop.loot": {
      "outcome": "completed",
-     "atMs": 233500
+     "atMs": 224000
     },
     "guide.loop.return": {
      "outcome": "completed",
-     "atMs": 244250
+     "atMs": 240750
     },
     "guide.loop.carry-rounds": {
      "outcome": "completed",
-     "atMs": 244250
+     "atMs": 240750
     },
     "guide.loop.sell": {
      "outcome": "completed",
-     "atMs": 244500
+     "atMs": 241000
     },
     "guide.loop.ready": {
      "outcome": "completed",
-     "atMs": 244500
+     "atMs": 241000
     }
    }
   },
@@ -5299,22 +5267,22 @@
   "displayName": "Test Pilot",
   "seed": "bb22cc33dd44ee55ff6677889900aa11",
   "createdAtRealMs": 1700000000000,
-  "revision": 7137,
-  "nextEntityOrdinal": 5216,
-  "nextEventOrdinal": 7889,
+  "revision": 7008,
+  "nextEntityOrdinal": 5107,
+  "nextEventOrdinal": 7668,
   "time": {
-   "simulationTimeMs": 1743250,
+   "simulationTimeMs": 1711750,
    "paused": false,
    "rate": 1,
    "accumulatorMs": 0
   },
   "random": {
    "combat": {
-    "s0": 3094946661,
-    "s1": 1158733251,
-    "s2": 3610613088,
-    "s3": 1106445843,
-    "drawIndex": 3286
+    "s0": 651718837,
+    "s1": 220981343,
+    "s2": 474673988,
+    "s3": 3095534426,
+    "drawIndex": 3264
    },
    "economy": {
     "s0": 1517961906,
@@ -5348,100 +5316,100 @@
   "scheduler": {
    "entries": [
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e936",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e923",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 2027500,
+     "dueAtMs": 2017500,
      "priority": 90,
-     "insertionOrdinal": 594,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e933"
+     "insertionOrdinal": 585,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e920"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e1156",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e1170",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 2157500,
+     "dueAtMs": 2171500,
      "priority": 90,
-     "insertionOrdinal": 739,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e1152"
+     "insertionOrdinal": 752,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e1166"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e1513",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e1486",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 2225000,
+     "dueAtMs": 2233500,
      "priority": 90,
-     "insertionOrdinal": 958,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e1509"
+     "insertionOrdinal": 944,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e1482"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e1748",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e1722",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 2270000,
+     "dueAtMs": 2278500,
      "priority": 90,
-     "insertionOrdinal": 1113,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e1746"
+     "insertionOrdinal": 1100,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e1720"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e2035",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e1931",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 2370000,
+     "dueAtMs": 2348500,
      "priority": 90,
-     "insertionOrdinal": 1296,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e2032"
+     "insertionOrdinal": 1233,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e1928"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e2459",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e2412",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 2605000,
+     "dueAtMs": 2570000,
      "priority": 90,
-     "insertionOrdinal": 1559,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e2456"
+     "insertionOrdinal": 1538,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e2409"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e2693",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e2632",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 2650500,
+     "dueAtMs": 2610500,
      "priority": 90,
-     "insertionOrdinal": 1714,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e2691"
+     "insertionOrdinal": 1681,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e2630"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e2952",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e2945",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 2740500,
+     "dueAtMs": 2718000,
      "priority": 90,
-     "insertionOrdinal": 1880,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e2949"
+     "insertionOrdinal": 1881,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e2942"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e3665",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e3553",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 2998500,
+     "dueAtMs": 2981000,
      "priority": 90,
-     "insertionOrdinal": 2349,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e3662"
+     "insertionOrdinal": 2279,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e3550"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e4429",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e4281",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 3098500,
+     "dueAtMs": 3071000,
      "priority": 90,
-     "insertionOrdinal": 2853,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e4425"
+     "insertionOrdinal": 2752,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e4277"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e5025",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e4922",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 3228500,
+     "dueAtMs": 3201500,
      "priority": 90,
-     "insertionOrdinal": 3259,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e5022"
+     "insertionOrdinal": 3186,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e4919"
     },
     {
-     "entryId": "ce0f36ba8e20edb4ebcba9757-e5187",
+     "entryId": "ce0f36ba8e20edb4ebcba9757-e5078",
      "kind": "encounter.wreckExpire",
-     "dueAtMs": 3298500,
+     "dueAtMs": 3269000,
      "priority": 90,
-     "insertionOrdinal": 3367,
-     "ownerId": "ce0f36ba8e20edb4ebcba9757-e5185"
+     "insertionOrdinal": 3290,
+     "ownerId": "ce0f36ba8e20edb4ebcba9757-e5076"
     },
     {
      "entryId": "ce0f36ba8e20edb4ebcba9757-e9",
@@ -5460,8 +5428,8 @@
      "ownerId": "ce0f36ba8e20edb4ebcba9757-e663"
     }
    ],
-   "nextInsertionOrdinal": 3395
+   "nextInsertionOrdinal": 3318
   }
  },
- "checksum": "5e5d7cd70606e6830a7f986827b51cf3181865a133c64f51742f1815a64e39d6"
+ "checksum": "510e074968b602b6f88b205868a3a664f2bad95c3a63387330fbd7bab078257a"
 }

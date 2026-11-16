@@ -1,5 +1,5 @@
 {
-  "$comment": "Whole campaigns flown from a new campaign's first day (MVP Implementation Plan phase 17; MVP Scope 4.3). Each career is a plan a player could follow: equip a representative fit from tests/fixtures/scenarios/progression.json, then fly a progression scenario until a goal is met - a number of completions, a number of losses, or enough credits for the next fit. maxSorties is the band: a career that needs more sorties than that stalls, and the stall is the finding. Nothing is set directly; every credit and item comes from the loop.",
+  "$comment": "Whole campaigns flown from a new campaign's first day (MVP Implementation Plan phase 17; MVP Scope 4.3; v0.2 Implementation Plan phase 6). Each career is a plan a player could follow: equip a fit - a representative fit from tests/fixtures/scenarios/progression.json, an authored reference fit (fit.*) or one of the career fits below - then fly a scenario until a goal is met: a number of completions, a number of losses, or enough credits for the next fit. A fit on another hull switches to a stored ship of that hull or buys one; reuse moves the modules it needs off the pilot's other ships first. A scenario is a progression or ladder scenario, one of the career scenarios below, or <fitId>@<encounterId>, a reference fit flown with its matrix policy (tests/fixtures/balance/matrix.json). ignoreModuleDrops leaves every module drop in the wrecks. maxSorties is the band: a career that needs more sorties than that stalls, and the stall is the finding. Nothing is set directly; every credit and item comes from the loop.",
   "startingWallet": {
     "description": "The starting credits buy one direction - the second autocannon the multi-opponent site asks for, or a poor purchase that does not help - but not the mastery or long-range fits (MVP Scope 4.3, objective 2).",
     "affordable": [
@@ -183,6 +183,384 @@
           "maxSorties": 1
         }
       ]
+    },
+    {
+      "id": "v02-hull-ladder",
+      "description": "A new pilot spends the starting credits on a second autocannon, clears the Pirate Patrol until the reference autocannon frigate is affordable, farms Crossfire in it until the blaster-and-web destroyer package is, moves the shared modules across and farms Armored Hold until the railgun cruiser package is, then clears the Pirate Base - the advanced site that cost the destroyers the most - in the cruiser. Every module drop is taken and sold or kept.",
+      "objectives": [
+        "V02-AC-11",
+        "V02-AC-10"
+      ],
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "steps": [
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "patrol.intermediate",
+          "until": {
+            "affords": "fit.frigate.autocannon"
+          },
+          "maxSorties": 3
+        },
+        {
+          "equip": "fit.frigate.autocannon",
+          "reuse": true
+        },
+        {
+          "fly": "fit.frigate.autocannon@encounter.borrell.crossfire",
+          "until": {
+            "affords": "fit.destroyer.blaster-web"
+          },
+          "maxSorties": 10
+        },
+        {
+          "equip": "fit.destroyer.blaster-web",
+          "reuse": true
+        },
+        {
+          "fly": "fit.destroyer.blaster-web@encounter.borrell.armored-hold",
+          "until": {
+            "affords": "fit.cruiser.railgun"
+          },
+          "maxSorties": 18
+        },
+        {
+          "equip": "fit.cruiser.railgun",
+          "reuse": true
+        },
+        {
+          "fly": "fit.cruiser.railgun@encounter.borrell.pirate-base",
+          "until": {
+            "completions": 2
+          },
+          "maxSorties": 2
+        }
+      ]
+    },
+    {
+      "id": "v02-no-module-drops",
+      "description": "The same plan with every module drop left in the wrecks: the conservative income of bounties, salvage and rounds alone, so neither hull upgrade rests on a lucky drop (FeatureSpec02 7.2, 9).",
+      "objectives": [
+        "V02-AC-10",
+        "V02-AC-11"
+      ],
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "ignoreModuleDrops": true,
+      "steps": [
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "patrol.intermediate",
+          "until": {
+            "affords": "fit.frigate.autocannon"
+          },
+          "maxSorties": 3
+        },
+        {
+          "equip": "fit.frigate.autocannon",
+          "reuse": true
+        },
+        {
+          "fly": "fit.frigate.autocannon@encounter.borrell.crossfire",
+          "until": {
+            "affords": "fit.destroyer.blaster-web"
+          },
+          "maxSorties": 10
+        },
+        {
+          "equip": "fit.destroyer.blaster-web",
+          "reuse": true
+        },
+        {
+          "fly": "fit.destroyer.blaster-web@encounter.borrell.armored-hold",
+          "until": {
+            "affords": "fit.cruiser.railgun"
+          },
+          "maxSorties": 18
+        },
+        {
+          "equip": "fit.cruiser.railgun",
+          "reuse": true
+        },
+        {
+          "fly": "fit.cruiser.railgun@encounter.borrell.pirate-base",
+          "until": {
+            "completions": 2
+          },
+          "maxSorties": 2
+        }
+      ]
+    },
+    {
+      "id": "v02-destroyer-loss",
+      "description": "A poor purchase and a loss: the pilot buys a bare destroyer as soon as the hull is affordable, moves the frigate's guns and booster across, takes it to the Command Group and loses it. Basic insurance pays; the stored frigate - stripped, but flight-ready - becomes active, so no recovery grant applies. One autocannon rebuilds it and clears the Pirate Scout, the intermediate fit is bought back, and the Pirate Patrol is cleared again (FeatureSpec02 4.2, 9; Functional Specification 9.12).",
+      "objectives": [
+        "V02-AC-12"
+      ],
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "steps": [
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "patrol.intermediate",
+          "until": {
+            "affords": "destroyer.folly"
+          },
+          "maxSorties": 6
+        },
+        {
+          "equip": "destroyer.folly",
+          "reuse": true
+        },
+        {
+          "fly": "mistake.destroyer-folly.command-group",
+          "until": {
+            "losses": 1
+          },
+          "maxSorties": 1
+        },
+        {
+          "equip": "rebuild"
+        },
+        {
+          "fly": "rebuild.pirate-scout",
+          "until": {
+            "completions": 1
+          },
+          "maxSorties": 1
+        },
+        {
+          "fly": "rebuild.pirate-scout",
+          "until": {
+            "affords": "intermediate"
+          },
+          "maxSorties": 4
+        },
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "patrol.intermediate",
+          "until": {
+            "completions": 2
+          },
+          "maxSorties": 2
+        }
+      ]
+    },
+    {
+      "id": "v02-cruiser-loss",
+      "description": "The hull ladder to the railgun cruiser, then a loss: the pilot brawls the Screened Battery at 1 km without boosting and loses the cruiser. Insurance pays a share of the hull; the stored destroyer becomes active, gets back the damage enhancer the cruiser took, and Armored Hold keeps paying (FeatureSpec02 4.2; Functional Specification 9.12).",
+      "objectives": [
+        "V02-AC-12"
+      ],
+      "seeds": [
+        "bb22cc33dd44ee55ff6677889900aa11",
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "steps": [
+        {
+          "equip": "intermediate"
+        },
+        {
+          "fly": "patrol.intermediate",
+          "until": {
+            "affords": "fit.frigate.autocannon"
+          },
+          "maxSorties": 3
+        },
+        {
+          "equip": "fit.frigate.autocannon",
+          "reuse": true
+        },
+        {
+          "fly": "fit.frigate.autocannon@encounter.borrell.crossfire",
+          "until": {
+            "affords": "fit.destroyer.blaster-web"
+          },
+          "maxSorties": 10
+        },
+        {
+          "equip": "fit.destroyer.blaster-web",
+          "reuse": true
+        },
+        {
+          "fly": "fit.destroyer.blaster-web@encounter.borrell.armored-hold",
+          "until": {
+            "affords": "fit.cruiser.railgun"
+          },
+          "maxSorties": 18
+        },
+        {
+          "equip": "fit.cruiser.railgun",
+          "reuse": true
+        },
+        {
+          "fly": "mistake.cruiser-brawl.screened-battery",
+          "until": {
+            "losses": 1
+          },
+          "maxSorties": 1
+        },
+        {
+          "equip": "fit.destroyer.blaster-web"
+        },
+        {
+          "fly": "fit.destroyer.blaster-web@encounter.borrell.armored-hold",
+          "until": {
+            "completions": 3
+          },
+          "maxSorties": 3
+        }
+      ]
+    }
+  ],
+  "fits": [
+    {
+      "id": "destroyer.folly",
+      "description": "A poor purchase: a bare destroyer hull carrying the frigate's two autocannons and shield booster, bought instead of saving for a destroyer package (FeatureSpec02 9: a bare hull is not a ready-to-fight upgrade).",
+      "hullId": "hull.independent.destroyer",
+      "modules": [
+        {
+          "slot": "weapon",
+          "index": 0,
+          "moduleId": "module.turret.autocannon.small",
+          "ammunitionId": "ammo.projectile.small.phased"
+        },
+        {
+          "slot": "weapon",
+          "index": 1,
+          "moduleId": "module.turret.autocannon.small",
+          "ammunitionId": "ammo.projectile.small.phased"
+        },
+        {
+          "slot": "system",
+          "index": 0,
+          "moduleId": "module.shield.booster.small"
+        }
+      ],
+      "cargo": [
+        {
+          "definitionId": "ammo.projectile.small.phased",
+          "quantity": 200
+        }
+      ]
+    },
+    {
+      "id": "rebuild",
+      "description": "What a pilot left with an empty stored frigate and a little money puts back on it: one autocannon and its rounds.",
+      "modules": [
+        {
+          "slot": "weapon",
+          "index": 0,
+          "moduleId": "module.turret.autocannon.small",
+          "ammunitionId": "ammo.projectile.small.fusion"
+        }
+      ],
+      "cargo": [
+        {
+          "definitionId": "ammo.projectile.small.fusion",
+          "quantity": 100
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "mistake.destroyer-folly.command-group",
+      "description": "The poor-purchase destroyer taken to the advanced band, never boosting its shield and never leaving: two autocannons cannot out-damage the controller, the brawler and the battery.",
+      "encounterId": "encounter.borrell.command-group",
+      "fitId": "destroyer.folly",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.snare",
+          "npc.pirate.bruiser"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [
+          0,
+          1
+        ]
+      },
+      "seeds": [],
+      "sorties": 1
+    },
+    {
+      "id": "mistake.cruiser-brawl.screened-battery",
+      "description": "The railgun cruiser brawls the screening frigates at 1 km, where medium railguns cannot track, never boosts its shield and never leaves.",
+      "encounterId": "encounter.borrell.screened-battery",
+      "fitId": "fit.cruiser.railgun",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.cutter"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "always",
+        "repairBelowFraction": 0
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [
+          0,
+          1
+        ]
+      },
+      "seeds": [],
+      "sorties": 1
+    },
+    {
+      "id": "rebuild.pirate-scout",
+      "description": "The rebuilt frigate - one autocannon - clears the onboarding site.",
+      "encounterId": "encounter.borrell.pirate-scout",
+      "fitId": "rebuild",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [],
+      "sorties": 1
     }
   ]
 }

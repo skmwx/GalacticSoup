@@ -1,0 +1,280 @@
+{
+  "$comment": "The seeded fit-versus-site matrix (v0.2 Implementation Plan phase 6; FeatureSpec02 5.3, 11). Every reference fit in content/balance/reference-fits.json is flown at every ladder site with the same ten seeds. Each fit keeps one command policy everywhere (arrival distance, movement, propulsion, repair and web habits); each site keeps one target priority for every fit; every policy retreats once the hull falls below retreatBelowHullFraction. claims declare, with their metric, which fit must be preferable where, and why: 'outcome' is a consistent win/retreat improvement (the better fit clears at least 90% of seeds and at least 30 points more than the other); 'medianFightSeconds' and 'repairBurden' need a reduction of at least 30% with both fits clearing reliably; 'runningCost' needs a lower median repair-plus-rounds bill. reversals pair two claims on the same hull that prefer opposite fits.",
+  "seeds": [
+    "0123456789abcdef0123456789abcdef",
+    "fedcba9876543210fedcba9876543210",
+    "bb22cc33dd44ee55ff6677889900aa11",
+    "c0ffee00c0ffee00c0ffee00c0ffee00",
+    "1234abcd1234abcd1234abcd1234abcd",
+    "0badf00d0badf00d0badf00d0badf00d",
+    "a1a1a1a1b2b2b2b2c3c3c3c3d4d4d4d4",
+    "5eed5eed5eed5eed5eed5eed5eed5eed",
+    "9a8b7c6d5e4f30219a8b7c6d5e4f3021",
+    "deadbeefcafef00ddeadbeefcafef00d"
+  ],
+  "retreatBelowHullFraction": 0.35,
+  "policies": {
+    "fit.frigate.autocannon": {
+      "arrivalDistanceKm": 10,
+      "movement": {
+        "kind": "orbit",
+        "distanceKm": 1
+      },
+      "propulsion": "closing",
+      "repairBelowFraction": 0.8
+    },
+    "fit.frigate.guided": {
+      "arrivalDistanceKm": 10,
+      "movement": {
+        "kind": "orbit",
+        "distanceKm": 5
+      },
+      "propulsion": "closing",
+      "repairBelowFraction": 0.8
+    },
+    "fit.destroyer.artillery": {
+      "arrivalDistanceKm": 10,
+      "movement": {
+        "kind": "keepRange",
+        "distanceKm": 10
+      },
+      "propulsion": "closing",
+      "repairBelowFraction": 0.8
+    },
+    "fit.destroyer.blaster-web": {
+      "arrivalDistanceKm": 10,
+      "movement": {
+        "kind": "orbit",
+        "distanceKm": 1
+      },
+      "propulsion": "closing",
+      "repairBelowFraction": 0.8,
+      "web": true,
+      "holdFireBeyondKm": 4
+    },
+    "fit.cruiser.railgun": {
+      "arrivalDistanceKm": 30,
+      "movement": {
+        "kind": "keepRange",
+        "distanceKm": 20
+      },
+      "propulsion": "never",
+      "repairBelowFraction": 0.8,
+      "repairCapacitorFloor": 0.4
+    },
+    "fit.cruiser.guided": {
+      "arrivalDistanceKm": 30,
+      "movement": {
+        "kind": "keepRange",
+        "distanceKm": 15
+      },
+      "propulsion": "closing",
+      "repairBelowFraction": 0.8
+    }
+  },
+  "sites": {
+    "encounter.borrell.pirate-scout": {
+      "targetPriority": []
+    },
+    "encounter.borrell.knife-fight": {
+      "targetPriority": []
+    },
+    "encounter.borrell.longshot-picket": {
+      "targetPriority": []
+    },
+    "encounter.borrell.missile-picket": {
+      "targetPriority": []
+    },
+    "encounter.borrell.pirate-patrol": {
+      "targetPriority": [
+        "npc.pirate.cutter"
+      ]
+    },
+    "encounter.borrell.armored-hold": {
+      "targetPriority": [
+        "npc.pirate.warden"
+      ]
+    },
+    "encounter.borrell.range-check": {
+      "targetPriority": [
+        "npc.pirate.binder"
+      ]
+    },
+    "encounter.borrell.crossfire": {
+      "targetPriority": [
+        "npc.pirate.gunner"
+      ]
+    },
+    "encounter.borrell.pirate-base": {
+      "targetPriority": []
+    },
+    "encounter.borrell.bombardment-line": {
+      "targetPriority": []
+    },
+    "encounter.borrell.screened-battery": {
+      "targetPriority": [
+        "npc.pirate.cutter"
+      ]
+    },
+    "encounter.borrell.command-group": {
+      "targetPriority": [
+        "npc.pirate.snare",
+        "npc.pirate.bruiser"
+      ]
+    }
+  },
+  "claims": [
+    {
+      "id": "frigate.close-range.knife-fight",
+      "kind": "preference",
+      "encounterId": "encounter.borrell.knife-fight",
+      "better": "fit.frigate.autocannon",
+      "worse": "fit.frigate.guided",
+      "metric": "medianFightSeconds",
+      "reason": "Autocannons track the cutter as it orbits; small guided rounds lose much of their damage to a small, fast target."
+    },
+    {
+      "id": "frigate.guided.longshot-picket",
+      "kind": "preference",
+      "encounterId": "encounter.borrell.longshot-picket",
+      "better": "fit.frigate.guided",
+      "worse": "fit.frigate.autocannon",
+      "metric": "medianFightSeconds",
+      "reason": "Guided rounds reach the backing-off marksman from 15 km; the autocannons must chase it down to a few kilometres first."
+    },
+    {
+      "id": "destroyer.blasters.armored-hold",
+      "kind": "preference",
+      "encounterId": "encounter.borrell.armored-hold",
+      "better": "fit.destroyer.blaster-web",
+      "worse": "fit.destroyer.artillery",
+      "metric": "medianFightSeconds",
+      "reason": "The brawlers come to the destroyer and repair; four blasters out-damage their repairers far faster than slow-firing artillery."
+    },
+    {
+      "id": "destroyer.artillery.longshot-picket",
+      "kind": "preference",
+      "encounterId": "encounter.borrell.longshot-picket",
+      "better": "fit.destroyer.artillery",
+      "worse": "fit.destroyer.blaster-web",
+      "metric": "medianFightSeconds",
+      "reason": "Artillery reaches the marksman at its own range; blasters must close the whole distance on a slow hull while it keeps shooting."
+    },
+    {
+      "id": "cruiser.guided.knife-fight",
+      "kind": "preference",
+      "encounterId": "encounter.borrell.knife-fight",
+      "better": "fit.cruiser.guided",
+      "worse": "fit.cruiser.railgun",
+      "metric": "outcome",
+      "reason": "Medium railguns cannot track an orbiting frigate; guided rounds need no tracking and, with the application enhancer, still land part of their damage."
+    },
+    {
+      "id": "cruiser.railguns.crossfire",
+      "kind": "preference",
+      "encounterId": "encounter.borrell.crossfire",
+      "better": "fit.cruiser.railgun",
+      "worse": "fit.cruiser.guided",
+      "metric": "medianFightSeconds",
+      "reason": "Against raider hulls that come straight in or sit still at range, railguns hit at once while every guided volley flies for seconds and loses damage to the targets' speed."
+    },
+    {
+      "id": "hull.frigate-to-destroyer.armored-hold",
+      "kind": "hullStep",
+      "encounterId": "encounter.borrell.armored-hold",
+      "better": "fit.destroyer.blaster-web",
+      "worse": "fit.frigate.autocannon",
+      "metric": "outcome",
+      "reason": "The developed brawler site that destroys or drives off the best autocannon frigate becomes a reliable clear in a destroyer flown the same way."
+    },
+    {
+      "id": "hull.destroyer-to-cruiser.pirate-base",
+      "kind": "hullStep",
+      "encounterId": "encounter.borrell.pirate-base",
+      "better": "fit.cruiser.railgun",
+      "worse": "fit.destroyer.blaster-web",
+      "metric": "medianFightSeconds",
+      "reason": "The blaster destroyer must close on every opponent at the advanced base in turn; the cruiser kills them from 20 km before they arrive."
+    },
+    {
+      "id": "hull.destroyer-to-cruiser.pirate-base.repairs",
+      "kind": "hullStep",
+      "encounterId": "encounter.borrell.pirate-base",
+      "better": "fit.cruiser.railgun",
+      "worse": "fit.destroyer.artillery",
+      "metric": "repairBurden",
+      "reason": "The artillery destroyer clears the base but comes home with armour and hull to pay for; the cruiser's buffer and booster absorb the same fight."
+    },
+    {
+      "id": "small-target.cruiser.knife-fight",
+      "kind": "smallTarget",
+      "encounterId": "encounter.borrell.knife-fight",
+      "better": "fit.frigate.autocannon",
+      "worse": "fit.cruiser.railgun",
+      "metric": "outcome",
+      "reason": "The cheapest reference fit clears the fast-frigate site that the railgun cruiser mostly cannot: medium turrets do not track a small orbiting target."
+    },
+    {
+      "id": "small-target.cruiser.range-check",
+      "kind": "smallTarget",
+      "encounterId": "encounter.borrell.range-check",
+      "better": "fit.destroyer.blaster-web",
+      "worse": "fit.cruiser.railgun",
+      "metric": "outcome",
+      "reason": "A webbing frigate and a cutter at close orbit: small blasters and a web clear it; medium railguns barely touch either."
+    },
+    {
+      "id": "operating-cost.cruiser.pirate-scout",
+      "kind": "operatingCost",
+      "encounterId": "encounter.borrell.pirate-scout",
+      "better": "fit.frigate.autocannon",
+      "worse": "fit.cruiser.guided",
+      "metric": "runningCost",
+      "reason": "Medium guided rounds cost several times small projectile rounds: the cruiser clears the onboarding site at a fraction of its bounty in margin."
+    },
+    {
+      "id": "operating-cost.cruiser.bombardment-line",
+      "kind": "operatingCost",
+      "encounterId": "encounter.borrell.bombardment-line",
+      "better": "fit.destroyer.artillery",
+      "worse": "fit.cruiser.railgun",
+      "metric": "runningCost",
+      "reason": "Both clear the missile line; medium charges and the cruiser's repairs make every cruiser sortie dearer than the destroyer's."
+    }
+  ],
+  "reversals": [
+    {
+      "hullId": "hull.independent.starter",
+      "fits": [
+        "fit.frigate.autocannon",
+        "fit.frigate.guided"
+      ],
+      "claims": [
+        "frigate.close-range.knife-fight",
+        "frigate.guided.longshot-picket"
+      ]
+    },
+    {
+      "hullId": "hull.independent.destroyer",
+      "fits": [
+        "fit.destroyer.blaster-web",
+        "fit.destroyer.artillery"
+      ],
+      "claims": [
+        "destroyer.blasters.armored-hold",
+        "destroyer.artillery.longshot-picket"
+      ]
+    },
+    {
+      "hullId": "hull.independent.cruiser",
+      "fits": [
+        "fit.cruiser.guided",
+        "fit.cruiser.railgun"
+      ],
+      "claims": [
+        "cruiser.guided.knife-fight",
+        "cruiser.railguns.crossfire"
+      ]
+    }
+  ]
+}

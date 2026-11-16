@@ -229,7 +229,7 @@
         "powerOutput": 160,
         "processingOutput": 380
       },
-      "referenceValueCredits": 140000,
+      "referenceValueCredits": 110000,
       "insuranceClass": "heavy",
       "traitKeys": [
         "content.hull.independent.cruiser.trait.durable",

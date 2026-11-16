@@ -197,15 +197,22 @@ test.describe('guided first loop', () => {
     await confirmDialog(page, 'Confirm sale');
 
     // Get ready: repair, which also recharges the capacitor, and resupply.
-    expect(await step(page, 'Get the ship ready')).toContain('capacitor');
-    await showMe(page);
-    // The services are on the Overview, which Show me opened.
-    await expect(servicesRegion(page)).toBeVisible();
-    for (const [control, dialog] of [['Repair all', 'Confirm full repair'], ['Resupply ammunition', 'Confirm resupply']] as const) {
-      const open = await serviceButton(page, control);
-      if (await open.isEnabled()) {
-        await open.click();
-        await confirmDialog(page, dialog);
+    // Docking restores the shield and the capacitor; a ship that came home
+    // unhurt with its last reload finished is ready already, and the step
+    // completed on docking.
+    const next = guidance(page).getByRole('heading', { level: 3 });
+    await expect(next).toHaveText(/^(Get the ship ready|Carry spare rounds|Improve the fit)$/, { timeout: 60_000 });
+    if ((await next.innerText()) === 'Get the ship ready') {
+      expect(await step(page, 'Get the ship ready')).toContain('capacitor');
+      await showMe(page);
+      // The services are on the Overview, which Show me opened.
+      await expect(servicesRegion(page)).toBeVisible();
+      for (const [control, dialog] of [['Repair all', 'Confirm full repair'], ['Resupply ammunition', 'Confirm resupply']] as const) {
+        const open = await serviceButton(page, control);
+        if (await open.isEnabled()) {
+          await open.click();
+          await confirmDialog(page, dialog);
+        }
       }
     }
     await ensureRunning(page);

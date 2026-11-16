@@ -5,7 +5,9 @@ import { describe, expect, it } from 'vitest';
 
 import { REPO_ROOT } from '../../../config/aliases.mjs';
 import { tuningDigest } from '../../../scripts/lib/content/tuning.mjs';
-import { CAREERS } from '../../support/balance/career.ts';
+import { CAREERS, careerFit, careerScenario } from '../../support/balance/career.ts';
+import { MATRIX, matrixFits } from '../../support/balance/matrix.ts';
+import { shippedContent } from '../../support/content.ts';
 import { compilePack, shippedPack } from '../../support/contentFixtures.ts';
 import {
   fixtureFit,
@@ -85,7 +87,8 @@ describe('balance fixtures', () => {
     }
   });
 
-  it('describes careers a player could follow with the fixtures\' fits and scenarios [MVP-AC-07, MVP-AC-08]', () => {
+  it('describes careers a player could follow with the fixtures\' fits and scenarios [MVP-AC-07, MVP-AC-08, V02-AC-11]', () => {
+    const content = shippedContent();
     for (const fitId of [...CAREERS.startingWallet.affordable, ...CAREERS.startingWallet.unaffordable]) fixtureFit(fitId);
     const objectives = new Set<string>();
     for (const career of CAREERS.careers) {
@@ -96,17 +99,71 @@ describe('balance fixtures', () => {
       let equipped: string | null = null;
       for (const step of career.steps) {
         if ('equip' in step) {
-          equipped = fixtureFit(step.equip).id;
+          equipped = careerFit(step.equip, content).id;
           continue;
         }
-        expect(fixtureScenario(step.fly).fitId, `${career.id} flies ${step.fly} with ${String(equipped)}`).toBe(equipped);
+        expect(careerScenario(step.fly).fitId, `${career.id} flies ${step.fly} with ${String(equipped)}`).toBe(equipped);
         expect(step.maxSorties, `${career.id} ${step.fly}`).toBeGreaterThan(0);
-        if ('affords' in step.until) fixtureFit(step.until.affords);
+        if ('affords' in step.until) careerFit(step.until.affords, content);
       }
     }
     // Together the careers stand for every MVP Scope 4.3 objective the
     // starting-wallet test does not.
     for (const objective of ['4.3.1', '4.3.3', '4.3.4', '4.3.5', '4.3.6']) expect(objectives).toContain(objective);
+  });
+
+  it('declares the fit matrix\'s comparisons in advance, with at least two same-hull reversals and both hull steps [V02-AC-04, V02-AC-11]', () => {
+    const content = shippedContent();
+    const fits = matrixFits();
+    // Every authored reference fit has a policy, and every ladder site a priority.
+    const reference = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'content', 'balance', 'reference-fits.json'), 'utf8')) as { fits: { id: string }[] };
+    expect([...fits].sort()).toEqual(reference.fits.map((fit) => fit.id).sort());
+    expect(Object.keys(MATRIX.sites).sort()).toEqual(content.encounters().map((encounter) => encounter.id).sort());
+    expect(MATRIX.seeds.length).toBeGreaterThanOrEqual(10);
+    expect(new Set(MATRIX.seeds).size).toBe(MATRIX.seeds.length);
+
+    const hullOf = (fitId: string): string => careerFit(fitId, content).hullId ?? content.rules.economy.starterHullId;
+    const ids = new Set<string>();
+    for (const claim of MATRIX.claims) {
+      expect(ids.has(claim.id), claim.id).toBe(false);
+      ids.add(claim.id);
+      expect(fits, claim.id).toContain(claim.better);
+      expect(fits, claim.id).toContain(claim.worse);
+      expect(Object.keys(MATRIX.sites), claim.id).toContain(claim.encounterId);
+      expect(['outcome', 'medianFightSeconds', 'repairBurden', 'runningCost'], claim.id).toContain(claim.metric);
+      expect(claim.reason.length, claim.id).toBeGreaterThan(20);
+    }
+    const claim = (id: string) => {
+      const found = MATRIX.claims.find((entry) => entry.id === id);
+      if (found === undefined) throw new Error(`No claim ${id}.`);
+      return found;
+    };
+
+    // Same-hull reversals: two claims on one hull, opposite winners, different sites.
+    expect(MATRIX.reversals.length).toBeGreaterThanOrEqual(2);
+    for (const reversal of MATRIX.reversals) {
+      const [first, second] = reversal.claims.map(claim);
+      expect(first!.kind).toBe('preference');
+      expect(second!.kind).toBe('preference');
+      for (const fitId of reversal.fits) expect(hullOf(fitId)).toBe(reversal.hullId);
+      expect([first!.better, first!.worse].sort()).toEqual([...reversal.fits].sort());
+      expect(second!.better).toBe(first!.worse);
+      expect(second!.worse).toBe(first!.better);
+      expect(second!.encounterId).not.toBe(first!.encounterId);
+    }
+
+    // Both hull steps, each the larger hull over the smaller one at a fixed site...
+    const steps = MATRIX.claims.filter((entry) => entry.kind === 'hullStep');
+    const step = (from: string, to: string) => steps.some((entry) => hullOf(entry.worse) === from && hullOf(entry.better) === to);
+    expect(step('hull.independent.starter', 'hull.independent.destroyer')).toBe(true);
+    expect(step('hull.independent.destroyer', 'hull.independent.cruiser')).toBe(true);
+    // ...and the larger hull's disadvantage against small targets or in what it costs to run.
+    const disadvantages = MATRIX.claims.filter((entry) => entry.kind === 'smallTarget' || entry.kind === 'operatingCost');
+    expect(disadvantages.some((entry) => hullOf(entry.worse) === 'hull.independent.cruiser')).toBe(true);
+    for (const entry of disadvantages) {
+      const sizes = ['hull.independent.starter', 'hull.independent.destroyer', 'hull.independent.cruiser'];
+      expect(sizes.indexOf(hullOf(entry.worse)), entry.id).toBeGreaterThan(sizes.indexOf(hullOf(entry.better)));
+    }
   });
 
   it('records the installed tuning as the release-candidate balance bundle [TECH-15.1, TECH-16]', () => {
@@ -119,7 +176,11 @@ describe('balance fixtures', () => {
       'The tuning changed since the balance candidate was recorded: run npm run balance:record and review reports/balance.md.',
     ).toBe(tuningDigest(compiled.bundle as never));
     // Every seed a simulation uses is recorded with it.
-    const seeds = new Set([...PROGRESSION.scenarios.flatMap((scenario) => scenario.seeds), ...CAREERS.careers.flatMap((career) => career.seeds)]);
+    const seeds = new Set([
+      ...PROGRESSION.scenarios.flatMap((scenario) => scenario.seeds),
+      ...CAREERS.careers.flatMap((career) => career.seeds),
+      ...MATRIX.seeds,
+    ]);
     expect([...seeds].sort()).toEqual(candidate.seeds);
   });
 });

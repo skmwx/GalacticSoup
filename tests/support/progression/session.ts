@@ -65,7 +65,10 @@ export async function openSession(state: CampaignState, content: ContentReposito
   };
   const data = async <TData>(type: string, payload?: unknown): Promise<TData> => {
     const response = await ask<TData>(type, payload ?? EMPTY_PAYLOAD);
-    if (!response.ok) throw new Error(`${type} failed: ${response.error.messageKey}`);
+    if (!response.ok) {
+      const params = response.error.params === undefined ? '' : ` ${JSON.stringify(response.error.params)}`;
+      throw new Error(`${type} failed: ${response.error.messageKey}${params}`);
+    }
     return response.data;
   };
 

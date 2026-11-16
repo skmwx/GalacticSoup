@@ -42,7 +42,7 @@
         "falloffKm": 6,
         "trackingRadiansPerSecond": 0.12,
         "signatureResolutionMetres": 40,
-        "damageMultiplier": 2.6,
+        "damageMultiplier": 2.4,
         "magazineSize": 12
       }
     },
@@ -54,7 +54,7 @@
       "size": "medium",
       "fitting": { "powerUse": 22, "processingUse": 18 },
       "volumeCubicMetres": 0.01,
-      "referenceValueCredits": 38000,
+      "referenceValueCredits": 24000,
       "category": "turret",
       "hardpoint": "turret",
       "activation": { "capacitorPerCycle": 0, "cycleSeconds": 3.5 },
@@ -86,7 +86,7 @@
         "falloffKm": 2.5,
         "trackingRadiansPerSecond": 0.5,
         "signatureResolutionMetres": 40,
-        "damageMultiplier": 2,
+        "damageMultiplier": 2.4,
         "magazineSize": 30
       }
     },
@@ -120,7 +120,7 @@
       "size": "medium",
       "fitting": { "powerUse": 28, "processingUse": 30 },
       "volumeCubicMetres": 0.01,
-      "referenceValueCredits": 52000,
+      "referenceValueCredits": 30000,
       "category": "turret",
       "hardpoint": "turret",
       "activation": { "capacitorPerCycle": 5, "cycleSeconds": 5 },
@@ -145,7 +145,7 @@
       "referenceValueCredits": 15000,
       "category": "launcher",
       "hardpoint": "launcher",
-      "activation": { "capacitorPerCycle": 0, "cycleSeconds": 6 },
+      "activation": { "capacitorPerCycle": 0, "cycleSeconds": 5 },
       "launcher": { "damageMultiplier": 1, "magazineSize": 8 }
     },
     {
@@ -156,7 +156,7 @@
       "size": "medium",
       "fitting": { "powerUse": 26, "processingUse": 36 },
       "volumeCubicMetres": 0.01,
-      "referenceValueCredits": 48000,
+      "referenceValueCredits": 28000,
       "category": "launcher",
       "hardpoint": "launcher",
       "activation": { "capacitorPerCycle": 0, "cycleSeconds": 8 },

@@ -269,6 +269,42 @@ describe('expiry', () => {
     expect(validateCampaign(state, source)).toEqual([]);
   });
 
+  it('stops a ship that is approaching the wreck when it expires [FUNC-5.4, FUNC-22.5]', () => {
+    // Warp to the wreck, then order an approach to it and hold that order.
+    const approach = (source: ContentRepository) => {
+      const fixture = inSite(withCredits(newCampaign(TEST_SEED, source), 1_000), {
+        content: source, playerPositionKm: { x: 12, y: -7 }, spawn: false,
+      });
+      destroyPlayer(fixture);
+      let state = command(stateOf(fixture), 'time.set', { paused: false, rate: 1 }, source).state;
+      const wreck = wreckOf(state);
+      state = command(state, 'ship.undock', {}, source).state;
+      state = command(state, 'navigation.warpToBookmark', { bookmarkId: wreck.id, arrivalDistanceKm: 10 }, source).state;
+      state = until(state, (current) =>
+        current.assets.location.kind === 'site' && current.navigation.travel === null, source, 600_000);
+      state = command(state, 'movement.approach', { targetId: wreck.id, distanceKm: 0 }, source).state;
+      return { state, wreck };
+    };
+    // The same trip with a lasting wreck says when the ship starts its
+    // approach; a wreck that lasts a little longer expires while it is under way.
+    const probe = approach(content);
+    const lifetime = Math.ceil((probe.state.time.simulationTimeMs - probe.wreck.createdAtMs) / 1_000) + 5;
+    const source = shortLived(lifetime);
+    let { state, wreck } = approach(source);
+    const shipId = state.assets.activeShipId!;
+    expect(state.navigation.movementOrders[shipId]).toMatchObject({ kind: 'approach', targetId: wreck.id });
+
+    state = until(state, (current) => current.encounter.wrecks[wreck.id] === undefined, source);
+
+    // The order aimed at nothing is gone; the ship holds a safe stop instead.
+    expect(state.navigation.currentSite?.objects[wreck.id]).toBeUndefined();
+    expect(state.navigation.movementOrders[shipId]).toMatchObject({ kind: 'stop' });
+    expect(validateCampaign(state, source)).toEqual([]);
+    // Time goes on without a broken invariant.
+    state = command(state, 'time.advance', { elapsedRealMs: 250 }, source).state;
+    expect(validateCampaign(state, source)).toEqual([]);
+  });
+
   it('lets a warp already on its way keep the point it was aimed at [FUNC-5.4, FUNC-7.3]', () => {
     const source = shortLived(2);
     const fixture = inSite(withCredits(newCampaign(TEST_SEED, source), 1_000), {

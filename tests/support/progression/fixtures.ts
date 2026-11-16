@@ -66,6 +66,11 @@ export interface PilotTactics {
   readonly web?: boolean;
   /** Hold fire while the target is farther than this, sparing rounds and capacitor; absent always fires. */
   readonly holdFireBeyondKm?: number;
+  /**
+   * Retreat once every opponent of these profiles is destroyed while others
+   * still live: a selective kill. Absent fights the whole group.
+   */
+  readonly leaveOnceKilled?: readonly string[];
 }
 
 export type ScenarioExpectation = 'completed' | 'notCompleted';

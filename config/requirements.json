@@ -1339,13 +1339,17 @@
     {
       "id": "V02-AC-04",
       "title": "Six reference fits and same-hull preference reversals",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         2,
         4,
         6
       ],
-      "extent": "Phases 2-4: all six reference fits are authored and validated as legal and obtainable, two per hull with different weapon families, covering active shield, active armour, passive shield, a web-assisted turret fit and guided combat. The measured same-hull preference reversals follow in phase 6."
+      "extent": "Phases 2-4: all six reference fits are authored and validated as legal and obtainable, two per hull with different weapon families, covering active shield, active armour, passive shield, a web-assisted turret fit and guided combat. Phase 6: the seeded fit-versus-site matrix flies every reference fit, fully supplied, at all twelve sites over ten fixed seeds with one command policy per fit and one target priority per site, and holds thirteen comparisons declared in advance with their metric. Each hull has a same-hull reversal: frigate autocannons beat guided launchers at Knife Fight and lose at Longshot Picket; blaster-and-web beats artillery at Armored Hold and loses at Longshot Picket; cruiser guided launchers beat railguns at Knife Fight and lose at Crossfire.",
+      "content": [
+        "content/balance/reference-fits.json",
+        "tests/fixtures/balance/matrix.json"
+      ]
     },
     {
       "id": "V02-AC-05",
@@ -1355,7 +1359,7 @@
         2,
         3
       ],
-      "extent": "Phases 2-3: projectile, hybrid and guided families in small and medium sizes; size enforcement before and at commit; registered passive operators for shield capacity and recharge, capacitor recharge, family damage, tracking and guided application, all through the common stacking pipeline with traces and offline behaviour. Phase 6 tunes the magnitudes.",
+      "extent": "Phases 2-3: projectile, hybrid and guided families in small and medium sizes; size enforcement before and at commit; registered passive operators for shield capacity and recharge, capacitor recharge, family damage, tracking and guided application, all through the common stacking pipeline with traces and offline behaviour. Phase 6 tuned the magnitudes against the fit matrix: small blaster damage 2.0 to 2.4, small artillery 2.6 to 2.4, small guided launcher cycle 6 s to 5 s.",
       "content": [
         "content/catalog/modules",
         "content/catalog/ammunition",
@@ -1449,15 +1453,16 @@
     {
       "id": "V02-AC-10",
       "title": "Ten module drops and one-time reward materialisation",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         5,
         6
       ],
-      "extent": "Phase 5: the ladder's opponents can drop seventeen module definitions across weapons, defence, capacitor and weapon support, and propulsion and control, including small and medium launchers and a medium afterburner, with a starter-fittable drop in every band; every drop is also sold. Disclosure is derived from the same loot tables, with each opponent's chance and quantity, and states that loot is not guaranteed. One-time bounties, wreck materialisation, retreat and return, save and reopen, and player wrecks surviving a fresh attempt are covered. The no-lucky-drop progression route is measured in phase 6.",
+      "extent": "Phase 5: the ladder's opponents can drop seventeen module definitions across weapons, defence, capacitor and weapon support, and propulsion and control, including small and medium launchers and a medium afterburner, with a starter-fittable drop in every band; every drop is also sold. Disclosure is derived from the same loot tables, with each opponent's chance and quantity, and states that loot is not guaranteed. One-time bounties, wreck materialisation, retreat and return, save and reopen, and player wrecks surviving a fresh attempt are covered. Phase 6: a career that leaves every module drop in the wrecks reaches the destroyer after 10-11 sorties and the cruiser after 26, on bounties, salvage and the market alone. A wreck that expires while a ship approaches it now stops that ship safely.",
       "content": [
         "content/encounters/loot",
-        "content/encounters/npcs"
+        "content/encounters/npcs",
+        "tests/fixtures/balance/careers.json"
       ],
       "requests": [
         "navigation.destinations",
@@ -1468,9 +1473,23 @@
     {
       "id": "V02-AC-11",
       "title": "Career runs buy and use both hull upgrades",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         6
+      ],
+      "content": [
+        "content/balance/reference-fits.json",
+        "tests/fixtures/balance/matrix.json",
+        "tests/fixtures/balance/careers.json"
+      ],
+      "extent": "Phase 6: careers from a new campaign buy and fly both hull upgrades through ordinary play - the destroyer package after 9 sorties and the cruiser package after 13-14 further, 62-72 simulated minutes from the start - and the cruiser clears the Pirate Base twice. Fixed earlier encounters become materially easier: the best frigate fit never clears Armored Hold over ten seeds, the destroyer always does; the railgun cruiser clears the Pirate Base in 78 s against 361 s for the blaster destroyer, and every time where the artillery destroyer clears it 7 times in 10. Larger hulls keep their disadvantages: the railgun cruiser clears Knife Fight 4 times in 10 and Range Check once, and cruiser rounds and repairs cost several times the frigate's and destroyer's; each step up costs more to field and to lose.",
+      "requests": [
+        "market.confirmBuy",
+        "ship.activate",
+        "fitting.commit",
+        "navigation.warp",
+        "repair.confirm",
+        "resupply.confirm"
       ]
     },
     {
@@ -1482,7 +1501,10 @@
         2,
         6
       ],
-      "extent": "Phase 1: loss of a purchased hull with a usable, an unusable or no stored ship, shipless purchases and starter recovery. Career-level evidence follows in phase 6."
+      "extent": "Phase 1: loss of a purchased hull with a usable, an unusable or no stored ship, shipless purchases and starter recovery. Phase 6, career level: a destroyer bought bare too early and lost leaves the stored frigate active without a grant, one autocannon rebuilds it and the easy site pays the way back; a lost cruiser leaves the stored destroyer active and profitable. Selective kills followed by retreat earn less per minute than clearing the site, and no insurance choice makes a deliberate loss pay.",
+      "content": [
+        "tests/fixtures/balance/careers.json"
+      ]
     },
     {
       "id": "V02-AC-13",
@@ -1525,7 +1547,8 @@
       "scope": "planned",
       "phases": [
         6
-      ]
+      ],
+      "extent": "Phase 6 prepared the human playtest route (docs/agent-comm/release/v02-playtest-route.md): start unaided, contrasting fits, an explainable failure, both hull upgrades, revisiting an earlier threat, recovering from a loss and the advanced band, with questions mapped to the acceptance criteria. Pending: the human review. Automated evidence cannot substitute for it."
     }
   ]
 }

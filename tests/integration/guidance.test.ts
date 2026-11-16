@@ -174,8 +174,17 @@ describe('guidance through the complete loop', () => {
     await returnHome(sortie);
 
     // The ready-check waited for the return, so it was not completed at the
-    // start, when the new ship was already ready. Now it is open.
-    expect((await statuses(sortie))['guide.loop.ready']).toBe('open');
+    // start, when the new ship was already ready. Back at the station it
+    // completes exactly when the ship came home ready - whole once docking
+    // has restored the shield, every magazine full - and is open otherwise,
+    // until the station makes it ready. Whether the last reload finished on
+    // the way home depends on how many rounds the fight left.
+    const shipId = (await sortie.data<AssetsData>('assets.list')).activeShipId!;
+    const repair = await sortie.data<RepairPreviewData>('repair.preview', { shipId });
+    const resupply = await sortie.data<ResupplyPreviewData>('resupply.preview', { shipId });
+    const cameHomeReady = repair.armorDamage === 0 && repair.hullDamage === 0 && repair.shieldDamage === 0 &&
+      resupply.lines.every((line) => line.loadedRounds >= line.magazineSize);
+    expect((await statuses(sortie))['guide.loop.ready']).toBe(cameHomeReady ? 'completed' : 'open');
 
     await sellSomething(sortie);
     await getReady(sortie);

@@ -71,8 +71,12 @@ export interface SortieRecord {
   readonly hitPointsShare: number;
   /** The smallest share of its total hit points the ship was down to during the fight, or zero after a loss. */
   readonly lowestHitPointsShare: number;
-  /** Rounds the player fired. */
+  /** Rounds the player fired: turret shots and guided launches. */
   readonly roundsFired: number;
+  /** Simulated seconds a module waited for capacitor or a weapon stood stopped for want of it. */
+  readonly capacitorStarvedSeconds: number;
+  /** The smallest share of the capacitor seen during the fight. */
+  readonly lowestCapacitorShare: number;
   /** Units of each definition taken from wrecks. */
   readonly loot: Readonly<Record<string, number>>;
   /** Completions the station reports for the encounter once the sortie is over. */
@@ -91,6 +95,11 @@ export interface RunOptions {
   readonly loot?: boolean;
   /** The fit to fly, when it is not one of the progression fixtures' own (the ladder's reference fits). */
   readonly fit?: FixtureFit;
+  /**
+   * Leave modules in the wrecks: the conservative no-module-drop income of
+   * FeatureSpec02 9. Absent or true takes them with everything else.
+   */
+  readonly lootModules?: boolean;
 }
 
 /** Runs every seed of a scenario. */
@@ -156,20 +165,27 @@ export async function flySortie(
   const playerId = (await session.data<AssetsData>('assets.list')).activeShipId ?? '';
   const eventsBefore = session.events.length;
 
-  const result = await fightEncounter(session, scenario.tactics, FIGHT_BUDGET_SECONDS);
-  const fightEvents = session.events.slice(eventsBefore);
-  const finalCombat = result.status === 'lost' ? null : await session.data<CombatData>('combat.state');
-  const finalLayers = finalCombat === null ? zeroLayers() : layersOf(finalCombat);
+  const fought = await fightEncounter(session, scenario.tactics, FIGHT_BUDGET_SECONDS);
+  let finalCombat = fought.status === 'lost' ? null : await session.data<CombatData>('combat.state');
   const ended = await session.data<EncounterData>('encounter.state');
-  const bountyCredits = result.status === 'lost'
-    ? sumParam(fightEvents, 'encounter.bountyPaid', 'credits')
+  let bountyCredits = fought.status === 'lost'
+    ? sumParam(session.events.slice(eventsBefore), 'encounter.bountyPaid', 'credits')
     : ended.instance?.bountyCreditsPaid ?? 0;
 
   const loot: Record<string, number> = {};
-  if (result.status === 'completed' && options.loot === true) {
-    await lootWrecks(session, loot);
+  if (fought.status === 'completed' && options.loot === true) {
+    await lootWrecks(session, loot, options.lootModules !== false);
   }
-  if (result.status !== 'lost') await returnHome(session);
+  let result = fought;
+  if (fought.status !== 'lost' && (await returnHome(session)) === 'recovered') {
+    // Destroyed on the way out - while aligning to warp after a retreat - and
+    // recovered at the station: that sortie was lost (Functional Specification 9.12).
+    result = { ...fought, status: 'lost', lowestHitPointsShare: 0 };
+    finalCombat = null;
+    bountyCredits = sumParam(session.events.slice(eventsBefore), 'encounter.bountyPaid', 'credits');
+  }
+  const fightEvents = session.events.slice(eventsBefore);
+  const finalLayers = finalCombat === null ? zeroLayers() : layersOf(finalCombat);
   const destinations = await session.data<DestinationsData>('navigation.destinations');
 
   return {
@@ -185,7 +201,10 @@ export async function flySortie(
     hitPointsShare: finalCombat === null ? 0 : hitPointsShareOf(finalCombat),
     lowestHitPointsShare: result.lowestHitPointsShare,
     roundsFired: fightEvents.filter((event) =>
-      event.kind === 'combat.shotResolved' && event.params?.['attackerId'] === playerId).length,
+      (event.kind === 'combat.shotResolved' && event.params?.['attackerId'] === playerId) ||
+      (event.kind === 'combat.projectileLaunched' && event.params?.['sourceId'] === playerId)).length,
+    capacitorStarvedSeconds: result.capacitorStarvedSeconds,
+    lowestCapacitorShare: result.lowestCapacitorShare,
     loot,
     completionCount: destinations.destinations.find((entry) => entry.encounterId === encounter.id)?.completionCount ?? 0,
   };
@@ -256,7 +275,7 @@ export async function refit(session: ScenarioSession, fit: FixtureFit, content: 
  * already emptied - are not flown to, and a wreck that expires on the way is
  * simply gone (Functional Specification 5.4, 9.11).
  */
-async function lootWrecks(session: ScenarioSession, loot: Record<string, number>): Promise<void> {
+async function lootWrecks(session: ScenarioSession, loot: Record<string, number>, modules: boolean): Promise<void> {
   const encounter = await session.data<EncounterData>('encounter.state');
   const site = await session.data<SiteData>('navigation.site');
   const closest = site.rangePresetsKm[0] ?? 0;
@@ -265,13 +284,16 @@ async function lootWrecks(session: ScenarioSession, loot: Record<string, number>
     return response.ok ? response.data : null;
   };
   for (const wreck of encounter.wrecks.filter((entry) => entry.owner === 'npc')) {
-    if (((await contentsOf(wreck.wreckId))?.stacks.length ?? 0) === 0) continue;
+    const wanted = (await contentsOf(wreck.wreckId))?.stacks
+      .filter((stack) => modules || !stack.item.definitionId.startsWith('module.')) ?? [];
+    if (wanted.length === 0) continue;
     await session.data('movement.approach', { targetId: wreck.wreckId, distanceKm: closest });
     const reached = await advanceUntil(session, async () =>
       (await contentsOf(wreck.wreckId))?.accessible !== false, 300);
     const contents = await contentsOf(wreck.wreckId);
     if (!reached || contents === null) continue;
     for (const stack of contents.stacks) {
+      if (!modules && stack.item.definitionId.startsWith('module.')) continue;
       const quantity = contents.maximumQuantities.find((entry) => entry.stackId === stack.id)?.maximumQuantity ?? 0;
       if (quantity <= 0) continue;
       const taken = await session.ask('loot.take', { wreckId: wreck.wreckId, stackId: stack.id, quantity });
@@ -280,20 +302,28 @@ async function lootWrecks(session: ScenarioSession, loot: Record<string, number>
   }
 }
 
-async function returnHome(session: ScenarioSession): Promise<void> {
+/**
+ * Warps home and docks. Returns `recovered` when the ship never got there
+ * because it was destroyed on the way out and the pilot was recovered docked.
+ */
+async function returnHome(session: ScenarioSession): Promise<'docked' | 'recovered'> {
   const site = await session.data<SiteData>('navigation.site');
   if (site.location.kind === 'site' && site.site?.objects.every((object) => object.kind !== 'station')) {
     const travelling = site.travelStatus?.kind === 'warp';
     if (!travelling) await session.data('navigation.retreat');
   }
+  let recovered = false;
   await advanceUntil(session, async () => {
     const current = await session.data<SiteData>('navigation.site');
-    return current.site?.objects.some((object) => object.kind === 'station') === true;
+    recovered = current.location.kind === 'station';
+    return recovered || current.site?.objects.some((object) => object.kind === 'station') === true;
   }, 300, 'the ship never reached the station site');
+  if (recovered) return 'recovered';
   const station = (await session.data<SiteData>('navigation.site')).site?.objects.find((object) => object.kind === 'station');
   await session.data('navigation.dock', { stationId: station?.id ?? '' });
   await advanceUntil(session, async () =>
     (await session.data<SiteData>('navigation.site')).location.kind === 'station', 120, 'the ship never docked');
+  return 'docked';
 }
 
 async function advanceUntil(

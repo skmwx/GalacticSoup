@@ -129,7 +129,10 @@ describe('the opponent command adapter', () => {
     advance(fixture, 100);
     const order = movementOrderOf(fixture.draft, shipId);
     expect(order?.kind).toBe('orbit');
-    expect(order !== null && 'distanceKm' in order ? order.distanceKm : 0).toBeCloseTo(3, 6);
+    // Its short-range autocannon puts its preferred range below the role's
+    // minimum, so it asks for the minimum orbit.
+    expect(order !== null && 'distanceKm' in order ? order.distanceKm : 0)
+      .toBeCloseTo(fixture.content.rules.combat.npcRoles.skirmisher.minimumRangeKm, 6);
 
     advance(fixture, 20_000);
     const combatant = combatantOf(fixture.draft, fixture.content, shipId);
@@ -147,16 +150,31 @@ describe('the opponent command adapter', () => {
     const fixture = encounterFixture();
     const shipId = opponentIds(fixture)[0] ?? '';
 
-    advance(fixture, 200);
-    // It spawns 12 km out and wants 3 km, so it burns to close.
-    expect(activeModuleState(fixture.draft.combat.ships[shipId]!, 'system:0').repeating).toBe(true);
+    const rules = fixture.content.rules.combat;
+    const wanted = rules.npcRoles.skirmisher.minimumRangeKm;
+    const band = wanted + wanted * rules.npcRangeToleranceFraction;
+    const burning = (): boolean => activeModuleState(fixture.draft.combat.ships[shipId]!, 'system:0').repeating;
+    const range = (): number => {
+      const object = fixture.draft.navigation.currentSite?.objects[shipId];
+      const player = fixture.draft.navigation.currentSite?.objects[fixture.playerId];
+      if (object === undefined || player === undefined) throw new Error('The site lost a ship.');
+      return distance(object.position, player.position);
+    };
 
-    advance(fixture, 120_000);
-    const object = fixture.draft.navigation.currentSite?.objects[shipId];
-    const player = fixture.draft.navigation.currentSite?.objects[fixture.playerId];
-    if (object === undefined || player === undefined) throw new Error('The site lost a ship.');
-    expect(distance(object.position, player.position)).toBeLessThan(6);
-    expect(activeModuleState(fixture.draft.combat.ships[shipId]!, 'system:0').repeating).toBe(false);
+    advance(fixture, 200);
+    // It spawns 12 km out, far outside its band, so it burns to close.
+    expect(range()).toBeGreaterThan(band);
+    expect(burning()).toBe(true);
+
+    // Once it has closed inside its band it stops burning. (At afterburner
+    // speed a light hull cannot hold an orbit this tight, so it swings back
+    // out and burns again: the fast, wide orbit of FeatureSpec02 7.1.)
+    let stoppedInBand = false;
+    for (let second = 0; second < 60 && !stoppedInBand; second += 1) {
+      advance(fixture, 1_000);
+      stoppedInBand = range() <= band && !burning();
+    }
+    expect(stoppedInBand).toBe(true);
   });
 
   it('stops deciding once it is destroyed [FUNC-22.5]', () => {

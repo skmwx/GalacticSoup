@@ -1,6 +1,6 @@
 {
   "kind": "rules.combat",
-  "$comment": "Constants of Functional Specification 9.2-9.12, including NPC behaviour bands. A tackler orbits inside its web range; an opponent with a web keeps a capacitor reserve for it rather than burning its afterburner dry.",
+  "$comment": "Constants of Functional Specification 9.2-9.12, including NPC behaviour bands. A tackler orbits inside its web range; an opponent with a web keeps a capacitor reserve for it rather than burning its afterburner dry. A skirmisher asks for a 1.5 km orbit, tighter than a light hull can hold at afterburner speed: it settles near 3 km with its afterburner lit, the fast, high-angular-velocity orbit of the fast-frigate archetype (FeatureSpec02 7.1; v0.2 phase 6).",
   "values": {
     "resistanceMaximum": 0.9,
     "damageVariationMinimum": 0.75,
@@ -36,7 +36,7 @@
       "skirmisher": {
         "movement": "orbit",
         "preferredRangeFraction": 0.75,
-        "minimumRangeKm": 3
+        "minimumRangeKm": 1.5
       },
       "sniper": {
         "movement": "keepRange",

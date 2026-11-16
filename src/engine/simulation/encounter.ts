@@ -446,6 +446,14 @@ function removeWreck(context: SimulationContext, wreckId: string, cancelBoundary
   delete (draft.assets.inventories as Record<string, unknown>)[wreck.inventoryId];
   draft.assets.version += 1;
   delete (mutableEncounter(draft).wrecks as Record<string, unknown>)[wreckId];
+  // A ship approaching or orbiting the wreck stops safely rather than keep an
+  // order aimed at nothing (Functional Specification 22.5).
+  for (const shipId of Object.keys(draft.navigation.movementOrders).sort()) {
+    const order = draft.navigation.movementOrders[shipId];
+    if (order !== undefined && 'targetId' in order && order.targetId === wreckId) {
+      orderMovement(context, shipId, { kind: 'stop' });
+    }
+  }
   removeSiteObject(draft, wreckId);
   // An expired wreck is no longer a bookmark. A warp already on its way keeps
   // the position it was aimed at (Functional Specification 5.4, 7.3).

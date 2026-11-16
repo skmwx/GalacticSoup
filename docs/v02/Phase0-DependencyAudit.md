@@ -46,6 +46,8 @@ The module union (`src/engine/ports/content/definitions.ts`, `MODULE_CATEGORIES`
 
 **Phase 5, done.** Twelve templates and twelve combat sites, four per tier; each template carries `decisionKey`, `recommendationKey`, `weaknessKey` and `fitSensitive`. The Scout, Patrol and Base keep their MVP compositions (only their briefing metadata is new), so the MVP progression, balance and golden fixtures did not move; phase 6 may retune them. `DestinationChooser` groups encounters by band with a filter that reports what it hides; the departure panel repeats the chosen site's band, threats and recommendation. A campaign saved under earlier 0.2.0 content learns the new sites on load (`withAuthoredSitesKnown`). Semantic validation now allows one encounter per combat site.
 
+**Phase 6, done.** The Scout, Patrol and Base compositions are unchanged. One rule moved them: the skirmisher role's minimum orbit (`content/rules/combat.json`) fell from 3 km to 1.5 km. A light hull cannot hold that at afterburner speed, so the Scout and the cutters at the Patrol now orbit near 3 km with their afterburners lit: faster, as the fast-frigate archetype says they should. The MVP progression bands and careers still hold unchanged. A trial that gave the warden a capacitor battery made the MVP Pirate Base unwinnable for the MVP frigate fits and was reverted. The balance harness (`tests/support/progression`, `tests/support/balance`) flies reference fits on their hulls, careers across hulls with module reuse, the seeded fit matrix (`tests/integration/balance/matrix/`) and selective-kill raids.
+
 ## 5. Module category switches
 
 Exhaustive `switch` statements over `ModuleDefinition['category']` decide each module's modifiers and behaviour:
@@ -86,5 +88,7 @@ Content schema `schemas/content/modules.schema.json` is a discriminated union ov
 | Protocol (phase 4) | 20 | 21 | `module.activate` takes an optional `targetId`; module runtime says whether it is targeted, its target and its reachable targets; defence state lists speed effects and the speed limit; `control` combat events; `speedReduced` in loss reports; `moduleOutOfRange`. |
 | Save format / campaign state (phase 4) | 12 | 13 | Combat state gains `speedEffects`; operated modules and their cycles gain `targetId`; the recorder gains `control` events; loss reports may name `speedReduced`. `MIGRATE_12_TO_13` adds an empty list and `null` targets; `format-12.json` and `format-13.json` are its before/after fixtures. |
 | Protocol (phase 5) | 21 | 22 | Destinations carry decision, recommendation, weakness, fit-sensitivity and archetype threats; spawns carry the archetype; each possible drop names its kind, category, size and every opponent that can drop it with chance and quantity. `tackler` joins the spawn roles. Save format and campaign state are unchanged (13). |
+
+Phase 6 changes no contract: protocol 22, save format and campaign state 13 and content 0.2.0 stand. Its tuning changes only values, which the same authored content version opens (Technical Specification 11.4).
 
 The contract lock (`tests/fixtures/contracts/lock.json`), golden saves (`tests/fixtures/saves/golden/*`), golden replay and balance candidate are re-recorded through their scripts whenever these change.

@@ -235,6 +235,15 @@ Initial tuning targets, to be measured and revised with recorded reasons, are:
 
 These sortie counts are pacing hypotheses, not fixed prices or a mandated grind. Record simulation duration as well as sortie count so very long encounters cannot pass on count alone. Human playtesting decides whether the resulting pace is enjoyable.
 
+*Measured in phase 6 (`reports/balance.md`, three career seeds).* With ordinary looting:
+
+- the starting credits buy a second autocannon at once;
+- the reference autocannon frigate follows after 1-2 developed sorties;
+- the destroyer package arrives after 9 sorties;
+- the cruiser package after 13-14 further sorties, 62-72 simulated minutes from a new campaign.
+
+Leaving every module drop behind costs one sortie at each stage: the destroyer after 10-11 and the cruiser after 15-16 further. That is the dependable no-lucky-drop route, so sitting one sortie above the upper bound is accepted. Reaching the cruiser required repricing it and its medium modules by about a third, because the original package cost about 500,000 credits.
+
 The station and combat interface must make the new choices understandable: local ship selection/comparison, market filters by purpose/size/compatibility, relevant fitting limits, threat/reward disclosure for twelve destinations, guided application, and web effects. Preserve the reviewed compact weapon/module rows and expandable detail. All frequent actions remain keyboard and mouse operable, with non-color cues, scaling, focus management, reduced motion, and formula explanations.
 
 ## 10. Persistence and compatibility — V02-SAVE

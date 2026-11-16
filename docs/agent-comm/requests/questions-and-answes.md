@@ -98,3 +98,21 @@ Adjust confirmation checks so natural regeneration cannot invalidate unrelated t
 **Resolution applied (2026-11-14):** Completed docking now restores shield and capacitor instantly for free, preserving armor and hull damage. Natural regeneration no longer increments the asset version used by economic confirmations, and repair confirmation hashes exclude shield damage and capacitor charge. Regression tests cover docking restoration and confirming repair and purchase after one second of regeneration, including a campaign resumed docked with depleted pools.
 
 **Validation:** Type checking, architecture, content validation, all 1,407 unit tests, 135 integration tests, 143 component tests, performance, balance, traceability, and the production build audit passed. The focused station and guidance browser suites passed all five tests in Chromium and all five in Firefox. Firefox required an elevated rerun after restricted execution failed during page creation. Golden campaign and save fixtures were refreshed. The full release gate was stopped after its Chromium progression test lost its ship and stalled waiting for a vanished target. Full release certification and a new candidate record remain pending.
+
+## Q13 - v0.2 phase 6 - Human playtest of fit and hull progression (V02-AC-15)
+
+**Asked:** 2026-11-16 (v0.2 phase 6). **Blocking:** V02-AC-15 and the phase 6 exit gate only.
+Phase 7's automated work can proceed.
+
+The automated balance evidence is in: `reports/balance.md` and the phase 6 completion record. On each
+hull the two reference fits reverse which is better between sites. Each larger hull makes a fixed,
+formerly dangerous site clearly easier, and keeps its disadvantages against small fast targets and
+in running cost. Careers reach the destroyer after 9 sorties and the cruiser after 13-14 more.
+
+Whether that progression is *satisfying* is the question only you can answer (V02-AC-15).
+
+**Request:** please play the route in `docs/agent-comm/release/v02-playtest-route.md`, about three
+hours over two or three sittings, and fill in its Result section. Findings become tuning or
+usability changes, and the affected evidence is run again.
+
+**Answer:**
