@@ -104,7 +104,14 @@ describe('tunable values live in content', () => {
       expect(content.message(content.defaultLocale, hull.nameKey), hull.id).toBeTruthy();
     }
     for (const encounter of content.encounters()) {
-      for (const key of [encounter.nameKey, encounter.descriptionKey, encounter.rewardSummaryKey]) {
+      for (const key of [
+        encounter.nameKey,
+        encounter.descriptionKey,
+        encounter.rewardSummaryKey,
+        encounter.decisionKey,
+        encounter.recommendationKey,
+        encounter.weaknessKey,
+      ]) {
         expect(content.message(content.defaultLocale, key), encounter.id).toBeTruthy();
       }
     }

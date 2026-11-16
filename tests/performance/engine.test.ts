@@ -21,9 +21,13 @@ import { runCommand } from '@engine/application';
 import { PROTOCOL_VERSION, type AssetsData, type EngineResponse } from '@protocol';
 
 import { REPO_ROOT } from '../../config/aliases.mjs';
+import { SITE_SOFT_BUDGETS } from '../../scripts/lib/content/budgets.mjs';
 import { shippedContent } from '../support/content.ts';
 import { GOLDEN_STATES } from '../support/golden/campaign.ts';
 import { readGoldenSave, readGoldenSaves } from '../support/golden/fixtures.ts';
+import { inSite, stateOf } from '../support/loss.ts';
+import { assembleFit } from '../support/progression/assemble.ts';
+import { referenceFixtureFit } from '../support/progression/ladder.ts';
 
 /**
  * Performance against the authored MVP maxima (MVP Implementation Plan phase
@@ -252,4 +256,57 @@ describe('saves at the authored maximum', () => {
     expect(percentile(capture, 0.95)).toBeLessThan(TARGETS.snapshotMs);
     expect(percentile(open, 0.95)).toBeLessThan(TARGETS.openCampaignMs);
   }, 120_000);
+});
+
+describe('simulation timing at the authored projectile and effect maxima', () => {
+  it('processes a quantum inside the budget while the largest guided volleys are in flight [TECH-13, TECH-9.1, V02-AC-06]', () => {
+    // The ladder site with the most guided fire (Bombardment Line: two lancers
+    // and a bombard), against the player in the largest hull with every
+    // weapon slot a launcher, both sides launching (scripts/lib/content/budgets.mjs).
+    const loads = content.encounters().map((encounter) => ({
+      id: encounter.id,
+      launchers: encounter.spawns.reduce((total, spawn) => total + spawn.count *
+        content.requireNpcProfile(spawn.npcProfileId).loadout.modules
+          .filter((moduleId) => content.module(moduleId)?.category === 'launcher').length, 0),
+    }));
+    const heaviest = loads.reduce((most, entry) => (entry.launchers > most.launchers ? entry : most));
+    expect(heaviest.id).toBe('encounter.borrell.bombardment-line');
+    const encounter = content.requireEncounter(heaviest.id as never);
+
+    const docked = assembleFit(referenceFixtureFit('fit.cruiser.guided', content), 'cafe0123cafe0123cafe0123cafe0123', content).state;
+    let state = stateOf(inSite(docked, { siteId: encounter.siteId, content }));
+    const run = (type: string, payload: unknown): void => {
+      const result = runCommand({ campaign: state, content, type: type as never, payload, invariantChecks: 'lightweight' });
+      if (result.kind === 'committed' && result.campaign !== null) state = result.campaign;
+    };
+    const opponents = state.encounter.active!.npcs.map((npc) => npc.shipId);
+    run('time.set', { paused: false, rate: 1 });
+    for (const shipId of opponents) run('targeting.lock', { targetId: shipId });
+
+    const samples: number[] = [];
+    let mostInFlight = 0;
+    let mostBoundaries = 0;
+    for (let quantum = 0; quantum < 1_800 && state.assets.location.kind === 'site'; quantum += 1) {
+      if (quantum % 20 === 0) {
+        // Keep every launcher cycling on the nearest living opponent.
+        const target = state.encounter.active?.npcs.find((npc) => npc.destroyedAtMs === null)?.shipId;
+        if (target !== undefined) {
+          for (let slot = 0; slot < 4; slot += 1) run('weapon.activate', { slotKind: 'weapon', slotIndex: slot, targetId: target });
+        }
+      }
+      const started = performance.now();
+      run('time.advance', { elapsedRealMs: QUANTUM_MS });
+      samples.push(performance.now() - started);
+      mostInFlight = Math.max(mostInFlight, state.combat.projectiles.length);
+      mostBoundaries = Math.max(mostBoundaries, state.scheduler.entries.length);
+    }
+
+    const measured = summarise(samples);
+    report['guidedVolley'] = { encounterId: heaviest.id, mostInFlight, mostBoundaries, quantum: measured };
+    // Both sides had rounds in the air together, more than any one ship can launch.
+    expect(mostInFlight).toBeGreaterThanOrEqual(6);
+    expect(mostBoundaries).toBeLessThanOrEqual(SITE_SOFT_BUDGETS.scheduledBoundaries);
+    expect(mostInFlight).toBeLessThanOrEqual(SITE_SOFT_BUDGETS.projectiles);
+    expect(measured.p95Ms).toBeLessThan(TARGETS.quantumP95Ms);
+  }, 240_000);
 });

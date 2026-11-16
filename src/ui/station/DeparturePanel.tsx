@@ -1,6 +1,6 @@
 import { useState, type JSX } from 'react';
 
-import type { ShipData } from '@protocol';
+import type { DestinationData, ShipData } from '@protocol';
 
 import { ActionButton, commandAvailability, type ActionRunner } from '../actions';
 import { Dialog } from '../common/Dialog';
@@ -10,6 +10,7 @@ import { formatSimulationDuration } from '../format/duration';
 import { formatPercent, formatStat } from '../format/numbers';
 import { useLocalizer, useTranslate } from '../localization';
 import { usePreferences } from '../preferences';
+import { bandLabel } from '../space/DestinationChooser';
 import type { PlayData } from '../frame/usePlayData';
 import styles from './Station.module.css';
 
@@ -83,6 +84,7 @@ export function DeparturePanel({ data, runner }: DeparturePanelProps): JSX.Eleme
               ? translate('departure.noneSelected')
               : translate('departure.currentSelection', { site: translate(selected.nameKey) })}
         </p>
+        {selectedBookmark === null && selected !== null ? <SelectionPreparation entry={selected} /> : null}
 
         <UndockWarnings warnings={warnings} />
         <CapacitorReadiness ship={data.ship} />
@@ -140,6 +142,34 @@ export function DeparturePanel({ data, runner }: DeparturePanelProps): JSX.Eleme
         <p className={styles['muted']}>{translate('departure.confirm.setting')}</p>
       </Dialog>
     </section>
+  );
+}
+
+/**
+ * What the chosen site asks for, while there is still time to refit for it
+ * (FeatureSpec02 8.2): its band, the archetypes it fields, what answers them
+ * and the fit it punishes. A recommendation only - undocking never depends on
+ * it, and the full briefing is read in space.
+ */
+function SelectionPreparation({ entry }: { readonly entry: DestinationData }): JSX.Element {
+  const translate = useTranslate();
+  return (
+    <ul className={styles['preparation']} data-departure-briefing={entry.encounterId}>
+      <li>
+        {bandLabel(entry.tier, translate)}
+        {entry.threats.length === 0
+          ? null
+          : ` · ${translate('destination.threats', {
+              threats: entry.threats.map((threat) => translate(`archetype.${threat}`)).join(', '),
+            })}`}
+      </li>
+      <li>{translate('destination.recommended', { text: translate(entry.recommendationKey) })}</li>
+      <li>
+        {translate(entry.fitSensitive ? 'destination.weaknessSensitive' : 'destination.weakness', {
+          text: translate(entry.weaknessKey),
+        })}
+      </li>
+    </ul>
   );
 }
 

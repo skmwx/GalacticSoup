@@ -103,13 +103,16 @@ describe('the authored encounter loop', () => {
     const host = await openCampaign();
     const destinations = await data<DestinationsData>(host, 'navigation.destinations');
 
-    expect([...destinations.destinations].map((entry) => entry.tier).sort()).toEqual([1, 1, 2, 3]);
+    // The v0.2 ladder: four sites in each of three bands (FeatureSpec02 8.1).
+    expect([...destinations.destinations].map((entry) => entry.tier).sort())
+      .toEqual([1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3]);
     const scout = destinations.destinations.find((entry) => entry.encounterId === SCOUT);
     expect(scout?.spawns).toEqual([
       {
         npcProfileId: 'npc.pirate.scout',
         nameKey: 'content.npc.pirate.scout.name',
         role: 'skirmisher',
+        archetype: 'fastFrigate',
         count: 1,
         bountyCredits: 3000,
       },

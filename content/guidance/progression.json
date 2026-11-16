@@ -1,0 +1,71 @@
+{
+  "kind": "guidance",
+  "$comment": "Contextual guidance for the choices v0.2 adds (v0.2 Implementation Plan phase 5, item 6; FeatureSpec02 9): choosing a site by band and by the fit it punishes, applying guided rounds, countering a web, buying a larger hull and switching between ships. It is not the complete-game tutorial. No step requires another, so each completes whenever the player first does the thing; every step may be skipped, and the whole guidance hidden and resumed. It follows the flight school: while that chain is unfinished, its step is the one shown.",
+  "definitions": [
+    {
+      "id": "guide.progression",
+      "titleKey": "content.guide.progression.title",
+      "introKey": "content.guide.progression.intro",
+      "completedKey": "content.guide.progression.completed",
+      "steps": [
+        {
+          "id": "guide.progression.read-site",
+          "titleKey": "content.guide.progression.read-site.title",
+          "bodyKey": "content.guide.progression.read-site.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "encounterEntered",
+            "minimumTier": 1,
+            "fitSensitive": true
+          }
+        },
+        {
+          "id": "guide.progression.guided",
+          "titleKey": "content.guide.progression.guided.title",
+          "bodyKey": "content.guide.progression.guided.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "guidedLaunched"
+          }
+        },
+        {
+          "id": "guide.progression.web",
+          "titleKey": "content.guide.progression.web.title",
+          "bodyKey": "content.guide.progression.web.body",
+          "surface": "space",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "controllerDestroyed"
+          }
+        },
+        {
+          "id": "guide.progression.buy-hull",
+          "titleKey": "content.guide.progression.buy-hull.title",
+          "bodyKey": "content.guide.progression.buy-hull.body",
+          "surface": "station.market",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "hullPurchased"
+          }
+        },
+        {
+          "id": "guide.progression.switch-ship",
+          "titleKey": "content.guide.progression.switch-ship.title",
+          "bodyKey": "content.guide.progression.switch-ship.body",
+          "surface": "station.ship",
+          "requires": [],
+          "skippable": true,
+          "predicate": {
+            "kind": "shipActivated"
+          }
+        }
+      ]
+    }
+  ]
+}

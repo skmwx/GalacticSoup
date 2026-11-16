@@ -59,7 +59,12 @@
           "nameKey",
           "descriptionKey",
           "rewardSummaryKey",
+          "decisionKey",
+          "recommendationKey",
+          "weaknessKey",
+          "fitSensitive",
           "tier",
+          "threats",
           "selected",
           "current",
           "known",
@@ -90,10 +95,43 @@
           "rewardSummaryKey": {
             "type": "string"
           },
+          "decisionKey": {
+            "description": "The primary decision and pressure the site is built around (FeatureSpec02 8.1).",
+            "type": "string",
+            "minLength": 1
+          },
+          "recommendationKey": {
+            "description": "The capabilities that answer it; a recommendation, never a gate (FeatureSpec02 8.2).",
+            "type": "string",
+            "minLength": 1
+          },
+          "weaknessKey": {
+            "description": "The fit the site punishes (FeatureSpec02 8.1).",
+            "type": "string",
+            "minLength": 1
+          },
+          "fitSensitive": {
+            "description": "The site exposes a specific inappropriate-fit weakness.",
+            "type": "boolean"
+          },
           "tier": {
             "type": "integer",
             "minimum": 1,
             "maximum": 5
+          },
+          "threats": {
+            "description": "The distinct enemy archetypes the site fields, in authored spawn order (FeatureSpec02 7.1, 8.2).",
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "fastFrigate",
+                "artillery",
+                "brawler",
+                "missile",
+                "controller"
+              ]
+            }
           },
           "selected": {
             "type": "boolean"
@@ -113,6 +151,7 @@
                 "npcProfileId",
                 "nameKey",
                 "role",
+                "archetype",
                 "count",
                 "bountyCredits"
               ],
@@ -129,7 +168,24 @@
                   "enum": [
                     "brawler",
                     "skirmisher",
-                    "sniper"
+                    "sniper",
+                    "tackler"
+                  ]
+                },
+                "archetype": {
+                  "anyOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "enum": [
+                        "fastFrigate",
+                        "artillery",
+                        "brawler",
+                        "missile",
+                        "controller"
+                      ]
+                    }
                   ]
                 },
                 "count": {
@@ -160,19 +216,108 @@
             }
           },
           "possibleLoot": {
-            "description": "The disclosed loot with the names it is shown by (MVP Scope 4.2).",
+            "description": "The disclosed loot with the names it is shown by, and every opponent that can drop each item with its chance and quantity (MVP Scope 4.2; FeatureSpec02 7.2).",
             "type": "array",
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["itemId", "nameKey"],
+              "required": [
+                "itemId",
+                "nameKey",
+                "kind",
+                "category",
+                "size",
+                "sources"
+              ],
               "properties": {
                 "itemId": {
                   "type": "string",
                   "pattern": "^(item|module|ammo)(?:\\.[a-z0-9][a-z0-9-]*)+$",
                   "maxLength": 96
                 },
-                "nameKey": { "type": "string", "minLength": 1 }
+                "nameKey": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kind": {
+                  "enum": [
+                    "module",
+                    "ammunition",
+                    "item"
+                  ]
+                },
+                "category": {
+                  "anyOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  ]
+                },
+                "size": {
+                  "anyOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "enum": [
+                        "small",
+                        "medium"
+                      ]
+                    }
+                  ]
+                },
+                "sources": {
+                  "description": "Every opponent that can drop the item, with its authored chance and quantity range (FeatureSpec02 7.2).",
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "npcProfileId",
+                      "nameKey",
+                      "count",
+                      "chance",
+                      "quantityMinimum",
+                      "quantityMaximum"
+                    ],
+                    "properties": {
+                      "npcProfileId": {
+                        "type": "string",
+                        "pattern": "^npc(?:\\.[a-z0-9][a-z0-9-]*)+$",
+                        "maxLength": 96
+                      },
+                      "nameKey": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "count": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "chance": {
+                        "type": "number",
+                        "exclusiveMinimum": 0,
+                        "maximum": 1
+                      },
+                      "quantityMinimum": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "quantityMaximum": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    }
+                  }
+                }
               }
             }
           },

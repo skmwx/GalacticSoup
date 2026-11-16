@@ -2,6 +2,7 @@ import {
   campaignDefinitionReferences,
   readCampaignState,
   validateCampaign,
+  withAuthoredSitesKnown,
   type CampaignState,
   type InvariantIssue,
 } from '@engine/domain';
@@ -197,7 +198,7 @@ export function loadSave(stored: unknown, context: LoadContext): LoadResult {
 
   return {
     ok: true,
-    state: payload.state,
+    state: contentChanged ? withInstalledKnowledge(payload.state, context.content) : payload.state,
     envelope,
     migrated: migration.applied,
     contentChanged,
@@ -288,6 +289,20 @@ function checkEnvelopeShape(save: MigratableSave): LoadFailure | null {
   }
 
   return null;
+}
+
+/**
+ * Applies what a declared content transition adds to a campaign's knowledge
+ * (Technical Specification 11.4): permanent sites newly authored in the
+ * system the campaign is in become known, as entering the system would have
+ * made them (Functional Specification 5.2). Nothing is removed; content the
+ * save already matched leaves the state untouched.
+ */
+function withInstalledKnowledge(state: CampaignState, content: ContentRepository): CampaignState {
+  const system = content.system(state.assets.location.systemId);
+  if (system === undefined) return state;
+  const navigation = withAuthoredSitesKnown(state.navigation, system.sites.map((site) => site.id));
+  return navigation === state.navigation ? state : { ...state, navigation };
 }
 
 /**

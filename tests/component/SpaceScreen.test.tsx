@@ -507,6 +507,55 @@ describe('destinations in space', () => {
     harness.gateway.dispose();
   });
 
+  it('groups the twelve sites by band, filters without removing any, and briefs threats, counters and drop odds [V02-AC-09, V02-AC-10, FUNC-19.2, FUNC-20]', async () => {
+    const issues: LocalizationIssue[] = [];
+    const harness = renderGame({ onIssue: (issue) => issues.push(issue) });
+    await startCampaign(harness);
+    await undock(harness);
+
+    const list = destinations();
+    for (const band of ['Entry band · tier 1', 'Developed band · tier 2', 'Advanced band · tier 3']) {
+      const group = within(list).getByRole('list', { name: band });
+      expect(within(group).getAllByRole('button')).toHaveLength(4);
+    }
+    // A fit-sensitive site says so in the list, in words.
+    expect(destination(/^Range Check Tier 2 .* · fit-sensitive/)).toBeInTheDocument();
+
+    // The filter narrows the list and says how many it hides; every site stays reachable.
+    await harness.user.selectOptions(within(list).getByLabelText('Show'), 'Advanced band · tier 3');
+    expect(within(list).queryByRole('list', { name: 'Entry band · tier 1' })).toBeNull();
+    expect(within(list).getByText('8 more sites are listed under the other bands.')).toBeInTheDocument();
+    await harness.user.click(destination(/^Command Group/));
+    let briefing = within(list).getByRole('group', { name: 'Destination briefing' });
+    expect(briefing).toHaveTextContent('Advanced band · tier 3');
+    expect(briefing).toHaveTextContent(/Advanced site\. The system's danger rating describes the system/);
+    expect(briefing).toHaveTextContent('Threats: Web controller, Tanky brawler, Slow artillery ship');
+    expect(within(list).getByRole('button', { name: /^Warp to Command Group/ })).not.toBeUnavailable();
+    await harness.user.selectOptions(within(list).getByLabelText('Show'), 'All bands');
+    for (const band of ['Entry band · tier 1', 'Developed band · tier 2']) {
+      expect(within(list).getByRole('list', { name: band })).toBeInTheDocument();
+    }
+    expect(within(list).queryByText(/more sites are listed under the other bands/)).toBeNull();
+
+    await harness.user.click(destination(/^Range Check/));
+    briefing = within(list).getByRole('group', { name: 'Destination briefing' });
+    expect(briefing).toHaveTextContent('1 x Pirate Binder (Web controller)');
+    expect(briefing).toHaveTextContent('1 x Pirate Cutter (Fast close-range frigate)');
+    expect(briefing).toHaveTextContent(/Decision: Answer a web/);
+    expect(briefing).toHaveTextContent(/Recommended: Lock and kill the binder first/);
+    expect(briefing).toHaveTextContent(/Fit-sensitive\. Weak fits: A slow fit/);
+    expect(briefing).not.toHaveTextContent(/Advanced site/);
+    // The odds behind the possible loot, on demand.
+    await harness.user.click(within(briefing).getByText('Drop chances'));
+    const web = briefing.querySelector('[data-loot-item="module.web.small"]');
+    expect(web).toHaveTextContent('1 x Pirate Binder, 10% each, 1');
+    expect(briefing).toHaveTextContent('Equipment');
+    expect(briefing).toHaveTextContent('Random loot is never guaranteed.');
+
+    expect(issues).toEqual([]);
+    harness.gateway.dispose();
+  });
+
   it('returns home with the return key: a warp from a site [MVP-AC-08, FUNC-7.3, FUNC-20]', async () => {
     const harness = renderGame();
     await startCampaign(harness);

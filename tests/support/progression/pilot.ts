@@ -75,8 +75,13 @@ export async function fightEncounter(
     if (target !== null) {
       await holdMovement(session, site, tactics, target.shipId);
       await keepLocks(session, combat, alive, tactics, target.shipId);
-      await keepFiring(session, combat, target.shipId);
+      if (tactics.holdFireBeyondKm !== undefined && (target.rangeFromPlayerKm ?? Infinity) > tactics.holdFireBeyondKm) {
+        await holdFire(session, combat);
+      } else {
+        await keepFiring(session, combat, target.shipId);
+      }
       await runPropulsion(session, combat, tactics, target);
+      if (tactics.web === true) await runWebs(session, combat, target.shipId);
     }
     await runRepairs(session, combat, tactics);
 
@@ -179,6 +184,13 @@ async function keepFiring(session: ScenarioSession, combat: CombatData, targetId
   }
 }
 
+/** Stops every cycling weapon, so rounds and capacitor are not spent out of reach. */
+async function holdFire(session: ScenarioSession, combat: CombatData): Promise<void> {
+  for (const weapon of combat.weapons) {
+    if (weapon.repeating) await session.ask('weapon.deactivate', { slotKind: weapon.slot.kind, slotIndex: weapon.slot.index });
+  }
+}
+
 function firingAt(weapon: WeaponRuntimeData, targetId: string): boolean {
   return weapon.repeating && weapon.targetId === targetId;
 }
@@ -198,6 +210,21 @@ async function runPropulsion(
     false;
   for (const module of combat.modules.filter((entry) => entry.category === 'propulsion')) {
     await operate(session, module, wanted);
+  }
+}
+
+/**
+ * Keeps every web on the target while the module offers it: aimed at that
+ * locked target and within reach. A web aimed elsewhere is re-aimed; one the
+ * engine refuses, out of reach or unlocked, is left until it is offered.
+ */
+async function runWebs(session: ScenarioSession, combat: CombatData, targetId: string): Promise<void> {
+  for (const module of combat.modules.filter((entry) => entry.category === 'web')) {
+    if (!module.online || module.passive) continue;
+    if (module.repeating && module.targetId === targetId) continue;
+    const reachable = module.targets.some((entry) => entry.targetId === targetId && entry.command.available);
+    if (!reachable) continue;
+    await session.ask('module.activate', { slotKind: module.slot.kind, slotIndex: module.slot.index, targetId });
   }
 }
 

@@ -484,10 +484,14 @@ describe('home again', () => {
     await screen.findByRole('heading', { name: 'Navigation' });
     const scout = document.querySelector('[data-disclosure="encounter.borrell.pirate-scout"]');
     if (!(scout instanceof HTMLElement)) throw new Error('The scout site discloses nothing.');
-    expect(within(scout).getByText('1 x Pirate Scout (Skirmisher), 3,000 ISK each')).toBeInTheDocument();
+    // Opponents are named by the archetype they fly as (FeatureSpec02 7.1).
+    expect(within(scout).getByText('1 x Pirate Scout (Fast close-range frigate), 3,000 ISK each')).toBeInTheDocument();
     expect(within(scout).getByText('Total bounty 3,000 ISK')).toBeInTheDocument();
-    expect(within(scout).getByText('Possible loot: Fusion S, Burned Alloy Plate')).toBeInTheDocument();
     expect(within(scout).getByText('Cleared 1 times')).toBeInTheDocument();
+    const briefing = document.querySelector('[data-briefing="encounter.borrell.pirate-scout"]');
+    if (!(briefing instanceof HTMLElement)) throw new Error('The scout site has no briefing.');
+    expect(within(briefing).getByText(/^Possible loot: Fusion S, Burned Alloy Plate/)).toBeInTheDocument();
+    expect(briefing).toHaveTextContent('Random loot is never guaranteed.');
 
     expect(harness.issues).toEqual([]);
     harness.gateway.dispose();

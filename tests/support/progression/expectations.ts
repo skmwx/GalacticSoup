@@ -4,7 +4,7 @@ import type { ContentRepository } from '@engine';
 
 import { describeDiagnosis, diagnoseEncounter } from './diagnostics.ts';
 import {
-  fixtureFit,
+  type FixtureFit,
   fixtureScenario,
   type Band,
   type FixtureScenario,
@@ -57,8 +57,19 @@ export interface ScenarioSummary {
 }
 
 export async function expectScenario(id: string, content: ContentRepository): Promise<ScenarioSummary> {
-  const scenario = fixtureScenario(id);
-  const run = await runScenario(scenario, content, { loot: true });
+  return expectScenarioRun(fixtureScenario(id), content);
+}
+
+/**
+ * Holds one scenario to its bands. A scenario outside the progression
+ * fixtures - one of the ladder's - passes the fit it flies.
+ */
+export async function expectScenarioRun(
+  scenario: FixtureScenario,
+  content: ContentRepository,
+  fit?: FixtureFit,
+): Promise<ScenarioSummary> {
+  const run = await runScenario(scenario, content, { loot: true, ...(fit === undefined ? {} : { fit }) });
   const summary = summariseRun(run);
   const context = explain(scenario, run, summary, content);
 
@@ -159,7 +170,7 @@ function round(value: number, digits: number): number {
 }
 
 function explain(scenario: FixtureScenario, run: ScenarioRun, summary: ScenarioSummary, content: ContentRepository): string {
-  const diagnosis = diagnoseEncounter(content, scenario.encounterId, fixtureFit(scenario.fitId), scenario.tactics);
+  const diagnosis = diagnoseEncounter(content, scenario.encounterId, run.fit, scenario.tactics);
   return [
     `${scenario.id}: ${scenario.description}`,
     `  measured: completed ${String(summary.completed)}/${String(summary.planned)}, median ${String(summary.medianFightSeconds)} s, ` +

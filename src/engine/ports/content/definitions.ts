@@ -518,7 +518,19 @@ export interface EncounterDefinition {
   readonly nameKey: MessageKey;
   readonly descriptionKey: MessageKey;
   readonly rewardSummaryKey: MessageKey;
-  /** Guidance shown before entry, not a hidden gate (MVP Scope 4.2). */
+  /** The primary decision and pressure the site is built around (FeatureSpec02 8.1). */
+  readonly decisionKey: MessageKey;
+  /** The capabilities that answer it, disclosed before warp; never a gate (FeatureSpec02 8.2). */
+  readonly recommendationKey: MessageKey;
+  /** The fit the site punishes (FeatureSpec02 8.1). */
+  readonly weaknessKey: MessageKey;
+  /** The site exposes a specific inappropriate-fit weakness, not only a damage check. */
+  readonly fitSensitive: boolean;
+  /**
+   * The difficulty band, disclosed before entry: guidance, never a hidden gate
+   * (MVP Scope 4.2). v0.2 uses tiers 1-3 as its entry, developed and advanced
+   * bands (FeatureSpec02 8.1).
+   */
   readonly tier: number;
   readonly systemId: SystemId;
   readonly siteId: SiteId;
@@ -658,7 +670,8 @@ export type GuidanceMovementOrder = (typeof GUIDANCE_MOVEMENT_ORDERS)[number];
 export type GuidancePredicate =
   | { readonly kind: 'destinationSelected' }
   | { readonly kind: 'undocked' }
-  | { readonly kind: 'encounterEntered'; readonly minimumTier: number }
+  /** With `fitSensitive`, only a site marked fit-sensitive counts (FeatureSpec02 8.1). */
+  | { readonly kind: 'encounterEntered'; readonly minimumTier: number; readonly fitSensitive?: true }
   | { readonly kind: 'movementOrdered'; readonly orders: readonly GuidanceMovementOrder[] }
   | { readonly kind: 'targetLocked' }
   | { readonly kind: 'weaponFired' }
@@ -669,7 +682,12 @@ export type GuidancePredicate =
   | { readonly kind: 'itemSold' }
   | { readonly kind: 'shipReady'; readonly capacitorFraction: number }
   | { readonly kind: 'ammunitionInHold'; readonly minimumRounds: number }
-  | { readonly kind: 'fitCommitted' };
+  | { readonly kind: 'fitCommitted' }
+  /** v0.2 phase 5: the choices the combat progression adds (FeatureSpec02 9). */
+  | { readonly kind: 'guidedLaunched' }
+  | { readonly kind: 'controllerDestroyed' }
+  | { readonly kind: 'hullPurchased' }
+  | { readonly kind: 'shipActivated' };
 
 export type GuidancePredicateKind = GuidancePredicate['kind'];
 

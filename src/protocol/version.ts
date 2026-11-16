@@ -1,6 +1,13 @@
 /**
  * Protocol version (Technical Specification 7.1, 18).
  *
+ * Version 22 (v0.2 phase 5) completes the destination briefing for the
+ * twelve-site ladder: each destination states the decision it is built
+ * around, the capabilities it recommends, the fit it punishes, whether it is
+ * fit-sensitive and the enemy archetypes it fields; each spawn names its
+ * archetype; and each possible drop says what kind of item it is and which
+ * opponents can drop it with what chance and quantity. A spawn's role may now
+ * be `tackler`.
  * Version 21 (v0.2 phase 4) adds speed control: `module.activate` takes an
  * optional `targetId` for a targeted module (the web); module runtime says
  * whether it is targeted, what it acts on and which locked targets it could
@@ -53,7 +60,7 @@
  * Version 10 added the encounter, opponent, wreck and loot contracts, the
  * disclosed reward summary on a destination, and the take-loot command.
  */
-export const PROTOCOL_VERSION = 21;
+export const PROTOCOL_VERSION = 22;
 
 /**
  * Revision reported while no campaign is open. Revisions are per-campaign and

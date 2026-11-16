@@ -25,6 +25,7 @@ import type {
   CommandAvailabilityData,
   DestinationData,
   DestinationLootData,
+  DestinationLootSourceData,
   DestinationSpawnData,
   DestinationsData,
   SiteData,
@@ -45,7 +46,7 @@ import { deepClone, deepFreeze } from '@shared';
  * (Technical Specification 12.3). The interface therefore never re-derives a
  * navigation rule to decide whether to enable a control.
  *
- * @implements TECH-7.3, TECH-10.1, TECH-12.3, FUNC-5.2, FUNC-5.3, FUNC-7.1, FUNC-7.2, FUNC-7.3, FUNC-7.4, FUNC-19.2, FUNC-19.3, MVP-AC-03, MVP-AC-08
+ * @implements TECH-7.3, TECH-10.1, TECH-12.3, FUNC-5.2, FUNC-5.3, FUNC-7.1, FUNC-7.2, FUNC-7.3, FUNC-7.4, FUNC-19.2, FUNC-19.3, FUNC-9.11, MVP-AC-03, MVP-AC-08, V02-AC-09, V02-AC-10
  */
 export function siteProjection(state: CampaignState, content: ContentRepository): SiteData {
   const rules: NavigationRuleInput = { state, content };
@@ -116,7 +117,14 @@ export function destinationsProjection(
       nameKey: encounter.nameKey,
       descriptionKey: encounter.descriptionKey,
       rewardSummaryKey: encounter.rewardSummaryKey,
+      decisionKey: encounter.decisionKey,
+      recommendationKey: encounter.recommendationKey,
+      weaknessKey: encounter.weaknessKey,
+      fitSensitive: encounter.fitSensitive,
       tier: encounter.tier,
+      threats: [...new Set(encounter.spawns
+        .map((spawn) => content.npcProfile(spawn.npcProfileId)?.archetype)
+        .filter((archetype): archetype is NonNullable<typeof archetype> => archetype !== undefined))],
       selected: state.navigation.selectedEncounterId === encounter.id,
       current: location.kind === 'site' && location.siteId === encounter.siteId,
       known: known.has(encounter.siteId),
@@ -126,6 +134,7 @@ export function destinationsProjection(
           npcProfileId: spawn.npcProfileId,
           nameKey: profile?.nameKey ?? '',
           role: profile?.role ?? '',
+          archetype: profile?.archetype ?? null,
           count: spawn.count,
           bountyCredits: profile?.bountyCredits ?? 0,
         };
@@ -134,13 +143,8 @@ export function destinationsProjection(
         (total, spawn) => total + (content.npcProfile(spawn.npcProfileId)?.bountyCredits ?? 0) * spawn.count,
         0,
       ),
-      possibleLootItemIds: disclosedLoot(content, encounter.spawns),
-      possibleLoot: disclosedLoot(content, encounter.spawns).map(
-        (itemId): DestinationLootData => ({
-          itemId,
-          nameKey: content.tradeable(itemId)?.nameKey ?? '',
-        }),
-      ),
+      possibleLootItemIds: disclosedLoot(content, encounter.spawns).map((entry) => entry.itemId),
+      possibleLoot: disclosedLoot(content, encounter.spawns),
       completionCount: completionCount(state, encounter.id),
       commands: [
         availability(
@@ -229,22 +233,50 @@ function bookmarkDestinations(rules: NavigationRuleInput): readonly BookmarkDest
 
 /**
  * Every item the opponents of one encounter can drop, in stable order
- * (MVP Scope 4.2).
+ * (MVP Scope 4.2; FeatureSpec02 7.2).
  *
- * The summary is disclosed before entry; it does not replace the reward
- * timing and ownership rules of Functional Specification 9.11.
+ * The disclosure is read from the same profiles and loot tables that roll the
+ * wrecks, so the briefing cannot promise what the encounter does not hold:
+ * each item names every opponent that can drop it, with that table's chance
+ * and quantity range. It does not replace the reward timing and ownership
+ * rules of Functional Specification 9.11, and nothing in it is guaranteed.
  */
 function disclosedLoot(
   content: ContentRepository,
-  spawns: readonly { readonly npcProfileId: string }[],
-): readonly string[] {
-  const items = new Set<string>();
+  spawns: readonly { readonly npcProfileId: string; readonly count: number }[],
+): readonly DestinationLootData[] {
+  const sources = new Map<string, DestinationLootSourceData[]>();
   for (const spawn of spawns) {
     const profile = content.npcProfile(spawn.npcProfileId);
     const table = profile === undefined ? undefined : content.lootTable(profile.lootTableId);
-    if (table !== undefined) for (const item of possibleLoot(table)) items.add(item);
+    if (profile === undefined || table === undefined) continue;
+    for (const itemId of possibleLoot(table)) {
+      const list = sources.get(itemId) ?? [];
+      for (const entry of table.entries.filter((candidate) => candidate.itemId === itemId)) {
+        list.push({
+          npcProfileId: profile.id,
+          nameKey: profile.nameKey,
+          count: spawn.count,
+          chance: entry.chance,
+          quantityMinimum: entry.quantityMinimum,
+          quantityMaximum: entry.quantityMaximum,
+        });
+      }
+      sources.set(itemId, list);
+    }
   }
-  return [...items].sort();
+  return [...sources.keys()].sort().map((itemId): DestinationLootData => {
+    const module = content.module(itemId);
+    const charge = content.ammunition(itemId);
+    return {
+      itemId,
+      nameKey: content.tradeable(itemId)?.nameKey ?? '',
+      kind: module !== undefined ? 'module' : charge !== undefined ? 'ammunition' : 'item',
+      category: module?.category ?? null,
+      size: module?.size ?? charge?.size ?? null,
+      sources: sources.get(itemId) ?? [],
+    };
+  });
 }
 
 /**

@@ -133,6 +133,10 @@
                           "type": "integer",
                           "minimum": 1,
                           "maximum": 5
+                        },
+                        "fitSensitive": {
+                          "description": "When true, only a site marked fit-sensitive completes the step (FeatureSpec02 8.1).",
+                          "const": true
                         }
                       }
                     },
@@ -291,6 +295,58 @@
                           "type": "integer",
                           "minimum": 1,
                           "maximum": 1000000
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "guidedLaunched",
+                          "description": "The player launched a guided round."
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "controllerDestroyed",
+                          "description": "The player destroyed an opponent that carries a speed-control module."
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "hullPurchased",
+                          "description": "The player bought a hull at a market."
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "shipActivated",
+                          "description": "The player switched the active ship while docked."
                         }
                       }
                     }

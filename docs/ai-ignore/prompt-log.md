@@ -168,3 +168,5 @@ docs\v02\FeatureImplementationPlan02.md
 
 Please implement phase 0 and phase 1 of v0.2
 Please implement phase 2 and phase 3 of v0.2
+Please implement phase 4 of v0.2
+Please implement phase 5 of v0.2

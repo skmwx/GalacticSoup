@@ -86,7 +86,8 @@ function matches(
     case 'encounterEntered': {
       if (event.kind !== 'encounter.started') return false;
       const encounter = content.encounter(String(params['encounterId']));
-      return encounter !== undefined && encounter.tier >= predicate.minimumTier;
+      return encounter !== undefined && encounter.tier >= predicate.minimumTier &&
+        (predicate.fitSensitive !== true || encounter.fitSensitive);
     }
     case 'movementOrdered':
       return event.kind === 'navigation.movementOrdered' &&
@@ -112,6 +113,21 @@ function matches(
       return event.kind === 'market.transactionCommitted' && params['side'] === 'sell';
     case 'fitCommitted':
       return event.kind === 'fitting.committed';
+    case 'guidedLaunched':
+      return event.kind === 'combat.projectileLaunched' && player !== null && params['sourceId'] === player;
+    case 'controllerDestroyed': {
+      // Destroying an opponent that flies a web is the counter the web step
+      // teaches: the effect it held ends with it (FeatureSpec02 6.3, 7.1).
+      if (event.kind !== 'encounter.opponentDestroyed') return false;
+      const profile = content.npcProfile(String(params['profileId']));
+      return profile !== undefined &&
+        profile.loadout.modules.some((moduleId) => content.module(moduleId)?.category === 'web');
+    }
+    case 'hullPurchased':
+      return event.kind === 'market.transactionCommitted' && params['side'] === 'buy' &&
+        content.hull(String(params['itemId'])) !== undefined;
+    case 'shipActivated':
+      return event.kind === 'ship.activated';
     default:
       return assertNever(predicate);
   }

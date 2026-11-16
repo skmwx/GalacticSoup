@@ -1,6 +1,6 @@
 {
   "kind": "systems",
-  "$comment": "The single v0.2 system. Galaxy travel and gates are deferred; the ladder grows inside it (FeatureSpec02 8.1).",
+  "$comment": "The single v0.2 system. Galaxy travel and gates are deferred; the twelve-site ladder grows inside it (FeatureSpec02 8.1). Harder sites lie farther from the station, so a retreat from them is a longer warp home.",
   "definitions": [
     {
       "id": "system.borrell",
@@ -50,6 +50,78 @@
           "position": {
             "xKm": -18000,
             "yKm": -36000
+          }
+        },
+        {
+          "id": "site.borrell.shard-gulch",
+          "nameKey": "content.site.borrell.shard-gulch.name",
+          "kind": "combat",
+          "position": {
+            "xKm": 15000,
+            "yKm": 22000
+          }
+        },
+        {
+          "id": "site.borrell.far-beacon",
+          "nameKey": "content.site.borrell.far-beacon.name",
+          "kind": "combat",
+          "position": {
+            "xKm": -30000,
+            "yKm": -8000
+          }
+        },
+        {
+          "id": "site.borrell.hulk-anchorage",
+          "nameKey": "content.site.borrell.hulk-anchorage.name",
+          "kind": "combat",
+          "position": {
+            "xKm": 55000,
+            "yKm": -30000
+          }
+        },
+        {
+          "id": "site.borrell.tangle-drift",
+          "nameKey": "content.site.borrell.tangle-drift.name",
+          "kind": "combat",
+          "position": {
+            "xKm": -40000,
+            "yKm": 45000
+          }
+        },
+        {
+          "id": "site.borrell.split-ridge",
+          "nameKey": "content.site.borrell.split-ridge.name",
+          "kind": "combat",
+          "position": {
+            "xKm": 8000,
+            "yKm": 52000
+          }
+        },
+        {
+          "id": "site.borrell.ashfall-line",
+          "nameKey": "content.site.borrell.ashfall-line.name",
+          "kind": "combat",
+          "position": {
+            "xKm": -62000,
+            "yKm": -28000
+          }
+        },
+        {
+          "id": "site.borrell.battery-rock",
+          "nameKey": "content.site.borrell.battery-rock.name",
+          "kind": "combat",
+          "position": {
+            "xKm": 70000,
+            "yKm": 10000
+          }
+        },
+        {
+          "id": "site.borrell.command-relay",
+          "nameKey": "content.site.borrell.command-relay.name",
+          "kind": "combat",
+          "position": {
+            "xKm": -5000,
+            "yKm": -65000
           }
         }
       ]

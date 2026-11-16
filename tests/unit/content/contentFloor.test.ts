@@ -13,9 +13,9 @@ import {
  * The delivery content floor (MVP Scope 4.1-4.2, as carried into v0.2;
  * FeatureSpec02 4-8; v0.2 Implementation Plan phase 0).
  *
- * The shipped manifest names a development milestone profile; the release
- * profile adds the complete v0.2 quantities and must refuse the content until
- * the catalog and ladder phases have delivered it.
+ * From v0.2 phase 5 the shipped manifest claims the release profile: the
+ * complete v0.2 catalog, roster, reference fits, twelve-site ladder and drop
+ * coverage. The development milestones stay honest subsets of it.
  *
  * The shipped bundle must sell enough at the starting station for two combat
  * approaches and offer three repeatable encounters that press the player in
@@ -26,6 +26,14 @@ import {
 
 const HARBOUR = 'economy/listings/borrell-harbour.json';
 const ENCOUNTERS = 'encounters/templates/borrell.json';
+
+/** Moves the Crossfire from the developed to the advanced band, unbalancing both. */
+function moveCrossfireToTier3(document: Record<string, unknown>): void {
+  const crossfire = (document['definitions'] as Record<string, unknown>[])
+    .find((definition) => definition['id'] === 'encounter.borrell.crossfire');
+  if (crossfire === undefined) throw new Error('The shipped content has no Crossfire.');
+  crossfire['tier'] = 3;
+}
 
 function floorIssues(pack: readonly ContentFile[]): readonly ContentIssue[] {
   const result = compilePack(pack, { floor: true });
@@ -105,9 +113,10 @@ describe('the MVP content floor', () => {
 
   it('needs repeatable encounters covering tiers 1, 2 and 3 [MVP-AC-07, MVP-AC-09]', () => {
     const tiers = floorIssues(editEncounters((definitions) => {
-      // The Pirate Base, the only tier 3 site, drops to tier 2.
-      const base = definitions.find((definition) => definition['id'] === 'encounter.borrell.pirate-base');
-      (base as Record<string, unknown>)['tier'] = 2;
+      // Every advanced site drops to tier 2.
+      for (const definition of definitions) {
+        if (definition['tier'] === 3) definition['tier'] = 2;
+      }
     }));
     expect(tiers.some((entry) => entry.detail.includes('cover tiers 1, 2 and 3 and no other, not tiers 1, 2'))).toBe(true);
 
@@ -148,23 +157,89 @@ describe('content floor profiles', () => {
       else document['contentFloor'] = profile;
     });
 
-  it('ships a development milestone, which the release profile refuses as incomplete [V02-AC-02, TECH-6.2]', () => {
+  it('ships the release floor from phase 5, which every development milestone also accepts [V02-AC-02, V02-AC-09, V02-AC-10, TECH-6.2]', () => {
     const manifest = JSON.parse(shippedPack().find((file) => file.path === 'content/manifest.json')!.text) as {
       contentFloor?: string;
     };
-    expect(manifest.contentFloor).toBe('v0.2-phase-4');
+    expect(manifest.contentFloor).toBe('v0.2-release');
     expect(compilePack(shippedPack(), { floor: true }).issues).toEqual([]);
+    for (const milestone of ['v0.2-phase-1', 'v0.2-phase-3', 'v0.2-phase-4']) {
+      expect(compilePack(declare(milestone), { floor: true }).issues, milestone).toEqual([]);
+    }
 
-    const release = floorIssues(declare('v0.2-release')).map((entry) => entry.detail);
-    // Phase 4 completes the catalog, the roster and the reference fits; the
-    // twelve-site ladder and the drop coverage follow in phase 5.
-    expect(release.some((detail) => detail.includes('combat module definitions'))).toBe(false);
-    expect(release.some((detail) => detail.includes('ammunition definitions, fewer than 16'))).toBe(false);
-    expect(release.some((detail) => detail.includes('NPC profiles state an archetype, fewer than 10'))).toBe(false);
-    expect(release.some((detail) => detail.includes('reference fit'))).toBe(false);
-    expect(release.some((detail) => detail.includes('tier 1 encounters, not 4'))).toBe(true);
-    expect(release.some((detail) => detail.includes('module definitions can drop, fewer than 10'))).toBe(true);
-    expect(release.every((detail) => detail.endsWith('(v0.2 release floor)'))).toBe(true);
+    // A milestone is honest about what it lacks: with the bands out of
+    // balance the phase-4 milestone still holds, the release floor does not.
+    const unbalanced = editDocument(declare('v0.2-phase-4'), ENCOUNTERS, moveCrossfireToTier3);
+    expect(compilePack(unbalanced, { floor: true }).issues).toEqual([]);
+  });
+
+  it('holds the release ladder to twelve distinct sites in three bands of four [V02-AC-09, FUNC-21]', () => {
+    const unbalanced = floorIssues(editDocument(shippedPack(), ENCOUNTERS, moveCrossfireToTier3))
+      .map((entry) => entry.detail);
+    expect(unbalanced).toContain('3 tier 2 encounters, not 4 (v0.2 release floor)');
+    expect(unbalanced).toContain('5 tier 3 encounters, not 4 (v0.2 release floor)');
+
+    // Range Check re-flown with the Patrol's opponents differs only in numbers
+    // and distances: not a distinct encounter.
+    const copied = floorIssues(editEncounters((definitions) => {
+      const rangeCheck = definitions.find((definition) => definition['id'] === 'encounter.borrell.range-check')!;
+      rangeCheck['spawns'] = [
+        { npcProfileId: 'npc.pirate.cutter', count: 1, spawnDistanceKm: 8 },
+        { npcProfileId: 'npc.pirate.marksman', count: 2, spawnDistanceKm: 25 },
+      ];
+    })).map((entry) => entry.detail);
+    expect(copied.some((detail) =>
+      detail.includes('"encounter.borrell.range-check" fields the same opponents as "encounter.borrell.pirate-patrol"'))).toBe(true);
+  });
+
+  it('holds the release ladder to three fit-sensitive sites and every archetype profile placed [V02-AC-08, V02-AC-09]', () => {
+    const blunt = floorIssues(editEncounters((definitions) => {
+      for (const definition of definitions) {
+        if (definition['id'] !== 'encounter.borrell.range-check') definition['fitSensitive'] = false;
+      }
+    })).map((entry) => entry.detail);
+    expect(blunt.some((detail) => detail.includes('1 encounters expose an inappropriate-fit weakness, fewer than 3'))).toBe(true);
+
+    const unplaced = floorIssues(editEncounters((definitions) => {
+      const command = definitions.find((definition) => definition['id'] === 'encounter.borrell.command-group')!;
+      command['spawns'] = [
+        { npcProfileId: 'npc.pirate.binder', count: 1, spawnDistanceKm: 10 },
+        { npcProfileId: 'npc.pirate.bruiser', count: 1, spawnDistanceKm: 12 },
+        { npcProfileId: 'npc.pirate.gunlayer', count: 1, spawnDistanceKm: 36 },
+      ];
+    })).map((entry) => entry.detail);
+    expect(unplaced.some((detail) => detail.includes('the controller profile "npc.pirate.snare" flies in no encounter'))).toBe(true);
+  });
+
+  it('counts only the drops the ladder can produce, across every module group and band [V02-AC-10]', () => {
+    // A loot table no encounter's opponents use drops nothing.
+    const stranded = floorIssues(editDocument(shippedPack(), 'encounters/npcs/pirates.json', (document) => {
+      for (const definition of document['definitions'] as Record<string, unknown>[]) {
+        if (['npc.pirate.bombard', 'npc.pirate.snare'].includes(String(definition['id']))) {
+          definition['lootTableId'] = 'loot.pirate.scout';
+        }
+      }
+    })).map((entry) => entry.detail);
+    expect(stranded).toContain('no medium module can drop (FeatureSpec02 7.2) (v0.2 release floor)');
+
+    const noControl = floorIssues(editDocument(shippedPack(), 'encounters/loot/pirates.json', (document) => {
+      for (const table of document['definitions'] as { entries: { itemId: string }[] }[]) {
+        table.entries = table.entries.filter((entry) =>
+          !entry.itemId.startsWith('module.propulsion.') && entry.itemId !== 'module.web.small');
+      }
+    })).map((entry) => entry.detail);
+    expect(noControl).toContain('no propulsion or control module can drop (FeatureSpec02 7.2) (v0.2 release floor)');
+
+    // The entry band must pay in equipment the starter hull can use.
+    const entryCargoOnly = floorIssues(editDocument(shippedPack(), 'encounters/loot/pirates.json', (document) => {
+      for (const table of document['definitions'] as { id: string; entries: { itemId: string }[] }[]) {
+        if (['loot.pirate.cutter', 'loot.pirate.patrol', 'loot.pirate.lancer'].includes(table.id)) {
+          table.entries = table.entries.filter((entry) => !entry.itemId.startsWith('module.'));
+        }
+      }
+    })).map((entry) => entry.detail);
+    expect(entryCargoOnly.some((detail) =>
+      detail.includes('no tier 1 encounter can drop a module the starter hull can fit'))).toBe(true);
   });
 
   it('holds the phase-4 catalog to 26 modules, every archetype twice and six covering fits [V02-AC-02, V02-AC-04, V02-AC-08]', () => {
@@ -189,7 +264,8 @@ describe('content floor profiles', () => {
   });
 
   it('holds a manifest that names no profile to the release floor, and refuses an unknown one [TECH-6.2]', () => {
-    expect(floorIssues(declare(null)).some((entry) => entry.detail.includes('(v0.2 release floor)'))).toBe(true);
+    const unnamed = editDocument(declare(null), ENCOUNTERS, moveCrossfireToTier3);
+    expect(floorIssues(unnamed).some((entry) => entry.detail.includes('(v0.2 release floor)'))).toBe(true);
     // The schema refuses an unknown profile before the floor is reached.
     expect(compilePack(declare('v0.2-anything'), { floor: true }).ok).toBe(false);
   });

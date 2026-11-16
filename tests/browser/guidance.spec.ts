@@ -58,8 +58,12 @@ async function cleanProfile(page: Page): Promise<void> {
   await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
 }
 
+/**
+ * The guidance panel. Its heading names the chain it is on - the flight
+ * school, then the v0.2 choices - so it is found by its own mark.
+ */
 function guidance(page: Page): Locator {
-  return page.getByRole('region', { name: 'Flight school', exact: true });
+  return page.locator('section[data-guidance]');
 }
 
 function region(page: Page, name: string): Locator {
@@ -242,9 +246,11 @@ test.describe('guided first loop', () => {
     await page.keyboard.press('w');
     await ensureRunning(page);
 
-    // Arriving at the patrol finishes the guidance.
-    await expect(guidance(page)).toHaveAttribute('data-guidance-step', 'finished', { timeout: 90_000 });
+    // Arriving at the patrol finishes the flight school; the guidance says so
+    // and moves on to the choices v0.2 adds, starting with reading a site.
+    await expect(guidance(page)).toHaveAttribute('data-guidance-step', 'guide.progression.read-site', { timeout: 90_000 });
     await expect(guidance(page)).toContainText('You have flown the whole loop.');
-    await expect(guidance(page)).toContainText('15 of 15 steps done');
+    await expect(guidance(page)).toContainText('Choosing your fights');
+    await expect(guidance(page)).toContainText('0 of 5 steps done');
   });
 });

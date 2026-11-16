@@ -1,0 +1,481 @@
+{
+  "$comment": "Each of the twelve sites set against a fit a player could have for it, flown with the ordinary controls (v0.2 Implementation Plan phase 5 exit gate: every site completable by an appropriate test fit). Fits are the authored reference fits (content/balance/reference-fits.json), bought on their hull at the starting station, or the starter fit. Two seeds and two consecutive sorties each prove the site stays repeatable with the full bounty. weakFits sets each fit-sensitive site against the fit its briefing says it punishes, flown competently: it must fail to clear the site, or clear it at least three times more slowly than the fit made for it. Phase 6 grows this into the measured fit-versus-site matrix; these bands only require completion or its absence.",
+  "scenarios": [
+    {
+      "id": "ladder.pirate-scout",
+      "description": "The starter fit clears the onboarding site with the fit a campaign begins with (V02-AC-01).",
+      "encounterId": "encounter.borrell.pirate-scout",
+      "fitId": "starter",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.knife-fight",
+      "description": "Small autocannons track the cutter at close orbit; the afterburner keeps the range the pilot chooses.",
+      "encounterId": "encounter.borrell.knife-fight",
+      "fitId": "fit.frigate.autocannon",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "closing",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.longshot-picket",
+      "description": "The afterburner closes on the marksman, whose railgun cannot track a frigate on top of it.",
+      "encounterId": "encounter.borrell.longshot-picket",
+      "fitId": "fit.frigate.autocannon",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "closing",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.missile-picket",
+      "description": "Guided rounds answer guided rounds: the frigate closes into its own flight range and boosts its shield through the volleys.",
+      "encounterId": "encounter.borrell.missile-picket",
+      "fitId": "fit.frigate.guided",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 5
+        },
+        "propulsion": "closing",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.pirate-patrol",
+      "description": "The destroyer webs and burns down the cutters first, then burns after the marksman, holding fire until the blasters reach.",
+      "encounterId": "encounter.borrell.pirate-patrol",
+      "fitId": "fit.destroyer.blaster-web",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.cutter"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "closing",
+        "repairBelowFraction": 0.8,
+        "web": true,
+        "holdFireBeyondKm": 4
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.armored-hold",
+      "description": "Thermal plasma from four blasters outpaces the brawlers' repairers, one at a time.",
+      "encounterId": "encounter.borrell.armored-hold",
+      "fitId": "fit.destroyer.blaster-web",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.warden"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "closing",
+        "repairBelowFraction": 0.8,
+        "web": true
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.range-check",
+      "description": "The binder dies first; with its web gone the gunner is a straight brawl.",
+      "encounterId": "encounter.borrell.range-check",
+      "fitId": "fit.destroyer.blaster-web",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.binder"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "closing",
+        "repairBelowFraction": 0.8,
+        "web": true
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.crossfire",
+      "description": "Artillery at 10 km kills the gunner as it closes head-on, then reaches the gunlayer at its own range.",
+      "encounterId": "encounter.borrell.crossfire",
+      "fitId": "fit.destroyer.artillery",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.gunner"
+        ],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 10
+        },
+        "propulsion": "closing",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.pirate-base",
+      "description": "Medium railguns hold the brawlers at 20 km, where their rounds seldom land.",
+      "encounterId": "encounter.borrell.pirate-base",
+      "fitId": "fit.cruiser.railgun",
+      "tactics": {
+        "arrivalDistanceKm": 50,
+        "targetPriority": [],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 20
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8,
+        "repairCapacitorFloor": 0.4
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.bombardment-line",
+      "description": "The cruiser's buffer and booster outlast the volleys while its railguns kill the launchers one by one.",
+      "encounterId": "encounter.borrell.bombardment-line",
+      "fitId": "fit.cruiser.railgun",
+      "tactics": {
+        "arrivalDistanceKm": 30,
+        "targetPriority": [],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 20
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8,
+        "repairCapacitorFloor": 0.4
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.screened-battery",
+      "description": "Small blasters and the web kill the screen of cutters, then the destroyer burns to the battery, holding fire until the blasters reach.",
+      "encounterId": "encounter.borrell.screened-battery",
+      "fitId": "fit.destroyer.blaster-web",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.cutter"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "closing",
+        "repairBelowFraction": 0.8,
+        "web": true,
+        "holdFireBeyondKm": 4
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    },
+    {
+      "id": "ladder.command-group",
+      "description": "The cruiser kills the snare and bruiser at range, then the gunlayer.",
+      "encounterId": "encounter.borrell.command-group",
+      "fitId": "fit.cruiser.railgun",
+      "tactics": {
+        "arrivalDistanceKm": 50,
+        "targetPriority": [
+          "npc.pirate.snare",
+          "npc.pirate.bruiser"
+        ],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 20
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8,
+        "repairCapacitorFloor": 0.4
+      },
+      "expect": "completed",
+      "band": {
+        "completedShare": [
+          1,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef",
+        "fedcba9876543210fedcba9876543210"
+      ],
+      "sorties": 2
+    }
+  ],
+  "weakFits": [
+    {
+      "id": "ladder.knife-fight.weak",
+      "description": "Medium railguns barely track a cutter orbiting a slow cruiser: the cruiser out-lasts it at best, many times slower; the briefing names this weakness.",
+      "encounterId": "encounter.borrell.knife-fight",
+      "fitId": "fit.cruiser.railgun",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 20
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8,
+        "repairCapacitorFloor": 0.4
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [
+          0,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "ladder.armored-hold.weak",
+      "description": "One autocannon cannot out-damage two repairing brawlers; the briefing names this weakness.",
+      "encounterId": "encounter.borrell.armored-hold",
+      "fitId": "starter",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.warden"
+        ],
+        "movement": {
+          "kind": "orbit",
+          "distanceKm": 1
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [
+          0,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "ladder.range-check.weak",
+      "description": "A guided frigate that relies on keeping its distance is webbed and caught, and its rounds apply poorly to the small, fast pair; the briefing names this weakness.",
+      "encounterId": "encounter.borrell.range-check",
+      "fitId": "fit.frigate.guided",
+      "tactics": {
+        "arrivalDistanceKm": 30,
+        "targetPriority": [
+          "npc.pirate.binder"
+        ],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 15
+        },
+        "propulsion": "closing",
+        "repairBelowFraction": 0.8
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [
+          0,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef"
+      ],
+      "sorties": 1
+    },
+    {
+      "id": "ladder.screened-battery.weak",
+      "description": "Medium railguns cannot track the screening cutters, and the battery fires on; the briefing names this weakness.",
+      "encounterId": "encounter.borrell.screened-battery",
+      "fitId": "fit.cruiser.railgun",
+      "tactics": {
+        "arrivalDistanceKm": 10,
+        "targetPriority": [
+          "npc.pirate.cutter"
+        ],
+        "movement": {
+          "kind": "keepRange",
+          "distanceKm": 20
+        },
+        "propulsion": "never",
+        "repairBelowFraction": 0.8,
+        "repairCapacitorFloor": 0.4
+      },
+      "expect": "notCompleted",
+      "band": {
+        "completedShare": [
+          0,
+          1
+        ]
+      },
+      "seeds": [
+        "0123456789abcdef0123456789abcdef"
+      ],
+      "sorties": 1
+    }
+  ]
+}

@@ -60,6 +60,10 @@ function contentWithoutCutter(): ContentRepository {
       { npcProfileId: 'npc.pirate.scout', count: 2, spawnDistanceKm: 16 },
       { npcProfileId: 'npc.pirate.marksman', count: 1, spawnDistanceKm: 30 },
     ];
+    // The other ladder sites that field cutters field gunlayers instead.
+    for (const entry of document['definitions'] as { spawns: { npcProfileId: string }[] }[]) {
+      for (const spawn of entry.spawns) if (spawn.npcProfileId === CUTTER) spawn.npcProfileId = 'npc.pirate.gunlayer';
+    }
   });
   // Nine profiles no longer meet the phase-4 roster floor; the earlier
   // milestone is declared so the structural change itself is what is tested.

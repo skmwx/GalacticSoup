@@ -106,19 +106,44 @@ export interface SiteData {
   readonly arrivalDistancesKm: readonly number[];
 }
 
-/** One authored spawn group, disclosed before entry (MVP Scope 4.2). */
+/** One authored spawn group, disclosed before entry (MVP Scope 4.2; FeatureSpec02 8.2). */
 export interface DestinationSpawnData {
   readonly npcProfileId: string;
   readonly nameKey: string;
   readonly role: string;
+  /** The enemy archetype the profile flies as, or `null` for one that names none (FeatureSpec02 7.1). */
+  readonly archetype: string | null;
   readonly count: number;
   readonly bountyCredits: number;
 }
 
-/** One item an encounter's opponents can drop (MVP Scope 4.2). */
+/**
+ * One opponent's chance at an item, as its loot table authors it
+ * (FeatureSpec02 7.2): each such opponent rolls the chance once when its
+ * wreck materializes, and a hit yields a quantity in the inclusive range.
+ */
+export interface DestinationLootSourceData {
+  readonly npcProfileId: string;
+  readonly nameKey: string;
+  /** Opponents of this profile in the encounter, each rolling separately. */
+  readonly count: number;
+  readonly chance: number;
+  readonly quantityMinimum: number;
+  readonly quantityMaximum: number;
+}
+
+/** One item an encounter's opponents can drop (MVP Scope 4.2; FeatureSpec02 7.2). */
 export interface DestinationLootData {
   readonly itemId: string;
   readonly nameKey: string;
+  /** What the item is: equipment to fit, ammunition to load, or goods to sell. */
+  readonly kind: 'module' | 'ammunition' | 'item';
+  /** A module's category, or `null` for anything else. */
+  readonly category: string | null;
+  /** A module's or charge's size, or `null` when it has none. */
+  readonly size: string | null;
+  /** Every opponent that can drop it, in authored spawn order. */
+  readonly sources: readonly DestinationLootSourceData[];
 }
 
 export interface DestinationData {
@@ -127,7 +152,18 @@ export interface DestinationData {
   readonly nameKey: string;
   readonly descriptionKey: string;
   readonly rewardSummaryKey: string;
+  /** The primary decision and pressure the site is built around (FeatureSpec02 8.1). */
+  readonly decisionKey: string;
+  /** The capabilities that answer it; a recommendation, never a gate (FeatureSpec02 8.2). */
+  readonly recommendationKey: string;
+  /** The fit the site punishes (FeatureSpec02 8.1). */
+  readonly weaknessKey: string;
+  /** The site exposes a specific inappropriate-fit weakness. */
+  readonly fitSensitive: boolean;
+  /** The difficulty band: v0.2 tiers 1-3 are the entry, developed and advanced bands (FeatureSpec02 8.1). */
   readonly tier: number;
+  /** The distinct enemy archetypes it fields, in authored spawn order: its principal threats. */
+  readonly threats: readonly string[];
   readonly selected: boolean;
   readonly current: boolean;
   readonly known: boolean;

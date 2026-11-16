@@ -127,7 +127,7 @@ export function diagnoseEncounter(
   tactics: PilotTactics,
 ): EncounterDiagnosis {
   const encounter = content.requireEncounter(encounterId as never);
-  const hull = content.requireHull(content.rules.economy.starterHullId as never);
+  const hull = content.requireHull((fit.hullId ?? content.rules.economy.starterHullId) as never);
   const playerFit = describeFixtureFit(content, fit);
   const player = shipModel(content, hull, playerFit);
   const boosted = deriveShipAttributes({

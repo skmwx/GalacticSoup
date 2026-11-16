@@ -1,6 +1,6 @@
 {
   "kind": "npc.profiles",
-  "$comment": "Ten profiles across the five v0.2 archetypes (FeatureSpec02 7.1), two per archetype with a different hull, loadout or pressure. The gunner, the Pirate Base's MVP close-range escort, keeps its tuned loadout and names no archetype until the phase 5 ladder revises the Base. Roles differ by range behaviour, damage profile and module use, not only by hit points. Reserve rounds let an opponent reload from its hold; the tier-1 scout carries none, so the easiest site cannot outlast a starter ship. The Pirate Base's brawlers fire phased rounds that still bite at 10 km, so the mastery site rewards controlling the range. The lancer and bombard are missile ships that keep to their flight range; orbiting alone does not outrun a guided volley. The binder and snare are web controllers: they orbit inside 10 km and slow the target while the rest of the group deals damage. Statistics are preliminary; phase 6 tunes them.",
+  "$comment": "Ten profiles across the five v0.2 archetypes (FeatureSpec02 7.1), two per archetype with a different hull, loadout or pressure. The gunner, the Pirate Base's MVP close-range escort, keeps its tuned loadout and names no archetype; it is the close-range damage beside the Range Check's controller and the Crossfire's artillery. Roles differ by range behaviour, damage profile and module use, not only by hit points. Reserve rounds let an opponent reload from its hold; the tier-1 scout carries none, so the easiest site cannot outlast a starter ship. The Pirate Base's brawlers fire phased rounds that still bite at 10 km, so the mastery site rewards controlling the range. The lancer and bombard are missile ships that keep to their flight range; orbiting alone does not outrun a guided volley. The binder and snare are web controllers: they orbit inside 10 km and slow the target while the rest of the group deals damage. Each v0.2 profile drops from its own loot table. Statistics are preliminary; phase 6 tunes them.",
   "definitions": [
     {
       "id": "npc.pirate.scout",
@@ -87,7 +87,7 @@
         ]
       },
       "bountyCredits": 7000,
-      "lootTableId": "loot.pirate.patrol"
+      "lootTableId": "loot.pirate.gunlayer"
     },
     {
       "id": "npc.pirate.gunner",
@@ -156,7 +156,7 @@
         ]
       },
       "bountyCredits": 8500,
-      "lootTableId": "loot.pirate.base"
+      "lootTableId": "loot.pirate.bruiser"
     },
     {
       "id": "npc.pirate.lancer",
@@ -203,7 +203,7 @@
         ]
       },
       "bountyCredits": 7500,
-      "lootTableId": "loot.pirate.lancer"
+      "lootTableId": "loot.pirate.bombard"
     },
     {
       "id": "npc.pirate.binder",
@@ -226,7 +226,7 @@
         ]
       },
       "bountyCredits": 5500,
-      "lootTableId": "loot.pirate.cutter"
+      "lootTableId": "loot.pirate.binder"
     },
     {
       "id": "npc.pirate.snare",
@@ -251,7 +251,7 @@
         ]
       },
       "bountyCredits": 8000,
-      "lootTableId": "loot.pirate.gunner"
+      "lootTableId": "loot.pirate.snare"
     }
   ]
 }

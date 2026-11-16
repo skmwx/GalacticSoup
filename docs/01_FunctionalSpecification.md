@@ -569,6 +569,8 @@ Destroyed NPC ships may provide:
 - standing changes;
 - authored encounter progress.
 
+Before a combat site is entered, its bounties and possible loot are disclosed from the same definitions that pay and roll them. On inspection the disclosure gives, for each item, every opponent that can drop it with its chance and quantity range, and it states that random loot is never guaranteed. A wreck's contents are rolled once, when it is created; opening it or reloading never rolls them again. Dropped equipment is identical to the same item bought or fabricated.
+
 Reward ownership is immediate because the game is single-player. Opening a wreck within 1 km shows its contents. A take command moves selected items to cargo subject to capacity. Wreck contents remaining after expiration are lost.
 
 Leaving a combat site is a valid outcome unless the encounter explicitly protects an objective or has a deadline. Hostile ships do not follow through warp or gates unless the encounter clearly announces pursuit before the player enters.

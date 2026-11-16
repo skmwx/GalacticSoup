@@ -446,6 +446,15 @@
   color: var(--gs-color-text-muted);
 }
 
+/* The chosen site's band, threats and counters, as short muted lines. */
+.preparation {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: var(--gs-color-text-muted);
+  font-size: var(--gs-font-small);
+}
+
 .warning {
   margin: 0;
   color: var(--gs-color-warn);

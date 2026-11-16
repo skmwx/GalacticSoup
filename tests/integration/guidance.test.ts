@@ -183,8 +183,11 @@ describe('guidance through the complete loop', () => {
     await enterPatrol(sortie);
 
     const finished = await sortie.data<OnboardingData>('onboarding.state');
-    expect(finished.currentStepId).toBeNull();
-    const chain = finished.chains[0]!;
+    // The flight school is done; the guidance moves on to the choices v0.2
+    // adds, none of which this loop made.
+    expect(finished.currentStepId).toBe('guide.progression.read-site');
+    const chain = finished.chains.find((entry) => entry.id === 'guide.loop')!;
+    expect(finished.chains.find((entry) => entry.id === 'guide.progression')?.completedCount).toBe(0);
     expect(chain.finished).toBe(true);
     expect(chain.skippedCount).toBe(0);
     expect(chain.steps.every((step) => step.status === 'completed')).toBe(true);

@@ -60,6 +60,12 @@ export function GuidancePanel({ data, runner, onGoTo, openSurface }: GuidancePan
   if (chain === null) return null;
   const step = found?.step ?? null;
   const done = chain.completedCount + chain.skippedCount;
+  // A chain that follows another opens with the earlier one's closing words
+  // until the player has done something in it, so finishing the flight school
+  // is still said (v0.2 phase 5 adds a second chain after it).
+  const index = onboarding.chains.indexOf(chain);
+  const previous = index > 0 ? onboarding.chains[index - 1] ?? null : null;
+  const justFinished = previous !== null && previous.finished && done === 0 ? previous : null;
   const skip = commandAvailability(step?.commands, 'onboarding.skipStep');
   const surface = step === null ? null : presentedSurface(step.surface);
   const surfaceLabel = surface === null ? null : translate(surfaceLabelKey(surface));
@@ -82,6 +88,9 @@ export function GuidancePanel({ data, runner, onGoTo, openSurface }: GuidancePan
         </p>
       </div>
 
+      {justFinished === null ? null : (
+        <p className={styles['body']} data-guidance-previous={justFinished.id}>{translate(justFinished.completedKey)}</p>
+      )}
       {step === null ? (
         <p className={styles['body']}>{translate(chain.completedKey)}</p>
       ) : (

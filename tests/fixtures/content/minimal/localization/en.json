@@ -4,9 +4,12 @@
   "messages": {
     "content.ammo.test.charge.description": "A test charge.",
     "content.ammo.test.charge.name": "Test Charge",
+    "content.encounter.test.skirmish.decision": "Test decision.",
     "content.encounter.test.skirmish.description": "A test encounter.",
     "content.encounter.test.skirmish.name": "Test Skirmish",
+    "content.encounter.test.skirmish.recommendation": "Test recommendation.",
     "content.encounter.test.skirmish.reward": "Test bounty.",
+    "content.encounter.test.skirmish.weakness": "Test weakness.",
     "content.guide.test.choose.body": "Choose a test site.",
     "content.guide.test.choose.title": "Choose",
     "content.guide.test.completed": "Test guidance complete.",

@@ -203,12 +203,81 @@ describe('destination disclosure', () => {
     const destinations = destinationsProjection(testCampaign(), content).destinations;
     const scout = destinations.find((entry) => entry.encounterId === 'encounter.borrell.pirate-scout');
 
+    const scoutSource = { npcProfileId: 'npc.pirate.scout', nameKey: 'content.npc.pirate.scout.name', count: 1 };
     expect(scout?.possibleLoot).toEqual([
-      { itemId: 'ammo.projectile.small.fusion', nameKey: 'content.ammo.projectile.small.fusion.name' },
-      { itemId: 'item.salvage.alloy', nameKey: 'content.item.salvage.alloy.name' },
+      {
+        itemId: 'ammo.projectile.small.fusion',
+        nameKey: 'content.ammo.projectile.small.fusion.name',
+        kind: 'ammunition',
+        category: null,
+        size: 'small',
+        sources: [{ ...scoutSource, chance: 0.35, quantityMinimum: 10, quantityMaximum: 40 }],
+      },
+      {
+        itemId: 'item.salvage.alloy',
+        nameKey: 'content.item.salvage.alloy.name',
+        kind: 'item',
+        category: null,
+        size: null,
+        sources: [{ ...scoutSource, chance: 0.6, quantityMinimum: 1, quantityMaximum: 2 }],
+      },
     ]);
     for (const entry of destinations) {
       expect(entry.possibleLoot.map((loot) => loot.itemId)).toEqual(entry.possibleLootItemIds);
     }
+  });
+
+  it('derives every drop chance and quantity from the loot tables that roll the wrecks [V02-AC-10, FUNC-9.11]', () => {
+    const destinations = destinationsProjection(testCampaign(), content).destinations;
+    expect(destinations).toHaveLength(12);
+    for (const entry of destinations) {
+      const encounter = content.requireEncounter(entry.encounterId as never);
+      const expected = encounter.spawns.flatMap((spawn) => {
+        const profile = content.requireNpcProfile(spawn.npcProfileId);
+        return content.requireLootTable(profile.lootTableId).entries.map((loot) => ({
+          itemId: loot.itemId,
+          source: { npcProfileId: profile.id, nameKey: profile.nameKey, count: spawn.count, chance: loot.chance,
+            quantityMinimum: loot.quantityMinimum, quantityMaximum: loot.quantityMaximum },
+        }));
+      });
+      const disclosed = entry.possibleLoot.flatMap((item) => item.sources.map((source) => ({ itemId: item.itemId, source })));
+      expect(disclosed.length, entry.encounterId).toBe(expected.length);
+      for (const row of expected) expect(disclosed, entry.encounterId).toContainEqual(row);
+      for (const item of entry.possibleLoot) {
+        const module = content.module(item.itemId);
+        expect(item.kind).toBe(module !== undefined ? 'module' : content.ammunition(item.itemId) !== undefined ? 'ammunition' : 'item');
+        expect(item.category).toBe(module?.category ?? null);
+      }
+    }
+    // The Pirate Patrol's two cutters each roll their own table.
+    const patrol = destinations.find((entry) => entry.encounterId === 'encounter.borrell.pirate-patrol')!;
+    expect(patrol.possibleLoot.find((item) => item.itemId === 'module.propulsion.afterburner.small')?.sources)
+      .toEqual([{ npcProfileId: 'npc.pirate.cutter', nameKey: 'content.npc.pirate.cutter.name', count: 2,
+        chance: 0.1, quantityMinimum: 1, quantityMaximum: 1 }]);
+  });
+
+  it('briefs each site with its band, archetype threats, decision, recommendation and weakness [V02-AC-09, FUNC-19.2]', () => {
+    const destinations = destinationsProjection(testCampaign(), content).destinations;
+    const byId = new Map(destinations.map((entry) => [entry.encounterId, entry]));
+    const rangeCheck = byId.get('encounter.borrell.range-check')!;
+    expect(rangeCheck.tier).toBe(2);
+    expect(rangeCheck.fitSensitive).toBe(true);
+    expect(rangeCheck.threats).toEqual(['controller', 'fastFrigate']);
+    expect(rangeCheck.spawns.map((spawn) => [spawn.npcProfileId, spawn.role, spawn.archetype])).toEqual([
+      ['npc.pirate.binder', 'tackler', 'controller'],
+      ['npc.pirate.cutter', 'skirmisher', 'fastFrigate'],
+    ]);
+    expect(byId.get('encounter.borrell.command-group')!.threats).toEqual(['controller', 'brawler', 'artillery']);
+    for (const entry of destinations) {
+      for (const key of [entry.decisionKey, entry.recommendationKey, entry.weaknessKey]) {
+        expect(content.message(content.defaultLocale, key as never), `${entry.encounterId} ${key}`).toBeTruthy();
+      }
+    }
+    expect(destinations.filter((entry) => entry.fitSensitive).map((entry) => entry.encounterId).sort()).toEqual([
+      'encounter.borrell.armored-hold',
+      'encounter.borrell.knife-fight',
+      'encounter.borrell.range-check',
+      'encounter.borrell.screened-battery',
+    ]);
   });
 });

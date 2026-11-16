@@ -42,20 +42,35 @@ const FUNDING_CREDITS = 10_000_000;
 export function assembleFit(fit: FixtureFit, seed: string, content: ContentRepository): AssembledFit {
   const stationId = content.rules.economy.startingStationId;
   let state = withCredits(newCampaign(seed, content), FUNDING_CREDITS);
-  const shipId = state.assets.activeShipId;
-  if (shipId === null) throw new Error('A new campaign has no active ship.');
-  const ship = state.assets.ships[shipId];
-  if (ship === undefined) throw new Error('The active ship does not exist.');
-
-  // Buy what the campaign does not already own.
   const purchases: FitPurchase[] = [];
-  for (const [definitionId, quantity] of shortfall(fit, state, content)) {
+  const buy = (definitionId: string, quantity: number): void => {
     const preview = marketBuyPreview(state, content, { stationId, itemId: definitionId, quantity });
     if (!preview.available || preview.token === null) {
       throw new Error(`Fit "${fit.id}" needs ${String(quantity)} ${definitionId}, which the market refuses: ${String(preview.unavailableReason)}`);
     }
     state = command(state, 'market.confirmBuy', { token: preview.token }, content).state;
     purchases.push({ definitionId, quantity, credits: preview.totalCredits });
+  };
+
+  // A fit for a larger hull buys that hull and switches to it, as a player
+  // does (FeatureSpec02 4.2); the starter ship stays docked with its own fit.
+  const starterShipId = state.assets.activeShipId;
+  const larger = fit.hullId !== undefined && fit.hullId !== content.rules.economy.starterHullId;
+  if (larger) {
+    const before = new Set(Object.keys(state.assets.ships));
+    buy(fit.hullId!, 1);
+    const bought = Object.values(state.assets.ships).find((candidate) => !before.has(candidate.id));
+    if (bought === undefined) throw new Error(`Fit "${fit.id}" bought no ${fit.hullId!}.`);
+    state = command(state, 'ship.activate', { shipId: bought.id }, content).state;
+  }
+  const shipId = state.assets.activeShipId;
+  if (shipId === null || (larger && shipId === starterShipId)) throw new Error('The fit has no active ship to assemble on.');
+  const ship = state.assets.ships[shipId];
+  if (ship === undefined) throw new Error('The active ship does not exist.');
+
+  // Buy what the campaign does not already own.
+  for (const [definitionId, quantity] of shortfall(fit, state, content, larger ? stationId : null)) {
+    buy(definitionId, quantity);
   }
 
   // Assemble the fit in one draft.
@@ -108,8 +123,18 @@ export function assembleFit(fit: FixtureFit, seed: string, content: ContentRepos
   };
 }
 
-/** What the fit needs beyond what the campaign owns, by definition, in stable order. */
-function shortfall(fit: FixtureFit, state: CampaignState, content: ContentRepository): [string, number][] {
+/**
+ * What the fit needs beyond what the campaign owns, by definition, in stable
+ * order. For the starter ship everything owned counts, its own fit included;
+ * for a newly bought hull only loose stock in the station hangar does, because
+ * the starter keeps what is fitted to it.
+ */
+function shortfall(
+  fit: FixtureFit,
+  state: CampaignState,
+  content: ContentRepository,
+  hangarOnlyAt: string | null,
+): [string, number][] {
   const needed = new Map<string, number>();
   const add = (definitionId: string, quantity: number): void => {
     needed.set(definitionId, (needed.get(definitionId) ?? 0) + quantity);
@@ -118,13 +143,18 @@ function shortfall(fit: FixtureFit, state: CampaignState, content: ContentReposi
     add(entry.moduleId, 1);
     if (entry.ammunitionId !== undefined) {
       const module = content.requireModule(entry.moduleId as never);
-      add(entry.ammunitionId, module.category === 'turret' ? module.turret.magazineSize : 0);
+      add(entry.ammunitionId, module.category === 'turret' ? module.turret.magazineSize
+        : module.category === 'launcher' ? module.launcher.magazineSize : 0);
     }
   }
   for (const entry of fit.cargo) add(entry.definitionId, entry.quantity);
 
   const owned = new Map<string, number>();
-  for (const stack of Object.values(state.assets.stacks)) {
+  const stacks = hangarOnlyAt === null
+    ? Object.values(state.assets.stacks)
+    : [...new Set(Object.values(state.assets.stacks).map((stack) => stack.definitionId))]
+      .flatMap((definitionId) => hangarStacks(state, hangarOnlyAt, definitionId));
+  for (const stack of stacks) {
     owned.set(stack.definitionId, (owned.get(stack.definitionId) ?? 0) + stack.quantity);
   }
   return [...needed.entries()]

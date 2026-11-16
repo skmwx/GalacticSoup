@@ -29,6 +29,8 @@ export interface FixtureFit {
   readonly id: string;
   /** Why this fit represents its stage of progression. */
   readonly description: string;
+  /** The hull it is fitted to; absent is the starter ship. A larger hull is bought and switched to. */
+  readonly hullId?: string;
   readonly modules: readonly FixtureFitSlot[];
   /** Reserve ammunition carried in the hold. */
   readonly cargo: readonly FixtureCargo[];
@@ -60,6 +62,10 @@ export interface PilotTactics {
   readonly repairCapacitorFloor?: number;
   /** Retreat once the hull falls below this share; absent fights to the end. */
   readonly retreatBelowHullFraction?: number;
+  /** Run every web on the current target while it is locked and in reach; absent never does. */
+  readonly web?: boolean;
+  /** Hold fire while the target is farther than this, sparing rounds and capacitor; absent always fires. */
+  readonly holdFireBeyondKm?: number;
 }
 
 export type ScenarioExpectation = 'completed' | 'notCompleted';

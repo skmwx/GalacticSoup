@@ -89,6 +89,8 @@ export interface ScenarioRun {
 export interface RunOptions {
   /** Take everything from the wrecks before going home. */
   readonly loot?: boolean;
+  /** The fit to fly, when it is not one of the progression fixtures' own (the ladder's reference fits). */
+  readonly fit?: FixtureFit;
 }
 
 /** Runs every seed of a scenario. */
@@ -97,7 +99,7 @@ export async function runScenario(
   content: ContentRepository,
   options: RunOptions = {},
 ): Promise<ScenarioRun> {
-  const fit = fixtureFit(scenario.fitId);
+  const fit = options.fit ?? fixtureFit(scenario.fitId);
   const sorties: SortieRecord[] = [];
   let costCredits = 0;
   for (const seed of scenario.seeds) {

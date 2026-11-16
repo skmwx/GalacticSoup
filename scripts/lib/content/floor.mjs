@@ -13,8 +13,10 @@
  *     completed implementation phases deliver and is honest that the rest of
  *     the v0.2 catalog and ladder are not there yet;
  *   - `v0.2-release` holds the complete v0.2 floor: three hulls, 26 combat
- *     modules, the ammunition floor, ten NPC profiles, twelve sites in three
- *     bands and the drop coverage.
+ *     modules, the ammunition floor, ten NPC profiles, twelve distinct sites
+ *     in three bands with at least three fit-sensitive ones, and the drop
+ *     coverage. The shipped manifest claims it from v0.2 phase 5, when the
+ *     ladder is complete.
  *
  * Every profile includes the checks that kept the MVP loop honest (two combat
  * approaches for sale, varied encounters, danger and guidance coverage), with
@@ -26,7 +28,7 @@
  * the test run, `npm run validate:content` and the production build.
  */
 import { issue } from './issues.mjs';
-import { acceptsCharge, weaponFamilyOf } from './semantic.mjs';
+import { acceptsCharge, hullAcceptsSize, weaponFamilyOf } from './semantic.mjs';
 
 /** A longer-range turret choice reaches at least this multiple of the shortest. */
 const RANGE_SPREAD = 2;
@@ -50,7 +52,7 @@ const WEAPON_COVERAGE_PROFILES = new Set(['v0.2-phase-3', 'v0.2-phase-4', RELEAS
  * fits complete (v0.2 Implementation Plan phase 4, item 5): the 26 modules all
  * purchasable, ten profiles covering the five archetypes, and six reference
  * fits covering the required approaches. The twelve-site ladder and drop
- * coverage stay release-only until phase 5.
+ * coverage are release-only.
  */
 const CATALOG_COMPLETE_PROFILES = new Set(['v0.2-phase-4', RELEASE_FLOOR_PROFILE]);
 
@@ -92,6 +94,18 @@ const RELEASE_FLOOR = {
   npcProfiles: 10,
   encountersPerTier: { 1: 4, 2: 4, 3: 4 },
   droppableModules: 10,
+  fitSensitiveEncounters: 3,
+};
+
+/**
+ * The module groups the drops must span between them (FeatureSpec02 7.2):
+ * weapons, defence, capacitor or weapon support, and propulsion or control.
+ */
+const DROP_GROUPS = {
+  weapons: ['turret', 'launcher'],
+  defence: ['shieldBooster', 'armorRepairer', 'resistancePlating', 'resistanceAmplifier', 'shieldExtender', 'shieldRecharger'],
+  'capacitor or weapon support': ['capacitorBattery', 'capacitorRecharger', 'weaponUpgrade'],
+  'propulsion or control': ['propulsion', 'web'],
 };
 
 /** The floor profile a manifest claims; an unnamed one is held to the release floor. */
@@ -136,7 +150,7 @@ export function validateContentFloor(collected) {
     issues.push(...checkCompleteCatalog({ collected, modules, ammunition, profiles, hulls, sold, where, stationId }));
   }
   if (profile === RELEASE_FLOOR_PROFILE) {
-    issues.push(...checkReleaseFloor({ collected, modules, ammunition, profiles, sold, where, stationId }));
+    issues.push(...checkReleaseFloor({ collected, modules, profiles, hulls }));
   }
   return issues;
 }
@@ -237,36 +251,90 @@ function checkCompleteCatalog({ collected, modules, ammunition, profiles, hulls,
 }
 
 /**
- * FeatureSpec02 7.2, 8.1: the complete v0.2 ladder and drop coverage, on top
- * of the complete catalog.
+ * FeatureSpec02 7.1, 7.2, 8.1: the complete v0.2 ladder and drop coverage, on
+ * top of the complete catalog.
+ *
+ * - twelve encounters, four in each of the three bands;
+ * - every encounter fields a different set of opponent profiles, so no two
+ *   differ only in health, damage or count;
+ * - at least three are marked fit-sensitive;
+ * - every archetype profile flies in at least one encounter;
+ * - the drops the ladder can actually produce (the loot tables of the
+ *   profiles it spawns) span at least ten modules, a launcher, a medium module
+ *   and every module group, and every band can drop a module the starter hull
+ *   can fit, so early sites pay in usable equipment rather than only cargo.
  */
-function checkReleaseFloor({ collected, modules }) {
+function checkReleaseFloor({ collected, modules, profiles, hulls }) {
   const issues = [];
   const fail = (file, path, detail) => issues.push(issue('catalogRelationship', file, path, `${detail} (v0.2 release floor)`));
   const encounters = collected.definitions.encounters;
+  const encounterFile = encounters[0]?.file ?? '';
   const expectedTotal = Object.values(RELEASE_FLOOR.encountersPerTier).reduce((a, b) => a + b, 0);
   for (const [tier, count] of Object.entries(RELEASE_FLOOR.encountersPerTier)) {
     const found = encounters.filter((entry) => entry.value.tier === Number(tier)).length;
-    if (found !== count) fail(encounters[0]?.file ?? '', '', `${String(found)} tier ${tier} encounters, not ${String(count)}`);
+    if (found !== count) fail(encounterFile, '', `${String(found)} tier ${tier} encounters, not ${String(count)}`);
   }
   if (encounters.length !== expectedTotal) {
-    fail(encounters[0]?.file ?? '', '', `${String(encounters.length)} encounters in total, not ${String(expectedTotal)}`);
+    fail(encounterFile, '', `${String(encounters.length)} encounters in total, not ${String(expectedTotal)}`);
   }
-  const lootTables = collected.definitions['loot.tables'];
-  const dropped = new Set(lootTables
-    .flatMap((entry) => JSON.stringify(entry.value).match(/"itemId":"[^"]+"/g) ?? [])
-    .map((match) => match.slice('"itemId":"'.length, -1))
-    .filter((id) => modules.has(id)));
-  if (dropped.size < RELEASE_FLOOR.droppableModules) {
-    fail(lootTables[0]?.file ?? '', 'definitions',
-      `${String(dropped.size)} module definitions can drop, fewer than ${String(RELEASE_FLOOR.droppableModules)}`);
+
+  const compositions = new Map();
+  for (const entry of encounters) {
+    const composition = [...new Set(entry.value.spawns.map((spawn) => spawn.npcProfileId))].sort().join('+');
+    const previous = compositions.get(composition);
+    if (previous !== undefined) {
+      fail(entry.file, `${entry.path}.spawns`,
+        `"${entry.value.id}" fields the same opponents as "${previous}"; twelve distinct encounters differ in composition (FeatureSpec02 8.1)`);
+    }
+    compositions.set(composition, entry.value.id);
   }
-  const droppedModules = [...dropped].map((id) => modules.get(id)?.value).filter((module) => module !== undefined);
+  const sensitive = encounters.filter((entry) => entry.value.fitSensitive === true).length;
+  if (sensitive < RELEASE_FLOOR.fitSensitiveEncounters) {
+    fail(encounterFile, '',
+      `${String(sensitive)} encounters expose an inappropriate-fit weakness, fewer than ${String(RELEASE_FLOOR.fitSensitiveEncounters)} (FeatureSpec02 8.1)`);
+  }
+  const fielded = new Set(encounters.flatMap((entry) => entry.value.spawns.map((spawn) => spawn.npcProfileId)));
+  for (const [id, entry] of profiles) {
+    if (entry.value.archetype !== undefined && !fielded.has(id)) {
+      fail(entry.file, entry.path, `the ${entry.value.archetype} profile "${id}" flies in no encounter (FeatureSpec02 7.1)`);
+    }
+  }
+
+  const tables = new Map(collected.definitions['loot.tables'].map((entry) => [entry.value.id, entry]));
+  const lootFile = collected.definitions['loot.tables'][0]?.file ?? '';
+  /** Module definitions an encounter's opponents can drop. */
+  const dropsOf = (encounter) => encounter.spawns
+    .map((spawn) => tables.get(profiles.get(spawn.npcProfileId)?.value.lootTableId)?.value.entries ?? [])
+    .flat()
+    .map((lootEntry) => modules.get(lootEntry.itemId)?.value)
+    .filter((module) => module !== undefined);
+  const droppedModules = [...new Map(encounters.flatMap((entry) => dropsOf(entry.value))
+    .map((module) => [module.id, module])).values()];
+  if (droppedModules.length < RELEASE_FLOOR.droppableModules) {
+    fail(lootFile, 'definitions',
+      `the ladder's opponents can drop ${String(droppedModules.length)} module definitions, fewer than ${String(RELEASE_FLOOR.droppableModules)}`);
+  }
   if (!droppedModules.some((module) => module.category === 'launcher')) {
-    fail(lootTables[0]?.file ?? '', 'definitions', 'no launcher can drop (FeatureSpec02 7.2)');
+    fail(lootFile, 'definitions', 'no launcher can drop (FeatureSpec02 7.2)');
   }
   if (!droppedModules.some((module) => module.size === 'medium')) {
-    fail(lootTables[0]?.file ?? '', 'definitions', 'no medium module can drop (FeatureSpec02 7.2)');
+    fail(lootFile, 'definitions', 'no medium module can drop (FeatureSpec02 7.2)');
+  }
+  for (const [group, categories] of Object.entries(DROP_GROUPS)) {
+    if (!droppedModules.some((module) => categories.includes(module.category))) {
+      fail(lootFile, 'definitions', `no ${group} module can drop (FeatureSpec02 7.2)`);
+    }
+  }
+  const starter = hulls.get(collected.rules.economy?.values.starterHullId)?.value;
+  if (starter !== undefined) {
+    const fitsStarter = (module) => (starter.slots[module.slot] ?? 0) > 0 && hullAcceptsSize(starter, module) &&
+      (module.hardpoint === undefined || (starter.hardpoints[module.hardpoint] ?? 0) > 0);
+    for (const tier of Object.keys(RELEASE_FLOOR.encountersPerTier)) {
+      const band = encounters.filter((entry) => entry.value.tier === Number(tier));
+      if (band.length > 0 && !band.some((entry) => dropsOf(entry.value).some(fitsStarter))) {
+        fail(lootFile, 'definitions', `no tier ${tier} encounter can drop a module the starter hull can fit (FeatureSpec02 7.2)`);
+      }
+    }
   }
   return issues;
 }

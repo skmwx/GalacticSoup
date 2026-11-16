@@ -2,17 +2,19 @@ import { describe, expect, it } from 'vitest';
 
 import {
   campaignStateHash,
+  draftOf,
   createCampaign,
   runCommand,
   type CampaignState,
 } from '@engine';
 import { onboardingProjection } from '@engine/projections';
+import { advanceGuidance } from '@engine/simulation';
 import { canonicalJson } from '@shared';
 
 import { testCampaign } from '../../support/campaign.ts';
 import { shippedContent } from '../../support/content.ts';
 import { fixtureRepository } from '../../support/contentFixtures.ts';
-import { command, reasonOf, refusal } from '../../support/loss.ts';
+import { buy, command, lossContext, reasonOf, refusal, withCredits } from '../../support/loss.ts';
 
 /**
  * Guidance progress: the declarative objective chain, its skip and hide
@@ -199,5 +201,68 @@ describe('guidance progress', () => {
 
     expect(canonicalJson(chosen.state.random)).toBe(canonicalJson(start.random));
     expect(chosen.state.assets).toEqual(start.assets);
+  });
+});
+
+describe('guidance for the v0.2 choices (v0.2 Implementation Plan phase 5)', () => {
+  /** Runs one batch of events through guidance on a fresh campaign, and returns the step statuses. */
+  function after(events: readonly { kind: string; params?: Record<string, string | number | boolean> }[]): {
+    readonly status: (stepId: string) => string | undefined;
+    readonly playerId: string;
+  } {
+    const draft = draftOf(testCampaign());
+    const context = lossContext(draft, content);
+    advanceGuidance(context, events.map((event, ordinal) => ({ ordinal, simulationTimeMs: 0, ...event }) as never));
+    const state = draft as unknown as CampaignState;
+    return { status: (stepId) => statusOf(state, stepId), playerId: draft.assets.activeShipId! };
+  }
+
+  it('follows the flight school as a second chain of skippable steps [FUNC-3.2, V02-AC-14]', () => {
+    const view = onboardingProjection(testCampaign(), content);
+    expect(view.chains.map((chain) => chain.id)).toEqual(['guide.loop', 'guide.progression']);
+    const progression = view.chains[1]!;
+    expect(progression.steps.map((step) => step.id)).toEqual([
+      'guide.progression.read-site',
+      'guide.progression.guided',
+      'guide.progression.web',
+      'guide.progression.buy-hull',
+      'guide.progression.switch-ship',
+    ]);
+    expect(progression.steps.every((step) => step.skippable)).toBe(true);
+    // While the flight school is unfinished its step is the one shown.
+    expect(view.currentStepId).toBe('guide.loop.undock');
+  });
+
+  it('counts a fit-sensitive site, the player\'s own launch and a destroyed web carrier, and nothing else [FUNC-3.2, TECH-10.6, V02-AC-09]', () => {
+    const playerId = after([]).playerId;
+    const blunt = after([{ kind: 'encounter.started', params: { encounterId: 'encounter.borrell.pirate-patrol' } }]);
+    expect(blunt.status('guide.progression.read-site')).not.toBe('completed');
+    const sensitive = after([{ kind: 'encounter.started', params: { encounterId: 'encounter.borrell.range-check' } }]);
+    expect(sensitive.status('guide.progression.read-site')).toBe('completed');
+
+    const theirs = after([{ kind: 'combat.projectileLaunched', params: { sourceId: 'entity.someone-else' } }]);
+    expect(theirs.status('guide.progression.guided')).not.toBe('completed');
+    const ours = after([{ kind: 'combat.projectileLaunched', params: { sourceId: playerId } }]);
+    expect(ours.status('guide.progression.guided')).toBe('completed');
+
+    const gunner = after([{ kind: 'encounter.opponentDestroyed', params: { profileId: 'npc.pirate.gunner' } }]);
+    expect(gunner.status('guide.progression.web')).not.toBe('completed');
+    const binder = after([{ kind: 'encounter.opponentDestroyed', params: { profileId: 'npc.pirate.binder' } }]);
+    expect(binder.status('guide.progression.web')).toBe('completed');
+  });
+
+  it('completes on buying a hull and on switching ships, not on buying a module [FUNC-3.2, V02-AC-03]', () => {
+    const rich = withCredits(testCampaign(), 1_000_000);
+    const module = buy(rich, 'module.web.small', 1);
+    expect(statusOf(module.state, 'guide.progression.buy-hull')).not.toBe('completed');
+
+    const hull = buy(module.state, 'hull.independent.destroyer', 1);
+    expect(statusOf(hull.state, 'guide.progression.buy-hull')).toBe('completed');
+    expect(statusOf(hull.state, 'guide.progression.switch-ship')).not.toBe('completed');
+
+    const destroyer = Object.values(hull.state.assets.ships)
+      .find((ship) => ship.owner === 'player' && ship.hullId === 'hull.independent.destroyer')!;
+    const switched = command(hull.state, 'ship.activate', { shipId: destroyer.id });
+    expect(statusOf(switched.state, 'guide.progression.switch-ship')).toBe('completed');
   });
 });

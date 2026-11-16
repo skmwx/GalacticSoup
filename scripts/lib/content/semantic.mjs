@@ -1013,9 +1013,16 @@ function checkLootOutlets(collected, { hulls, modules, ammunition }) {
 
 function checkSiteUse(collected, sites, encounters) {
   const issues = [];
-  const used = new Set();
+  const used = new Map();
   for (const entry of collected.definitions.encounters) {
-    used.add(entry.value.siteId);
+    // Arriving at a site instantiates the encounter authored there, so a site
+    // holding two would be ambiguous (Technical Specification 10.1).
+    const previous = used.get(entry.value.siteId);
+    if (previous !== undefined) {
+      issues.push(issue('catalogRelationship', entry.file, `${entry.path}.siteId`,
+        `"${entry.value.siteId}" already holds "${previous}"; a combat site holds one encounter`));
+    }
+    used.set(entry.value.siteId, entry.value.id);
   }
   void encounters;
 

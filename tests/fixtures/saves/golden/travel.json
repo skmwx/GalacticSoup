@@ -1,10 +1,10 @@
 {
  "format": "galactic-soup/save",
  "formatVersion": 13,
- "protocolVersion": 21,
+ "protocolVersion": 22,
  "engineVersion": "0.2.0",
- "contentVersion": "0.2.0+e8cda2f4198a",
- "contentHash": "e8cda2f4198a9dbe910effa4e7ed5430b024d338c8e2641d491288adca5b8cdf",
+ "contentVersion": "0.2.0+f434e326a565",
+ "contentHash": "f434e326a565c77b37cbb10cc424ab6d9e3c2901843f8e8f87b9a6eb9d995dbf",
  "slotId": "slot-1",
  "saveId": "slot-1:auto:1",
  "campaignId": "ce0f36ba8e20edb4ebcba9757",
@@ -662,10 +662,18 @@
   "navigation": {
    "version": 180,
    "knownDestinationSiteIds": [
+    "site.borrell.ashfall-line",
+    "site.borrell.battery-rock",
+    "site.borrell.command-relay",
     "site.borrell.derelict-lane",
+    "site.borrell.far-beacon",
+    "site.borrell.hulk-anchorage",
     "site.borrell.outpost-cradle",
+    "site.borrell.shard-gulch",
     "site.borrell.signal-spire",
+    "site.borrell.split-ridge",
     "site.borrell.station",
+    "site.borrell.tangle-drift",
     "site.borrell.verge"
    ],
    "selectedEncounterId": "encounter.borrell.pirate-base",
@@ -885,5 +893,5 @@
    "nextInsertionOrdinal": 4
   }
  },
- "checksum": "e0fff00f40b79b77f6a70c3ff8aa5fc3fe26c7320211fb464bedb2caa77b9ff4"
+ "checksum": "e1911229bc501d93990796bc2e326802a2862dae7a692233a8fcfaded14143a6"
 }

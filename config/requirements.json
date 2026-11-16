@@ -1416,7 +1416,7 @@
       "phases": [
         4
       ],
-      "extent": "Ten profiles, two per archetype, each held by content validation to its role and archetype-defining modules; small integration encounters show each archetype's observable behaviour through the shared opponent adapter. Their placement in the twelve-site ladder follows in phase 5.",
+      "extent": "Ten profiles, two per archetype, each held by content validation to its role and archetype-defining modules; small integration encounters show each archetype's observable behaviour through the shared opponent adapter. Phase 5 places every archetype profile in the twelve-site ladder, and the release floor requires it.",
       "content": [
         "content/encounters/npcs",
         "content/rules/combat.json"
@@ -1429,9 +1429,21 @@
     {
       "id": "V02-AC-09",
       "title": "Twelve-site ladder in three bands",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         5
+      ],
+      "extent": "Phase 5: twelve distinct templates, four in each of the entry, developed and advanced bands, each with a decision, recommendation and weakness disclosed before warp, archetype threats, and four fit-sensitive sites (Knife Fight, Armored Hold, Range Check, Screened Battery). Every site is selectable and reachable from a new campaign with no hidden gate or player scaling, and is completed repeatedly with the full bounty by a fit made for it; each fit-sensitive site punishes the fit its briefing names. The destination chooser groups and filters by band without removing entries.",
+      "content": [
+        "content/encounters/templates",
+        "content/universe/systems",
+        "content/localization/en.json"
+      ],
+      "requests": [
+        "navigation.destinations",
+        "navigation.selectDestination",
+        "navigation.warp",
+        "encounter.state"
       ]
     },
     {
@@ -1441,6 +1453,16 @@
       "phases": [
         5,
         6
+      ],
+      "extent": "Phase 5: the ladder's opponents can drop seventeen module definitions across weapons, defence, capacitor and weapon support, and propulsion and control, including small and medium launchers and a medium afterburner, with a starter-fittable drop in every band; every drop is also sold. Disclosure is derived from the same loot tables, with each opponent's chance and quantity, and states that loot is not guaranteed. One-time bounties, wreck materialisation, retreat and return, save and reopen, and player wrecks surviving a fresh attempt are covered. The no-lucky-drop progression route is measured in phase 6.",
+      "content": [
+        "content/encounters/loot",
+        "content/encounters/npcs"
+      ],
+      "requests": [
+        "navigation.destinations",
+        "loot.contents",
+        "loot.take"
       ]
     },
     {
@@ -1472,7 +1494,7 @@
         3,
         4
       ],
-      "extent": "Phases 0-1: multi-ship resume, v0.1/future/undeclared-content rejection without alteration, explicit reset and replace confirmation. Phase 3: format 12 with guided projectiles in flight, the format 11 to 12 migration, and mid-flight resume reproducing the uninterrupted result. Phase 4: format 13 with speed effects and module targets, the format 12 to 13 migration, and mid-effect, mid-cycle resume reproducing the uninterrupted result.",
+      "extent": "Phases 0-1: multi-ship resume, v0.1/future/undeclared-content rejection without alteration, explicit reset and replace confirmation. Phase 3: format 12 with guided projectiles in flight, the format 11 to 12 migration, and mid-flight resume reproducing the uninterrupted result. Phase 4: format 13 with speed effects and module targets, the format 12 to 13 migration, and mid-effect, mid-cycle resume reproducing the uninterrupted result. Phase 5: a campaign saved under earlier 0.2.0 content learns the ladder's new sites on load, and selective kills, retreat, save and return pay each bounty once and never reroll a wreck.",
       "requests": [
         "campaign.saves",
         "campaign.resume",
@@ -1483,10 +1505,18 @@
     {
       "id": "V02-AC-14",
       "title": "Browser loop from purchase to harder site and reopen",
-      "scope": "planned",
+      "scope": "included",
       "phases": [
         3,
         5
+      ],
+      "extent": "Phases 3 and 5, Chromium: the guided slice (buy and fit a launcher, guided volleys, reopen in flight) and the progression loop (buy a destroyer, switch, fit blasters and a web, choose a site by band and briefing, web and destroy the cutter, loot, repair and resupply, warp to an advanced site, close and reopen there), by mouse and keyboard. Firefox and the accessibility pass over the enlarged surfaces belong to phase 7.",
+      "requests": [
+        "ship.activate",
+        "navigation.destinations",
+        "module.activate",
+        "loot.take",
+        "campaign.resume"
       ]
     },
     {

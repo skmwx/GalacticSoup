@@ -1,12 +1,16 @@
 {
   "kind": "encounters",
-  "$comment": "Repeatable sites. The MVP Scout, Patrol and Base, and from v0.2 phase 3 the Missile Picket, the first guided threat (FeatureSpec02 8.1). Phase 5 completes the twelve-site ladder.",
+  "$comment": "The twelve-site v0.2 ladder (FeatureSpec02 8.1): four sites in each of three bands, tiers 1-3 (entry, developed, advanced). Each site states the decision it is built around, the capabilities that answer it and the fit it punishes; fitSensitive marks the sites whose weakness is a specific inappropriate fit rather than too little damage. The MVP Scout, Patrol and Base keep their compositions, which the MVP balance evidence was measured against; the v0.2 phase 6 tuning pass may revise them. Spawn distances are from the site's centre, where a warp arrives the chosen distance short of; opponents are spaced evenly around it, so two spawn groups face the player from opposite sides. Difficulty is authored and fixed: nothing here reads the player's ship, wallet or record.",
   "definitions": [
     {
       "id": "encounter.borrell.pirate-scout",
       "nameKey": "content.encounter.borrell.pirate-scout.name",
       "descriptionKey": "content.encounter.borrell.pirate-scout.description",
       "rewardSummaryKey": "content.encounter.borrell.pirate-scout.reward",
+      "decisionKey": "content.encounter.borrell.pirate-scout.decision",
+      "recommendationKey": "content.encounter.borrell.pirate-scout.recommendation",
+      "weaknessKey": "content.encounter.borrell.pirate-scout.weakness",
+      "fitSensitive": false,
       "tier": 1,
       "systemId": "system.borrell",
       "siteId": "site.borrell.verge",
@@ -20,10 +24,56 @@
       ]
     },
     {
+      "id": "encounter.borrell.knife-fight",
+      "nameKey": "content.encounter.borrell.knife-fight.name",
+      "descriptionKey": "content.encounter.borrell.knife-fight.description",
+      "rewardSummaryKey": "content.encounter.borrell.knife-fight.reward",
+      "decisionKey": "content.encounter.borrell.knife-fight.decision",
+      "recommendationKey": "content.encounter.borrell.knife-fight.recommendation",
+      "weaknessKey": "content.encounter.borrell.knife-fight.weakness",
+      "fitSensitive": true,
+      "tier": 1,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.shard-gulch",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.cutter",
+          "count": 1,
+          "spawnDistanceKm": 6
+        }
+      ]
+    },
+    {
+      "id": "encounter.borrell.longshot-picket",
+      "nameKey": "content.encounter.borrell.longshot-picket.name",
+      "descriptionKey": "content.encounter.borrell.longshot-picket.description",
+      "rewardSummaryKey": "content.encounter.borrell.longshot-picket.reward",
+      "decisionKey": "content.encounter.borrell.longshot-picket.decision",
+      "recommendationKey": "content.encounter.borrell.longshot-picket.recommendation",
+      "weaknessKey": "content.encounter.borrell.longshot-picket.weakness",
+      "fitSensitive": false,
+      "tier": 1,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.far-beacon",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.marksman",
+          "count": 1,
+          "spawnDistanceKm": 32
+        }
+      ]
+    },
+    {
       "id": "encounter.borrell.missile-picket",
       "nameKey": "content.encounter.borrell.missile-picket.name",
       "descriptionKey": "content.encounter.borrell.missile-picket.description",
       "rewardSummaryKey": "content.encounter.borrell.missile-picket.reward",
+      "decisionKey": "content.encounter.borrell.missile-picket.decision",
+      "recommendationKey": "content.encounter.borrell.missile-picket.recommendation",
+      "weaknessKey": "content.encounter.borrell.missile-picket.weakness",
+      "fitSensitive": false,
       "tier": 1,
       "systemId": "system.borrell",
       "siteId": "site.borrell.signal-spire",
@@ -41,6 +91,10 @@
       "nameKey": "content.encounter.borrell.pirate-patrol.name",
       "descriptionKey": "content.encounter.borrell.pirate-patrol.description",
       "rewardSummaryKey": "content.encounter.borrell.pirate-patrol.reward",
+      "decisionKey": "content.encounter.borrell.pirate-patrol.decision",
+      "recommendationKey": "content.encounter.borrell.pirate-patrol.recommendation",
+      "weaknessKey": "content.encounter.borrell.pirate-patrol.weakness",
+      "fitSensitive": false,
       "tier": 2,
       "systemId": "system.borrell",
       "siteId": "site.borrell.derelict-lane",
@@ -59,10 +113,92 @@
       ]
     },
     {
+      "id": "encounter.borrell.armored-hold",
+      "nameKey": "content.encounter.borrell.armored-hold.name",
+      "descriptionKey": "content.encounter.borrell.armored-hold.description",
+      "rewardSummaryKey": "content.encounter.borrell.armored-hold.reward",
+      "decisionKey": "content.encounter.borrell.armored-hold.decision",
+      "recommendationKey": "content.encounter.borrell.armored-hold.recommendation",
+      "weaknessKey": "content.encounter.borrell.armored-hold.weakness",
+      "fitSensitive": true,
+      "tier": 2,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.hulk-anchorage",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.warden",
+          "count": 1,
+          "spawnDistanceKm": 10
+        },
+        {
+          "npcProfileId": "npc.pirate.bruiser",
+          "count": 1,
+          "spawnDistanceKm": 13
+        }
+      ]
+    },
+    {
+      "id": "encounter.borrell.range-check",
+      "nameKey": "content.encounter.borrell.range-check.name",
+      "descriptionKey": "content.encounter.borrell.range-check.description",
+      "rewardSummaryKey": "content.encounter.borrell.range-check.reward",
+      "decisionKey": "content.encounter.borrell.range-check.decision",
+      "recommendationKey": "content.encounter.borrell.range-check.recommendation",
+      "weaknessKey": "content.encounter.borrell.range-check.weakness",
+      "fitSensitive": true,
+      "tier": 2,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.tangle-drift",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.binder",
+          "count": 1,
+          "spawnDistanceKm": 8
+        },
+        {
+          "npcProfileId": "npc.pirate.cutter",
+          "count": 1,
+          "spawnDistanceKm": 12
+        }
+      ]
+    },
+    {
+      "id": "encounter.borrell.crossfire",
+      "nameKey": "content.encounter.borrell.crossfire.name",
+      "descriptionKey": "content.encounter.borrell.crossfire.description",
+      "rewardSummaryKey": "content.encounter.borrell.crossfire.reward",
+      "decisionKey": "content.encounter.borrell.crossfire.decision",
+      "recommendationKey": "content.encounter.borrell.crossfire.recommendation",
+      "weaknessKey": "content.encounter.borrell.crossfire.weakness",
+      "fitSensitive": false,
+      "tier": 2,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.split-ridge",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.gunner",
+          "count": 1,
+          "spawnDistanceKm": 9
+        },
+        {
+          "npcProfileId": "npc.pirate.gunlayer",
+          "count": 1,
+          "spawnDistanceKm": 38
+        }
+      ]
+    },
+    {
       "id": "encounter.borrell.pirate-base",
       "nameKey": "content.encounter.borrell.pirate-base.name",
       "descriptionKey": "content.encounter.borrell.pirate-base.description",
       "rewardSummaryKey": "content.encounter.borrell.pirate-base.reward",
+      "decisionKey": "content.encounter.borrell.pirate-base.decision",
+      "recommendationKey": "content.encounter.borrell.pirate-base.recommendation",
+      "weaknessKey": "content.encounter.borrell.pirate-base.weakness",
+      "fitSensitive": false,
       "tier": 3,
       "systemId": "system.borrell",
       "siteId": "site.borrell.outpost-cradle",
@@ -82,6 +218,89 @@
           "npcProfileId": "npc.pirate.warden",
           "count": 1,
           "spawnDistanceKm": 22
+        }
+      ]
+    },
+    {
+      "id": "encounter.borrell.bombardment-line",
+      "nameKey": "content.encounter.borrell.bombardment-line.name",
+      "descriptionKey": "content.encounter.borrell.bombardment-line.description",
+      "rewardSummaryKey": "content.encounter.borrell.bombardment-line.reward",
+      "decisionKey": "content.encounter.borrell.bombardment-line.decision",
+      "recommendationKey": "content.encounter.borrell.bombardment-line.recommendation",
+      "weaknessKey": "content.encounter.borrell.bombardment-line.weakness",
+      "fitSensitive": false,
+      "tier": 3,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.ashfall-line",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.lancer",
+          "count": 2,
+          "spawnDistanceKm": 28
+        },
+        {
+          "npcProfileId": "npc.pirate.bombard",
+          "count": 1,
+          "spawnDistanceKm": 20
+        }
+      ]
+    },
+    {
+      "id": "encounter.borrell.screened-battery",
+      "nameKey": "content.encounter.borrell.screened-battery.name",
+      "descriptionKey": "content.encounter.borrell.screened-battery.description",
+      "rewardSummaryKey": "content.encounter.borrell.screened-battery.reward",
+      "decisionKey": "content.encounter.borrell.screened-battery.decision",
+      "recommendationKey": "content.encounter.borrell.screened-battery.recommendation",
+      "weaknessKey": "content.encounter.borrell.screened-battery.weakness",
+      "fitSensitive": true,
+      "tier": 3,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.battery-rock",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.cutter",
+          "count": 2,
+          "spawnDistanceKm": 10
+        },
+        {
+          "npcProfileId": "npc.pirate.gunlayer",
+          "count": 1,
+          "spawnDistanceKm": 42
+        }
+      ]
+    },
+    {
+      "id": "encounter.borrell.command-group",
+      "nameKey": "content.encounter.borrell.command-group.name",
+      "descriptionKey": "content.encounter.borrell.command-group.description",
+      "rewardSummaryKey": "content.encounter.borrell.command-group.reward",
+      "decisionKey": "content.encounter.borrell.command-group.decision",
+      "recommendationKey": "content.encounter.borrell.command-group.recommendation",
+      "weaknessKey": "content.encounter.borrell.command-group.weakness",
+      "fitSensitive": false,
+      "tier": 3,
+      "systemId": "system.borrell",
+      "siteId": "site.borrell.command-relay",
+      "repeatable": true,
+      "spawns": [
+        {
+          "npcProfileId": "npc.pirate.snare",
+          "count": 1,
+          "spawnDistanceKm": 10
+        },
+        {
+          "npcProfileId": "npc.pirate.bruiser",
+          "count": 1,
+          "spawnDistanceKm": 12
+        },
+        {
+          "npcProfileId": "npc.pirate.gunlayer",
+          "count": 1,
+          "spawnDistanceKm": 36
         }
       ]
     }

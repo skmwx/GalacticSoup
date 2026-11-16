@@ -235,7 +235,7 @@ JSON Schema validates field types, required values, ranges, discriminated unions
 - availability of every fabrication raw material;
 - reachability of starter/tutorial content with the starter fit;
 - no circular skill prerequisite chain;
-- encounter rewards and NPC loadouts referencing valid definitions;
+- encounter rewards and NPC loadouts referencing valid definitions, and at most one encounter authored at each combat site, since arriving at a site instantiates the encounter authored there;
 - full localization keys and icon references.
 
 Validation runs at development startup, test startup, and production build time. A production build fails on any error.
@@ -567,7 +567,7 @@ Migrations are immutable functions with golden before/after fixtures. Every publ
 
 A compatibility boundary is a declared oldest supported save format. A save below it is refused with a message naming the release that wrote it, before checksum, migration, or content checks, so it cannot appear compatible because the definitions it names still resolve; the stored snapshot is left unchanged, nothing is deleted or replaced, and starting over still requires the explicit reset or replace confirmation. The only boundary declared so far is the early-alpha transition from v0.1 (save formats 1-10) to v0.2 (format 11), recorded in decision ADR-V02-01. A boundary waives only the migration obligation: schema validation, checksums, bounded parsing, transaction safety, autosave recovery, current-version replay fixtures, and forward-version rejection all remain required.
 
-The loader compares the save's content version and hash with the installed bundle. A hash mismatch is accepted only when the installed release declares a compatible content transition or provides a migration. Transitions are declared in the content manifest as the authored content versions whose saves the bundle may open; the bundle's own authored version is always included. Resolvable references alone never establish compatibility. Compatible balance-only changes retain entity and definition IDs and adopt the installed values for future calculations. Structural content changes migrate affected campaign state explicitly. An incompatible save is rejected without modification, and the original snapshot remains available. Released content transitions have fixtures covering representative saves that reference changed definitions.
+The loader compares the save's content version and hash with the installed bundle. A hash mismatch is accepted only when the installed release declares a compatible content transition or provides a migration. Transitions are declared in the content manifest as the authored content versions whose saves the bundle may open; the bundle's own authored version is always included. Resolvable references alone never establish compatibility. Compatible balance-only changes retain entity and definition IDs and adopt the installed values for future calculations. A declared transition also applies the installed content's permanent additions to what the campaign knows: permanent sites newly authored in a system the campaign has entered become known, as entering the system would have made them (Functional Specification 5.2). Nothing already known is removed, and a save opened against the bundle it was written with is not altered. Structural content changes migrate affected campaign state explicitly. An incompatible save is rejected without modification, and the original snapshot remains available. Released content transitions have fixtures covering representative saves that reference changed definitions.
 
 Import first validates into temporary storage. By default it creates a new campaign slot with a new local slot identity while retaining the campaign identity inside the save only when it cannot collide. Overwrite requires an explicit preview and confirmation; the previous slot remains until the imported snapshot commits successfully.
 
@@ -620,7 +620,7 @@ The reference performance target is a current mid-range desktop at 1920x1080:
 - open a validated campaign within two seconds for a 25 MB uncompressed snapshot;
 - complete routine autosave serialization without blocking the UI main thread for more than one frame.
 
-Content validation defines explicit per-site soft budgets for ships, projectiles, containers, asteroids, labels, and scheduled events. Exceeding a soft budget emits a build warning and requires a performance fixture. It does not silently change game rules at runtime.
+Content validation defines explicit per-site soft budgets for ships, projectiles, active effects, containers, asteroids, labels, and scheduled events. A site's load counts its authored opponents' fits and the most the player could bring: the largest player hull, with every slot that allows it carrying a launcher or a control module. Exceeding a soft budget emits a build warning and requires a performance fixture. It does not silently change game rules at runtime.
 
 Spatial queries use a uniform grid index maintained by the site aggregate. Direct iteration remains acceptable for small authored sites, but results must be returned in stable order. Projection messages use topic deltas for fast-changing data and full snapshots after load or recovery.
 

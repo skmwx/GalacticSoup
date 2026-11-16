@@ -1,6 +1,6 @@
 {
   "kind": "loot.tables",
-  "$comment": "Wreck contents. Every entry is something the player can sell at the starting station or fit and load. Drop rates and quantities are tuning values the phase 17 balance pass measured (reports/balance.md).",
+  "$comment": "Wreck contents. Every entry is something the player can sell at the starting station or fit and load, and every module here is also sold there, so a drop speeds progression without being required (FeatureSpec02 7.2). The MVP tables keep the rates the MVP balance pass measured (reports/balance.md); the v0.2 opponents carry their own tables, which drop the equipment they fly with. Entry-band opponents drop small, usable modules; the advanced band adds the medium launcher and medium afterburner. Rates are preliminary until the phase 6 tuning pass.",
   "definitions": [
     {
       "id": "loot.pirate.scout",
@@ -129,6 +129,169 @@
         {
           "itemId": "module.launcher.guided.small",
           "chance": 0.12,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        }
+      ]
+    },
+    {
+      "id": "loot.pirate.gunlayer",
+      "entries": [
+        {
+          "itemId": "item.salvage.circuitry",
+          "chance": 0.55,
+          "quantityMinimum": 1,
+          "quantityMaximum": 2
+        },
+        {
+          "itemId": "ammo.projectile.small.phased",
+          "chance": 0.4,
+          "quantityMinimum": 20,
+          "quantityMaximum": 40
+        },
+        {
+          "itemId": "module.turret.artillery.small",
+          "chance": 0.12,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        },
+        {
+          "itemId": "module.upgrade.tracking",
+          "chance": 0.1,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        }
+      ]
+    },
+    {
+      "id": "loot.pirate.bruiser",
+      "entries": [
+        {
+          "itemId": "item.salvage.alloy",
+          "chance": 0.7,
+          "quantityMinimum": 1,
+          "quantityMaximum": 3
+        },
+        {
+          "itemId": "ammo.hybrid.small.plasma",
+          "chance": 0.4,
+          "quantityMinimum": 20,
+          "quantityMaximum": 40
+        },
+        {
+          "itemId": "module.turret.blaster.small",
+          "chance": 0.12,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        },
+        {
+          "itemId": "module.repair.armor.small",
+          "chance": 0.12,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        },
+        {
+          "itemId": "module.upgrade.damage.hybrid",
+          "chance": 0.08,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        }
+      ]
+    },
+    {
+      "id": "loot.pirate.bombard",
+      "entries": [
+        {
+          "itemId": "item.salvage.circuitry",
+          "chance": 0.6,
+          "quantityMinimum": 1,
+          "quantityMaximum": 2
+        },
+        {
+          "itemId": "ammo.guided.small.thermal",
+          "chance": 0.45,
+          "quantityMinimum": 8,
+          "quantityMaximum": 20
+        },
+        {
+          "itemId": "module.upgrade.guided",
+          "chance": 0.1,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        },
+        {
+          "itemId": "module.shield.extender",
+          "chance": 0.12,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        },
+        {
+          "itemId": "module.launcher.guided.medium",
+          "chance": 0.05,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        }
+      ]
+    },
+    {
+      "id": "loot.pirate.binder",
+      "entries": [
+        {
+          "itemId": "item.salvage.alloy",
+          "chance": 0.6,
+          "quantityMinimum": 1,
+          "quantityMaximum": 2
+        },
+        {
+          "itemId": "ammo.projectile.small.fusion",
+          "chance": 0.35,
+          "quantityMinimum": 20,
+          "quantityMaximum": 40
+        },
+        {
+          "itemId": "module.web.small",
+          "chance": 0.1,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        },
+        {
+          "itemId": "module.capacitor.recharger",
+          "chance": 0.1,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        }
+      ]
+    },
+    {
+      "id": "loot.pirate.snare",
+      "entries": [
+        {
+          "itemId": "item.salvage.alloy",
+          "chance": 0.65,
+          "quantityMinimum": 1,
+          "quantityMaximum": 3
+        },
+        {
+          "itemId": "ammo.projectile.small.phased",
+          "chance": 0.4,
+          "quantityMinimum": 20,
+          "quantityMaximum": 40
+        },
+        {
+          "itemId": "module.web.small",
+          "chance": 0.12,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        },
+        {
+          "itemId": "module.shield.booster.small",
+          "chance": 0.1,
+          "quantityMinimum": 1,
+          "quantityMaximum": 1
+        },
+        {
+          "itemId": "module.propulsion.afterburner.medium",
+          "chance": 0.06,
           "quantityMinimum": 1,
           "quantityMaximum": 1
         }

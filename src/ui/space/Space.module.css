@@ -1023,6 +1023,24 @@
   flex-direction: column;
   gap: var(--gs-space-1);
 }
+/* Each difficulty band is its own short list under a small heading. */
+.destinationChoices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gs-space-1);
+}
+.bandHeading {
+  margin: var(--gs-space-1) 0 0;
+  font-size: var(--gs-font-small);
+  font-weight: 600;
+  color: var(--gs-color-text-muted);
+}
+.destinationBriefing .plainList {
+  gap: 2px;
+}
 .destinationList .objectButton {
   flex-wrap: wrap;
   gap: 0 var(--gs-space-2);
