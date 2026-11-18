@@ -1514,9 +1514,10 @@
         0,
         1,
         3,
-        4
+        4,
+        7
       ],
-      "extent": "Phases 0-1: multi-ship resume, v0.1/future/undeclared-content rejection without alteration, explicit reset and replace confirmation. Phase 3: format 12 with guided projectiles in flight, the format 11 to 12 migration, and mid-flight resume reproducing the uninterrupted result. Phase 4: format 13 with speed effects and module targets, the format 12 to 13 migration, and mid-effect, mid-cycle resume reproducing the uninterrupted result. Phase 5: a campaign saved under earlier 0.2.0 content learns the ladder's new sites on load, and selective kills, retreat, save and return pay each bounty once and never reroll a wreck.",
+      "extent": "Phases 0-1: multi-ship resume, v0.1/future/undeclared-content rejection without alteration, explicit reset and replace confirmation. Phase 3: format 12 with guided projectiles in flight, the format 11 to 12 migration, and mid-flight resume reproducing the uninterrupted result. Phase 4: format 13 with speed effects and module targets, the format 12 to 13 migration, and mid-effect, mid-cycle resume reproducing the uninterrupted result. Phase 5: a campaign saved under earlier 0.2.0 content learns the ladder's new sites on load, and selective kills, retreat, save and return pay each bounty once and never reroll a wreck. Phase 7: the authored ladder fights reopened every 3.7 simulated seconds through the save envelope (Bombardment Line with guided volleys in flight on both sides, Range Check under both sides' webs, the Command Group with a mixed railgun, launcher and blaster cruiser) match the uninterrupted fight at every reopen, with reserved rounds, kills and each bounty paid once; a damaged, insured stored ship and an open draft for it resume and still commit to that ship alone; in the browser a v0.1 save is explained, left untouched and replaced only on confirmation; a twenty-sortie session keeps its saves bounded.",
       "requests": [
         "campaign.saves",
         "campaign.resume",
@@ -1530,9 +1531,10 @@
       "scope": "included",
       "phases": [
         3,
-        5
+        5,
+        7
       ],
-      "extent": "Phases 3 and 5, Chromium: the guided slice (buy and fit a launcher, guided volleys, reopen in flight) and the progression loop (buy a destroyer, switch, fit blasters and a web, choose a site by band and briefing, web and destroy the cutter, loot, repair and resupply, warp to an advanced site, close and reopen there), by mouse and keyboard. Firefox and the accessibility pass over the enlarged surfaces belong to phase 7.",
+      "extent": "Phases 3 and 5, Chromium: the guided slice (buy and fit a launcher, guided volleys, reopen in flight) and the progression loop (buy a destroyer, switch, fit blasters and a web, choose a site by band and briefing, web and destroy the cutter, loot, repair and resupply, warp to an advanced site, close and reopen there), by mouse and keyboard. Phase 7: both flows and the whole browser suite in Firefox as well; the accessibility pass over the enlarged surfaces in Chromium and Firefox - a hangar of three ships and its comparison, switching ship from the keyboard, the market's purpose, size and compatibility filters, twelve destinations in bands with a filter and keyboard choice, a fight under guided fire with reduced motion and a fight under a web - each audited, operable without a pointer and stated in words; offline operation as before.",
       "requests": [
         "ship.activate",
         "navigation.destinations",

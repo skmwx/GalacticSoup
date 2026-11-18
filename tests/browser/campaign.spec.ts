@@ -95,6 +95,70 @@ test.describe('campaign persistence', () => {
     await expect(page.getByText('0s', { exact: true })).toBeVisible();
   });
 
+  test('adds one capped step, never the missing hours, after a suspension or a clock change [V02-AC-13, FUNC-22.12, TECH-9.1]', async ({ page }) => {
+    // The page's clocks are Playwright's from here on: they run in real time
+    // until a test jumps them, the way a sleeping laptop or a changed system
+    // clock would.
+    await page.clock.install();
+    await page.reload();
+    await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
+    await startCampaign(page);
+    const simulated = async (): Promise<number> => {
+      const text = await page.locator('dt', { hasText: 'Simulation time' }).locator('xpath=following-sibling::dd[1]').innerText();
+      let seconds = 0;
+      for (const [, amount, unit] of text.matchAll(/(\d+)\s*([hms])/g)) {
+        seconds += Number(amount) * (unit === 'h' ? 3_600 : unit === 'm' ? 60 : 1);
+      }
+      return seconds;
+    };
+    const run = async (): Promise<void> => {
+      await page.getByRole('button', { name: /^Resume/ }).click();
+      await expect(page.getByText(/Running at 1x/)).toBeVisible();
+    };
+    const pause = async (): Promise<void> => {
+      await page.getByRole('button', { name: /^Pause/ }).click();
+      await expect(page.getByText('Paused', { exact: true })).toBeVisible();
+    };
+    // The readout shows whole seconds and can show the last running step a
+    // moment late, so "nothing added" allows that one second, against hours.
+    const DISPLAY_SLACK = 1;
+
+    await run();
+    await expect.poll(simulated, { timeout: 20_000 }).toBeGreaterThanOrEqual(3);
+    await pause();
+    const before = await simulated();
+
+    // Paused, two hours pass: nothing moves.
+    await page.clock.fastForward('02:00:00');
+    expect((await simulated()) - before).toBeLessThanOrEqual(DISPLAY_SLACK);
+
+    // Running, the tab sleeps for two hours: the first frame back advances at
+    // most one capped step, not the two hours.
+    await run();
+    await page.clock.fastForward('02:00:00');
+    await pause();
+    const afterSleep = await simulated();
+    expect(afterSleep - before).toBeLessThan(15);
+
+    // The system clock is set years ahead while running: the game reads
+    // only elapsed frame time, so the jump adds nothing.
+    await run();
+    await page.clock.setSystemTime(new Date('2031-01-01T00:00:00Z'));
+    await pause();
+    expect((await simulated()) - afterSleep).toBeLessThan(15);
+
+    // Close and reopen: the campaign comes back at the time it was closed.
+    const closedAt = await simulated();
+    await openGameMenu(page);
+    await page.getByRole('button', { name: /Close campaign/ }).click();
+    // Only once the close has finished saving: the hours pass while closed.
+    await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
+    await page.clock.fastForward('08:00:00');
+    await page.getByRole('button', { name: 'Resume campaign' }).click();
+    await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
+    expect(Math.abs((await simulated()) - closedAt)).toBeLessThanOrEqual(DISPLAY_SLACK);
+  });
+
   test('deletes the campaign and its saves on reset [FUNC-3.4]', async ({ page }) => {
     await startCampaign(page);
 

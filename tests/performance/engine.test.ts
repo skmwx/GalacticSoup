@@ -18,16 +18,21 @@ import {
   type SaveEnvelope,
 } from '@engine';
 import { runCommand } from '@engine/application';
+import { marketBuyPreview } from '@engine/projections';
+import { COMBAT_EVENT_LIMIT, NOTIFICATION_HISTORY_LIMIT } from '@engine/domain';
 import { PROTOCOL_VERSION, type AssetsData, type EngineResponse } from '@protocol';
 
 import { REPO_ROOT } from '../../config/aliases.mjs';
 import { SITE_SOFT_BUDGETS } from '../../scripts/lib/content/budgets.mjs';
 import { shippedContent } from '../support/content.ts';
+import { matrixScenario } from '../support/balance/matrix.ts';
 import { GOLDEN_STATES } from '../support/golden/campaign.ts';
 import { readGoldenSave, readGoldenSaves } from '../support/golden/fixtures.ts';
-import { inSite, stateOf } from '../support/loss.ts';
+import { command, inSite, stateOf, withCredits } from '../support/loss.ts';
 import { assembleFit } from '../support/progression/assemble.ts';
 import { referenceFixtureFit } from '../support/progression/ladder.ts';
+import { flySortie, refit } from '../support/progression/scenario.ts';
+import { openSession } from '../support/progression/session.ts';
 
 /**
  * Performance against the authored MVP maxima (MVP Implementation Plan phase
@@ -50,6 +55,8 @@ import { referenceFixtureFit } from '../support/progression/ladder.ts';
 
 const content = shippedContent();
 const QUANTUM_MS = content.rules.time.simulationQuantumMs;
+/** Sorties in the long repeat session (v0.2 Implementation Plan phase 7, work item 4). */
+const SESSION_SORTIES = 20;
 
 /** Technical Specification 13. */
 const TARGETS = {
@@ -309,4 +316,161 @@ describe('simulation timing at the authored projectile and effect maxima', () =>
     expect(mostInFlight).toBeLessThanOrEqual(SITE_SOFT_BUDGETS.projectiles);
     expect(measured.p95Ms).toBeLessThan(TARGETS.quantumP95Ms);
   }, 240_000);
+});
+
+describe('simulation timing with webs held on both sides', () => {
+  it('processes a quantum inside the budget while the player and the binder web each other [TECH-13, TECH-9.1, V02-AC-07]', () => {
+    // Range Check: the binder webs the player while the player's own web holds
+    // its target, so speed effects from both sides are refreshed and expire
+    // under the shared scheduler while the guns cycle.
+    const encounter = content.requireEncounter('encounter.borrell.range-check' as never);
+    const docked = assembleFit(referenceFixtureFit('fit.destroyer.blaster-web', content), 'beef0123beef0123beef0123beef0123', content).state;
+    let state = stateOf(inSite(docked, { siteId: encounter.siteId, content }));
+    const run = (type: string, payload: unknown): void => {
+      const result = runCommand({ campaign: state, content, type: type as never, payload, invariantChecks: 'lightweight' });
+      if (result.kind === 'committed' && result.campaign !== null) state = result.campaign;
+    };
+    run('time.set', { paused: false, rate: 1 });
+    const samples: number[] = [];
+    let mostEffects = 0;
+    let mostBoundaries = 0;
+    for (let quantum = 0; quantum < 1_200 && state.assets.location.kind === 'site'; quantum += 1) {
+      if (quantum % 20 === 0) {
+        const living = state.encounter.active?.npcs.filter((npc) => npc.destroyedAtMs === null) ?? [];
+        for (const npc of living) run('targeting.lock', { targetId: npc.shipId });
+        const target = living[0]?.shipId;
+        if (target !== undefined) {
+          run('movement.orbit', { targetId: target, distanceKm: 4 });
+          for (let slot = 0; slot < 4; slot += 1) run('weapon.activate', { slotKind: 'weapon', slotIndex: slot, targetId: target });
+          run('module.activate', { slotKind: 'system', slotIndex: 0, targetId: target });
+        }
+      }
+      const started = performance.now();
+      run('time.advance', { elapsedRealMs: QUANTUM_MS });
+      samples.push(performance.now() - started);
+      mostEffects = Math.max(mostEffects, state.combat.speedEffects.length);
+      mostBoundaries = Math.max(mostBoundaries, state.scheduler.entries.length);
+    }
+
+    const measured = summarise(samples);
+    report['webs'] = { encounterId: encounter.id, mostSpeedEffects: mostEffects, mostBoundaries, quantum: measured };
+    expect(mostEffects).toBeGreaterThanOrEqual(2);
+    expect(mostEffects).toBeLessThanOrEqual(SITE_SOFT_BUDGETS.speedEffects);
+    expect(mostBoundaries).toBeLessThanOrEqual(SITE_SOFT_BUDGETS.scheduledBoundaries);
+    expect(measured.p95Ms).toBeLessThan(TARGETS.quantumP95Ms);
+  }, 240_000);
+});
+
+describe('a long repeat session with an enlarged inventory', () => {
+  it('keeps saves bounded and commands, quanta and snapshots inside their budgets after twenty looted sorties in three ships [TECH-13, TECH-11.3, TECH-7.3, V02-AC-13]', async () => {
+    // A cruiser campaign that also owns the starter frigate and a destroyer
+    // (three ships, each with its own hold) flies the Pirate Base, the largest authored site, twenty
+    // times, taking every wreck's contents home and selling none of them, so
+    // the hangar fills the way a long session fills it.
+    const seed = 'deed0123deed0123deed0123deed0123';
+    const fit = referenceFixtureFit('fit.cruiser.railgun', content);
+    const assembled = assembleFit(fit, seed, content).state;
+    const stationId = content.rules.economy.startingStationId;
+    let start = withCredits(assembled, assembled.assets.credits + 200_000);
+    const preview = marketBuyPreview(start, content, { stationId, itemId: 'hull.independent.destroyer', quantity: 1 });
+    if (preview.token === null) throw new Error(`The destroyer could not be bought: ${String(preview.unavailableReason)}`);
+    start = command(start, 'market.confirmBuy', { token: preview.token }, content).state;
+    expect(Object.keys(start.assets.ships)).toHaveLength(3);
+
+    const session = await openSession(start, content);
+    const scenario = { ...matrixScenario('fit.cruiser.railgun', 'encounter.borrell.pirate-base', [seed]), sorties: SESSION_SORTIES };
+    const sizes: number[] = [];
+    const saveNow = async (sortie: number): Promise<SaveEnvelope> => {
+      await session.data('campaign.save', { kind: 'manual', savedAtRealMs: 1_700_000_000_000 + sortie });
+      const manifest = await session.saves.readManifest('slot-1');
+      const newest = manifest?.saves[0];
+      if (newest === undefined) throw new Error('Nothing was saved.');
+      const envelope = (await session.saves.readSave('slot-1', newest.saveId)) as SaveEnvelope;
+      sizes.push(JSON.stringify(envelope).length);
+      return envelope;
+    };
+
+    let completed = 0;
+    let envelope = await saveNow(0);
+    for (let sortie = 1; sortie <= SESSION_SORTIES; sortie += 1) {
+      const record = await flySortie(session, scenario, content, seed, sortie, { loot: true });
+      if (record.status === 'completed') completed += 1;
+      expect(record.status, `sortie ${String(sortie)}`).not.toBe('lost');
+      await refit(session, fit, content);
+      if (sortie === 1 || sortie % 10 === 0) envelope = await saveNow(sortie);
+    }
+    expect(completed).toBeGreaterThanOrEqual(SESSION_SORTIES - 2);
+
+    const state = loaded(envelope);
+    const stacks = Object.values(state.assets.stacks).length;
+    // Histories stay at their limits however long the session runs.
+    expect(state.combat.events.length).toBeLessThanOrEqual(COMBAT_EVENT_LIMIT);
+    expect(state.notifications.entries.length).toBeLessThanOrEqual(NOTIFICATION_HISTORY_LIMIT);
+    expect(Math.max(...sizes)).toBeLessThan(SAVE_LIMITS.maxTotalBytes / 32);
+
+    // Station requests over the enlarged hangar and three ships.
+    const station = await hostAt(envelope);
+    const shipIds = Object.keys(state.assets.ships);
+    const requestSamples: number[] = [];
+    const timed = async (type: string, payload: unknown = {}): Promise<void> => {
+      const started = performance.now();
+      await station.ask(type, payload);
+      requestSamples.push(performance.now() - started);
+    };
+    for (let round = 0; round < 15; round += 1) {
+      for (const type of ['market.listings', 'inventory.hangar', 'station.services']) await timed(type, { stationId });
+      await timed('ships.list');
+      await timed('assets.list');
+      for (const shipId of shipIds) {
+        await timed('ship.get', { shipId });
+        await timed('inventory.cargo', { shipId });
+      }
+      await timed('fitting.begin', { shipId: state.assets.activeShipId });
+      await timed('fitting.draft');
+      await timed('fitting.revert');
+    }
+
+    // Snapshot capture and open at the end of the session.
+    const capture: number[] = [];
+    const open: number[] = [];
+    for (let round = 0; round < 20; round += 1) {
+      let started = performance.now();
+      const text = JSON.stringify(captureSnapshot({
+        campaign: state, content, engineVersion: ENGINE_VERSION, protocolVersion: PROTOCOL_VERSION,
+        slotId: 'slot-1', kind: 'auto', sequence: round + 1, savedAtRealMs: 1,
+      }));
+      capture.push(performance.now() - started);
+      started = performance.now();
+      expect(loadSave(JSON.parse(text) as unknown, { content }).ok).toBe(true);
+      open.push(performance.now() - started);
+    }
+
+    // A fight at the largest site after the session simulates as fast as one at its start.
+    let fight = stateOf(inSite(state, { siteId: content.requireEncounter('encounter.borrell.pirate-base' as never).siteId, content }));
+    const quanta: number[] = [];
+    for (let quantum = 0; quantum < 600 && fight.assets.location.kind === 'site'; quantum += 1) {
+      const started = performance.now();
+      const result = runCommand({ campaign: fight, content, type: 'time.advance', payload: { elapsedRealMs: QUANTUM_MS }, invariantChecks: 'lightweight' });
+      quanta.push(performance.now() - started);
+      if (result.kind !== 'committed' || result.campaign === null) throw new Error('A quantum did not commit.');
+      fight = result.campaign;
+    }
+
+    const requests = summarise(requestSamples);
+    report['longSession'] = {
+      sorties: SESSION_SORTIES,
+      completed,
+      ships: shipIds.length,
+      stacks,
+      saveBytesBySortie: sizes,
+      request: requests,
+      snapshotCapture: summarise(capture),
+      snapshotOpen: summarise(open),
+      quantumAfterSession: summarise(quanta),
+    };
+    expect(requests.p95Ms).toBeLessThan(TARGETS.requestP95Ms);
+    expect(percentile(capture, 0.95)).toBeLessThan(TARGETS.snapshotMs);
+    expect(percentile(open, 0.95)).toBeLessThan(TARGETS.openCampaignMs);
+    expect(percentile(quanta, 0.95)).toBeLessThan(TARGETS.quantumP95Ms);
+  }, 600_000);
 });

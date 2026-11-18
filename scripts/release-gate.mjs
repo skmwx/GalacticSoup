@@ -184,7 +184,7 @@ if (record) {
   const { identity } = evidence;
   const candidate = {
     $comment:
-      'The release candidate (MVP Implementation Plan phase 21). Written by npm run release:record from a green release gate; do not edit by hand. A change to the sources or the bundle makes it stale until the gate has passed again.',
+      'The release candidate (MVP Implementation Plan phase 21; v0.2 Implementation Plan phase 7). Written by npm run release:record from a green release gate; do not edit by hand. A change to the sources or the bundle makes it stale until the gate has passed again.',
     candidate: `${identity.applicationVersion}-${label}`,
     applicationVersion: identity.applicationVersion,
     engineVersion: identity.engineVersion,

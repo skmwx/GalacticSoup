@@ -81,8 +81,10 @@ test.describe('combat accessibility', () => {
     while ((await closed.count()) > 0) {
       await closed.first().click();
     }
+    // Only the explanations on screen: one inside a hidden view (such as a
+    // destination's drop chances) cannot be clicked and is not what the pilot sees.
     for (const summary of await page.locator('summary').all()) {
-      await summary.click();
+      if (await summary.isVisible()) await summary.click();
     }
     await audit(page);
   });

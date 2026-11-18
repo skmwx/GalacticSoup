@@ -1,9 +1,9 @@
 {
   "name": "galactic-soup",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Galactic Soup - single-player space trading, exploration and combat game (MVP).",
+  "description": "Galactic Soup - single-player space trading, exploration and combat game (v0.2 Combat Progression Alpha).",
   "engines": {
     "node": ">=20.19.0"
   },

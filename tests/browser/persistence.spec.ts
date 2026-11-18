@@ -126,6 +126,48 @@ async function damage(page: Page, saveIds: readonly string[], change: 'credits' 
   );
 }
 
+/**
+ * Rewrites every stored snapshot and the manifest as v0.1 left them: save
+ * format 10, written by engine 0.1.0 (ADR-V02-01). The checksum is left as it
+ * was, because the release boundary is checked before any checksum.
+ */
+async function makeEarlierRelease(page: Page): Promise<void> {
+  await page.evaluate(
+    async (name) =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open(name);
+        open.onerror = () => { reject(open.error ?? new Error('The database did not open.')); };
+        open.onsuccess = () => {
+          const database = open.result;
+          const transaction = database.transaction(['snapshots', 'manifests'], 'readwrite');
+          const snapshots = transaction.objectStore('snapshots');
+          const all = snapshots.getAll();
+          all.onsuccess = () => {
+            for (const record of all.result as { document: { formatVersion: number; engineVersion: string } }[]) {
+              record.document.formatVersion = 10;
+              record.document.engineVersion = '0.1.0';
+              snapshots.put(record);
+            }
+          };
+          const manifests = transaction.objectStore('manifests');
+          const listed = manifests.getAll();
+          listed.onsuccess = () => {
+            for (const manifest of listed.result as { saves: { formatVersion: number }[] }[]) {
+              for (const save of manifest.saves) save.formatVersion = 10;
+              manifests.put(manifest);
+            }
+          };
+          transaction.oncomplete = () => { database.close(); resolve(); };
+          transaction.onerror = () => {
+            database.close();
+            reject(transaction.error ?? new Error('The saves could not be rewritten.'));
+          };
+        };
+      }),
+    DATABASE,
+  );
+}
+
 async function closeAndResume(page: Page): Promise<void> {
   await openGameMenu(page);
   await page.getByRole('button', { name: /Close campaign/ }).click();
@@ -220,5 +262,41 @@ test.describe('save integrity in the browser', () => {
     const after = await storedSlot(page);
     expect(after.snapshots.map((save) => save.formatVersion)).toEqual(before.snapshots.map(() => 99));
     expect(after.listed).toEqual(before.listed);
+  });
+
+  test('explains that a v0.1 save cannot continue, keeps it untouched, and replaces it only on confirmation [V02-AC-13, TECH-11.4, FUNC-3.4]', async ({ page }) => {
+    await startCampaign(page);
+    await openGameMenu(page);
+    await page.getByRole('button', { name: /Close campaign/ }).click();
+    await expect(page.getByRole('button', { name: 'Resume campaign' })).toBeVisible();
+    await makeEarlierRelease(page);
+    const before = await storedSlot(page);
+    expect(before.snapshots.every((save) => save.formatVersion === 10)).toBe(true);
+
+    await page.reload();
+    await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
+    // The save is described, not offered: there is nothing to resume.
+    await expect(page.getByRole('note')).toContainText('This saved campaign is from Galactic Soup 0.1');
+    await expect(page.getByRole('note')).toContainText('Start a new campaign to play this version.');
+    await expect(page.getByRole('button', { name: 'Resume campaign' })).toHaveCount(0);
+
+    // Starting over asks first; keeping the old save changes nothing.
+    await page.getByLabel('Pilot name').fill('Fresh Pilot');
+    await page.getByRole('button', { name: 'Start campaign' }).click();
+    const confirm = page.getByRole('group', { name: 'Replace the saved campaign' });
+    await expect(confirm).toBeVisible();
+    await expect(confirm.getByRole('button', { name: 'Replace it and start' })).toBeFocused();
+    await confirm.getByRole('button', { name: 'Keep the saved campaign' }).click();
+    await expect(confirm).toBeHidden();
+    const kept = await storedSlot(page);
+    expect(kept.snapshots.map((save) => save.checksum)).toEqual(before.snapshots.map((save) => save.checksum));
+    expect(kept.listed).toEqual(before.listed);
+
+    // Confirming starts a fresh v0.2 campaign, saved in the current format.
+    await page.getByRole('button', { name: 'Start campaign' }).click();
+    await confirm.getByRole('button', { name: 'Replace it and start' }).click();
+    await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
+    await expect.poll(async () => (await storedSlot(page)).snapshots.map((save) => save.formatVersion))
+      .toEqual([SAVE_FORMAT_VERSION]);
   });
 });

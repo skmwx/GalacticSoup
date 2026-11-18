@@ -1,10 +1,9 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-import { envelopeChecksum, type SaveEnvelope } from '@engine';
-
 import { openGameMenu } from '../support/cockpit.ts';
 import { chooseDestination, destinationBriefing, destinations, dockHome, warpHome, warpTo } from '../support/destinations.ts';
 import { applyFit, chooseAmmunition, chooseModule } from '../support/fitting.ts';
+import { buy, freshCampaign, fund } from '../support/funding.ts';
 import { takeService } from '../support/services.ts';
 import { undock } from '../support/undock.ts';
 
@@ -26,7 +25,6 @@ import { undock } from '../support/undock.ts';
 
 const PILOT = 'Ladder Pilot';
 const SEED = 'ee55ff6677889900aa11bb22cc33dd44';
-const DATABASE = 'galactic-soup';
 const FUNDING = 400_000;
 
 async function fixSeed(page: Page): Promise<void> {
@@ -44,79 +42,6 @@ async function fixSeed(page: Page): Promise<void> {
   }, SEED);
 }
 
-async function freshCampaign(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.evaluate(
-    async (name) =>
-      new Promise<void>((resolve) => {
-        const request = indexedDB.deleteDatabase(name);
-        request.onsuccess = () => resolve();
-        request.onerror = () => resolve();
-        request.onblocked = () => resolve();
-      }),
-    DATABASE,
-  );
-  await page.goto('/');
-  await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
-  await page.getByLabel('Pilot name').fill(PILOT);
-  await page.getByRole('button', { name: 'Start campaign' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
-  await expect(page.getByText('Saved at revision 1.')).toBeVisible();
-}
-
-/** Closes the campaign, adds credits to its latest save and seals it again, then resumes. */
-async function fund(page: Page, credits: number): Promise<void> {
-  await openGameMenu(page);
-  await page.getByRole('button', { name: /Close campaign/ }).click();
-  const latest = await page.evaluate(
-    async (name) =>
-      new Promise<{ key: string; document: SaveEnvelope }>((resolve, reject) => {
-        const open = indexedDB.open(name);
-        open.onerror = () => { reject(open.error ?? new Error('The database did not open.')); };
-        open.onsuccess = () => {
-          const database = open.result;
-          const transaction = database.transaction('snapshots', 'readonly');
-          const all = transaction.objectStore('snapshots').getAll();
-          transaction.oncomplete = () => {
-            database.close();
-            const records = all.result as { document: SaveEnvelope }[];
-            const newest = records.reduce((most, record) =>
-              (record.document.sequence > most.document.sequence ? record : most));
-            resolve({ key: newest.document.saveId, document: newest.document });
-          };
-        };
-      }),
-    DATABASE,
-  );
-  const state = latest.document.state as unknown as { assets: { credits: number } };
-  state.assets.credits += credits;
-  const { checksum: _stale, ...fields } = latest.document;
-  void _stale;
-  const resealed = { ...fields, checksum: envelopeChecksum(fields) };
-  await page.evaluate(
-    async ({ name, saveId, document }) =>
-      new Promise<void>((resolve, reject) => {
-        const open = indexedDB.open(name);
-        open.onerror = () => { reject(open.error ?? new Error('The database did not open.')); };
-        open.onsuccess = () => {
-          const database = open.result;
-          const transaction = database.transaction('snapshots', 'readwrite');
-          const store = transaction.objectStore('snapshots');
-          const read = store.get(saveId);
-          read.onsuccess = () => {
-            store.put({ ...(read.result as object), document });
-          };
-          transaction.oncomplete = () => { database.close(); resolve(); };
-          transaction.onerror = () => { database.close(); reject(transaction.error ?? new Error('The save was not rewritten.')); };
-        };
-      }),
-    { name: DATABASE, saveId: latest.key, document: resealed },
-  );
-  await page.reload();
-  await page.getByRole('button', { name: 'Resume campaign' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
-}
-
 function region(page: Page, name: string): Locator {
   return page.getByRole('region', { name, exact: true });
 }
@@ -125,16 +50,6 @@ async function ensureRunning(page: Page): Promise<void> {
   const resume = page.getByRole('button', { name: /^Resume/ });
   if (await resume.isVisible()) await resume.click();
   await expect(page.getByText(/Running at 1x/)).toBeVisible();
-}
-
-async function buy(page: Page, name: string, quantity: number, toHold = false): Promise<void> {
-  await page.getByRole('button', { name: `Buy ${name}`, exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Confirm purchase' });
-  await dialog.getByLabel('Quantity').fill(String(quantity));
-  if (toHold) await dialog.getByLabel('Deliver to').selectOption({ label: 'Ship cargo hold' });
-  await expect(dialog.getByText('Calculating…')).toBeHidden();
-  await dialog.getByRole('button', { name: 'Confirm' }).click();
-  await expect(dialog).toBeHidden();
 }
 
 async function closeAndReopen(page: Page, heading: string): Promise<void> {
@@ -148,7 +63,7 @@ async function closeAndReopen(page: Page, heading: string): Promise<void> {
 test.describe('the v0.2 progression loop', () => {
   test.beforeEach(async ({ page }) => {
     await fixSeed(page);
-    await freshCampaign(page);
+    await freshCampaign(page, PILOT);
   });
 
   test('buys and flies a destroyer, webs and loots at a fit-sensitive site, refits and reopens at an advanced site [V02-AC-14, V02-AC-03, V02-AC-07, V02-AC-09, FUNC-19.5]', async ({

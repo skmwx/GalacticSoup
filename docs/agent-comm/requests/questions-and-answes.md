@@ -116,3 +116,20 @@ hours over two or three sittings, and fill in its Result section. Findings becom
 usability changes, and the affected evidence is run again.
 
 **Answer:**
+
+
+## Q14 - v0.2 phase 7 - Please update `docs/human-input/CurrentState.md` for v0.2
+
+**Asked:** 2026-11-17 (v0.2 phase 7). **Blocking:** nothing automated; it is a release handoff step agents may not do.
+
+Phase 7 is done. The candidate is recorded, and the handoff is `docs/agent-comm/release/v02-release-handoff.md`: what v0.2 contains, the gate results, the compatibility policy and the open findings. `CurrentState.md` still describes the state before v0.2. Agents must not edit `docs/human-input`.
+
+**Request:** please update `docs/human-input/CurrentState.md` to say that:
+
+- v0.2 (Combat Progression Alpha) is implemented, and its automated gate is green;
+- V02-AC-15 (the human playtest, Q13) is still pending;
+- a v0.1 campaign cannot be continued, so v0.2 needs a fresh campaign.
+
+Also say whatever you want the next increment to start from.
+
+**Answer:**
