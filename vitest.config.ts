@@ -3,6 +3,12 @@ import { defineConfig } from 'vitest/config';
 
 import { aliasEntries } from './config/aliases.mjs';
 import { contentPlugin } from './config/contentPlugin.mjs';
+import {
+  INTEGRATION_FAST_PROJECT,
+  INTEGRATION_INCLUDE,
+  INTEGRATION_RELEASE_INCLUDE,
+  INTEGRATION_RELEASE_PROJECT,
+} from './config/testSelections.mjs';
 
 const alias = aliasEntries();
 
@@ -11,8 +17,10 @@ const alias = aliasEntries();
 // (Technical Specification 6.2).
 const content = (): ReturnType<typeof contentPlugin> => contentPlugin();
 
-// Named projects back the `test:unit`, `test:integration`, `test:performance`
-// and `test:component` entry points (Technical Specification 15.1).
+// Named projects back the `test:unit`, `test:integration` (both integration
+// projects), `test:integration:fast`, `test:integration:release`,
+// `test:performance` and `test:component` entry points (Technical
+// Specification 15.1).
 // Browser and accessibility levels run under Playwright.
 // @implements TECH-15.1
 export default defineConfig({
@@ -29,12 +37,26 @@ export default defineConfig({
         },
       },
       {
+        // The integration suite in two disjoint selections whose union is
+        // every file under tests/integration (config/testSelections.mjs):
+        // the fast one for feature verification, the long simulations for
+        // the release gate and `npm run balance`.
         plugins: [content()],
         resolve: { alias },
         test: {
-          name: 'integration',
+          name: INTEGRATION_FAST_PROJECT,
           environment: 'node',
-          include: ['tests/integration/**/*.test.ts'],
+          include: INTEGRATION_INCLUDE,
+          exclude: INTEGRATION_RELEASE_INCLUDE,
+        },
+      },
+      {
+        plugins: [content()],
+        resolve: { alias },
+        test: {
+          name: INTEGRATION_RELEASE_PROJECT,
+          environment: 'node',
+          include: INTEGRATION_RELEASE_INCLUDE,
         },
       },
       {

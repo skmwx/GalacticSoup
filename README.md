@@ -24,7 +24,10 @@ specification and technical specification define the game; `docs/MVPScope.md` an
 | `npm run check:architecture` | Package boundaries, dependency direction, headless-engine rule, circular imports. |
 | `npm run validate:content` | Schema and semantic validation of the content bundle. |
 | `npm run test:unit` | Formula, contract and rule unit tests (Node environment). |
-| `npm run test:integration` | Engine and transport integration tests (Node environment). |
+| `npm run test:integration` | Engine and transport integration tests (Node environment): both selections below. |
+| `npm run test:integration:fast` | The fast integration selection: loops, replay, persistence, properties, a fixed-seed Scout sortie. |
+| `npm run test:integration:release` | The release-only integration selection: balance careers and matrix, progression scenarios, site ladder (long). |
+| `npm run test:discover` | Lists what each Vitest script and Playwright project selects, without running it, and checks the integration split. |
 | `npm run test:performance` | Engine timing against the Technical Specification 13 targets, run alone. |
 | `npm run test:component` | React component behaviour (jsdom). |
 | `npm run test:browser` | Playwright acceptance flows against the production build. |
@@ -441,7 +444,7 @@ it: docked with a fitting draft open, in warp, in a fight, after a loss, beside 
 hold loot, and with every site cleared.
 
 `tests/integration/goldenCampaign.test.ts` records the campaign again and compares it byte for
-byte, replays the log through the in-process gateway and through the worker dispatcher, and reloads
+byte; `goldenCampaignReplay`, `goldenCampaignWorker` and `goldenCampaignContinue` replay the log through the in-process gateway and through the worker dispatcher, and reloads
 each save: it must open through the load pipeline, rebuild every projection the uninterrupted
 campaign showed there, and continue to the next golden state with the same hashes. The same saves
 are the subjects of the state audit and the starting points of half the property runs.
@@ -452,8 +455,9 @@ the balance candidate; `npm run golden:record` records them again, and the diff 
 
 ## Property runs and performance
 
-`tests/integration/campaignProperties.test.ts` flies a seeded random pilot through thousands of
-steps from new campaigns and from golden saves. It asks for legal and illegal things in no
+`tests/integration/campaignProperties*.test.ts` fly a seeded random pilot through thousands of
+steps from new campaigns and from golden saves, one run or two to a file so that they run side by
+side. It asks for legal and illegal things in no
 particular order, and at every step the same things must hold: a refusal is a rule and never an
 internal error, one commit moves one revision, nothing that counts runs backwards, only elapsed
 time draws from a random stream, the wallet changes by exactly what a preview said, items are

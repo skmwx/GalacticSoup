@@ -24,7 +24,7 @@ import { REPO_ROOT } from '../config/aliases.mjs';
 const vitest = path.join(REPO_ROOT, 'node_modules', 'vitest', 'vitest.mjs');
 const result = spawnSync(
   process.execPath,
-  [vitest, 'run', '--project', 'integration', 'tests/integration/goldenCampaign.test.ts'],
+  [vitest, 'run', '--project', 'integration-fast', 'tests/integration/goldenCampaign.test.ts'],
   { cwd: REPO_ROOT, stdio: 'inherit', env: { ...process.env, GOLDEN_RECORD: '1' } },
 );
 

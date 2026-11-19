@@ -1,0 +1,2956 @@
+{
+  "generatedFor": "Galactic Soup",
+  "generatedAt": "2026-11-19T17:27:16Z",
+  "summary": {
+    "vitestFilesByProject": {
+      "component": 13,
+      "integration": 51,
+      "performance": 1,
+      "unit": 80
+    },
+    "vitestFilesByScript": {
+      "diagnose:content": 1,
+      "balance": 25,
+      "balance:record": 25,
+      "test": 145,
+      "test:unit": 80,
+      "test:integration": 51,
+      "test:component": 13,
+      "test:performance": 1
+    },
+    "playwrightCasesByProject": {
+      "browser": 35,
+      "accessibility": 43,
+      "browser-firefox": 35,
+      "accessibility-firefox": 43,
+      "browser-chrome": 17,
+      "browser-edge": 17
+    }
+  },
+  "checks": [
+    {
+      "name": "the integration project holds every integration file",
+      "ok": true,
+      "detail": "missing: none; extra: none"
+    },
+    {
+      "name": "diagnose:content resolves the content diagnostics file alone",
+      "ok": true,
+      "detail": "tests/integration/contentDiagnostics.test.ts"
+    },
+    {
+      "name": "balance resolves the progression and balance simulations",
+      "ok": true,
+      "detail": "25 files, expected 25"
+    },
+    {
+      "name": "balance:record resolves the progression and balance simulations",
+      "ok": true,
+      "detail": "25 files, expected 25"
+    },
+    {
+      "name": "no Playwright case runs twice in a project",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "vitest": {
+    "projects": {
+      "component": [
+        "tests/component/actionRunner.test.tsx",
+        "tests/component/AppShell.test.tsx",
+        "tests/component/CampaignPanel.test.tsx",
+        "tests/component/CombatScreen.test.tsx",
+        "tests/component/CompatibilityFailure.test.tsx",
+        "tests/component/Guidance.test.tsx",
+        "tests/component/LossScreen.test.tsx",
+        "tests/component/Notifications.test.tsx",
+        "tests/component/Settings.test.tsx",
+        "tests/component/ShipsPanel.test.tsx",
+        "tests/component/SpaceScreen.test.tsx",
+        "tests/component/StationScreen.test.tsx",
+        "tests/component/WebControl.test.tsx"
+      ],
+      "integration": [
+        "tests/integration/balance/careerCruiserLoss.test.ts",
+        "tests/integration/balance/careerDestroyerLoss.test.ts",
+        "tests/integration/balance/careerHullLadder.test.ts",
+        "tests/integration/balance/careerLongRange.test.ts",
+        "tests/integration/balance/careerLossRecovery.test.ts",
+        "tests/integration/balance/careerNoModuleDrops.test.ts",
+        "tests/integration/balance/careerPoorPurchase.test.ts",
+        "tests/integration/balance/careerScoutFirst.test.ts",
+        "tests/integration/balance/hullEconomy.test.ts",
+        "tests/integration/balance/matrix/armored-hold.test.ts",
+        "tests/integration/balance/matrix/bombardment-line.test.ts",
+        "tests/integration/balance/matrix/command-group.test.ts",
+        "tests/integration/balance/matrix/crossfire.test.ts",
+        "tests/integration/balance/matrix/knife-fight.test.ts",
+        "tests/integration/balance/matrix/longshot-picket.test.ts",
+        "tests/integration/balance/matrix/missile-picket.test.ts",
+        "tests/integration/balance/matrix/pirate-base.test.ts",
+        "tests/integration/balance/matrix/pirate-patrol.test.ts",
+        "tests/integration/balance/matrix/pirate-scout.test.ts",
+        "tests/integration/balance/matrix/range-check.test.ts",
+        "tests/integration/balance/matrix/screened-battery.test.ts",
+        "tests/integration/balance/selectiveKills.test.ts",
+        "tests/integration/balance/startingWallet.test.ts",
+        "tests/integration/campaignProperties.test.ts",
+        "tests/integration/campaignSession.test.ts",
+        "tests/integration/combat.test.ts",
+        "tests/integration/contentCompatibility.test.ts",
+        "tests/integration/contentDiagnostics.test.ts",
+        "tests/integration/contentPort.test.ts",
+        "tests/integration/economy.test.ts",
+        "tests/integration/encounter.test.ts",
+        "tests/integration/fitting.test.ts",
+        "tests/integration/fittingCatalog.test.ts",
+        "tests/integration/goldenCampaign.test.ts",
+        "tests/integration/guidance.test.ts",
+        "tests/integration/guidedWeapons.test.ts",
+        "tests/integration/inventory.test.ts",
+        "tests/integration/loss.test.ts",
+        "tests/integration/multiHull.test.ts",
+        "tests/integration/navigation.test.ts",
+        "tests/integration/npcArchetypes.test.ts",
+        "tests/integration/progression.test.ts",
+        "tests/integration/progressionMastery.test.ts",
+        "tests/integration/replay.test.ts",
+        "tests/integration/saveResume.test.ts",
+        "tests/integration/siteAttempts.test.ts",
+        "tests/integration/siteLadder.test.ts",
+        "tests/integration/transportParity.test.ts",
+        "tests/integration/v02Persistence.test.ts",
+        "tests/integration/webControl.test.ts",
+        "tests/integration/workerDispatcher.test.ts"
+      ],
+      "performance": [
+        "tests/performance/engine.test.ts"
+      ],
+      "unit": [
+        "tests/unit/architecture.test.ts",
+        "tests/unit/config/aliases.test.ts",
+        "tests/unit/config/releaseGate.test.ts",
+        "tests/unit/config/traceability.test.ts",
+        "tests/unit/content/balanceFixtures.test.ts",
+        "tests/unit/content/buildIntegration.test.ts",
+        "tests/unit/content/compilation.test.ts",
+        "tests/unit/content/contentFloor.test.ts",
+        "tests/unit/content/dataDriven.test.ts",
+        "tests/unit/content/guidanceValidation.test.ts",
+        "tests/unit/content/repository.test.ts",
+        "tests/unit/content/schemaValidation.test.ts",
+        "tests/unit/content/semanticValidation.test.ts",
+        "tests/unit/content/shippedContent.test.ts",
+        "tests/unit/content/siteBudgets.test.ts",
+        "tests/unit/content/startingAssets.test.ts",
+        "tests/unit/engine/assetPersistence.test.ts",
+        "tests/unit/engine/attributes.test.ts",
+        "tests/unit/engine/bookmark.test.ts",
+        "tests/unit/engine/campaignState.test.ts",
+        "tests/unit/engine/clock.test.ts",
+        "tests/unit/engine/combat.test.ts",
+        "tests/unit/engine/combatDamage.test.ts",
+        "tests/unit/engine/combatFormulas.test.ts",
+        "tests/unit/engine/combatModules.test.ts",
+        "tests/unit/engine/combatPersistence.test.ts",
+        "tests/unit/engine/commandPipeline.test.ts",
+        "tests/unit/engine/contentMessages.test.ts",
+        "tests/unit/engine/economy.test.ts",
+        "tests/unit/engine/encounter.test.ts",
+        "tests/unit/engine/encounterLoot.test.ts",
+        "tests/unit/engine/encounterPersistence.test.ts",
+        "tests/unit/engine/engineHost.test.ts",
+        "tests/unit/engine/fitting.test.ts",
+        "tests/unit/engine/guidance.test.ts",
+        "tests/unit/engine/guidedFormula.test.ts",
+        "tests/unit/engine/headless.test.ts",
+        "tests/unit/engine/inventory.test.ts",
+        "tests/unit/engine/loss.test.ts",
+        "tests/unit/engine/lossPersistence.test.ts",
+        "tests/unit/engine/lossProperties.test.ts",
+        "tests/unit/engine/marketListings.test.ts",
+        "tests/unit/engine/modifierOperators.test.ts",
+        "tests/unit/engine/navigation.test.ts",
+        "tests/unit/engine/navigationAvailability.test.ts",
+        "tests/unit/engine/notifications.test.ts",
+        "tests/unit/engine/npcBehavior.test.ts",
+        "tests/unit/engine/random.test.ts",
+        "tests/unit/engine/saveEnvelope.test.ts",
+        "tests/unit/engine/saveLoad.test.ts",
+        "tests/unit/engine/saveMigrations.test.ts",
+        "tests/unit/engine/saveService.test.ts",
+        "tests/unit/engine/scheduler.test.ts",
+        "tests/unit/engine/shipProjection.test.ts",
+        "tests/unit/engine/stateAudit.test.ts",
+        "tests/unit/engine/tacticalProjection.test.ts",
+        "tests/unit/gateway/campaignSession.test.ts",
+        "tests/unit/gateway/frameDriver.test.ts",
+        "tests/unit/persistence/indexedDbSaveStore.test.ts",
+        "tests/unit/persistence/memorySaveStore.test.ts",
+        "tests/unit/persistence/retention.test.ts",
+        "tests/unit/protocol/assets.test.ts",
+        "tests/unit/protocol/contractClosure.test.ts",
+        "tests/unit/protocol/fitting.test.ts",
+        "tests/unit/protocol/guidanceSchemaParity.test.ts",
+        "tests/unit/protocol/schemaParity.test.ts",
+        "tests/unit/protocol/transport.test.ts",
+        "tests/unit/protocol/validation.test.ts",
+        "tests/unit/shared/canonicalProfile.test.ts",
+        "tests/unit/shared/collections.test.ts",
+        "tests/unit/shared/identifiers.test.ts",
+        "tests/unit/shared/localization.test.ts",
+        "tests/unit/shared/numeric.test.ts",
+        "tests/unit/ui/bindings.test.ts",
+        "tests/unit/ui/camera.test.ts",
+        "tests/unit/ui/duration.test.ts",
+        "tests/unit/ui/messageCatalog.test.ts",
+        "tests/unit/ui/numbers.test.ts",
+        "tests/unit/ui/preferences.test.ts",
+        "tests/unit/ui/quantity.test.ts"
+      ]
+    },
+    "scripts": {
+      "diagnose:content": {
+        "command": "vitest run --project integration tests/integration/contentDiagnostics.test.ts",
+        "files": [
+          {
+            "file": "tests/integration/contentDiagnostics.test.ts",
+            "project": "integration"
+          }
+        ]
+      },
+      "balance": {
+        "command": "vitest run --project integration tests/integration/progression tests/integration/balance && node scripts/balance-report.mjs",
+        "files": [
+          {
+            "file": "tests/integration/balance/careerCruiserLoss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerDestroyerLoss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerHullLadder.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerLongRange.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerLossRecovery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerNoModuleDrops.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerPoorPurchase.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerScoutFirst.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/hullEconomy.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/armored-hold.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/bombardment-line.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/command-group.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/crossfire.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/knife-fight.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/longshot-picket.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/missile-picket.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-base.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-patrol.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-scout.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/range-check.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/screened-battery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/selectiveKills.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/startingWallet.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/progression.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/progressionMastery.test.ts",
+            "project": "integration"
+          }
+        ]
+      },
+      "balance:record": {
+        "command": "vitest run --project integration tests/integration/progression tests/integration/balance && node scripts/balance-report.mjs --record",
+        "files": [
+          {
+            "file": "tests/integration/balance/careerCruiserLoss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerDestroyerLoss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerHullLadder.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerLongRange.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerLossRecovery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerNoModuleDrops.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerPoorPurchase.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerScoutFirst.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/hullEconomy.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/armored-hold.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/bombardment-line.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/command-group.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/crossfire.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/knife-fight.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/longshot-picket.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/missile-picket.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-base.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-patrol.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-scout.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/range-check.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/screened-battery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/selectiveKills.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/startingWallet.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/progression.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/progressionMastery.test.ts",
+            "project": "integration"
+          }
+        ]
+      },
+      "test": {
+        "command": "vitest run",
+        "files": [
+          {
+            "file": "tests/component/actionRunner.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/AppShell.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/CampaignPanel.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/CombatScreen.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/CompatibilityFailure.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/Guidance.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/LossScreen.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/Notifications.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/Settings.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/ShipsPanel.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/SpaceScreen.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/StationScreen.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/WebControl.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/integration/balance/careerCruiserLoss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerDestroyerLoss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerHullLadder.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerLongRange.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerLossRecovery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerNoModuleDrops.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerPoorPurchase.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerScoutFirst.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/hullEconomy.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/armored-hold.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/bombardment-line.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/command-group.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/crossfire.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/knife-fight.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/longshot-picket.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/missile-picket.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-base.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-patrol.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-scout.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/range-check.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/screened-battery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/selectiveKills.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/startingWallet.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/campaignProperties.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/campaignSession.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/combat.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/contentCompatibility.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/contentDiagnostics.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/contentPort.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/economy.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/encounter.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/fitting.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/fittingCatalog.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/goldenCampaign.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/guidance.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/guidedWeapons.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/inventory.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/loss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/multiHull.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/navigation.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/npcArchetypes.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/progression.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/progressionMastery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/replay.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/saveResume.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/siteAttempts.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/siteLadder.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/transportParity.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/v02Persistence.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/webControl.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/workerDispatcher.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/performance/engine.test.ts",
+            "project": "performance"
+          },
+          {
+            "file": "tests/unit/architecture.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/config/aliases.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/config/releaseGate.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/config/traceability.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/balanceFixtures.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/buildIntegration.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/compilation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/contentFloor.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/dataDriven.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/guidanceValidation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/repository.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/schemaValidation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/semanticValidation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/shippedContent.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/siteBudgets.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/startingAssets.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/assetPersistence.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/attributes.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/bookmark.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/campaignState.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/clock.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combat.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combatDamage.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combatFormulas.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combatModules.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combatPersistence.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/commandPipeline.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/contentMessages.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/economy.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/encounter.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/encounterLoot.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/encounterPersistence.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/engineHost.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/fitting.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/guidance.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/guidedFormula.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/headless.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/inventory.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/loss.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/lossPersistence.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/lossProperties.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/marketListings.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/modifierOperators.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/navigation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/navigationAvailability.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/notifications.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/npcBehavior.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/random.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/saveEnvelope.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/saveLoad.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/saveMigrations.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/saveService.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/scheduler.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/shipProjection.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/stateAudit.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/tacticalProjection.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/gateway/campaignSession.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/gateway/frameDriver.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/persistence/indexedDbSaveStore.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/persistence/memorySaveStore.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/persistence/retention.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/assets.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/contractClosure.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/fitting.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/guidanceSchemaParity.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/schemaParity.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/transport.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/validation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/canonicalProfile.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/collections.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/identifiers.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/localization.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/numeric.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/bindings.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/camera.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/duration.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/messageCatalog.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/numbers.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/preferences.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/quantity.test.ts",
+            "project": "unit"
+          }
+        ]
+      },
+      "test:unit": {
+        "command": "vitest run --project unit",
+        "files": [
+          {
+            "file": "tests/unit/architecture.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/config/aliases.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/config/releaseGate.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/config/traceability.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/balanceFixtures.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/buildIntegration.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/compilation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/contentFloor.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/dataDriven.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/guidanceValidation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/repository.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/schemaValidation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/semanticValidation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/shippedContent.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/siteBudgets.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/content/startingAssets.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/assetPersistence.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/attributes.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/bookmark.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/campaignState.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/clock.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combat.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combatDamage.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combatFormulas.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combatModules.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/combatPersistence.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/commandPipeline.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/contentMessages.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/economy.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/encounter.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/encounterLoot.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/encounterPersistence.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/engineHost.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/fitting.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/guidance.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/guidedFormula.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/headless.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/inventory.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/loss.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/lossPersistence.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/lossProperties.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/marketListings.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/modifierOperators.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/navigation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/navigationAvailability.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/notifications.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/npcBehavior.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/random.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/saveEnvelope.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/saveLoad.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/saveMigrations.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/saveService.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/scheduler.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/shipProjection.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/stateAudit.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/engine/tacticalProjection.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/gateway/campaignSession.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/gateway/frameDriver.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/persistence/indexedDbSaveStore.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/persistence/memorySaveStore.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/persistence/retention.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/assets.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/contractClosure.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/fitting.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/guidanceSchemaParity.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/schemaParity.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/transport.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/protocol/validation.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/canonicalProfile.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/collections.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/identifiers.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/localization.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/shared/numeric.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/bindings.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/camera.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/duration.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/messageCatalog.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/numbers.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/preferences.test.ts",
+            "project": "unit"
+          },
+          {
+            "file": "tests/unit/ui/quantity.test.ts",
+            "project": "unit"
+          }
+        ]
+      },
+      "test:integration": {
+        "command": "vitest run --project integration",
+        "files": [
+          {
+            "file": "tests/integration/balance/careerCruiserLoss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerDestroyerLoss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerHullLadder.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerLongRange.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerLossRecovery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerNoModuleDrops.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerPoorPurchase.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/careerScoutFirst.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/hullEconomy.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/armored-hold.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/bombardment-line.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/command-group.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/crossfire.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/knife-fight.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/longshot-picket.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/missile-picket.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-base.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-patrol.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/pirate-scout.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/range-check.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/matrix/screened-battery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/selectiveKills.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/balance/startingWallet.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/campaignProperties.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/campaignSession.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/combat.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/contentCompatibility.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/contentDiagnostics.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/contentPort.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/economy.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/encounter.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/fitting.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/fittingCatalog.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/goldenCampaign.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/guidance.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/guidedWeapons.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/inventory.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/loss.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/multiHull.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/navigation.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/npcArchetypes.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/progression.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/progressionMastery.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/replay.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/saveResume.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/siteAttempts.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/siteLadder.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/transportParity.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/v02Persistence.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/webControl.test.ts",
+            "project": "integration"
+          },
+          {
+            "file": "tests/integration/workerDispatcher.test.ts",
+            "project": "integration"
+          }
+        ]
+      },
+      "test:component": {
+        "command": "vitest run --project component",
+        "files": [
+          {
+            "file": "tests/component/actionRunner.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/AppShell.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/CampaignPanel.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/CombatScreen.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/CompatibilityFailure.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/Guidance.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/LossScreen.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/Notifications.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/Settings.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/ShipsPanel.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/SpaceScreen.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/StationScreen.test.tsx",
+            "project": "component"
+          },
+          {
+            "file": "tests/component/WebControl.test.tsx",
+            "project": "component"
+          }
+        ]
+      },
+      "test:performance": {
+        "command": "vitest run --project performance",
+        "files": [
+          {
+            "file": "tests/performance/engine.test.ts",
+            "project": "performance"
+          }
+        ]
+      }
+    }
+  },
+  "playwright": {
+    "required": [
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/campaign.spec.ts",
+        "line": 48,
+        "title": "campaign accessibility > starts and closes a campaign with the keyboard alone [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/campaign.spec.ts",
+        "line": 68,
+        "title": "campaign accessibility > keeps the reset confirmation reachable and reversible [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/campaign.spec.ts",
+        "line": 87,
+        "title": "campaign accessibility > stays readable at a doubled interface scale [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/campaign.spec.ts",
+        "line": 105,
+        "title": "campaign accessibility > does not rely on colour alone to report a save [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/combat.spec.ts",
+        "line": 75,
+        "title": "combat accessibility > passes an automated audit in the middle of a fight [TECH-12.3, FUNC-19.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/combat.spec.ts",
+        "line": 92,
+        "title": "combat accessibility > passes an audit with the context menu open, and closes it with Escape [TECH-12.3, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/combat.spec.ts",
+        "line": 110,
+        "title": "combat accessibility > names hostility, locks and threats in words, not only colour [TECH-12.2, FUNC-9.1]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/combat.spec.ts",
+        "line": 122,
+        "title": "combat accessibility > stays usable at a doubled interface scale in a fight [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/guidance.spec.ts",
+        "line": 50,
+        "title": "guidance and notification accessibility > passes an audit with the guidance, a notification, the event log and the settings open [TECH-12.3, FUNC-19.7, MVP-AC-10]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/guidance.spec.ts",
+        "line": 74,
+        "title": "guidance and notification accessibility > operates the guidance and the event log from the keyboard alone [TECH-12.3, FUNC-20, FUNC-3.2]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/guidance.spec.ts",
+        "line": 99,
+        "title": "guidance and notification accessibility > names a step's state and a notification's level in words, not colour alone [TECH-12.2, TECH-12.3, FUNC-19.7]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/guidance.spec.ts",
+        "line": 119,
+        "title": "guidance and notification accessibility > stays usable at a doubled interface and text scale [TECH-12.3, TECH-12.5]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/loss.spec.ts",
+        "line": 69,
+        "title": "loss accessibility > audits the loss report and the shipless station, then buys a way back [FUNC-9.12, FUNC-19.6, FUNC-20, FUNC-22.1, TECH-12.3, MVP-AC-10]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 145,
+        "title": "presentation settings and accessibility > audits every station surface, a confirmation and a fight at doubled size, high contrast and reduced motion [TECH-12.3, TECH-12.2, TECH-15.1, FUNC-20, MVP-AC-02, MVP-AC-03]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 145,
+        "title": "presentation settings and accessibility > audits every station surface, a confirmation and a fight at standard size and contrast [TECH-12.3, TECH-12.2, TECH-15.1, FUNC-20, MVP-AC-02, MVP-AC-03]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 181,
+        "title": "presentation settings and accessibility > changes the display from the keyboard alone before a campaign, and keeps it after a reload [FUNC-20, TECH-12.3, TECH-3.1]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 235,
+        "title": "presentation settings and accessibility > changes the settings and answers the undock warning with the mouse alone [FUNC-20, FUNC-10, MVP-AC-02]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 271,
+        "title": "presentation settings and accessibility > remaps a key from the keyboard; buttons, guidance and combat follow it, and a refused key says why [FUNC-20, FUNC-19.2, TECH-12.3, MVP-AC-03, MVP-AC-10]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 336,
+        "title": "presentation settings and accessibility > traps focus in every confirmation and returns it to the control that opened it [TECH-12.3, FUNC-19.5, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 366,
+        "title": "presentation settings and accessibility > keeps every state readable when every colour is the same [TECH-12.2, FUNC-20, FUNC-19.7, MVP-AC-08]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 63,
+        "title": "v0.2 surfaces: accessibility > audits a hangar of three ships and their comparison, and switches ship from the keyboard [V02-AC-14, V02-AC-03, TECH-12.3, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 101,
+        "title": "v0.2 surfaces: accessibility > audits the market under its purpose, size and compatibility filters, operated from the keyboard [V02-AC-14, V02-AC-05, TECH-12.3, FUNC-11.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 135,
+        "title": "v0.2 surfaces: accessibility > audits twelve destinations in bands, filters them and chooses one from the keyboard [V02-AC-14, V02-AC-09, TECH-12.3, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 166,
+        "title": "v0.2 surfaces: accessibility > audits a fight under guided fire: volleys are marked by shape and described in words, also with reduced motion [V02-AC-14, V02-AC-06, TECH-12.2, TECH-12.3, FUNC-19.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 190,
+        "title": "v0.2 surfaces: accessibility > audits a fight under a web: the slowing is named with its source, strength, time and the speed left [V02-AC-14, V02-AC-07, TECH-12.2, TECH-12.3, FUNC-9.9]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/shell.spec.ts",
+        "line": 10,
+        "title": "shell accessibility > has no automatically detectable violations [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/shell.spec.ts",
+        "line": 21,
+        "title": "shell accessibility > exposes a document language and one top-level heading [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/shell.spec.ts",
+        "line": 28,
+        "title": "shell accessibility > remains readable at a doubled interface scale [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 53,
+        "title": "space accessibility > passes an automated audit on the departure and space surfaces [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 68,
+        "title": "space accessibility > describes the drawing instead of exposing its shapes [TECH-12.2]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 76,
+        "title": "space accessibility > selects an object and gives an order with the keyboard alone [TECH-12.3, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 92,
+        "title": "space accessibility > says why an order is unavailable rather than hiding it [TECH-12.3, FUNC-22.10]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 108,
+        "title": "space accessibility > chooses a destination and warps with the keyboard alone [MVP-AC-03, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 132,
+        "title": "space accessibility > sets a course with the keyboard alone through the point menu [FUNC-20, FUNC-19.2, TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 169,
+        "title": "space accessibility > stays readable at a doubled interface scale [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 49,
+        "title": "station accessibility > passes an automated audit on every station surface [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 62,
+        "title": "station accessibility > switches the market to Sell with the keyboard and audits both modes [TECH-12.3, FUNC-11.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 85,
+        "title": "station accessibility > moves a typed quantity with the keyboard and explains a refused one [TECH-12.3, FUNC-6.2]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 114,
+        "title": "station accessibility > passes an automated audit inside a confirmation [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 122,
+        "title": "station accessibility > reaches a surface and a purchase with the keyboard alone [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 140,
+        "title": "station accessibility > traps focus in a confirmation and returns it afterwards [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 165,
+        "title": "station accessibility > does not rely on colour alone to report a refusal [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 175,
+        "title": "station accessibility > stays readable at a doubled interface scale [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/campaign.spec.ts",
+        "line": 48,
+        "title": "campaign accessibility > starts and closes a campaign with the keyboard alone [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/campaign.spec.ts",
+        "line": 68,
+        "title": "campaign accessibility > keeps the reset confirmation reachable and reversible [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/campaign.spec.ts",
+        "line": 87,
+        "title": "campaign accessibility > stays readable at a doubled interface scale [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/campaign.spec.ts",
+        "line": 105,
+        "title": "campaign accessibility > does not rely on colour alone to report a save [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/combat.spec.ts",
+        "line": 75,
+        "title": "combat accessibility > passes an automated audit in the middle of a fight [TECH-12.3, FUNC-19.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/combat.spec.ts",
+        "line": 92,
+        "title": "combat accessibility > passes an audit with the context menu open, and closes it with Escape [TECH-12.3, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/combat.spec.ts",
+        "line": 110,
+        "title": "combat accessibility > names hostility, locks and threats in words, not only colour [TECH-12.2, FUNC-9.1]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/combat.spec.ts",
+        "line": 122,
+        "title": "combat accessibility > stays usable at a doubled interface scale in a fight [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/guidance.spec.ts",
+        "line": 50,
+        "title": "guidance and notification accessibility > passes an audit with the guidance, a notification, the event log and the settings open [TECH-12.3, FUNC-19.7, MVP-AC-10]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/guidance.spec.ts",
+        "line": 74,
+        "title": "guidance and notification accessibility > operates the guidance and the event log from the keyboard alone [TECH-12.3, FUNC-20, FUNC-3.2]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/guidance.spec.ts",
+        "line": 99,
+        "title": "guidance and notification accessibility > names a step's state and a notification's level in words, not colour alone [TECH-12.2, TECH-12.3, FUNC-19.7]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/guidance.spec.ts",
+        "line": 119,
+        "title": "guidance and notification accessibility > stays usable at a doubled interface and text scale [TECH-12.3, TECH-12.5]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/loss.spec.ts",
+        "line": 69,
+        "title": "loss accessibility > audits the loss report and the shipless station, then buys a way back [FUNC-9.12, FUNC-19.6, FUNC-20, FUNC-22.1, TECH-12.3, MVP-AC-10]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 145,
+        "title": "presentation settings and accessibility > audits every station surface, a confirmation and a fight at doubled size, high contrast and reduced motion [TECH-12.3, TECH-12.2, TECH-15.1, FUNC-20, MVP-AC-02, MVP-AC-03]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 145,
+        "title": "presentation settings and accessibility > audits every station surface, a confirmation and a fight at standard size and contrast [TECH-12.3, TECH-12.2, TECH-15.1, FUNC-20, MVP-AC-02, MVP-AC-03]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 181,
+        "title": "presentation settings and accessibility > changes the display from the keyboard alone before a campaign, and keeps it after a reload [FUNC-20, TECH-12.3, TECH-3.1]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 235,
+        "title": "presentation settings and accessibility > changes the settings and answers the undock warning with the mouse alone [FUNC-20, FUNC-10, MVP-AC-02]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 271,
+        "title": "presentation settings and accessibility > remaps a key from the keyboard; buttons, guidance and combat follow it, and a refused key says why [FUNC-20, FUNC-19.2, TECH-12.3, MVP-AC-03, MVP-AC-10]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 336,
+        "title": "presentation settings and accessibility > traps focus in every confirmation and returns it to the control that opened it [TECH-12.3, FUNC-19.5, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/presentation.spec.ts",
+        "line": 366,
+        "title": "presentation settings and accessibility > keeps every state readable when every colour is the same [TECH-12.2, FUNC-20, FUNC-19.7, MVP-AC-08]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 63,
+        "title": "v0.2 surfaces: accessibility > audits a hangar of three ships and their comparison, and switches ship from the keyboard [V02-AC-14, V02-AC-03, TECH-12.3, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 101,
+        "title": "v0.2 surfaces: accessibility > audits the market under its purpose, size and compatibility filters, operated from the keyboard [V02-AC-14, V02-AC-05, TECH-12.3, FUNC-11.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 135,
+        "title": "v0.2 surfaces: accessibility > audits twelve destinations in bands, filters them and chooses one from the keyboard [V02-AC-14, V02-AC-09, TECH-12.3, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 166,
+        "title": "v0.2 surfaces: accessibility > audits a fight under guided fire: volleys are marked by shape and described in words, also with reduced motion [V02-AC-14, V02-AC-06, TECH-12.2, TECH-12.3, FUNC-19.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/progression.spec.ts",
+        "line": 190,
+        "title": "v0.2 surfaces: accessibility > audits a fight under a web: the slowing is named with its source, strength, time and the speed left [V02-AC-14, V02-AC-07, TECH-12.2, TECH-12.3, FUNC-9.9]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/shell.spec.ts",
+        "line": 10,
+        "title": "shell accessibility > has no automatically detectable violations [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/shell.spec.ts",
+        "line": 21,
+        "title": "shell accessibility > exposes a document language and one top-level heading [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/shell.spec.ts",
+        "line": 28,
+        "title": "shell accessibility > remains readable at a doubled interface scale [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 53,
+        "title": "space accessibility > passes an automated audit on the departure and space surfaces [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 68,
+        "title": "space accessibility > describes the drawing instead of exposing its shapes [TECH-12.2]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 76,
+        "title": "space accessibility > selects an object and gives an order with the keyboard alone [TECH-12.3, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 92,
+        "title": "space accessibility > says why an order is unavailable rather than hiding it [TECH-12.3, FUNC-22.10]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 108,
+        "title": "space accessibility > chooses a destination and warps with the keyboard alone [MVP-AC-03, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 132,
+        "title": "space accessibility > sets a course with the keyboard alone through the point menu [FUNC-20, FUNC-19.2, TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/space.spec.ts",
+        "line": 169,
+        "title": "space accessibility > stays readable at a doubled interface scale [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 49,
+        "title": "station accessibility > passes an automated audit on every station surface [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 62,
+        "title": "station accessibility > switches the market to Sell with the keyboard and audits both modes [TECH-12.3, FUNC-11.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 85,
+        "title": "station accessibility > moves a typed quantity with the keyboard and explains a refused one [TECH-12.3, FUNC-6.2]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 114,
+        "title": "station accessibility > passes an automated audit inside a confirmation [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 122,
+        "title": "station accessibility > reaches a surface and a purchase with the keyboard alone [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 140,
+        "title": "station accessibility > traps focus in a confirmation and returns it afterwards [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 165,
+        "title": "station accessibility > does not rely on colour alone to report a refusal [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "accessibility-firefox",
+        "file": "tests/accessibility/station.spec.ts",
+        "line": 175,
+        "title": "station accessibility > stays readable at a doubled interface scale [TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 19,
+        "title": "application boot > reaches the engine through the dedicated worker [TECH-3.1, TECH-4.2]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 48,
+        "title": "application boot > serves the compiled content bundle to the worker [TECH-6.3]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 57,
+        "title": "application boot > makes no request outside its own origin [TECH-2, TECH-3.2, FUNC-22.14]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 71,
+        "title": "application boot > does not show the compatibility failure on a supported browser [TECH-4.2]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 57,
+        "title": "campaign persistence > creates, closes and reopens a campaign [MVP-AC-01, TECH-11.1]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 73,
+        "title": "campaign persistence > resumes the campaign after the page is reloaded [MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 85,
+        "title": "campaign persistence > adds no simulation time while the game is closed [FUNC-22.12]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 98,
+        "title": "campaign persistence > adds one capped step, never the missing hours, after a suspension or a clock change [V02-AC-13, FUNC-22.12, TECH-9.1]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 162,
+        "title": "campaign persistence > deletes the campaign and its saves on reset [FUNC-3.4]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 177,
+        "title": "campaign persistence > stores exactly one campaign slot [MVP Scope 6]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 208,
+        "title": "campaign persistence > persists the starting fit through the real worker and IndexedDB [MVP-AC-02, FUNC-8.4, TECH-11.2]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 260,
+        "title": "campaign persistence > makes no network request while saving [TECH-2, TECH-3.2]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/cockpit.spec.ts",
+        "line": 12,
+        "title": "keeps campaign management separate, undocks without a destination and reads briefings in space without moving",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/cockpit.spec.ts",
+        "line": 41,
+        "title": "keeps frequent flight controls in the desktop working view and reflows without horizontal overflow",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/combat.spec.ts",
+        "line": 185,
+        "title": "the first vertical slice > clears the easiest site, converts the rewards and clears it again with a better fit [MVP-AC-02, MVP-AC-03, MVP-AC-04, MVP-AC-06, MVP-AC-09, MVP-AC-01, V02-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/combat.spec.ts",
+        "line": 298,
+        "title": "combat commands > commands a fight with the mouse alone [MVP-AC-03, FUNC-19.2, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/combat.spec.ts",
+        "line": 355,
+        "title": "combat commands > commands a fight from the keyboard alone [MVP-AC-03, FUNC-20, TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/guidance.spec.ts",
+        "line": 109,
+        "title": "guided first loop > follows the in-game guidance from a new campaign through the easiest complete loop [MVP-AC-10, FUNC-3.2, FUNC-19.7, TECH-12.4]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/guided.spec.ts",
+        "line": 78,
+        "title": "the guided vertical slice > buys and fits a launcher, trades guided volleys with the missile boat, reopens in flight and returns [V02-AC-06, V02-AC-13, FUNC-9.6, FUNC-19.3]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/ladder.spec.ts",
+        "line": 69,
+        "title": "the v0.2 progression loop > buys and flies a destroyer, webs and loots at a fit-sensitive site, refits and reopens at an advanced site [V02-AC-14, V02-AC-03, V02-AC-07, V02-AC-09, FUNC-19.5]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/loss.spec.ts",
+        "line": 132,
+        "title": "losing a ship > is destroyed, reloads, recovers and clears the easiest site again [MVP-AC-08, FUNC-9.12, FUNC-5.4, FUNC-3.4, FUNC-22.1, MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/offline.spec.ts",
+        "line": 67,
+        "title": "playing without a network > starts from its own files and plays a whole loop with the network switched off [MVP-AC-01, MVP-AC-06, TECH-2, TECH-3.1, TECH-3.2]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 185,
+        "title": "save integrity in the browser > keeps five rolling autosaves and one manual save, each written whole [FUNC-3.4, TECH-11.1]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 213,
+        "title": "save integrity in the browser > falls back to the last valid snapshot when the newest is damaged, and leaves the damaged one alone [TECH-11.1, TECH-11.4, MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 244,
+        "title": "save integrity in the browser > refuses a save written by a newer format, says why, and does not touch it [TECH-11.4, FUNC-22.10]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 267,
+        "title": "save integrity in the browser > explains that a v0.1 save cannot continue, keeps it untouched, and replaces it only on confirmation [V02-AC-13, TECH-11.4, FUNC-3.4]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/progression.spec.ts",
+        "line": 376,
+        "title": "progression to the mastery site > clears the multi-opponent site, converts its rewards and clears the mastery site, reopening along the way [MVP-AC-01, MVP-AC-05, MVP-AC-06, MVP-AC-07, MVP-AC-09, FUNC-9.10, FUNC-9.11, FUNC-18]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/space.spec.ts",
+        "line": 47,
+        "title": "traversal > undocks, chooses in space, flies, warps, returns home, docks and resumes [MVP-AC-03, MVP-AC-08, MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/space.spec.ts",
+        "line": 111,
+        "title": "traversal > resumes in the site it was closed in [MVP-AC-01, FUNC-3.4]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/space.spec.ts",
+        "line": 127,
+        "title": "traversal > sets a course from the radar point menu after pan, zoom and resize [FUNC-19.2, FUNC-7.1]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/space.spec.ts",
+        "line": 200,
+        "title": "traversal > opens object commands, not a course, on a secondary click on an object [FUNC-19.2]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/station.spec.ts",
+        "line": 42,
+        "title": "station interface > prepares a ship end to end and finds it after a reopen [MVP-AC-01, MVP-AC-02, MVP-AC-06]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/station.spec.ts",
+        "line": 110,
+        "title": "station interface > moves a stack between the hangar and the hold [FUNC-6.2]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/station.spec.ts",
+        "line": 126,
+        "title": "station interface > explains a price instead of asserting it [MVP-AC-04, FUNC-19.6]",
+        "tags": []
+      },
+      {
+        "project": "browser",
+        "file": "tests/browser/station.spec.ts",
+        "line": 137,
+        "title": "station interface > runs the simulation clock only while it is not paused [FUNC-3.3]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 19,
+        "title": "application boot > reaches the engine through the dedicated worker [TECH-3.1, TECH-4.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 48,
+        "title": "application boot > serves the compiled content bundle to the worker [TECH-6.3]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 57,
+        "title": "application boot > makes no request outside its own origin [TECH-2, TECH-3.2, FUNC-22.14]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 71,
+        "title": "application boot > does not show the compatibility failure on a supported browser [TECH-4.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 57,
+        "title": "campaign persistence > creates, closes and reopens a campaign [MVP-AC-01, TECH-11.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 73,
+        "title": "campaign persistence > resumes the campaign after the page is reloaded [MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 85,
+        "title": "campaign persistence > adds no simulation time while the game is closed [FUNC-22.12]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 98,
+        "title": "campaign persistence > adds one capped step, never the missing hours, after a suspension or a clock change [V02-AC-13, FUNC-22.12, TECH-9.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 162,
+        "title": "campaign persistence > deletes the campaign and its saves on reset [FUNC-3.4]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 177,
+        "title": "campaign persistence > stores exactly one campaign slot [MVP Scope 6]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 208,
+        "title": "campaign persistence > persists the starting fit through the real worker and IndexedDB [MVP-AC-02, FUNC-8.4, TECH-11.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 260,
+        "title": "campaign persistence > makes no network request while saving [TECH-2, TECH-3.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/cockpit.spec.ts",
+        "line": 12,
+        "title": "keeps campaign management separate, undocks without a destination and reads briefings in space without moving",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/cockpit.spec.ts",
+        "line": 41,
+        "title": "keeps frequent flight controls in the desktop working view and reflows without horizontal overflow",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/combat.spec.ts",
+        "line": 185,
+        "title": "the first vertical slice > clears the easiest site, converts the rewards and clears it again with a better fit [MVP-AC-02, MVP-AC-03, MVP-AC-04, MVP-AC-06, MVP-AC-09, MVP-AC-01, V02-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/combat.spec.ts",
+        "line": 298,
+        "title": "combat commands > commands a fight with the mouse alone [MVP-AC-03, FUNC-19.2, FUNC-20]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/combat.spec.ts",
+        "line": 355,
+        "title": "combat commands > commands a fight from the keyboard alone [MVP-AC-03, FUNC-20, TECH-12.3]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/guidance.spec.ts",
+        "line": 109,
+        "title": "guided first loop > follows the in-game guidance from a new campaign through the easiest complete loop [MVP-AC-10, FUNC-3.2, FUNC-19.7, TECH-12.4]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/guided.spec.ts",
+        "line": 78,
+        "title": "the guided vertical slice > buys and fits a launcher, trades guided volleys with the missile boat, reopens in flight and returns [V02-AC-06, V02-AC-13, FUNC-9.6, FUNC-19.3]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/ladder.spec.ts",
+        "line": 69,
+        "title": "the v0.2 progression loop > buys and flies a destroyer, webs and loots at a fit-sensitive site, refits and reopens at an advanced site [V02-AC-14, V02-AC-03, V02-AC-07, V02-AC-09, FUNC-19.5]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/loss.spec.ts",
+        "line": 132,
+        "title": "losing a ship > is destroyed, reloads, recovers and clears the easiest site again [MVP-AC-08, FUNC-9.12, FUNC-5.4, FUNC-3.4, FUNC-22.1, MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/offline.spec.ts",
+        "line": 67,
+        "title": "playing without a network > starts from its own files and plays a whole loop with the network switched off [MVP-AC-01, MVP-AC-06, TECH-2, TECH-3.1, TECH-3.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 185,
+        "title": "save integrity in the browser > keeps five rolling autosaves and one manual save, each written whole [FUNC-3.4, TECH-11.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 213,
+        "title": "save integrity in the browser > falls back to the last valid snapshot when the newest is damaged, and leaves the damaged one alone [TECH-11.1, TECH-11.4, MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 244,
+        "title": "save integrity in the browser > refuses a save written by a newer format, says why, and does not touch it [TECH-11.4, FUNC-22.10]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 267,
+        "title": "save integrity in the browser > explains that a v0.1 save cannot continue, keeps it untouched, and replaces it only on confirmation [V02-AC-13, TECH-11.4, FUNC-3.4]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/progression.spec.ts",
+        "line": 376,
+        "title": "progression to the mastery site > clears the multi-opponent site, converts its rewards and clears the mastery site, reopening along the way [MVP-AC-01, MVP-AC-05, MVP-AC-06, MVP-AC-07, MVP-AC-09, FUNC-9.10, FUNC-9.11, FUNC-18]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/space.spec.ts",
+        "line": 47,
+        "title": "traversal > undocks, chooses in space, flies, warps, returns home, docks and resumes [MVP-AC-03, MVP-AC-08, MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/space.spec.ts",
+        "line": 111,
+        "title": "traversal > resumes in the site it was closed in [MVP-AC-01, FUNC-3.4]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/space.spec.ts",
+        "line": 127,
+        "title": "traversal > sets a course from the radar point menu after pan, zoom and resize [FUNC-19.2, FUNC-7.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/space.spec.ts",
+        "line": 200,
+        "title": "traversal > opens object commands, not a course, on a secondary click on an object [FUNC-19.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/station.spec.ts",
+        "line": 42,
+        "title": "station interface > prepares a ship end to end and finds it after a reopen [MVP-AC-01, MVP-AC-02, MVP-AC-06]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/station.spec.ts",
+        "line": 110,
+        "title": "station interface > moves a stack between the hangar and the hold [FUNC-6.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/station.spec.ts",
+        "line": 126,
+        "title": "station interface > explains a price instead of asserting it [MVP-AC-04, FUNC-19.6]",
+        "tags": []
+      },
+      {
+        "project": "browser-firefox",
+        "file": "tests/browser/station.spec.ts",
+        "line": 137,
+        "title": "station interface > runs the simulation clock only while it is not paused [FUNC-3.3]",
+        "tags": []
+      }
+    ],
+    "branded": [
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 19,
+        "title": "application boot > reaches the engine through the dedicated worker [TECH-3.1, TECH-4.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 48,
+        "title": "application boot > serves the compiled content bundle to the worker [TECH-6.3]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 57,
+        "title": "application boot > makes no request outside its own origin [TECH-2, TECH-3.2, FUNC-22.14]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 71,
+        "title": "application boot > does not show the compatibility failure on a supported browser [TECH-4.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 57,
+        "title": "campaign persistence > creates, closes and reopens a campaign [MVP-AC-01, TECH-11.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 73,
+        "title": "campaign persistence > resumes the campaign after the page is reloaded [MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 85,
+        "title": "campaign persistence > adds no simulation time while the game is closed [FUNC-22.12]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 98,
+        "title": "campaign persistence > adds one capped step, never the missing hours, after a suspension or a clock change [V02-AC-13, FUNC-22.12, TECH-9.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 162,
+        "title": "campaign persistence > deletes the campaign and its saves on reset [FUNC-3.4]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 177,
+        "title": "campaign persistence > stores exactly one campaign slot [MVP Scope 6]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 208,
+        "title": "campaign persistence > persists the starting fit through the real worker and IndexedDB [MVP-AC-02, FUNC-8.4, TECH-11.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 260,
+        "title": "campaign persistence > makes no network request while saving [TECH-2, TECH-3.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/offline.spec.ts",
+        "line": 67,
+        "title": "playing without a network > starts from its own files and plays a whole loop with the network switched off [MVP-AC-01, MVP-AC-06, TECH-2, TECH-3.1, TECH-3.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 185,
+        "title": "save integrity in the browser > keeps five rolling autosaves and one manual save, each written whole [FUNC-3.4, TECH-11.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 213,
+        "title": "save integrity in the browser > falls back to the last valid snapshot when the newest is damaged, and leaves the damaged one alone [TECH-11.1, TECH-11.4, MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 244,
+        "title": "save integrity in the browser > refuses a save written by a newer format, says why, and does not touch it [TECH-11.4, FUNC-22.10]",
+        "tags": []
+      },
+      {
+        "project": "browser-chrome",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 267,
+        "title": "save integrity in the browser > explains that a v0.1 save cannot continue, keeps it untouched, and replaces it only on confirmation [V02-AC-13, TECH-11.4, FUNC-3.4]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 19,
+        "title": "application boot > reaches the engine through the dedicated worker [TECH-3.1, TECH-4.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 48,
+        "title": "application boot > serves the compiled content bundle to the worker [TECH-6.3]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 57,
+        "title": "application boot > makes no request outside its own origin [TECH-2, TECH-3.2, FUNC-22.14]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/boot.spec.ts",
+        "line": 71,
+        "title": "application boot > does not show the compatibility failure on a supported browser [TECH-4.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 57,
+        "title": "campaign persistence > creates, closes and reopens a campaign [MVP-AC-01, TECH-11.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 73,
+        "title": "campaign persistence > resumes the campaign after the page is reloaded [MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 85,
+        "title": "campaign persistence > adds no simulation time while the game is closed [FUNC-22.12]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 98,
+        "title": "campaign persistence > adds one capped step, never the missing hours, after a suspension or a clock change [V02-AC-13, FUNC-22.12, TECH-9.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 162,
+        "title": "campaign persistence > deletes the campaign and its saves on reset [FUNC-3.4]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 177,
+        "title": "campaign persistence > stores exactly one campaign slot [MVP Scope 6]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 208,
+        "title": "campaign persistence > persists the starting fit through the real worker and IndexedDB [MVP-AC-02, FUNC-8.4, TECH-11.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/campaign.spec.ts",
+        "line": 260,
+        "title": "campaign persistence > makes no network request while saving [TECH-2, TECH-3.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/offline.spec.ts",
+        "line": 67,
+        "title": "playing without a network > starts from its own files and plays a whole loop with the network switched off [MVP-AC-01, MVP-AC-06, TECH-2, TECH-3.1, TECH-3.2]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 185,
+        "title": "save integrity in the browser > keeps five rolling autosaves and one manual save, each written whole [FUNC-3.4, TECH-11.1]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 213,
+        "title": "save integrity in the browser > falls back to the last valid snapshot when the newest is damaged, and leaves the damaged one alone [TECH-11.1, TECH-11.4, MVP-AC-01]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 244,
+        "title": "save integrity in the browser > refuses a save written by a newer format, says why, and does not touch it [TECH-11.4, FUNC-22.10]",
+        "tags": []
+      },
+      {
+        "project": "browser-edge",
+        "file": "tests/browser/persistence.spec.ts",
+        "line": 267,
+        "title": "save integrity in the browser > explains that a v0.1 save cannot continue, keeps it untouched, and replaces it only on confirmation [V02-AC-13, TECH-11.4, FUNC-3.4]",
+        "tags": []
+      }
+    ]
+  }
+}

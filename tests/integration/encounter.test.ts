@@ -98,6 +98,17 @@ async function loadCargoAmmunition(host: EngineHost): Promise<void> {
   }
 }
 
+/** Units per item definition. */
+function totals(stacks: readonly { readonly quantity: number; readonly item: { readonly definitionId: string } }[]): Map<string, number> {
+  const result = new Map<string, number>();
+  for (const stack of stacks) result.set(stack.item.definitionId, (result.get(stack.item.definitionId) ?? 0) + stack.quantity);
+  return result;
+}
+
+async function cargoTotals(host: EngineHost, shipId: string): Promise<Map<string, number>> {
+  return totals((await data<InventoryData>(host, 'inventory.cargo', { shipId })).stacks);
+}
+
 describe('the authored encounter loop', () => {
   it('discloses each site\'s opponents, bounty and possible loot before entry [MVP-AC-05, MVP-AC-09, FUNC-18]', async () => {
     const host = await openCampaign();
@@ -213,7 +224,13 @@ describe('the authored encounter loop', () => {
     }, 300);
     expect(reached).toBe(true);
 
+    // Loot is moved, never made or lost: what leaves the wreck is what the
+    // hold gains, and it is still there once the ship has docked.
+    const shipId = (await data<AssetsData>(host, 'assets.list')).ships.find((entry) => entry.active)?.id ?? '';
+    const holdBefore = await cargoTotals(host, shipId);
     const contents = await data<WreckContentsData>(host, 'loot.contents', { wreckId: wreck.wreckId });
+    const wreckBefore = totals(contents.stacks);
+    const takenTotals = new Map<string, number>();
     for (const stack of contents.stacks) {
       const allowed = contents.maximumQuantities.find((entry) => entry.stackId === stack.id);
       if ((allowed?.maximumQuantity ?? 0) > 0) {
@@ -223,7 +240,17 @@ describe('the authored encounter loop', () => {
           quantity: allowed?.maximumQuantity ?? 0,
         });
         expect(taken.ok).toBe(true);
+        const id = stack.item.definitionId;
+        takenTotals.set(id, (takenTotals.get(id) ?? 0) + (allowed?.maximumQuantity ?? 0));
       }
+    }
+    expect([...takenTotals.values()].reduce((sum, quantity) => sum + quantity, 0)).toBeGreaterThan(0);
+    const wreckAfter = totals((await data<WreckContentsData>(host, 'loot.contents', { wreckId: wreck.wreckId })).stacks);
+    const holdAfterLoot = await cargoTotals(host, shipId);
+    for (const id of new Set([...wreckBefore.keys(), ...holdBefore.keys(), ...takenTotals.keys()])) {
+      const moved = takenTotals.get(id) ?? 0;
+      expect(wreckAfter.get(id) ?? 0, `${id} left in the wreck`).toBe((wreckBefore.get(id) ?? 0) - moved);
+      expect(holdAfterLoot.get(id) ?? 0, `${id} in the hold`).toBe((holdBefore.get(id) ?? 0) + moved);
     }
 
     // Retreat and dock. The rewards come home with the ship.
@@ -242,8 +269,10 @@ describe('the authored encounter loop', () => {
       (await data<SiteData>(host, 'navigation.site')).location.kind === 'station', 60);
     expect(docked).toBe(true);
 
-    const shipId = (await data<SiteData>(host, 'navigation.site')).location;
-    void shipId;
+    // Docking neither spends nor creates anything: the hold and the wallet
+    // are what the site left them.
+    expect(await cargoTotals(host, shipId)).toEqual(holdAfterLoot);
+    expect((await data<WalletData>(host, 'wallet.get')).credits).toBe(startingCredits + 3000);
     const finalEncounter = await data<EncounterData>(host, 'encounter.state');
     expect(finalEncounter.instance).toBeNull();
     expect(finalEncounter.lastOutcome).toMatchObject({

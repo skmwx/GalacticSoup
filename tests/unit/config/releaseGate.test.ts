@@ -11,9 +11,11 @@ import {
   judge,
   readPlaywrightResult,
   readVitestResult,
+  readVitestSelections,
   renderGateReport,
   sourceDigest,
 } from '../../../scripts/lib/release.mjs';
+import { isIntegrationReleaseFile } from '../../../config/testSelections.mjs';
 
 /**
  * The release gate's bookkeeping (MVP Implementation Plan phase 21).
@@ -195,6 +197,48 @@ describe('a test runner result', () => {
 
     expect(tests).toMatchObject({ total: 4, passed: 2, failed: 1, skipped: 1 });
     expect(tests.failures).toEqual(['a fails', 'b.test.ts did not run']);
+  });
+
+  it('counts each integration selection of one Vitest run apart [TECH-15.1]', () => {
+    const root = path.join(os.tmpdir(), 'repo');
+    const file = (relative: string, ...statuses: string[]) => ({
+      name: path.join(root, relative),
+      status: statuses.includes('failed') ? 'failed' : 'passed',
+      assertionResults: statuses.map((status, index) => ({ status, fullName: `${relative} ${String(index)}` })),
+    });
+    const selections = readVitestSelections(
+      {
+        testResults: [
+          file('tests/integration/encounter.test.ts', 'passed', 'passed'),
+          file('tests/integration/balance/matrix/crossfire.test.ts', 'passed', 'failed'),
+          file('tests/integration/siteLadder.test.ts', 'passed', 'skipped'),
+        ],
+      },
+      root,
+      (relative) => (isIntegrationReleaseFile(relative) ? 'integration-release' : 'integration-fast'),
+    );
+
+    expect(Object.keys(selections)).toEqual(['integration-fast', 'integration-release']);
+    expect(selections['integration-fast']).toMatchObject({ total: 2, passed: 2, failed: 0, skipped: 0, files: 1 });
+    expect(selections['integration-release']).toMatchObject({ total: 4, passed: 2, failed: 1, skipped: 1, files: 2 });
+    expect(selections['integration-release']?.failures).toEqual(['tests/integration/balance/matrix/crossfire.test.ts 1']);
+  });
+
+  it('places exactly the long simulations in the release-only integration selection [TECH-15.1]', () => {
+    for (const file of [
+      'tests/integration/balance/careerScoutFirst.test.ts',
+      'tests/integration/balance/matrix/pirate-base.test.ts',
+      'tests/integration/progression.test.ts',
+      'tests/integration/progressionMastery.test.ts',
+      'tests/integration/siteLadder.test.ts',
+    ]) expect(isIntegrationReleaseFile(file), file).toBe(true);
+    for (const file of [
+      'tests/integration/encounter.test.ts',
+      'tests/integration/campaignProperties.test.ts',
+      'tests/integration/goldenCampaign.test.ts',
+      'tests/integration/progressionHelpers.ts',
+      'tests/unit/balance/matrix.test.ts',
+    ]) expect(isIntegrationReleaseFile(file), file).toBe(false);
   });
 
   it('reads the counts of a Playwright run, and names a test that passed only on a retry [TECH-15.1]', () => {

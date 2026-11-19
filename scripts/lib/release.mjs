@@ -171,6 +171,43 @@ export function auditBuild(distDir, expected = {}) {
 }
 
 /**
+ * Test counts from a Vitest JSON result that ran several selections at once,
+ * one set of counts per selection. A Vitest result does not name the project
+ * of each file, so `selectionOf` says which selection a file belongs to, from
+ * its path relative to `root`.
+ *
+ * @param {any} result
+ * @param {string} root
+ * @param {(file: string) => string} selectionOf
+ * @returns {Record<string, ReturnType<typeof readVitestResult>>}
+ */
+export function readVitestSelections(result, root, selectionOf) {
+  /** @type {Map<string, any[]>} */
+  const files = new Map();
+  for (const file of result.testResults ?? []) {
+    const relative = path.relative(root, String(file.name ?? '')).split(path.sep).join('/');
+    const selection = selectionOf(relative);
+    if (!files.has(selection)) files.set(selection, []);
+    files.get(selection)?.push(file);
+  }
+  /** @type {Record<string, ReturnType<typeof readVitestResult>>} */
+  const selections = {};
+  for (const [selection, testResults] of [...files].sort(([left], [right]) => left.localeCompare(right))) {
+    const assertions = testResults.flatMap((file) => file.assertionResults ?? []);
+    const count = (status) => assertions.filter((assertion) => assertion.status === status).length;
+    selections[selection] = readVitestResult({
+      testResults,
+      numTotalTests: assertions.length,
+      numPassedTests: count('passed'),
+      numFailedTests: count('failed'),
+      numPendingTests: count('pending') + count('skipped'),
+      numTodoTests: count('todo'),
+    });
+  }
+  return selections;
+}
+
+/**
  * Test counts from a Vitest JSON result.
  *
  * @param {any} result

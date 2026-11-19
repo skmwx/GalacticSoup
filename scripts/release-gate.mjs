@@ -7,7 +7,11 @@
  * and one built bundle, and writes what it found:
  *
  *   - the checks of `npm run verify`: types, architecture, content, the unit,
- *     integration, performance and component suites, traceability;
+ *     integration, performance and component suites, traceability. The
+ *     integration suite runs its two disjoint selections, fast and
+ *     release-only (`config/testSelections.mjs`), in one Vitest invocation,
+ *     counts each apart, and runs before the balance report that reads the
+ *     release-only simulations' sections;
  *   - the balance report, compared with the recorded balance candidate;
  *   - the production build, built twice and compared, then audited: no script
  *     in it may be able to make a request;
@@ -43,6 +47,12 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { REPO_ROOT } from '../config/aliases.mjs';
+import {
+  BRANDED_SMOKE_SPECS,
+  INTEGRATION_FAST_PROJECT,
+  INTEGRATION_RELEASE_PROJECT,
+  isIntegrationReleaseFile,
+} from '../config/testSelections.mjs';
 import { ENGINE_VERSION } from '../src/engine/application/version.ts';
 import { compileContent } from './lib/content/compile.mjs';
 import { readContentFiles } from './lib/content/read.mjs';
@@ -55,6 +65,7 @@ import {
   judge,
   readPlaywrightResult,
   readVitestResult,
+  readVitestSelections,
   renderGateReport,
   sourceDigest,
 } from './lib/release.mjs';
@@ -69,12 +80,7 @@ const VITE = path.join(REPO_ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
 const TSC = path.join(REPO_ROOT, 'node_modules', 'typescript', 'bin', 'tsc');
 
 /** The flows short enough to repeat in each branded Chromium build. */
-const SMOKE_SPECS = [
-  'tests/browser/boot.spec.ts',
-  'tests/browser/campaign.spec.ts',
-  'tests/browser/persistence.spec.ts',
-  'tests/browser/offline.spec.ts',
-];
+const SMOKE_SPECS = BRANDED_SMOKE_SPECS;
 
 /**
  * @typedef {object} Step
@@ -91,7 +97,14 @@ const STEPS = [
   { id: 'architecture', title: 'Architecture check', run: () => command(['scripts/check-architecture.mjs']) },
   { id: 'content', title: 'Content validation at the release floor', run: () => command(['scripts/validate-content.mjs', '--release']) },
   { id: 'unit', title: 'Unit suite', run: () => vitest('unit') },
-  { id: 'integration', title: 'Integration suite: loops, replay, properties, balance', run: () => vitest('integration') },
+  // Both integration selections run in one Vitest invocation, sharing one
+  // pool of workers, before the balance report, which joins the sections the
+  // release-only simulations write. The record counts each selection apart.
+  {
+    id: 'integration',
+    title: 'Integration suite, fast and release-only selections: loops, replay, properties, balance',
+    run: integration,
+  },
   { id: 'balance', title: 'Balance report against its candidate', run: balance },
   { id: 'performance', title: 'Performance suite', run: () => vitest('performance') },
   { id: 'component', title: 'Component suite', run: () => vitest('component') },
@@ -273,16 +286,46 @@ function command(argv) {
   return { status: exitCode === 0 ? 'passed' : 'failed', exitCode, log };
 }
 
-function vitest(project) {
-  const file = path.join(RESULTS_DIR, `${project}.json`);
+/**
+ * Runs one or more Vitest projects in a single invocation. The step record is
+ * named after the first project unless `name` says otherwise.
+ *
+ * @param {string | string[]} projects
+ * @param {string} [name]
+ */
+function vitest(projects, name) {
+  const list = Array.isArray(projects) ? projects : [projects];
+  const id = name ?? list[0];
+  const file = path.join(RESULTS_DIR, `${id}.json`);
   fs.rmSync(file, { force: true });
-  const { exitCode, log } = node(`vitest-${project}`, [
-    VITEST, 'run', '--project', project, '--reporter=default', '--reporter=json', `--outputFile.json=${file}`,
+  const { exitCode, log } = node(`vitest-${id}`, [
+    VITEST, 'run', ...list.flatMap((project) => ['--project', project]),
+    '--reporter=default', '--reporter=json', `--outputFile.json=${file}`,
   ]);
   if (!fs.existsSync(file)) return { status: 'failed', exitCode, log, reason: 'the suite wrote no result' };
   const tests = readVitestResult(JSON.parse(fs.readFileSync(file, 'utf8')));
   const passed = exitCode === 0 && tests.failed === 0 && tests.passed > 0;
   return { status: passed ? 'passed' : 'failed', exitCode, log, tests };
+}
+
+/**
+ * The integration suite: both selections in one run, counted apart. Each
+ * selection must have run and passed tests of its own, so the step cannot pass
+ * on one selection alone.
+ */
+function integration() {
+  const found = vitest([INTEGRATION_FAST_PROJECT, INTEGRATION_RELEASE_PROJECT], 'integration');
+  const file = path.join(RESULTS_DIR, 'integration.json');
+  if (!fs.existsSync(file)) return found;
+  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const selections = readVitestSelections(raw, REPO_ROOT, (file) =>
+    isIntegrationReleaseFile(file) ? INTEGRATION_RELEASE_PROJECT : INTEGRATION_FAST_PROJECT);
+  const missing = [INTEGRATION_FAST_PROJECT, INTEGRATION_RELEASE_PROJECT]
+    .filter((selection) => (selections[selection]?.passed ?? 0) === 0);
+  if (found.status === 'passed' && missing.length > 0) {
+    return { ...found, status: 'failed', reason: `no test of ${missing.join(' or ')} passed`, selections };
+  }
+  return { ...found, selections };
 }
 
 /** The balance report must find nothing moved since the balance candidate was recorded. */
