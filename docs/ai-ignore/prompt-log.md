@@ -172,3 +172,24 @@ Please implement phase 4 of v0.2
 Please implement phase 5 of v0.2
 Please implement phase 6 of v0.2
 Please implement phase 7 of v0.2
+
+# 032 Codex Sol 6.2 High
+Review the current the current tests suite and propose how it can be optimized.
+
+The first problem is that it runs too long, especially the UI (via Playwright) part. Maybe some 'cheat' controls can be introduced to the game to speed it up and reach the testable UI state faster. Maybe the tests can be split into "run after a feature" and "run after a major release" parts. Maybe some coverage is reduntant.
+
+The second is the sheer size of the tests. Please check if some coverage is done for coverage and doesn't actually test anything. Please check if some redundancy optimizations or deduplications can be made.
+
+Put test suite optimization proposal into docs/proposals/
+
+# 033 Codex Sol 6.2 High
+Based on docs\proposals\test-suite-optimization.md, please create a phased test suite optimization plan in docs\TestSuiteOptimizationPlan.md , with a goal that each phase can fit into a single agentic session.
+
+# 031 Opus 5.5 High
+For context, read docs\00_GameDesignBrief.md
+docs\01_FunctionalSpecification.md
+docs\02_TechnicalSpecification.md
+docs\human-input\CurrentState.md
+docs\TestSuiteOptimizationPlan.md
+
+Please implement phase 0 and phase 1 of test suite optimization.
