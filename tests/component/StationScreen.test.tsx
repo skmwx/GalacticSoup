@@ -249,7 +249,10 @@ describe('market', () => {
     expect(within(detail).getByText('Fits a weapon you have fitted')).toBeInTheDocument();
 
     harness.gateway.dispose();
-  });
+    // A purchase, a refit and two market reads: about 3 s alone and over 5 s
+    // beside the unit project in `verify:feature`, so it states its own limit
+    // like the other multi-step flows here.
+  }, 30_000);
 
   it('filters the market by purpose, size and what fits the active ship, keeping every entry reachable [FUNC-8.4, FUNC-19.5, V02-AC-05]', async () => {
     const harness = renderGame();
