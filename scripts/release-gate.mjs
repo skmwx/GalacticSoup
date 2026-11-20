@@ -17,7 +17,9 @@
  *     in it may be able to make a request;
  *   - the browser and accessibility suites, served exactly that bundle, in
  *     the Chromium and Firefox builds Playwright pins, and the start, save and
- *     offline flows in the Chrome and Edge installed on this machine. Each
+ *     short offline flows in the Chrome and Edge installed on this machine
+ *     (`BRANDED_SMOKE_SPECS`; the whole offline sortie is Chromium's and
+ *     Firefox's). Each
  *     Playwright step lists its project's full discovery first and passes
  *     only when every discovered case ran there and passed, nothing else ran,
  *     and every required witness of `config/releaseWitnesses.mjs` was

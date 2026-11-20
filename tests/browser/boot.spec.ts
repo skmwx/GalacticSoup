@@ -1,24 +1,31 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import { gameMenuButton, openSettings } from '../support/cockpit.ts';
+import { foreignRequests, observeRequests, originOf } from '../support/origin.ts';
 
 /**
  * The shipped build must boot, start the dedicated engine worker and reach it
  * through the gateway, without any gameplay network request
- * (Technical Specification 2, 3.1, 3.2, 4.2).
+ * (Technical Specification 2, 3.1, 3.2, 4.2, 6.3).
+ *
+ * One startup carries every successful-boot assertion, and opens the
+ * diagnostics once for both the worker and the content bundle (Test Suite
+ * Optimization Plan phase 10). It is also the one owner of the same-origin
+ * evidence: it must observe the document and the engine worker's script being
+ * requested, and every request the context makes must have exactly the origin
+ * that serves the build. A worker that cannot start is the component suite's
+ * (`tests/component/CompatibilityFailure.test.tsx`).
  */
 
-/** Diagnostics are a section of Settings, reached from the game menu, outside the gameplay layout. */
-async function openBuildDetails(page: Page): Promise<void> {
-  await expect(page.getByLabel('Pilot name')).toBeVisible();
-  await openSettings(page);
-  await page.getByText('Build and engine details').click();
-}
-
 test.describe('application boot', () => {
-  test('reaches the engine through the dedicated worker [TECH-3.1, TECH-4.2]', { tag: '@feature' }, async ({
+  test('boots from its own origin, reaches the engine through the dedicated worker and serves it the content bundle [TECH-2, TECH-3.1, TECH-3.2, TECH-4.2, TECH-6.3, FUNC-22.14]', { tag: '@feature' }, async ({
     page,
+    context,
+    baseURL,
   }) => {
+    expect(baseURL).toBeDefined();
+    const origin = originOf(baseURL ?? '');
+    const requests = observeRequests(context);
     const consoleErrors: string[] = [];
     page.on('console', (message) => {
       if (message.type() === 'error') {
@@ -36,44 +43,30 @@ test.describe('application boot', () => {
     await expect(page.getByRole('status', { name: 'Engine status' }).locator('..')).toHaveCSS('position', 'absolute');
     await expect(page.getByText('A single-player space trading, exploration and combat game.')).toHaveCount(0);
     await expect(gameMenuButton(page)).toBeVisible();
+    // A supported browser is not shown the compatibility failure.
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
 
-    // The build identity is a diagnostics surface, not the main screen.
-    await openBuildDetails(page);
+    // The build identity is a diagnostics surface, not the main screen. It
+    // names the worker transport and the content the build derived from the
+    // authored content and its digest.
+    await expect(page.getByLabel('Pilot name')).toBeVisible();
+    await openSettings(page);
+    await page.getByText('Build and engine details').click();
     await expect(page.getByText('worker', { exact: true })).toBeVisible();
     await expect(page.getByText(/^\d+ request types$/)).toBeVisible();
-
-    expect(consoleErrors).toEqual([]);
-  });
-
-  test('serves the compiled content bundle to the worker [TECH-6.3]', { tag: '@feature' }, async ({ page }) => {
-    await page.goto('/');
-
-    await openBuildDetails(page);
-    // The version the build derived from the authored content and its digest.
     await expect(page.getByText(/^\d+\.\d+\.\d+\+[0-9a-f]{12}$/)).toBeVisible();
     await expect(page.getByText(/\d+ definitions in \d+ kinds/)).toBeVisible();
-  });
 
-  test('makes no request outside its own origin [TECH-2, TECH-3.2, FUNC-22.14]', async ({ page, baseURL }) => {
-    const foreign: string[] = [];
-    page.on('request', (request) => {
-      if (baseURL !== undefined && !request.url().startsWith(baseURL)) {
-        foreign.push(request.url());
-      }
-    });
+    // The document and the engine worker's script were requested, from
+    // exactly the origin that serves the build, and nothing came from anywhere
+    // else.
+    const documents = requests.filter((request) => request.resourceType === 'document');
+    expect(documents.map((request) => request.url)).toEqual([`${origin}/`]);
+    const worker = requests.filter((request) => /\/engineWorker-[\w-]+\.js$/.test(new URL(request.url).pathname));
+    expect(worker.length).toBeGreaterThan(0);
+    expect(worker.every((request) => request.origin === origin)).toBe(true);
+    expect(foreignRequests(requests, origin)).toEqual([]);
 
-    await page.goto('/');
-    await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
-
-    expect(foreign).toEqual([]);
-  });
-
-  test('does not show the compatibility failure on a supported browser [TECH-4.2]', async ({
-    page,
-  }) => {
-    await page.goto('/');
-    await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
-
-    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    expect(consoleErrors).toEqual([]);
   });
 });

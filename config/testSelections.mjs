@@ -52,11 +52,19 @@ export const REQUIRED_PLAYWRIGHT_PROJECTS = ['browser', 'accessibility', 'browse
 
 /** The optional branded Chromium projects, and the flows short enough to repeat in each. */
 export const BRANDED_PLAYWRIGHT_PROJECTS = ['browser-chrome', 'browser-edge'];
+/**
+ * Specs only the branded projects run (Test Suite Optimization Plan phase 9):
+ * the short offline flow. The required `browser` projects ignore them and run
+ * the whole offline sortie, `tests/browser/offline.spec.ts`, instead.
+ */
+export const BRANDED_ONLY_SPECS = ['tests/browser/offlineSmoke.spec.ts'];
+/** The full sortie the branded projects leave to the required browser projects. */
+export const FULL_OFFLINE_SPEC = 'tests/browser/offline.spec.ts';
 export const BRANDED_SMOKE_SPECS = [
   'tests/browser/boot.spec.ts',
   'tests/browser/campaign.spec.ts',
   'tests/browser/persistence.spec.ts',
-  'tests/browser/offline.spec.ts',
+  ...BRANDED_ONLY_SPECS,
 ];
 
 /**

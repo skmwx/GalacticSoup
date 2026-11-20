@@ -257,19 +257,18 @@ test.describe('campaign persistence', () => {
     expect(await savedAssets()).toEqual(before);
   });
 
-  test('makes no network request while saving [TECH-2, TECH-3.2]', async ({ page, baseURL }) => {
-    const foreign: string[] = [];
-    page.on('request', (request) => {
-      if (baseURL !== undefined && !request.url().startsWith(baseURL)) {
-        foreign.push(request.url());
-      }
-    });
-
+  test('makes no network request while saving [TECH-2, TECH-3.2]', async ({ page, context }) => {
     await startCampaign(page);
     await openGameMenu(page, false);
+
+    // Saving is local: from the click to the saved revision the context asks
+    // for nothing at all. Where the loaded files come from is the boot case's
+    // same-origin evidence (`boot.spec.ts`).
+    const requests: string[] = [];
+    context.on('request', (request) => requests.push(request.url()));
     await page.getByRole('button', { name: /Save now/ }).click();
     await expect(page.getByText(/Saved at revision/)).toBeVisible();
 
-    expect(foreign).toEqual([]);
+    expect(requests).toEqual([]);
   });
 });

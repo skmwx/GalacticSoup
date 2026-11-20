@@ -5,6 +5,7 @@ import { destinationEntry, dockHome, warpHome, warpTo } from '../support/destina
 import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 import { openCheckpoint } from '../support/checkpoint/browser.ts';
+import { confirmDialog, fixSeed, freshCampaign } from '../support/freshCampaign.ts';
 
 /**
  * Losing a ship and coming back from it, in a real browser
@@ -36,40 +37,6 @@ import { openCheckpoint } from '../support/checkpoint/browser.ts';
  */
 
 const PILOT = 'Loss Pilot';
-const SEED = 'bb22cc33dd44ee55ff6677889900aa11';
-
-async function fixSeed(page: Page): Promise<void> {
-  await page.addInitScript((seed: string) => {
-    const original = crypto.getRandomValues.bind(crypto);
-    crypto.getRandomValues = (<T extends ArrayBufferView | null>(array: T): T => {
-      if (array instanceof Uint8Array && array.length === 16) {
-        for (let index = 0; index < 16; index += 1) {
-          array[index] = Number.parseInt(seed.slice(index * 2, index * 2 + 2), 16);
-        }
-        return array;
-      }
-      return original(array as never) as T;
-    }) as typeof crypto.getRandomValues;
-  }, SEED);
-}
-
-async function freshCampaign(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.evaluate(
-    async () =>
-      new Promise<void>((resolve) => {
-        const request = indexedDB.deleteDatabase('galactic-soup');
-        request.onsuccess = () => resolve();
-        request.onerror = () => resolve();
-        request.onblocked = () => resolve();
-      }),
-  );
-  await page.goto('/');
-  await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
-  await page.getByLabel('Pilot name').fill(PILOT);
-  await page.getByRole('button', { name: 'Start campaign' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
-}
 
 function region(page: Page, name: string): Locator {
   return page.getByRole('region', { name, exact: true });
@@ -103,9 +70,7 @@ async function buy(page: Page, item: string): Promise<void> {
   await marketMode(page, 'Buy');
   await page.getByRole('button', { name: `Buy ${item}` }).click();
   const purchase = page.getByRole('dialog', { name: 'Confirm purchase' });
-  await expect(purchase.getByText('Calculating…')).toBeHidden();
-  await purchase.getByRole('button', { name: 'Confirm' }).click();
-  await expect(purchase).toBeHidden();
+  await confirmDialog(purchase);
 }
 
 /**
@@ -143,7 +108,7 @@ test.describe('losing a ship', () => {
     // One sortie at 1x to the loss, then a warp out in the bought ship.
     test.setTimeout(8 * 60_000);
     await fixSeed(page);
-    await freshCampaign(page);
+    await freshCampaign(page, PILOT);
 
     // Take the autocannon off and sell it: after the payout the pilot can
     // afford a starter ship, so none is supplied.
@@ -155,9 +120,7 @@ test.describe('losing a ship', () => {
     await marketMode(page, 'Sell');
     await page.getByRole('button', { name: 'Sell 200mm Autocannon' }).click();
     const sale = page.getByRole('dialog', { name: 'Confirm sale' });
-    await expect(sale.getByText('Calculating…')).toBeHidden();
-    await sale.getByRole('button', { name: 'Confirm' }).click();
-    await expect(sale).toBeHidden();
+    await confirmDialog(sale);
 
     // Fly what is left to the hard site and do nothing there.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();

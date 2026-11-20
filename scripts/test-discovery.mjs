@@ -19,7 +19,10 @@
  *     tagged `@feature`, each of them also runs exactly once in each release
  *     project of its level, and the release gate never runs the smoke project;
  *   - the required release witnesses (phase 5, `config/releaseWitnesses.mjs`):
- *     each is discovered exactly once in every required project of its level.
+ *     each is discovered exactly once in every required project of its level;
+ *   - the branded offline selection (phase 9): the whole offline sortie runs
+ *     in Chromium and Firefox and not in Chrome or Edge, and the short
+ *     branded flow runs in Chrome and Edge and in no required project.
  *
  * Writes `reports/test-discovery.json` (or `--out=<file>`) and prints a
  * summary. Exits 1 when a check fails. Listing starts no browser and no
@@ -36,12 +39,14 @@ import process from 'node:process';
 
 import { REPO_ROOT } from '../config/aliases.mjs';
 import {
+  BRANDED_ONLY_SPECS,
   BRANDED_PLAYWRIGHT_PROJECTS,
   BRANDED_SMOKE_SPECS,
   FEATURE_SMOKE_PROJECT,
   FEATURE_TAG,
   FEATURE_VITEST_GROUPS,
   FEATURE_VITEST_PROJECTS,
+  FULL_OFFLINE_SPEC,
   INTEGRATION_FAST_PROJECT,
   INTEGRATION_RELEASE_PROJECT,
   isIntegrationReleaseFile,
@@ -270,6 +275,26 @@ check('no Playwright case runs twice in a project', duplicates.length === 0, dup
   const ids = RELEASE_WITNESSES.map((witness) => witness.id);
   check('release witnesses have distinct ids and cases',
     new Set(keys).size === keys.length && new Set(ids).size === ids.length);
+}
+
+// Branded offline selection (phase 9).
+{
+  const inFile = (list, project, file) => list.filter((entry) => entry.project === project && entry.file === file).length;
+  const wrong = [];
+  for (const project of ['browser', 'browser-firefox']) {
+    if (inFile(playwright.required, project, FULL_OFFLINE_SPEC) === 0) wrong.push(`${project} lacks ${FULL_OFFLINE_SPEC}`);
+    for (const file of BRANDED_ONLY_SPECS) {
+      if (inFile(playwright.required, project, file) !== 0) wrong.push(`${project} runs ${file}`);
+    }
+  }
+  for (const project of BRANDED_PLAYWRIGHT_PROJECTS) {
+    if (inFile(playwright.branded, project, FULL_OFFLINE_SPEC) !== 0) wrong.push(`${project} runs ${FULL_OFFLINE_SPEC}`);
+    for (const file of BRANDED_ONLY_SPECS) {
+      if (inFile(playwright.branded, project, file) === 0) wrong.push(`${project} lacks ${file}`);
+    }
+  }
+  check('the full offline sortie runs in Chromium and Firefox, the short offline flow in Chrome and Edge only',
+    wrong.length === 0, wrong.join('; '));
 }
 
 /* -------------------------------------------------------------------------- */

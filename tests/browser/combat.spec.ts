@@ -7,6 +7,7 @@ import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 import { takeService } from '../support/services.ts';
 import { openCheckpoint } from '../support/checkpoint/browser.ts';
+import { confirmDialog, fixSeed, freshCampaign } from '../support/freshCampaign.ts';
 
 /**
  * The first end-to-end vertical slice in a real browser
@@ -26,40 +27,6 @@ import { openCheckpoint } from '../support/checkpoint/browser.ts';
  */
 
 const PILOT = 'Slice Pilot';
-const SEED = 'bb22cc33dd44ee55ff6677889900aa11';
-
-async function fixSeed(page: Page): Promise<void> {
-  await page.addInitScript((seed: string) => {
-    const original = crypto.getRandomValues.bind(crypto);
-    crypto.getRandomValues = (<T extends ArrayBufferView | null>(array: T): T => {
-      if (array instanceof Uint8Array && array.length === 16) {
-        for (let index = 0; index < 16; index += 1) {
-          array[index] = Number.parseInt(seed.slice(index * 2, index * 2 + 2), 16);
-        }
-        return array;
-      }
-      return original(array as never) as T;
-    }) as typeof crypto.getRandomValues;
-  }, SEED);
-}
-
-async function freshCampaign(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.evaluate(
-    async () =>
-      new Promise<void>((resolve) => {
-        const request = indexedDB.deleteDatabase('galactic-soup');
-        request.onsuccess = () => resolve();
-        request.onerror = () => resolve();
-        request.onblocked = () => resolve();
-      }),
-  );
-  await page.goto('/');
-  await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
-  await page.getByLabel('Pilot name').fill(PILOT);
-  await page.getByRole('button', { name: 'Start campaign' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
-}
 
 function region(page: Page, name: string): Locator {
   return page.getByRole('region', { name, exact: true });
@@ -180,7 +147,7 @@ async function returnAndDock(page: Page): Promise<void> {
 test.describe('the first vertical slice', () => {
   test.beforeEach(async ({ page }) => {
     await fixSeed(page);
-    await freshCampaign(page);
+    await freshCampaign(page, PILOT);
   });
 
   test('clears the easiest site, converts the rewards and clears it again with a better fit [MVP-AC-02, MVP-AC-03, MVP-AC-04, MVP-AC-06, MVP-AC-09, MVP-AC-01, V02-AC-01]', async ({
@@ -224,15 +191,13 @@ test.describe('the first vertical slice', () => {
     await marketMode(page, 'Sell');
     await page.getByRole('button', { name: 'Sell Burned Alloy Plate' }).click();
     const sale = page.getByRole('dialog', { name: 'Confirm sale' });
-    await sale.getByRole('button', { name: 'Confirm' }).click();
-    await expect(sale).toBeHidden();
+    await confirmDialog(sale);
     await expect(page.getByText('23,000 ISK', { exact: true })).toBeHidden();
 
     await marketMode(page, 'Buy');
     await page.getByRole('button', { name: 'Buy 200mm Autocannon' }).click();
     const purchase = page.getByRole('dialog', { name: 'Confirm purchase' });
-    await purchase.getByRole('button', { name: 'Confirm' }).click();
-    await expect(purchase).toBeHidden();
+    await confirmDialog(purchase);
 
     // Two guns fire twice as many rounds: restock the hold as well.
     await page.getByRole('button', { name: 'Buy Fusion S' }).click();
@@ -241,8 +206,7 @@ test.describe('the first vertical slice', () => {
     await rounds.getByLabel('Deliver to').selectOption({ label: 'Ship cargo hold' });
     await expect(rounds.getByText('Calculating…')).toBeHidden();
     await expect(rounds.getByText(/200 × Fusion S/).first()).toBeVisible();
-    await rounds.getByRole('button', { name: 'Confirm' }).click();
-    await expect(rounds).toBeHidden();
+    await confirmDialog(rounds);
 
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
     await chooseModule(page, 'Weapon 2', 'module.turret.autocannon.small');

@@ -483,7 +483,9 @@ It runs a fixed list of steps and leaves a record of each in `reports/release/st
   the build, and the engine worker must carry the content the other steps validated;
 - the browser and accessibility suites, served exactly that bundle, in the Chromium and Firefox
   builds Playwright pins;
-- the start, save and offline flows in the Chrome and Edge installed on the machine.
+- the start, save and offline flows in the Chrome and Edge installed on the machine. There the
+  offline flow is the short one (`tests/browser/offlineSmoke.spec.ts`): the loaded bundle goes
+  offline, buys, saves, closes and resumes. The whole offline sortie runs in Chromium and Firefox.
 
 Every record names the sources and the bundle its step ran against. The verdict in
 `reports/release-gate.md` is green only when every required step passed against the sources and the

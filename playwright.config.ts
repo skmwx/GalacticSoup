@@ -1,6 +1,6 @@
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
 
-import { FEATURE_SMOKE_PROJECT, FEATURE_TAG, PREVIEW_PORT } from './config/testSelections.mjs';
+import { BRANDED_ONLY_SPECS, FEATURE_SMOKE_PROJECT, FEATURE_TAG, PREVIEW_PORT } from './config/testSelections.mjs';
 
 const PORT = PREVIEW_PORT;
 const BASE_URL = `http://localhost:${PORT}`;
@@ -15,6 +15,10 @@ const SERVE_BUILT = process.env['RELEASE_GATE_SERVE_BUILT'] === '1';
 // Optimization Plan phase 2).
 const FEATURE_VERIFY = process.env['FEATURE_VERIFY_SERVE_BUILT'] === '1';
 const RESULTS_FILE = process.env['RELEASE_GATE_RESULTS'];
+// The short branded offline flow runs only in Chrome and Edge; the required
+// browser projects run the whole offline sortie instead (Test Suite
+// Optimization Plan phase 9).
+const BRANDED_ONLY = BRANDED_ONLY_SPECS.map((file) => `**/${file}`);
 
 const reporter: ReporterDescription[] = process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : [['list']];
 if (RESULTS_FILE !== undefined) reporter.push(['json', { outputFile: RESULTS_FILE }]);
@@ -28,7 +32,7 @@ if (RESULTS_FILE !== undefined) reporter.push(['json', { outputFile: RESULTS_FIL
 // bundles and are the everyday suites; the `-firefox` projects run the same
 // files in Firefox. `browser-chrome` and `browser-edge` run them in the
 // branded stable builds installed on this machine, which the release gate uses
-// for the short start, save and offline flows.
+// for the short start, save and offline flows (`BRANDED_SMOKE_SPECS`).
 // @implements TECH-3.2, TECH-15.1
 export default defineConfig({
   testDir: 'tests',
@@ -44,6 +48,7 @@ export default defineConfig({
     {
       name: 'browser',
       testDir: 'tests/browser',
+      testIgnore: BRANDED_ONLY,
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -54,6 +59,7 @@ export default defineConfig({
     {
       name: 'browser-firefox',
       testDir: 'tests/browser',
+      testIgnore: BRANDED_ONLY,
       use: { ...devices['Desktop Firefox'] },
     },
     {

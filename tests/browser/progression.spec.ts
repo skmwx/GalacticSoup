@@ -8,6 +8,7 @@ import { applyFit, chooseAmmunition, chooseModule, fittingSlots, slotRow } from 
 import { takeService } from '../support/services.ts';
 import { expectCheckpointShown, openCheckpoint, walletReadout } from '../support/checkpoint/browser.ts';
 import { checkpointAt } from '../support/checkpoint/scenarios.ts';
+import { confirmDialog, fixSeed, freshCampaign } from '../support/freshCampaign.ts';
 
 /**
  * From the starting fit to the mastery site, in a real browser
@@ -48,40 +49,6 @@ import { checkpointAt } from '../support/checkpoint/scenarios.ts';
  */
 
 const PILOT = 'Progression Pilot';
-const SEED = 'bb22cc33dd44ee55ff6677889900aa11';
-
-async function fixSeed(page: Page): Promise<void> {
-  await page.addInitScript((seed: string) => {
-    const original = crypto.getRandomValues.bind(crypto);
-    crypto.getRandomValues = (<T extends ArrayBufferView | null>(array: T): T => {
-      if (array instanceof Uint8Array && array.length === 16) {
-        for (let index = 0; index < 16; index += 1) {
-          array[index] = Number.parseInt(seed.slice(index * 2, index * 2 + 2), 16);
-        }
-        return array;
-      }
-      return original(array as never) as T;
-    }) as typeof crypto.getRandomValues;
-  }, SEED);
-}
-
-async function freshCampaign(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.evaluate(
-    async () =>
-      new Promise<void>((resolve) => {
-        const request = indexedDB.deleteDatabase('galactic-soup');
-        request.onsuccess = () => resolve();
-        request.onerror = () => resolve();
-        request.onblocked = () => resolve();
-      }),
-  );
-  await page.goto('/');
-  await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
-  await page.getByLabel('Pilot name').fill(PILOT);
-  await page.getByRole('button', { name: 'Start campaign' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
-}
 
 function region(page: Page, name: string): Locator {
   return page.getByRole('region', { name, exact: true });
@@ -130,9 +97,7 @@ async function buy(page: Page, item: string, quantity = 1, toHold = false): Prom
   const purchase = page.getByRole('dialog', { name: 'Confirm purchase' });
   if (quantity !== 1) await purchase.getByLabel('Quantity').fill(String(quantity));
   if (toHold) await purchase.getByLabel('Deliver to').selectOption({ label: 'Ship cargo hold' });
-  await expect(purchase.getByText('Calculating…')).toBeHidden();
-  await purchase.getByRole('button', { name: 'Confirm' }).click();
-  await expect(purchase).toBeHidden();
+  await confirmDialog(purchase);
 }
 
 /**
@@ -148,9 +113,7 @@ async function sell(page: Page, item: string): Promise<void> {
     const before = await offer.count();
     await offer.first().click();
     const sale = page.getByRole('dialog', { name: 'Confirm sale' });
-    await expect(sale.getByText('Calculating…')).toBeHidden();
-    await sale.getByRole('button', { name: 'Confirm' }).click();
-    await expect(sale).toBeHidden();
+    await confirmDialog(sale);
     await expect(offer).toHaveCount(before - 1);
   }
 }
@@ -398,7 +361,7 @@ async function returnAndDock(page: Page): Promise<void> {
 test.describe('progression through the multi-opponent site', () => {
   test.beforeEach(async ({ page }) => {
     await fixSeed(page);
-    await freshCampaign(page);
+    await freshCampaign(page, PILOT);
   });
 
   test('clears the multi-opponent site, loots its wrecks after a reopen beside them and spends its rewards on the mastery fit [MVP-AC-01, MVP-AC-05, MVP-AC-06, MVP-AC-07, FUNC-9.10, FUNC-9.11]', async ({

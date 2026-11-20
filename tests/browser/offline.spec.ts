@@ -4,6 +4,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { undock } from '../support/undock.ts';
 import { dockHome, warpHome, warpTo } from '../support/destinations.ts';
 import { marketMode } from '../support/market.ts';
+import { originOf } from '../support/origin.ts';
 
 /**
  * The shipped build needs nothing but its own files
@@ -92,7 +93,8 @@ test.describe('playing without a network', () => {
     // worker, and for nothing that is not served beside them.
     expect(baseURL).toBeDefined();
     expect(requests.length).toBeGreaterThan(0);
-    expect(requests.filter((url) => !url.startsWith(baseURL ?? ''))).toEqual([]);
+    const origin = originOf(baseURL ?? '');
+    expect(requests.filter((url) => originOf(url) !== origin)).toEqual([]);
 
     await context.setOffline(true);
     requests.length = 0;
