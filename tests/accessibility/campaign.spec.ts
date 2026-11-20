@@ -45,7 +45,7 @@ test.describe('campaign accessibility', () => {
     await freshPage(page);
   });
 
-  test('starts and closes a campaign with the keyboard alone [TECH-12.3]', async ({ page }) => {
+  test('starts and closes a campaign with the keyboard alone [TECH-12.3]', { tag: '@feature' }, async ({ page }) => {
     const field = page.getByLabel('Pilot name');
     await field.focus();
     await page.keyboard.type(PILOT);

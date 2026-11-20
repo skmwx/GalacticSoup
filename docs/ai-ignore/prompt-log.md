@@ -193,3 +193,10 @@ docs\human-input\CurrentState.md
 docs\TestSuiteOptimizationPlan.md
 
 Please implement phase 0 and phase 1 of test suite optimization.
+
+Here are the answers:
+1) too slow for 2 minute target: yes, let's split files.
+2) The gate slowdown: let's do that, run both in one invocation
+
+Please implement phase 2 and phase 3 of test suite optimization.
+Please implement phase 3 and phase 4 of test suite optimization.

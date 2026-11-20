@@ -58,3 +58,25 @@ export const BRANDED_SMOKE_SPECS = [
   'tests/browser/persistence.spec.ts',
   'tests/browser/offline.spec.ts',
 ];
+
+/**
+ * Feature verification (`npm run verify:feature`, Test Suite Optimization Plan
+ * phase 2): the Vitest projects it runs in one invocation, and the Chromium
+ * smoke project that selects the browser and accessibility cases carrying
+ * `FEATURE_TAG`. Tagged cases stay in the four required projects, and the
+ * release gate never names the smoke project, so the gate runs each of them
+ * exactly once per engine.
+ */
+export const FEATURE_VITEST_PROJECTS = ['unit', INTEGRATION_FAST_PROJECT, 'component'];
+/**
+ * How `verify:feature` invokes them. Unit and component share one invocation;
+ * the fast integration selection runs on its own, because the component cases
+ * keep Vitest's 5 s timeout and time out when they share processors with the
+ * CPU-bound property and golden-replay files.
+ */
+export const FEATURE_VITEST_GROUPS = [['unit', 'component'], [INTEGRATION_FAST_PROJECT]];
+export const FEATURE_SMOKE_PROJECT = 'feature-smoke';
+export const FEATURE_TAG = '@feature';
+
+/** The port the production preview serves the build on for every Playwright run. */
+export const PREVIEW_PORT = 4173;

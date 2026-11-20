@@ -1,12 +1,19 @@
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
 
-const PORT = 4173;
+import { FEATURE_SMOKE_PROJECT, FEATURE_TAG, PREVIEW_PORT } from './config/testSelections.mjs';
+
+const PORT = PREVIEW_PORT;
 const BASE_URL = `http://localhost:${PORT}`;
 
 // The release gate builds the bundle once, fingerprints it and then serves
 // exactly those files to every browser suite; an ordinary run builds first
 // (MVP Implementation Plan phase 21).
 const SERVE_BUILT = process.env['RELEASE_GATE_SERVE_BUILT'] === '1';
+// `npm run verify:feature` has just built the bundle and manages its own
+// preview: it serves that build and never reuses a server that is already on
+// the port, so a stale preview cannot answer for the fresh build (Test Suite
+// Optimization Plan phase 2).
+const FEATURE_VERIFY = process.env['FEATURE_VERIFY_SERVE_BUILT'] === '1';
 const RESULTS_FILE = process.env['RELEASE_GATE_RESULTS'];
 
 const reporter: ReporterDescription[] = process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : [['list']];
@@ -55,6 +62,17 @@ export default defineConfig({
       use: { ...devices['Desktop Firefox'] },
     },
     {
+      // The Chromium feature smoke of `npm run verify:feature`: the existing
+      // browser and accessibility cases tagged @feature, which stay in the
+      // four release projects above. The release gate names its projects, so
+      // it never runs this one and no case runs twice in the gate.
+      name: FEATURE_SMOKE_PROJECT,
+      testDir: 'tests',
+      testMatch: ['browser/**/*.spec.ts', 'accessibility/**/*.spec.ts'],
+      grep: new RegExp(FEATURE_TAG),
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       name: 'browser-chrome',
       testDir: 'tests/browser',
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
@@ -66,11 +84,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: SERVE_BUILT
+    command: SERVE_BUILT || FEATURE_VERIFY
       ? `npm run preview -- --port ${PORT} --strictPort`
       : `npm run build && npm run preview -- --port ${PORT} --strictPort`,
     url: BASE_URL,
-    reuseExistingServer: !process.env['CI'],
+    reuseExistingServer: !process.env['CI'] && !FEATURE_VERIFY,
     timeout: 240_000,
     stdout: 'ignore',
     stderr: 'pipe',

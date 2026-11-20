@@ -16,7 +16,7 @@ async function openBuildDetails(page: Page): Promise<void> {
 }
 
 test.describe('application boot', () => {
-  test('reaches the engine through the dedicated worker [TECH-3.1, TECH-4.2]', async ({
+  test('reaches the engine through the dedicated worker [TECH-3.1, TECH-4.2]', { tag: '@feature' }, async ({
     page,
   }) => {
     const consoleErrors: string[] = [];
@@ -45,7 +45,7 @@ test.describe('application boot', () => {
     expect(consoleErrors).toEqual([]);
   });
 
-  test('serves the compiled content bundle to the worker [TECH-6.3]', async ({ page }) => {
+  test('serves the compiled content bundle to the worker [TECH-6.3]', { tag: '@feature' }, async ({ page }) => {
     await page.goto('/');
 
     await openBuildDetails(page);

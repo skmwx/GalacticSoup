@@ -27,7 +27,7 @@ specification and technical specification define the game; `docs/MVPScope.md` an
 | `npm run test:integration` | Engine and transport integration tests (Node environment): both selections below. |
 | `npm run test:integration:fast` | The fast integration selection: loops, replay, persistence, properties, a fixed-seed Scout sortie. |
 | `npm run test:integration:release` | The release-only integration selection: balance careers and matrix, progression scenarios, site ladder (long). |
-| `npm run test:discover` | Lists what each Vitest script and Playwright project selects, without running it, and checks the integration split. |
+| `npm run test:discover` | Lists what each Vitest script and Playwright project selects, without running it, and checks the integration split and the feature smoke selection. |
 | `npm run test:performance` | Engine timing against the Technical Specification 13 targets, run alone. |
 | `npm run test:component` | React component behaviour (jsdom). |
 | `npm run test:browser` | Playwright acceptance flows against the production build. |
@@ -36,6 +36,8 @@ specification and technical specification define the game; `docs/MVPScope.md` an
 | `npm run test:accessibility:firefox` | The accessibility flows in Firefox. |
 | `npm run traceability` | Requirement coverage report in `reports/`; fails on an uncovered included requirement. |
 | `npm run verify` | Everything above except the Playwright suites. |
+| `npm run verify:feature` | Everyday check for feature work: typecheck, architecture, content, unit, component and fast integration tests, traceability, one build, then the Chromium feature smoke on a managed preview. Fails at once if port 4173 is taken. |
+| `npm run test:smoke` | The Chromium feature smoke alone: the browser and accessibility cases tagged `@feature`. These cases also run in the four release projects. |
 | `npm run release:gate` | The release-candidate gate: every check above against one set of sources and one built bundle, in every release browser. |
 | `npm run release:report` | Writes `reports/release-gate.md` again from the gate's step records. |
 | `npm run release:record` | Records the candidate in `config/release-candidate.json`; refused unless the gate is green. |

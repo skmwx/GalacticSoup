@@ -14,7 +14,10 @@
  *     each with its file, line, title and tags;
  *   - that the fast and release-only integration selections are disjoint,
  *     that their union is every file under `tests/integration/`, and that the
- *     release-only selection is exactly the long simulations.
+ *     release-only selection is exactly the long simulations;
+ *   - the Chromium feature smoke (phase 2): its cases are exactly the cases
+ *     tagged `@feature`, each of them also runs exactly once in each release
+ *     project of its level, and the release gate never runs the smoke project.
  *
  * Writes `reports/test-discovery.json` (or `--out=<file>`) and prints a
  * summary. Exits 1 when a check fails. Listing starts no browser and no
@@ -33,6 +36,10 @@ import { REPO_ROOT } from '../config/aliases.mjs';
 import {
   BRANDED_PLAYWRIGHT_PROJECTS,
   BRANDED_SMOKE_SPECS,
+  FEATURE_SMOKE_PROJECT,
+  FEATURE_TAG,
+  FEATURE_VITEST_GROUPS,
+  FEATURE_VITEST_PROJECTS,
   INTEGRATION_FAST_PROJECT,
   INTEGRATION_RELEASE_PROJECT,
   isIntegrationReleaseFile,
@@ -136,7 +143,11 @@ function listPlaywright(projectNames, specs = []) {
 const playwright = {
   required: listPlaywright(REQUIRED_PLAYWRIGHT_PROJECTS),
   branded: listPlaywright(BRANDED_PLAYWRIGHT_PROJECTS, BRANDED_SMOKE_SPECS),
+  feature: listPlaywright([FEATURE_SMOKE_PROJECT]),
 };
+/** The files `verify:feature` runs across its Vitest invocations. */
+/** The files `verify:feature` runs in its one Vitest invocation. */
+const featureVitest = FEATURE_VITEST_GROUPS.flatMap((group) => listVitest(group.flatMap((project) => ['--project', project])));
 
 /* -------------------------------------------------------------------------- */
 /* Checks                                                                      */
@@ -211,12 +222,55 @@ for (const name of ['balance', 'balance:record']) {
 
 const keys = new Set();
 const duplicates = [];
-for (const entry of [...playwright.required, ...playwright.branded]) {
+for (const entry of [...playwright.required, ...playwright.branded, ...playwright.feature]) {
   const key = `${entry.project}|${entry.file}|${entry.title}`;
   if (keys.has(key)) duplicates.push(key);
   keys.add(key);
 }
 check('no Playwright case runs twice in a project', duplicates.length === 0, duplicates.join('; '));
+
+// Feature verification (phase 2).
+{
+  const identity = (entry) => `${entry.file}|${entry.title}`;
+  const feature = playwright.feature;
+  // The JSON listing names a tag without its leading @.
+  const hasTag = (entry) => entry.tags.some((tag) => `@${tag.replace(/^@/, '')}` === FEATURE_TAG);
+  const tagged = playwright.required.filter(hasTag);
+  const untagged = feature.filter((entry) => !hasTag(entry));
+  check('the feature smoke selects only cases tagged ' + FEATURE_TAG, feature.length > 0 && untagged.length === 0,
+    `${String(feature.length)} cases; untagged: ${untagged.map(identity).join(', ') || 'none'}`);
+  const taggedIds = [...new Set(tagged.map(identity))].sort();
+  const featureIds = feature.map(identity).sort();
+  check('every tagged case is in the feature smoke, once', JSON.stringify(taggedIds) === JSON.stringify(featureIds),
+    `tagged ${String(taggedIds.length)}, smoke ${String(featureIds.length)}`);
+  // Each smoke case runs exactly once in each release project of its level,
+  // Chromium and Firefox alike, and the smoke itself is never release evidence.
+  const enginesOf = (file) => file.startsWith('tests/accessibility/')
+    ? ['accessibility', 'accessibility-firefox']
+    : ['browser', 'browser-firefox'];
+  const wrong = [];
+  for (const entry of feature) {
+    for (const project of enginesOf(entry.file)) {
+      const runs = playwright.required.filter((other) => other.project === project && identity(other) === identity(entry)).length;
+      if (runs !== 1) wrong.push(`${project}: ${identity(entry)} runs ${String(runs)} times`);
+    }
+  }
+  check('every feature case runs exactly once in each applicable release engine', wrong.length === 0, wrong.join('; '));
+  check('the feature smoke is not a required or branded project',
+    !REQUIRED_PLAYWRIGHT_PROJECTS.includes(FEATURE_SMOKE_PROJECT) && !BRANDED_PLAYWRIGHT_PROJECTS.includes(FEATURE_SMOKE_PROJECT));
+  // The gate names the projects it runs; read them from its source.
+  const gate = fs.readFileSync(path.join(REPO_ROOT, 'scripts', 'release-gate.mjs'), 'utf8');
+  const gateProjects = [...gate.matchAll(/playwright\('([^']+)'/g)].map((match) => match[1]).sort();
+  const expectedGate = [...REQUIRED_PLAYWRIGHT_PROJECTS, ...BRANDED_PLAYWRIGHT_PROJECTS].sort();
+  check('the release gate runs only the required and branded Playwright projects',
+    JSON.stringify(gateProjects) === JSON.stringify(expectedGate), gateProjects.join(', '));
+  const featureFiles = featureVitest.map((entry) => `${entry.project}:${entry.file}`).sort();
+  const expectedFiles = all.filter((entry) => FEATURE_VITEST_PROJECTS.includes(entry.project))
+    .map((entry) => `${entry.project}:${entry.file}`).sort();
+  check('verify:feature runs the unit, fast integration and component files, each once',
+    JSON.stringify(featureFiles) === JSON.stringify(expectedFiles) && !featureVitest.some((entry) => entry.project === INTEGRATION_RELEASE_PROJECT),
+    `${String(featureFiles.length)} files, expected ${String(expectedFiles.length)}`);
+}
 
 /* -------------------------------------------------------------------------- */
 /* Output                                                                      */
@@ -228,7 +282,8 @@ const summary = {
   vitestFilesByScript: Object.fromEntries(Object.entries(scripts).map(([name, entry]) => [name, entry.files.length])),
   playwrightCasesByProject: Object.fromEntries(
     [...REQUIRED_PLAYWRIGHT_PROJECTS.map((name) => [name, count(playwright.required, name)]),
-      ...BRANDED_PLAYWRIGHT_PROJECTS.map((name) => [name, count(playwright.branded, name)])],
+      ...BRANDED_PLAYWRIGHT_PROJECTS.map((name) => [name, count(playwright.branded, name)]),
+      [FEATURE_SMOKE_PROJECT, playwright.feature.length]],
   ),
 };
 const discovery = {
@@ -236,7 +291,7 @@ const discovery = {
   generatedAt: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
   summary,
   checks,
-  vitest: { projects, scripts },
+  vitest: { projects, scripts, featureVerification: featureVitest },
   playwright,
 };
 fs.mkdirSync(path.dirname(out), { recursive: true });

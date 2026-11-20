@@ -7,7 +7,7 @@ import { expect, test } from '@playwright/test';
  * Keyboard-only scripted flows grow with the surfaces they cover.
  */
 test.describe('shell accessibility', () => {
-  test('has no automatically detectable violations [TECH-12.3]', async ({ page }) => {
+  test('has no automatically detectable violations [TECH-12.3]', { tag: '@feature' }, async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
 

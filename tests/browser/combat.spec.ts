@@ -6,6 +6,7 @@ import { chooseDestination, dockHome, warpHome, warpTo } from '../support/destin
 import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 import { takeService } from '../support/services.ts';
+import { openCheckpoint } from '../support/checkpoint/browser.ts';
 
 /**
  * The first end-to-end vertical slice in a real browser
@@ -420,5 +421,41 @@ test.describe('combat commands', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({
       timeout: 60_000,
     });
+  });
+});
+
+/**
+ * A combat command from a saved checkpoint (Test Suite Optimization Plan
+ * phase 3). The campaign is generated headlessly and seeded into this test's
+ * fresh context, paused at the scout site with the scout already inside lock
+ * and weapon range and nothing locked, then resumed through the start screen
+ * and the worker. Everything after that is the player's real sequence:
+ * select, lock, fire and stop.
+ */
+test.describe('combat from a checkpoint', () => {
+  test('selects, locks, fires at and stops firing on the scout from a saved checkpoint [MVP-AC-03, FUNC-20]', {
+    tag: '@feature',
+  }, async ({ page, baseURL }) => {
+    await openCheckpoint(page, 'scout-in-range', baseURL);
+
+    const entry = scoutEntry(page);
+    await entry.click();
+    await expect(entry).toHaveAttribute('aria-pressed', 'true');
+
+    // In range already: the lock is offered at once, while the clock is paused.
+    const lock = region(page, 'Navigation').getByRole('button', { name: /^Lock target/ });
+    await expect(lock).toBeEnabled();
+    await lock.click();
+    await ensureRunning(page);
+    await expect(region(page, 'In this site').getByText('Locked', { exact: true })).toBeVisible({ timeout: 30_000 });
+
+    const weapons = region(page, 'Weapons');
+    await expect(weapons.getByText('Aimed at Pirate Scout')).toBeVisible();
+    await weapons.getByRole('button', { name: /^Fire\s?E$/ }).click();
+    await expect(weapons.getByText(/^Firing at Pirate Scout/).first()).toBeVisible();
+
+    await weapons.getByRole('button', { name: /^Cease fire/ }).click();
+    await expect(weapons.locator('[data-weapon-status="stopped"]')).toBeVisible({ timeout: 10_000 });
+    await expect(weapons.getByText('Stopped: Stopped on command.')).toBeVisible();
   });
 });

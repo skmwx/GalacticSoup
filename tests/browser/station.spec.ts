@@ -39,7 +39,7 @@ test.describe('station interface', () => {
     await freshCampaign(page);
   });
 
-  test('prepares a ship end to end and finds it after a reopen [MVP-AC-01, MVP-AC-02, MVP-AC-06]', async ({
+  test('prepares a ship end to end and finds it after a reopen [MVP-AC-01, MVP-AC-02, MVP-AC-06]', { tag: '@feature' }, async ({
     page,
   }) => {
     await expect(page.getByText('20,000 ISK')).toBeVisible();

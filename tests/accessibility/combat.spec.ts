@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
 import { warpTo } from '../support/destinations.ts';
+import { openCheckpoint } from '../support/checkpoint/browser.ts';
 
 /**
  * The combat surfaces under automated audit
@@ -42,10 +43,11 @@ async function audit(page: Page): Promise<void> {
 }
 
 /**
- * Flies to the scout site, locks the scout and opens fire, then pauses. The
- * ship already carries its spare rounds.
+ * Starts a campaign, flies to the scout site, locks the scout and opens fire,
+ * then pauses. The ship already carries its spare rounds.
  */
 async function inAFight(page: Page): Promise<void> {
+  await freshCampaign(page);
   await page.getByRole('button', { name: 'Departure', exact: true }).click();
   await undock(page);
   await warpTo(page, 'Pirate Scout', 10);
@@ -68,13 +70,12 @@ async function inAFight(page: Page): Promise<void> {
 }
 
 test.describe('combat accessibility', () => {
-  test.beforeEach(async ({ page }) => {
-    await freshCampaign(page);
-  });
-
-  test('passes an automated audit in the middle of a fight [TECH-12.3, FUNC-19.3]', async ({ page }) => {
-    test.setTimeout(3 * 60_000);
-    await inAFight(page);
+  test('passes an automated audit in the middle of a fight [TECH-12.3, FUNC-19.3]', async ({ page, baseURL }) => {
+    // A fight saved headlessly - the scout locked, the autocannon firing, the
+    // booster running - opened through the start screen and the worker. The
+    // helper first checks the fight's status is shown in words: the site, the
+    // paused clock, the lock and the weapon firing at the scout.
+    await openCheckpoint(page, 'scout-fight', baseURL);
 
     // Open every weapon and module entry, then every explanation, so their contents are audited too.
     const closed = page.locator('[data-panel="equipment"] button[aria-expanded="false"]');

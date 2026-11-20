@@ -54,7 +54,7 @@ test.describe('campaign persistence', () => {
     await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
   });
 
-  test('creates, closes and reopens a campaign [MVP-AC-01, TECH-11.1]', async ({ page }) => {
+  test('creates, closes and reopens a campaign [MVP-AC-01, TECH-11.1]', { tag: '@feature' }, async ({ page }) => {
     await startCampaign(page);
 
     const identity = await campaignIdentity(page);
@@ -205,7 +205,7 @@ test.describe('campaign persistence', () => {
     expect(slots).toBe(1);
   });
 
-  test('persists the starting fit through the real worker and IndexedDB [MVP-AC-02, FUNC-8.4, TECH-11.2]', async ({ page }) => {
+  test('persists the starting fit through the real worker and IndexedDB [MVP-AC-02, FUNC-8.4, TECH-11.2]', { tag: '@feature' }, async ({ page }) => {
     await startCampaign(page);
     // The expected format comes from the engine rather than a literal, so a
     // format change fails the phase that makes it instead of this test.

@@ -119,7 +119,7 @@ test.describe('station accessibility', () => {
     await audit(page);
   });
 
-  test('reaches a surface and a purchase with the keyboard alone [TECH-12.3]', async ({ page }) => {
+  test('reaches a surface and a purchase with the keyboard alone [TECH-12.3]', { tag: '@feature' }, async ({ page }) => {
     // The registry's shortcut opens the market without a pointer.
     await page.keyboard.press('m');
     await expect(page.getByRole('heading', { name: 'Local market' })).toBeVisible();

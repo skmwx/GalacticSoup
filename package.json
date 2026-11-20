@@ -31,10 +31,12 @@
     "test:accessibility": "playwright test --project=accessibility",
     "test:browser:firefox": "playwright test --project=browser-firefox",
     "test:accessibility:firefox": "playwright test --project=accessibility-firefox",
+    "test:smoke": "playwright test --project=feature-smoke",
     "test:discover": "node scripts/test-discovery.mjs",
     "release:gate": "node scripts/release-gate.mjs",
     "release:report": "node scripts/release-gate.mjs --report",
     "release:record": "node scripts/release-gate.mjs --record",
+    "verify:feature": "node scripts/verify-feature.mjs",
     "verify": "npm run typecheck && npm run check:architecture && npm run validate:content && npm run test:unit && npm run test:integration && npm run test:performance && npm run test:component && npm run traceability && npm run build"
   },
   "dependencies": {
