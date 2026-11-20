@@ -11,8 +11,12 @@
  *     integration suite runs its two disjoint selections, fast and
  *     release-only (`config/testSelections.mjs`), in one Vitest invocation,
  *     counts each apart, and runs before the balance report that reads the
- *     release-only simulations' sections;
- *   - the balance report, compared with the recorded balance candidate;
+ *     release-only simulations' sections. Those sections go to a fresh run
+ *     directory, `reports/release/balance-run/`, with a manifest naming the
+ *     run, the sources and the content;
+ *   - the balance report, joined from that run alone and refused unless it
+ *     holds exactly the fixtures' measurements, then compared with the
+ *     recorded balance candidate;
  *   - the production build, built twice and compared, then audited: no script
  *     in it may be able to make a request;
  *   - the browser and accessibility suites, served exactly that bundle, in
@@ -48,7 +52,7 @@
  * @implements TECH-15.1
  */
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -61,6 +65,12 @@ import {
   isIntegrationReleaseFile,
 } from '../config/testSelections.mjs';
 import { witnessesFor } from '../config/releaseWitnesses.mjs';
+import {
+  BALANCE_RUN_ID_ENV,
+  BALANCE_SECTIONS_DIR_ENV,
+  createBalanceRun,
+  readBalanceRunManifest,
+} from './lib/balanceInputs.mjs';
 import { ENGINE_VERSION } from '../src/engine/application/version.ts';
 import { compileContent } from './lib/content/compile.mjs';
 import { readContentFiles } from './lib/content/read.mjs';
@@ -84,6 +94,8 @@ const DIST = path.join(REPO_ROOT, 'dist');
 const STEPS_DIR = path.join(REPO_ROOT, RELEASE_DIR, 'steps');
 const RESULTS_DIR = path.join(REPO_ROOT, RELEASE_DIR, 'results');
 const LOGS_DIR = path.join(REPO_ROOT, RELEASE_DIR, 'logs');
+/** Where the integration step's balance simulations write their sections; emptied for every run. */
+const BALANCE_RUN_DIR = path.join(REPO_ROOT, RELEASE_DIR, 'balance-run');
 const VITEST = path.join(REPO_ROOT, 'node_modules', 'vitest', 'vitest.mjs');
 const PLAYWRIGHT = path.join(REPO_ROOT, 'node_modules', '@playwright', 'test', 'cli.js');
 const VITE = path.join(REPO_ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
@@ -302,8 +314,9 @@ function command(argv) {
  *
  * @param {string | string[]} projects
  * @param {string} [name]
+ * @param {Record<string, string>} [env]
  */
-function vitest(projects, name) {
+function vitest(projects, name, env = {}) {
   const list = Array.isArray(projects) ? projects : [projects];
   const id = name ?? list[0];
   const file = path.join(RESULTS_DIR, `${id}.json`);
@@ -311,7 +324,7 @@ function vitest(projects, name) {
   const { exitCode, log } = node(`vitest-${id}`, [
     VITEST, 'run', ...list.flatMap((project) => ['--project', project]),
     '--reporter=default', '--reporter=json', `--outputFile.json=${file}`,
-  ]);
+  ], env);
   if (!fs.existsSync(file)) return { status: 'failed', exitCode, log, reason: 'the suite wrote no result' };
   const tests = readVitestResult(JSON.parse(fs.readFileSync(file, 'utf8')));
   const passed = exitCode === 0 && tests.failed === 0 && tests.passed > 0;
@@ -322,9 +335,24 @@ function vitest(projects, name) {
  * The integration suite: both selections in one run, counted apart. Each
  * selection must have run and passed tests of its own, so the step cannot pass
  * on one selection alone.
+ *
+ * The balance simulations among them write to a fresh run directory, whose
+ * manifest names the run, the sources and the content; the balance step joins
+ * only that run's sections (Test Suite Optimization Plan phase 12).
  */
 function integration() {
-  const found = vitest([INTEGRATION_FAST_PROJECT, INTEGRATION_RELEASE_PROJECT], 'integration');
+  const balanceRun = createBalanceRun(BALANCE_RUN_DIR, {
+    runId: randomUUID(),
+    sourceDigest: currentState().sourceDigest,
+    identity: contentIdentity(),
+  });
+  const found = {
+    ...vitest([INTEGRATION_FAST_PROJECT, INTEGRATION_RELEASE_PROJECT], 'integration', {
+      [BALANCE_SECTIONS_DIR_ENV]: BALANCE_RUN_DIR,
+      [BALANCE_RUN_ID_ENV]: balanceRun.runId,
+    }),
+    balanceRun: balanceRun.runId,
+  };
   const file = path.join(RESULTS_DIR, 'integration.json');
   if (!fs.existsSync(file)) return found;
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -338,10 +366,30 @@ function integration() {
   return { ...found, selections };
 }
 
-/** The balance report must find nothing moved since the balance candidate was recorded. */
+/**
+ * The balance report must find nothing moved since the balance candidate was
+ * recorded. It joins only the sections of the integration step's run, which
+ * must have measured these sources; the report itself refuses a section of
+ * another run or other content, a duplicate, and anything short of the
+ * fixtures' exact scenarios, careers, matrix cells and seeds.
+ */
 function balance() {
-  const { exitCode, log } = node('balance', ['scripts/balance-report.mjs']);
-  if (exitCode !== 0) return { status: 'failed', exitCode, log };
+  const manifest = readBalanceRunManifest(BALANCE_RUN_DIR);
+  if (manifest === null) {
+    return { status: 'failed', reason: 'no balance run to report on; run the integration step first' };
+  }
+  if (manifest.sourceDigest !== currentState().sourceDigest) {
+    return {
+      status: 'failed',
+      balanceRun: manifest.runId,
+      reason: `the balance run ${manifest.runId} measured other sources; run the integration step again`,
+    };
+  }
+  const relativeRunDir = path.relative(REPO_ROOT, BALANCE_RUN_DIR).split(path.sep).join('/');
+  const { exitCode, log } = node('balance', ['scripts/balance-report.mjs', `--run-dir=${relativeRunDir}`]);
+  if (exitCode !== 0) {
+    return { status: 'failed', exitCode, log, balanceRun: manifest.runId, reason: `the balance report refused the run's measurements; see ${log}` };
+  }
   const report = readJson(path.join(REPO_ROOT, 'reports', 'balance.json'));
   const candidate = readJson(path.join(REPO_ROOT, 'tests', 'fixtures', 'balance', 'candidate.json'));
   const same = sameBalance(report, candidate);
@@ -349,6 +397,7 @@ function balance() {
     status: same ? 'passed' : 'failed',
     exitCode,
     log,
+    balanceRun: manifest.runId,
     ...(same ? {} : { reason: 'the figures differ from the recorded balance candidate; see reports/balance.md' }),
   };
 }

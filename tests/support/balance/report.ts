@@ -1,7 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import process from 'node:process';
 
 import { REPO_ROOT } from '../../../config/aliases.mjs';
+import { BALANCE_RUN_ID_ENV, BALANCE_SECTIONS_DIR_ENV } from '../../../scripts/lib/balanceInputs.mjs';
+import { shippedContent } from '../content.ts';
 import type { ScenarioSummary } from '../progression/expectations.ts';
 
 import type { CellSummary, MatrixClaim } from './matrix.ts';
@@ -18,9 +21,22 @@ import type { CareerFixture, CareerSeedRun, SortieEntry } from './career.ts';
  * `reports/balance.md`; `npm run balance:record` also writes the candidate
  * record in `tests/fixtures/balance/candidate.json`. The figures are
  * deterministic, so two reports differ only where content or rules differ.
+ *
+ * The release gate gives each run a fresh directory and a run id
+ * (`BALANCE_SECTIONS_DIR`, `BALANCE_RUN_ID`). Every section is stamped with the
+ * run and the content it measured, so the report can refuse a section from
+ * another run or other content (Test Suite Optimization Plan phase 12;
+ * `scripts/lib/balanceInputs.mjs`).
  */
 
 export const BALANCE_SECTIONS_DIR = path.join(REPO_ROOT, 'reports', 'balance');
+
+/** Which run, and which content, a section measured. */
+export interface SectionStamp {
+  readonly runId: string | null;
+  readonly contentVersion: string;
+  readonly contentHash: string;
+}
 
 export interface ScenarioSection {
   readonly kind: 'scenarios';
@@ -60,9 +76,16 @@ export interface FiguresSection {
 export type BalanceSection = ScenarioSection | CareerSection | MatrixSection | FiguresSection;
 
 export function writeBalanceSection(name: string, section: BalanceSection): void {
-  fs.mkdirSync(BALANCE_SECTIONS_DIR, { recursive: true });
-  fs.writeFileSync(path.join(BALANCE_SECTIONS_DIR, `${name}.json`), `${JSON.stringify(section, null, 2)}\n`, 'utf8');
-  fs.writeFileSync(path.join(BALANCE_SECTIONS_DIR, `${name}.md`), renderSection(section), 'utf8');
+  const dir = process.env[BALANCE_SECTIONS_DIR_ENV] ?? BALANCE_SECTIONS_DIR;
+  const content = shippedContent();
+  const run: SectionStamp = {
+    runId: process.env[BALANCE_RUN_ID_ENV] ?? null,
+    contentVersion: content.contentVersion,
+    contentHash: content.contentHash,
+  };
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, `${name}.json`), `${JSON.stringify({ ...section, run }, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(path.join(dir, `${name}.md`), renderSection(section), 'utf8');
 }
 
 export function careerSummary(career: CareerFixture, runs: readonly CareerSeedRun[]): CareerSummary {

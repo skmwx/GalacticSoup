@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { ClientGateway } from '@gateway';
 import { createDirectGateway } from '@gateway/direct';
 import {
   EMPTY_PAYLOAD,
@@ -24,6 +25,7 @@ import {
   startSortie,
   type Sortie,
 } from '../support/sortie.ts';
+import { controlFrames } from '../support/controlledFrames.ts';
 
 /**
  * The combat interface over a real engine
@@ -39,14 +41,18 @@ import {
 
 interface Harness {
   readonly sortie: Sortie;
-  readonly gateway: ReturnType<typeof createDirectGateway>;
+  readonly gateway: ClientGateway;
   readonly user: ReturnType<typeof userEvent.setup>;
   readonly issues: LocalizationIssue[];
 }
 
-async function resume(sortie: Sortie, heading: string): Promise<Harness> {
+async function resume(
+  sortie: Sortie,
+  heading: string,
+  wrap: (gateway: ClientGateway) => ClientGateway = (gateway) => gateway,
+): Promise<Harness> {
   const issues: LocalizationIssue[] = [];
-  const gateway = createDirectGateway({ host: sortie.host, defaultTimeoutMs: 5_000 });
+  const gateway = wrap(createDirectGateway({ host: sortie.host, defaultTimeoutMs: 5_000 }));
   render(
     <LocalizationProvider onIssue={(issue) => issues.push(issue)}>
       <GameRoot gateway={gateway} />
@@ -559,29 +565,46 @@ describe('before leaving', () => {
 
 describe('returning to a reopened campaign', () => {
   it('reads the market again on docking after the campaign was reopened in space [MVP-AC-06, FUNC-11.3, TECH-7.3]', async () => {
+    // Prepared headlessly: undocked, ordered to dock, and already inside dock
+    // range with the docking timer running - then closed in space.
     const sortie = await startSortie();
     await loadAmmunition(sortie);
     await sortie.data('ship.undock');
+    const station = (await sortie.data<SiteData>('navigation.site')).site?.objects.find(
+      (object) => object.kind === 'station',
+    );
+    await sortie.data('navigation.dock', { stationId: station?.id ?? '' });
+    await sortie.data('time.set', { paused: false, rate: 1 });
+    const preparing = await sortie.until(async () => {
+      const travel = (await sortie.data<SiteData>('navigation.site')).travelStatus;
+      return travel?.kind === 'dock' && travel.phase === 'preparing';
+    }, 60);
+    if (!preparing) throw new Error('The ship never came within dock range.');
     await closeSortie(sortie);
-    const harness = await resume(sortie, 'Borrell Harbour');
-    await screen.findByRole('heading', { name: 'Navigation' });
 
-    // Docking takes simulation time, so the clock runs through the frame.
-    await harness.user.click(screen.getByRole('button', { name: /^Resume/ }));
-    const destinations = screen.getByRole('region', { name: 'Destinations' });
-    await harness.user.click(within(destinations).getByRole('button', { name: /^Borrell Harbour/ }));
-    await harness.user.click(within(destinations).getByRole('button', { name: /^Dock at Borrell Harbour/ }));
-    expect(await screen.findByText('Docked at Borrell Harbour', {}, { timeout: 20_000 })).toBeInTheDocument();
-    await harness.user.click(screen.getByRole('button', { name: /^Pause/ }));
+    // The interface's own frame driver completes the dock, one stepped frame
+    // at a time, so the invalidations reach it the way they do in play.
+    const frames = controlFrames();
+    try {
+      const harness = await resume(sortie, 'Borrell Harbour', (gateway) => frames.observe(gateway));
+      await screen.findByRole('heading', { name: 'Navigation' });
+      expect(screen.queryByRole('button', { name: 'Market' })).toBeNull();
 
-    await harness.user.click(screen.getByRole('button', { name: 'Market' }));
-    await harness.user.click(await screen.findByRole('radio', { name: 'Sell' }));
-    const offers = await screen.findAllByRole('button', { name: /^Sell Fusion S \((Hangar|Hold)\)$/ });
-    expect(offers.length).toBeGreaterThan(0);
-    for (const offer of offers) expect(offer).not.toBeUnavailable();
+      await harness.user.click(screen.getByRole('button', { name: /^Resume/ }));
+      await frames.stepUntil(() => screen.queryByText('Docked at Borrell Harbour') !== null);
+      await harness.user.click(screen.getByRole('button', { name: /^Pause/ }));
 
-    harness.gateway.dispose();
-  }, 30_000);
+      await harness.user.click(screen.getByRole('button', { name: 'Market' }));
+      await harness.user.click(await screen.findByRole('radio', { name: 'Sell' }));
+      const offers = await screen.findAllByRole('button', { name: /^Sell Fusion S \((Hangar|Hold)\)$/ });
+      expect(offers.length).toBeGreaterThan(0);
+      for (const offer of offers) expect(offer).not.toBeUnavailable();
+
+      harness.gateway.dispose();
+    } finally {
+      frames.restore();
+    }
+  });
 });
 
 describe('text', () => {

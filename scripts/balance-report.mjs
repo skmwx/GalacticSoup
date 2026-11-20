@@ -23,17 +23,28 @@
  *
  * Every figure is deterministic for a given content set and engine, so two
  * reports differ only where content or rules differ.
+ *
+ * With `--run-dir=<dir>` the sections are read from that run directory alone,
+ * which must hold the manifest the release gate wrote when it started the run;
+ * every section must belong to that run (Test Suite Optimization Plan phase
+ * 12). Either way, every section must have measured the current content, and
+ * together they must hold exactly the scenarios, careers, matrix cells and
+ * seeds the fixtures declare, each once (`scripts/lib/balanceInputs.mjs`).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
 import { REPO_ROOT } from '../config/aliases.mjs';
+import { readBalanceRun } from './lib/balanceInputs.mjs';
 import { compileContent } from './lib/content/compile.mjs';
 import { readContentFiles } from './lib/content/read.mjs';
 import { tuningDigest } from './lib/content/tuning.mjs';
 
-const SECTIONS_DIR = path.join(REPO_ROOT, 'reports', 'balance');
+const runDirArgument = process.argv.find((arg) => arg.startsWith('--run-dir='))?.slice('--run-dir='.length);
+const SECTIONS_DIR = runDirArgument === undefined
+  ? path.join(REPO_ROOT, 'reports', 'balance')
+  : path.resolve(REPO_ROOT, runDirArgument);
 const CANDIDATE = path.join(REPO_ROOT, 'tests', 'fixtures', 'balance', 'candidate.json');
 const PROGRESSION = path.join(REPO_ROOT, 'tests', 'fixtures', 'scenarios', 'progression.json');
 const CAREERS = path.join(REPO_ROOT, 'tests', 'fixtures', 'balance', 'careers.json');
@@ -54,32 +65,20 @@ const identity = {
 const progression = readJson(PROGRESSION);
 const careerFixtures = readJson(CAREERS);
 const matrixFixture = readJson(MATRIX);
-const sections = fs.existsSync(SECTIONS_DIR)
-  ? fs.readdirSync(SECTIONS_DIR).filter((file) => file.endsWith('.json')).sort()
-  : [];
-const scenarios = new Map();
-const careers = new Map();
-const matrix = new Map();
-for (const file of sections) {
-  const section = readJson(path.join(SECTIONS_DIR, file));
-  if (section.kind === 'scenarios') {
-    for (const scenario of section.scenarios) scenarios.set(scenario.scenarioId, scenario);
-  } else if (section.kind === 'careers') {
-    for (const career of section.careers) careers.set(career.careerId, career);
-  } else if (section.kind === 'matrix') {
-    matrix.set(section.encounterId, section);
-  }
-}
-
-const missing = [
-  ...progression.scenarios.map((scenario) => scenario.id).filter((id) => !scenarios.has(id)),
-  ...careerFixtures.careers.map((career) => career.id).filter((id) => !careers.has(id)),
-  ...Object.keys(matrixFixture.sites).filter((id) => !matrix.has(id)).map((id) => `matrix ${id}`),
-];
-if (missing.length > 0) {
-  process.stderr.write(`Balance report: no measurement for ${missing.join(', ')}. Run the balance simulations first (npm run balance).\n`);
+const run = readBalanceRun(SECTIONS_DIR, {
+  identity,
+  fixtures: { progression, careers: careerFixtures, matrix: matrixFixture },
+  requireRun: runDirArgument !== undefined,
+});
+if (run.problems.length > 0) {
+  process.stderr.write(
+    `Balance report: the measurements in ${path.relative(REPO_ROOT, SECTIONS_DIR) || '.'} cannot be joined:\n` +
+      run.problems.map((problem) => `  - ${problem}\n`).join('') +
+      'Run the balance simulations first (npm run balance).\n',
+  );
   process.exit(1);
 }
+const { scenarios, careers, matrix } = run;
 
 const headline = headlineFigures();
 const seeds = [...new Set([
@@ -107,7 +106,7 @@ if (record) {
 }
 
 process.stdout.write(
-  `Balance report: ${String(scenarios.size)} scenarios, ${String(careers.size)} careers, ${String(matrix.size)} matrix sites, tuning ${identity.tuningDigest.slice(0, 12)}` +
+  `Balance report${run.manifest === null ? '' : ` for run ${run.manifest.runId}`}: ${String(scenarios.size)} scenarios, ${String(careers.size)} careers, ${String(matrix.size)} matrix sites, tuning ${identity.tuningDigest.slice(0, 12)}` +
     `${record ? ', candidate recorded' : candidate === null ? ', no candidate recorded yet' : `, ${String(differences.length)} differences from the candidate`}.\n`,
 );
 
