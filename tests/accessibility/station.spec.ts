@@ -1,5 +1,6 @@
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+
+import { audit } from '../support/axe.ts';
 import { serviceButton } from '../support/services.ts';
 
 /**
@@ -8,13 +9,17 @@ import { serviceButton } from '../support/services.ts';
  *
  * This is the baseline the station screens are built to: every surface passes
  * an automated audit, every action is reachable and operable from the
- * keyboard, and a modal confirmation traps focus and gives it back. The full
- * accessibility pass over the finished game is a later phase.
+ * keyboard, and a refusal is said in words.
+ *
+ * The audits of every station surface and of the purchase confirmation, at
+ * the standard and the doubled presentation, and the focus trap and return of
+ * every confirmation are owned by `presentation.spec.ts` (Test Suite
+ * Optimization Plan phase 10a). This file keeps what only it shows: the Sell
+ * mode and its radio keys, a typed quantity and its refusal, a purchase by
+ * keyboard alone, and a refused service explained without colour.
  */
 
 const PILOT = 'Keyboard Pilot';
-
-const PANELS = ['Market', 'Hangar', 'Fitting', 'Ships'] as const;
 
 async function freshCampaign(page: Page): Promise<void> {
   await page.goto('/');
@@ -34,39 +39,19 @@ async function freshCampaign(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
 }
 
-async function audit(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
-  expect(results.violations).toEqual([]);
-}
-
 test.describe('station accessibility', () => {
   test.beforeEach(async ({ page }) => {
     await freshCampaign(page);
   });
 
-  test('passes an automated audit on every station surface [TECH-12.3]', async ({ page }) => {
-    await audit(page);
-
-    for (const panel of PANELS) {
-      await page.getByRole('button', { name: panel, exact: true }).click();
-      await expect(page.getByRole('button', { name: panel, exact: true })).toHaveAttribute(
-        'aria-current',
-        'page',
-      );
-      await audit(page);
-    }
-  });
-
-  test('switches the market to Sell with the keyboard and audits both modes [TECH-12.3, FUNC-11.3]', async ({ page }) => {
+  test('switches the market to Sell with the keyboard and audits the Sell mode [TECH-12.3, FUNC-11.3]', async ({ page }) => {
     await page.getByRole('button', { name: 'Market', exact: true }).click();
     const buyMode = page.getByRole('radio', { name: 'Buy', exact: true });
     await expect(buyMode).toBeChecked();
-    // Charge suitability is words, not only a colour.
+    // Charge suitability is words, not only a colour. The Buy mode itself is
+    // audited by the presentation matrix.
     const fusion = page.getByRole('row', { name: /^Fusion S/ });
     await expect(fusion.getByText('Fits a weapon you have fitted')).toBeVisible();
-    await audit(page);
 
     // Arrow keys move between the two modes, as in any radio group.
     await buyMode.focus();
@@ -111,14 +96,6 @@ test.describe('station accessibility', () => {
     await audit(page);
   });
 
-  test('passes an automated audit inside a confirmation [TECH-12.3]', async ({ page }) => {
-    await page.getByRole('button', { name: 'Market', exact: true }).click();
-    await page.getByRole('button', { name: 'Buy Fusion S' }).click();
-
-    await expect(page.getByRole('dialog', { name: 'Confirm purchase' })).toBeVisible();
-    await audit(page);
-  });
-
   test('reaches a surface and a purchase with the keyboard alone [TECH-12.3]', { tag: '@feature' }, async ({ page }) => {
     // The registry's shortcut opens the market without a pointer.
     await page.keyboard.press('m');
@@ -137,31 +114,6 @@ test.describe('station accessibility', () => {
     await expect(page.getByText('20,000 ISK')).toBeHidden();
   });
 
-  test('traps focus in a confirmation and returns it afterwards [TECH-12.3]', async ({ page }) => {
-    await page.getByRole('button', { name: 'Market', exact: true }).click();
-
-    const opener = page.getByRole('button', { name: 'Buy Fusion S' });
-    await opener.focus();
-    await page.keyboard.press('Enter');
-
-    const dialog = page.getByRole('dialog', { name: 'Confirm purchase' });
-    await expect(dialog).toBeVisible();
-
-    // Tabbing past the last control comes back to the first one, so focus
-    // never escapes behind the overlay.
-    for (let step = 0; step < 12; step += 1) {
-      await page.keyboard.press('Tab');
-      const inside = await page.evaluate(
-        () => document.activeElement?.closest('[role="dialog"]') !== null,
-      );
-      expect(inside).toBe(true);
-    }
-
-    await page.keyboard.press('Escape');
-    await expect(dialog).toBeHidden();
-    await expect(opener).toBeFocused();
-  });
-
   test('does not rely on colour alone to report a refusal [TECH-12.3]', async ({ page }) => {
     // An undamaged ship cannot be repaired, and the reason is words: the
     // tooltip that focus shows, and the button's accessible description.
@@ -170,19 +122,5 @@ test.describe('station accessibility', () => {
     await expect(repair).toHaveAccessibleDescription(/already fully repaired/);
     await repair.focus();
     await expect(page.getByText(/already fully repaired/).last()).toBeVisible();
-  });
-
-  test('stays readable at a doubled interface scale [TECH-12.3]', async ({ page }) => {
-    await page.getByRole('button', { name: 'Market', exact: true }).click();
-    await page.evaluate(() => {
-      document.documentElement.style.setProperty('--gs-ui-scale', '2');
-      document.documentElement.style.setProperty('--gs-text-scale', '2');
-    });
-
-    await expect(page.getByRole('heading', { name: 'Local market' })).toBeVisible();
-    const overflows = await page.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
-    );
-    expect(overflows).toBe(false);
   });
 });

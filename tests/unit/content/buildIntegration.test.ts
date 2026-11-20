@@ -16,6 +16,11 @@ import { CONTENT_BUNDLE_MODULE } from '../../../config/packages.mjs';
  * that it refuses bad content and that every build configuration installs it.
  * This test file is itself evidence of the test-startup case: the bundle it
  * imports was compiled when this run started.
+ *
+ * A successful compile of the shipped content has no case of its own here:
+ * `compileContentOrThrow` throws on failure, every test project compiles it at
+ * startup, and `shippedContent.test.ts` and the compiler tests own what the
+ * bundle holds (Test Suite Optimization Plan phase 11a).
  */
 
 const BROKEN_ROOT = path.resolve('tests/fixtures/content/broken');
@@ -28,13 +33,6 @@ function pluginNames(plugins: unknown): string[] {
 }
 
 describe('content build integration', () => {
-  it('compiles the shipped content [TECH-6.2, TECH-6.3]', () => {
-    const result = compileContentOrThrow();
-
-    expect(result.ok).toBe(true);
-    expect(result.stats.definitions).toBeGreaterThan(0);
-  });
-
   it('refuses to start when content is invalid, naming every problem [TECH-6.2]', () => {
     expect(() => compileContentOrThrow(BROKEN_ROOT)).toThrow(/Content validation failed/);
     expect(() => compileContentOrThrow(BROKEN_ROOT)).toThrow(/unresolvedReference/);

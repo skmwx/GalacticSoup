@@ -1,7 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-import { chooseDestination, destinations, destinationEntry, showNavigationView, warpTo } from '../support/destinations.ts';
+import { openCheckpoint } from '../support/checkpoint/browser.ts';
+import { destinations, destinationEntry, showNavigationView } from '../support/destinations.ts';
 import { buy, freshCampaign, fund } from '../support/funding.ts';
 import { undock } from '../support/undock.ts';
 
@@ -17,6 +18,12 @@ import { undock } from '../support/undock.ts';
  * automated audit as the rest of the game, be operable without a pointer, say
  * what it shows in words rather than colour alone, and keep the tactical
  * marks honest under reduced motion.
+ *
+ * The two fight audits open prepared checkpoints - a guided volley in flight,
+ * a web on the ship - reached headlessly and resumed through the real start
+ * screen and worker (Test Suite Optimization Plan phase 7a). Launch, flight
+ * and reopening in flight stay in the guided browser journey, and timing and
+ * expiry in the headless guided-weapon and web tests.
  */
 
 const PILOT = 'Accessible Captain';
@@ -30,21 +37,6 @@ async function audit(page: Page): Promise<void> {
   expect(results.violations).toEqual([]);
 }
 
-function region(page: Page, name: string): Locator {
-  return page.getByRole('region', { name, exact: true });
-}
-
-async function ensureRunning(page: Page): Promise<void> {
-  const resume = page.getByRole('button', { name: /^Resume/ });
-  if (await resume.isVisible()) await resume.click();
-  await expect(page.getByText(/Running at 1x/)).toBeVisible();
-}
-
-async function pause(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Pause/ }).click();
-  await expect(page.getByText('Paused', { exact: true })).toBeVisible();
-}
-
 /** Opens every collapsed equipment entry and explanation, so their contents are audited too. */
 async function openEverything(page: Page): Promise<void> {
   const closed = page.locator('[data-panel="equipment"] button[aria-expanded="false"]');
@@ -56,12 +48,9 @@ async function openEverything(page: Page): Promise<void> {
 }
 
 test.describe('v0.2 surfaces: accessibility', () => {
-  test.beforeEach(async ({ page }) => {
-    await freshCampaign(page, PILOT);
-  });
-
   test('audits a hangar of three ships and their comparison, and switches ship from the keyboard [V02-AC-14, V02-AC-03, TECH-12.3, FUNC-20]', async ({ page }) => {
     test.setTimeout(3 * 60_000);
+    await freshCampaign(page, PILOT);
     await fund(page, FUNDING);
     await page.getByRole('button', { name: 'Market', exact: true }).click();
     await buy(page, 'Bulwark', 1);
@@ -99,6 +88,7 @@ test.describe('v0.2 surfaces: accessibility', () => {
   });
 
   test('audits the market under its purpose, size and compatibility filters, operated from the keyboard [V02-AC-14, V02-AC-05, TECH-12.3, FUNC-11.3]', async ({ page }) => {
+    await freshCampaign(page, PILOT);
     await page.getByRole('button', { name: 'Market', exact: true }).click();
     const table = page.getByRole('table', { name: /items quoted here/ });
 
@@ -133,6 +123,7 @@ test.describe('v0.2 surfaces: accessibility', () => {
   });
 
   test('audits twelve destinations in bands, filters them and chooses one from the keyboard [V02-AC-14, V02-AC-09, TECH-12.3, FUNC-20]', async ({ page }) => {
+    await freshCampaign(page, PILOT);
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await undock(page);
     await showNavigationView(page, 'Warp');
@@ -163,43 +154,25 @@ test.describe('v0.2 surfaces: accessibility', () => {
     await expect(chooser.getByRole('list', { name: 'Entry band · tier 1' })).toBeVisible();
   });
 
-  test('audits a fight under guided fire: volleys are marked by shape and described in words, also with reduced motion [V02-AC-14, V02-AC-06, TECH-12.2, TECH-12.3, FUNC-19.3]', async ({ page }) => {
-    test.setTimeout(4 * 60_000);
+  test('audits a fight under guided fire: volleys are marked by shape and described in words, also with reduced motion [V02-AC-14, V02-AC-06, TECH-12.2, TECH-12.3, FUNC-19.3]', async ({ page, baseURL }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await undock(page);
-    await warpTo(page, 'Missile Picket', 10);
-    await ensureRunning(page);
-    await expect(page.getByRole('heading', { level: 2, name: 'Signal Spire' })).toBeVisible({ timeout: 60_000 });
-
-    await region(page, 'In this site').getByRole('button', { name: /Pirate Lancer/ }).click();
-    const lock = region(page, 'Navigation').getByRole('button', { name: /^Lock target/ });
-    await expect(lock).toBeEnabled({ timeout: 60_000 });
-    await lock.click();
+    // Paused at the Missile Picket, the lancer locked and its volley in flight at the ship.
+    await openCheckpoint(page, 'guided-incoming', baseURL, 'Pirate Lancer');
 
     // The lancer's rounds are drawn as filled diamonds, each with a text title.
     const incoming = page.locator('[data-projectile="incoming"]').first();
-    await expect(incoming).toBeVisible({ timeout: 90_000 });
-    await pause(page);
-    await expect(page.locator('[data-projectile="incoming"]').first().locator('title'))
-      .toHaveText(/^Guided projectile, [\d.]+ s of flight left$/);
+    await expect(incoming).toBeVisible();
+    await expect(incoming.locator('title')).toHaveText(/^Guided projectile, [\d.]+ s of flight left$/);
     await openEverything(page);
     await audit(page);
   });
 
-  test('audits a fight under a web: the slowing is named with its source, strength, time and the speed left [V02-AC-14, V02-AC-07, TECH-12.2, TECH-12.3, FUNC-9.9]', async ({ page }) => {
-    test.setTimeout(4 * 60_000);
-    await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await undock(page);
-    await chooseDestination(page, 'Range Check');
-    await warpTo(page, 'Range Check', 10);
-    await ensureRunning(page);
-    await expect(page.getByRole('heading', { level: 2, name: 'Tangle Drift' })).toBeVisible({ timeout: 60_000 });
+  test('audits a fight under a web: the slowing is named with its source, strength, time and the speed left [V02-AC-14, V02-AC-07, TECH-12.2, TECH-12.3, FUNC-9.9]', async ({ page, baseURL }) => {
+    // Paused at the Range Check with the binder's web on the ship.
+    await openCheckpoint(page, 'web-held', baseURL, 'Pirate Binder');
 
-    // Hold still: the binder closes in and webs the ship.
     const limit = page.locator('[data-readout="speedEffects"] [data-speed-limit]').first();
-    await expect(limit).toBeVisible({ timeout: 120_000 });
-    await pause(page);
+    await expect(limit).toBeVisible();
     await expect(limit).toHaveText(/^Speed limited to .+ \(normally .+\)$|^Speed limited to .+, the floor/);
     await expect(page.locator('[data-readout="speedEffects"] [data-speed-effect]').first()).toContainText(/Pirate Binder/);
     await expect(page.locator('[data-effect="web"][data-direction="incoming"] title').first())

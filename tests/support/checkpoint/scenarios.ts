@@ -62,6 +62,10 @@ const CLOSED_AT_REAL_MS = 1_700_000_100_000;
 
 const SCOUT_ENCOUNTER = 'encounter.borrell.pirate-scout';
 const SCOUT_SITE = 'site.borrell.verge';
+const GUIDED_ENCOUNTER = 'encounter.borrell.missile-picket';
+const GUIDED_SITE = 'site.borrell.signal-spire';
+const WEB_ENCOUNTER = 'encounter.borrell.range-check';
+const WEB_SITE = 'site.borrell.tangle-drift';
 /** The hard site the loss checkpoints leave the starter ship idle at until it is destroyed. */
 const BASE_SITE = 'site.borrell.outpost-cradle';
 const AUTOCANNON = 'module.turret.autocannon.small';
@@ -80,6 +84,8 @@ export const CHECKPOINT_NAMES = [
   'base-cleared',
   'loss-granted',
   'loss-shipless',
+  'guided-incoming',
+  'web-held',
 ] as const;
 export type CheckpointName = (typeof CHECKPOINT_NAMES)[number];
 
@@ -98,6 +104,10 @@ export const CHECKPOINT_DESCRIPTIONS: Readonly<Record<CheckpointName, string>> =
     'Docked and paused at Borrell Harbour after the starter ship, with a spare autocannon bought for the hangar, was destroyed idling at the Pirate Base: the loss reported and insured, a recovery-grant Wayfarer supplied, and what survived waiting in the wreck.',
   'loss-shipless':
     "Docked and paused at Borrell Harbour without a ship after the starter ship's autocannon was taken off and sold and the rest destroyed idling at the Pirate Base: the payout leaves enough to buy a starter ship, so the recovery service supplied none.",
+  'guided-incoming':
+    'Paused at the Missile Picket 10 km out with the starter ship, the Pirate Lancer locked and one of its guided volleys in flight at the ship.',
+  'web-held':
+    'Paused at the Range Check after a warp 10 km out, the starter ship held still until the Pirate Binder closed in and webbed it: the web running on the ship.',
 };
 
 /**
@@ -118,6 +128,10 @@ export interface SiteCheckpointFacts {
   /** The first weapon's target while it repeats, else `null`. */
   readonly firingAt: string | null;
   readonly boosterActive: boolean;
+  /** Guided projectiles in flight at the player's ship. */
+  readonly incomingProjectiles: number;
+  /** Speed reductions an opponent holds on the player's ship. */
+  readonly incomingWebs: number;
 }
 
 /** One fitted slot: what occupies it and the charge it holds, by definition. */
@@ -263,6 +277,8 @@ async function observeSite(session: Asker): Promise<SiteCheckpointFacts> {
     locks: combat.locks.map((lock) => ({ targetId: lock.targetId, status: lock.status })),
     firingAt: weapon !== undefined && weapon.repeating ? weapon.targetId : null,
     boosterActive: combat.modules.some((module) => module.slot.kind === 'system' && module.status === 'active'),
+    incomingProjectiles: combat.projectiles.filter((projectile) => projectile.atPlayer).length,
+    incomingWebs: combat.defenses?.speedEffects.filter((effect) => !effect.fromPlayer).length ?? 0,
   };
 }
 
@@ -606,6 +622,52 @@ async function loseShipAtBase(session: ScenarioSession, expected: 'granted' | 'n
   }
 }
 
+/** Undocks and warps to a site 10 km out, unpaused, and waits for arrival. */
+async function arriveAt(session: ScenarioSession, encounterId: string, siteId: string): Promise<void> {
+  await session.data('ship.undock');
+  await session.data('navigation.selectDestination', { encounterId });
+  await session.data('navigation.warp', { destinationSiteId: siteId, arrivalDistanceKm: 10 });
+  await session.data('time.set', { paused: false, rate: 1 });
+  const arrived = await until(session, async () => {
+    const site = await session.data<SiteData>('navigation.site');
+    return site.location.kind === 'site' && site.location.siteId === siteId;
+  }, 120);
+  if (!arrived) throw new Error(`The checkpoint ship never arrived at ${siteId}.`);
+}
+
+/**
+ * At the Missile Picket: locks the lancer once it can be locked, then waits
+ * for a volley in flight at the ship - the moment the guided-fire audit reads
+ * (Test Suite Optimization Plan phase 7a).
+ */
+async function underGuidedFire(session: ScenarioSession): Promise<void> {
+  await arriveAt(session, GUIDED_ENCOUNTER, GUIDED_SITE);
+  const lancer = (await session.data<EncounterData>('encounter.state')).instance?.npcs[0]?.shipId;
+  if (lancer === undefined) throw new Error('The Missile Picket spawned no opponent.');
+  const lockable = await until(session, async () => (await session.data<CombatData>('combat.state')).lockCommands
+    .find((entry) => entry.objectId === lancer)
+    ?.commands.some((command) => command.command === 'targeting.lock' && command.available) === true, 60);
+  if (!lockable) throw new Error('The lancer never came inside lock range.');
+  await session.data('targeting.lock', { targetId: lancer });
+  const incoming = await until(
+    session,
+    async () => (await session.data<CombatData>('combat.state')).projectiles.some((projectile) => projectile.atPlayer),
+    90,
+  );
+  if (!incoming) throw new Error('No guided volley was ever in flight at the ship.');
+}
+
+/**
+ * At the Range Check: holds still until an opponent's web is on the ship -
+ * the moment the web audit reads (Test Suite Optimization Plan phase 7a).
+ */
+async function underWeb(session: ScenarioSession): Promise<void> {
+  await arriveAt(session, WEB_ENCOUNTER, WEB_SITE);
+  const webbed = await until(session, async () => ((await session.data<CombatData>('combat.state')).defenses?.speedEffects
+    .some((effect) => !effect.fromPlayer)) === true, 120);
+  if (!webbed) throw new Error('No opponent ever webbed the ship.');
+}
+
 const SCRIPTS: Readonly<Record<CheckpointName, (session: ScenarioSession, content: ContentRepository) => Promise<void>>> = {
   async 'scout-arrived'(session) {
     await arriveAtScout(session);
@@ -633,6 +695,12 @@ const SCRIPTS: Readonly<Record<CheckpointName, (session: ScenarioSession, conten
   async 'loss-shipless'(session, content) {
     await sellFittedAutocannon(session, content);
     await loseShipAtBase(session, 'noShip');
+  },
+  async 'guided-incoming'(session) {
+    await underGuidedFire(session);
+  },
+  async 'web-held'(session) {
+    await underWeb(session);
   },
 };
 

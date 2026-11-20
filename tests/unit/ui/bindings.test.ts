@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  ACTION_CATEGORIES,
   ACTIONS,
   assignKey,
+  defaultShortcuts,
   isBindableKey,
   normaliseKey,
   REMAPPABLE_ACTIONS,
@@ -26,6 +28,14 @@ describe('key bindings', () => {
       expect(bindings.byKey.get(action.shortcut ?? '')).toBe(action.id);
     }
     expect(bindings.byKey.size).toBe(withShortcut.length);
+    // The registry's own map of defaults agrees: one entry per shortcut.
+    expect(defaultShortcuts().size).toBe(withShortcut.length);
+  });
+
+  it('lists every remappable action under a category the settings show [TECH-12.3, FUNC-20]', () => {
+    for (const action of REMAPPABLE_ACTIONS) {
+      expect(ACTION_CATEGORIES, action.id).toContain(action.category);
+    }
   });
 
   it('accepts single printable keys and function keys, never a key the page needs [FUNC-20, TECH-12.3]', () => {

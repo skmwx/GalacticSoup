@@ -78,6 +78,19 @@ describe('browser checkpoints', () => {
     expect(fight.facts.boosterActive).toBe(true);
   });
 
+  it('pauses under a guided volley in flight, and under a web on the ship [V02-AC-06, V02-AC-07]', async () => {
+    const guided = checkpointAt(await checkpoint('guided-incoming'), 'site');
+    expect(guided.facts.siteId).toBe('site.borrell.signal-spire');
+    expect(guided.facts.paused).toBe(true);
+    expect(guided.facts.locks).toEqual([{ targetId: guided.facts.opponentId, status: 'locked' }]);
+    expect(guided.facts.incomingProjectiles).toBeGreaterThan(0);
+
+    const web = checkpointAt(await checkpoint('web-held'), 'site');
+    expect(web.facts.siteId).toBe('site.borrell.tangle-drift');
+    expect(web.facts.paused).toBe(true);
+    expect(web.facts.incomingWebs).toBeGreaterThan(0);
+  }, GENERATION_TIMEOUT_MS);
+
   it('docks after the patrol with its bounty paid and the salvage in the hold [MVP-AC-06]', async () => {
     const patrol = checkpointAt(await checkpoint('patrol-salvage'), 'station');
     const { facts } = patrol;

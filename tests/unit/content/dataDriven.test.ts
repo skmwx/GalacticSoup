@@ -43,19 +43,13 @@ describe('structural enumerations', () => {
     expect([...DEFENSE_LAYERS]).toEqual(['shield', 'armor', 'hull']);
   });
 
-  it('gives every hull a resistance for every damage type on every layer [TECH-6.1]', () => {
-    for (const hull of content.hulls()) {
-      for (const layer of DEFENSE_LAYERS) {
-        expect(Object.keys(hull.defenses[layer].resistances).sort(), `${hull.id}.${layer}`).toEqual(
-          [...DAMAGE_TYPES].sort(),
-        );
-      }
-    }
-  });
-
-  it('divides every shot among exactly the four damage types [TECH-6.1, FUNC-9.7]', () => {
+  // The authored shape of resistance and damage profiles - exactly the four
+  // damage types - is the schemas' (`schemas/content/common.schema.json`), and
+  // `schemaValidation.test.ts` shows a missing or unknown damage type refused
+  // (Test Suite Optimization Plan phase 11a). What the schema cannot say is
+  // that a shot does damage at all.
+  it('gives every shot some damage [TECH-6.1, FUNC-9.7]', () => {
     for (const charge of content.ammunitions()) {
-      expect(Object.keys(charge.damagePerShot).sort(), charge.id).toEqual([...DAMAGE_TYPES].sort());
       expect(
         Object.values(charge.damagePerShot).reduce((total, value) => total + value, 0),
         charge.id,

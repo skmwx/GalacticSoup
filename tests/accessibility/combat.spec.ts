@@ -1,6 +1,6 @@
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+import { audit } from '../support/axe.ts';
 import { openCheckpoint } from '../support/checkpoint/browser.ts';
 
 /**
@@ -20,14 +20,11 @@ import { openCheckpoint } from '../support/checkpoint/browser.ts';
  * paused clock, the lock and the weapon firing at the scout. Flying there and
  * locking through the interface are the command cases' evidence
  * (`tests/browser/combat.spec.ts`).
+ *
+ * The audit uses the axe tags the station and presentation audits share
+ * (`tests/support/axe.ts`), so this is also the fight audit at the standard
+ * presentation (Test Suite Optimization Plan phase 10a).
  */
-
-async function audit(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
-  expect(results.violations).toEqual([]);
-}
 
 /** Opens the saved fight with the scout, paused. */
 async function inAFight(page: Page, baseURL: string | undefined): Promise<void> {

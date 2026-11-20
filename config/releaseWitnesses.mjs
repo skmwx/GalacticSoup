@@ -192,19 +192,28 @@ export const RELEASE_WITNESSES = [
     file: 'tests/accessibility/combat.spec.ts',
     title: 'combat accessibility > passes an automated audit in the middle of a fight',
   },
+  // Phase 10a: one presentation matrix owns the station-surface and purchase
+  // audits; the standard-size fight audit is `combat-audit`.
   {
     id: 'presentation-standard',
-    evidence: 'Station surfaces, a confirmation and a fight at standard size and contrast',
+    evidence: 'Station surfaces and a confirmation at standard size and contrast',
     level: 'accessibility',
     file: 'tests/accessibility/presentation.spec.ts',
-    title: 'presentation settings and accessibility > audits every station surface, a confirmation and a fight at standard size and contrast',
+    title: 'presentation settings and accessibility > audits every station surface and a confirmation at standard size and contrast',
   },
   {
     id: 'presentation-enlarged',
     evidence: 'The same at doubled size, high contrast and reduced motion',
     level: 'accessibility',
     file: 'tests/accessibility/presentation.spec.ts',
-    title: 'presentation settings and accessibility > audits every station surface, a confirmation and a fight at doubled size, high contrast and reduced motion',
+    title: 'presentation settings and accessibility > audits every station surface and a confirmation at doubled size, high contrast and reduced motion',
+  },
+  {
+    id: 'presentation-enlarged-fight',
+    evidence: 'A fight at doubled size, high contrast and reduced motion',
+    level: 'accessibility',
+    file: 'tests/accessibility/presentation.spec.ts',
+    title: 'presentation settings and accessibility > audits a fight at doubled size, high contrast and reduced motion',
   },
   {
     id: 'v02-hangar-comparison',

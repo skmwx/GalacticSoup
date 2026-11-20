@@ -6,7 +6,6 @@ import {
   ACTIONS,
   ActionButton,
   actionById,
-  defaultShortcuts,
   LocalizationProvider,
   useActionRunner,
   type ActionRunner,
@@ -31,25 +30,13 @@ function deferred(): { promise: Promise<void>; resolve: () => void } {
   return { promise, resolve };
 }
 
+// Labels resolving in the catalogue are owned by `tests/unit/ui/messageCatalog.test.ts`
+// (ACTION_MESSAGE_KEYS), and shortcut uniqueness and valid remapping categories by
+// `tests/unit/ui/bindings.test.ts` (Test Suite Optimization Plan phase 11a).
 describe('the action registry', () => {
-  it('gives every action a label, an icon and a remapping category [TECH-12.3]', () => {
-    for (const action of ACTIONS) {
-      expect(action.id.length).toBeGreaterThan(0);
-      expect(action.labelKey.length).toBeGreaterThan(0);
-      expect(action.icon.length).toBeGreaterThan(0);
-      expect(action.category.length).toBeGreaterThan(0);
-    }
-  });
-
-  it('registers each id once and each shortcut once [TECH-12.3]', () => {
+  it('registers each id once [TECH-12.3]', () => {
     const ids = ACTIONS.map((action) => action.id);
     expect(new Set(ids).size).toBe(ids.length);
-
-    const shortcuts = ACTIONS.flatMap((action) =>
-      action.shortcut === null ? [] : [action.shortcut],
-    );
-    expect(new Set(shortcuts).size).toBe(shortcuts.length);
-    expect(defaultShortcuts().size).toBe(shortcuts.length);
   });
 
   it('refuses to describe an action nobody registered [TECH-12.3]', () => {

@@ -66,6 +66,33 @@ describe('authored content schemas', () => {
     ).toBe(true);
   });
 
+  // The schema owns the shape of every damage profile: exactly the four damage
+  // types (Test Suite Optimization Plan phase 11a; `dataDriven.test.ts` no
+  // longer enumerates the keys of each shipped definition).
+  it('rejects a damage profile missing a damage type, or with one it does not know [TECH-6.1, TECH-6.2, FUNC-9.7]', () => {
+    const missing = compilePack(
+      editDocument(minimalPack(), 'catalog/ammunition.json', (document) => {
+        const definitions = document['definitions'] as Record<string, unknown>[];
+        delete (definitions[0]?.['damagePerShot'] as Record<string, number>)['thermal'];
+      }),
+    );
+    expect(missing.ok).toBe(false);
+    expect(missing.issues.some((issue) =>
+      issue.reason === 'schema' && issue.file.includes('catalog/ammunition.json') &&
+      issue.path.startsWith('definitions.0.damagePerShot'))).toBe(true);
+
+    const extra = compilePack(
+      editDocument(minimalPack(), 'catalog/ammunition.json', (document) => {
+        const definitions = document['definitions'] as Record<string, unknown>[];
+        (definitions[0]?.['damagePerShot'] as Record<string, number>)['radiant'] = 3;
+      }),
+    );
+    expect(extra.ok).toBe(false);
+    expect(extra.issues.some((issue) =>
+      issue.reason === 'schema' && issue.file.includes('catalog/ammunition.json') &&
+      issue.path.startsWith('definitions.0.damagePerShot'))).toBe(true);
+  });
+
   it('rejects an unknown property rather than ignoring it [TECH-6.2]', () => {
     const result = compilePack(
       editDocument(minimalPack(), 'catalog/items.json', (document) => {

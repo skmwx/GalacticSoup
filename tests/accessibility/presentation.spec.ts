@@ -1,6 +1,7 @@
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { audit, expectNoSidewaysScroll } from '../support/axe.ts';
+import { openCheckpoint } from '../support/checkpoint/browser.ts';
 import { gameMenuButton, openSettings } from '../support/cockpit.ts';
 import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule } from '../support/fitting.ts';
@@ -20,10 +21,15 @@ import { warpTo } from '../support/destinations.ts';
  * reload; a remapped key is the one the buttons, the guidance and the combat
  * shortcuts use; every dialog takes focus, keeps it and gives it back; and
  * with every colour made the same, each state still reads by shape or word.
+ *
+ * The station matrix is the one owner of the station-surface and purchase
+ * audits at both presentations (Test Suite Optimization Plan phase 10a). The
+ * fight at the enlarged presentation opens the saved scout fight; at the
+ * standard presentation the fight audit is `combat.spec.ts`, which expands
+ * every equipment entry with the same axe tags.
  */
 
 const PILOT = 'Presentation Pilot';
-const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const STORAGE_KEY = 'galactic-soup.preferences';
 const SURFACES = ['Overview', 'Market', 'Hangar', 'Fitting', 'Ships', 'Departure'] as const;
 
@@ -37,12 +43,14 @@ interface Variant {
   };
 }
 
+const ENLARGED: Variant = {
+  name: 'doubled size, high contrast and reduced motion',
+  display: { uiScale: 2, textScale: 2, contrast: 'high', motion: 'reduced' },
+};
+
 const VARIANTS: readonly Variant[] = [
   { name: 'standard size and contrast', display: { uiScale: 1, textScale: 1, contrast: 'standard', motion: 'full' } },
-  {
-    name: 'doubled size, high contrast and reduced motion',
-    display: { uiScale: 2, textScale: 2, contrast: 'high', motion: 'reduced' },
-  },
+  ENLARGED,
 ];
 
 async function clearProfile(page: Page): Promise<void> {
@@ -75,18 +83,6 @@ async function withDisplay(page: Page, display: Variant['display']): Promise<voi
     },
     [STORAGE_KEY, JSON.stringify({ version: 2, display })] as const,
   );
-}
-
-async function audit(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-  expect(results.violations).toEqual([]);
-}
-
-async function expectNoSidewaysScroll(page: Page): Promise<void> {
-  const overflows = await page.evaluate(
-    () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
-  );
-  expect(overflows).toBe(false);
 }
 
 function region(page: Page, name: string): Locator {
@@ -142,8 +138,9 @@ async function checkDialogFocus(page: Page, opener: Locator, title: string): Pro
 
 test.describe('presentation settings and accessibility', () => {
   for (const variant of VARIANTS) {
-    test(`audits every station surface, a confirmation and a fight at ${variant.name} [TECH-12.3, TECH-12.2, TECH-15.1, FUNC-20, MVP-AC-02, MVP-AC-03]`, async ({ page }) => {
-      test.setTimeout(4 * 60_000);
+    test(`audits every station surface and a confirmation at ${variant.name} [TECH-12.3, TECH-12.2, TECH-15.1, FUNC-20, MVP-AC-02]`, async ({ page }) => {
+      // Eight full audits: about 25-30 s in Firefox, beside the default 30 s limit.
+      test.setTimeout(2 * 60_000);
       await withDisplay(page, variant.display);
       await startCampaign(page);
 
@@ -170,13 +167,26 @@ test.describe('presentation settings and accessibility', () => {
       await audit(page);
       await expectNoSidewaysScroll(page);
       await page.getByRole('button', { name: 'Close settings' }).click();
-
-      await flyToScout(page);
-      await engageScout(page);
-      await audit(page);
-      await expectNoSidewaysScroll(page);
     });
   }
+
+  test(`audits a fight at ${ENLARGED.name} [TECH-12.3, TECH-12.2, TECH-15.1, FUNC-20, MVP-AC-03]`, async ({ page, baseURL }) => {
+    // The display is the browser's preference, there before the campaign opens.
+    await page.addInitScript(
+      ([key, value]) => {
+        window.localStorage.setItem(key, value);
+      },
+      [STORAGE_KEY, JSON.stringify({ version: 2, display: ENLARGED.display })] as const,
+    );
+    // Paused in the fight with the scout: locked, the autocannon firing, the booster running.
+    await openCheckpoint(page, 'scout-fight', baseURL);
+    const root = page.locator('html');
+    await expect(root).toHaveAttribute('data-contrast', 'high');
+    await expect(root).toHaveAttribute('data-motion', 'reduced');
+    await expect(page.locator('[data-effect="hostileLock"]').first()).toBeAttached();
+    await audit(page);
+    await expectNoSidewaysScroll(page);
+  });
 
   test('changes the display from the keyboard alone before a campaign, and keeps it after a reload [FUNC-20, TECH-12.3, TECH-3.1]', async ({ page }) => {
     await clearProfile(page);

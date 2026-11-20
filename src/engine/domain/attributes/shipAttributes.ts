@@ -6,7 +6,7 @@ import {
   type ModuleDefinition,
 } from '@engine/ports';
 
-import type { MessageKey } from '@shared';
+import { deepFreeze, type MessageKey } from '@shared';
 
 import type { FitDescription } from '../fitting/types';
 
@@ -67,7 +67,51 @@ export interface SpeedEffectInput {
   readonly speedFactor: number;
 }
 
+/**
+ * Derived attributes are a pure function of the hull, the online modules in
+ * fitted order, the content, the activation assumptions and the speed effects,
+ * and the simulation asks for the same ones many times a step - for every
+ * combatant, regeneration and movement (Test Suite Optimization Plan phase
+ * 13a measured this as the largest share of simulation time). Each result is
+ * therefore kept per content repository and hull, under a key made of exactly
+ * those inputs, and frozen: a caller can read it but not change what the next
+ * caller receives. A cache that grows past its bound is emptied, which costs a
+ * recomputation and changes no result.
+ */
+const DERIVED_CACHE_LIMIT = 4_096;
+const derivedCache = new WeakMap<ContentRepository, WeakMap<HullDefinition, Map<string, DerivedShipAttributes>>>();
+
+function derivationKey(input: ShipAttributeInput): string {
+  const modules = input.fit.filter((fitted) => fitted.online).map((fitted) => fitted.moduleId).join(',');
+  // The assumptions are only ever tested for membership, so their order is not part of the key.
+  const conditions = input.conditions === undefined ? '-' : [...input.conditions].sort().join(',');
+  const effects = (input.speedEffects ?? [])
+    .map((effect) => `${effect.sourceId}:${effect.sourceKey}:${String(effect.speedFactor)}`)
+    .join(',');
+  return `${modules}|${conditions}|${effects}`;
+}
+
 export function deriveShipAttributes(input: ShipAttributeInput): DerivedShipAttributes {
+  let byHull = derivedCache.get(input.content);
+  if (byHull === undefined) {
+    byHull = new WeakMap();
+    derivedCache.set(input.content, byHull);
+  }
+  let entries = byHull.get(input.hull);
+  if (entries === undefined) {
+    entries = new Map();
+    byHull.set(input.hull, entries);
+  }
+  const key = derivationKey(input);
+  const cached = entries.get(key);
+  if (cached !== undefined) return cached;
+  if (entries.size >= DERIVED_CACHE_LIMIT) entries.clear();
+  const derived = deepFreeze(computeShipAttributes(input));
+  entries.set(key, derived);
+  return derived;
+}
+
+function computeShipAttributes(input: ShipAttributeInput): DerivedShipAttributes {
   const { hull, content } = input;
   const modifiers: AttributeModifier[] = [];
 

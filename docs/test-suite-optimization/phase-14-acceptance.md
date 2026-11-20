@@ -1,5 +1,7 @@
 # Phase 14: acceptance run and timing comparison
 
+> **Superseded figures.** The lettered phases (6a, 7a, 10a, 11a, 13a) were done afterwards, and acceptance was run again. The gate is now GREEN in **27m 32s**, under the 35-minute target, and `verify:feature` takes a median of **93.3 s**. See [phase-6a-7a-10a-11a-13a-lettered-phases.md](phase-6a-7a-10a-11a-13a-lettered-phases.md#acceptance-after-the-lettered-phases). This document records the state before them.
+
 This is the final handoff of the [test suite optimization plan](../TestSuiteOptimizationPlan.md). It follows [Phase 13](phase-13-headless-profile.md). The runs used `9293702`, plus the Phase 13 profiler (`tests/profiling/`, which no suite runs) and the one-line component fix described [below](#a-fix-made-during-this-phase).
 
 **Results:**

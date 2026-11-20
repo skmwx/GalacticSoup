@@ -43,6 +43,8 @@ const SETUP_DOCUMENT = '<!doctype html><html lang="en"><head><title>Checkpoint s
 /** Site names the interface shows for the sites checkpoints are taken in. */
 const SITE_HEADINGS: Readonly<Record<string, string>> = {
   'site.borrell.verge': 'Verge Belt',
+  'site.borrell.signal-spire': 'Signal Spire',
+  'site.borrell.tangle-drift': 'Tangle Drift',
 };
 
 const checkpoints = new Map<string, Promise<Checkpoint>>();
@@ -246,14 +248,20 @@ async function expectLossShown(page: Page, loss: LossFact): Promise<void> {
 /**
  * Seeds the named checkpoint into the test's fresh context, resumes it
  * through the start screen and the worker, and checks the interface shows it.
+ * `opponent` names the checkpoint's first opponent as the site lists it.
  */
-export async function openCheckpoint(page: Page, name: CheckpointName, baseURL: string | undefined): Promise<Checkpoint> {
+export async function openCheckpoint(
+  page: Page,
+  name: CheckpointName,
+  baseURL: string | undefined,
+  opponent = 'Pirate Scout',
+): Promise<Checkpoint> {
   if (baseURL === undefined) throw new Error('A checkpoint needs the served base URL.');
   const checkpoint = await checkpointFor(name, baseURL);
   await seedCheckpoint(page, checkpoint);
   await page.goto('/');
   await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
   await page.getByRole('button', { name: 'Resume campaign' }).click();
-  await expectCheckpointShown(page, checkpoint);
+  await expectCheckpointShown(page, checkpoint, opponent);
   return checkpoint;
 }

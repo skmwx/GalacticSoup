@@ -6,7 +6,6 @@ import type { ClientGateway } from '@gateway';
 import { createChannelGateway, createDirectGateway } from '@gateway/direct';
 import {
   EMPTY_PAYLOAD,
-  type CapabilitiesData,
   type ContentSummaryData,
   type EngineResponse,
 } from '@protocol';
@@ -89,14 +88,6 @@ describe('content over the protocol', () => {
     );
     expect(fixture.contentVersion).not.toBe(shippedContent().contentVersion);
   });
-
-  it('lists the content request among the engine capabilities [TECH-7.1]', async () => {
-    const [direct] = transports();
-
-    const response = await direct!.gateway.request('system.capabilities', EMPTY_PAYLOAD);
-
-    expect(response.ok && (response.data as CapabilitiesData).requestTypes).toContain(
-      'content.summary',
-    );
-  });
+  // The capabilities list, `content.summary` included, is compared in full in
+  // `tests/unit/engine/engineHost.test.ts` (Test Suite Optimization Plan phase 11a).
 });
