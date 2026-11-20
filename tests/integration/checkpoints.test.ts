@@ -4,20 +4,36 @@ import { envelopeChecksum, type SaveEnvelope } from '@engine';
 
 import {
   CHECKPOINT_NAMES,
+  checkpointAt,
   CheckpointMismatch,
   prepareCheckpoint,
   verifyCheckpoint,
   type Checkpoint,
+  type CheckpointName,
 } from '../support/checkpoint/scenarios.ts';
 import { shippedContent } from '../support/content.ts';
 
 /**
- * The browser checkpoints (Test Suite Optimization Plan phase 3): each one is
- * reached through the protocol, is the same save every time it is made, says
- * what it promises, and is refused when its save no longer matches.
+ * The browser checkpoints (Test Suite Optimization Plan phases 3 and 4): each
+ * one is reached through the protocol, is the same save every time it is made,
+ * says what it promises, and is refused when its save no longer matches.
  */
 
 const content = shippedContent();
+
+/** One generation per checkpoint for the cases that only read it; the determinism case makes its own. */
+const made = new Map<CheckpointName, Promise<Checkpoint>>();
+function checkpoint(name: CheckpointName): Promise<Checkpoint> {
+  let found = made.get(name);
+  if (found === undefined) {
+    found = prepareCheckpoint(name, content);
+    made.set(name, found);
+  }
+  return found;
+}
+
+/** Simulated time is cheap but not free: the patrol sortie takes a few seconds to fly. */
+const GENERATION_TIMEOUT_MS = 30_000;
 
 /** Reseals an envelope after a change, so only the changed field differs. */
 function resealed(envelope: SaveEnvelope, change: Partial<SaveEnvelope>): SaveEnvelope {
@@ -28,29 +44,52 @@ function resealed(envelope: SaveEnvelope, change: Partial<SaveEnvelope>): SaveEn
 describe('browser checkpoints', () => {
   for (const name of CHECKPOINT_NAMES) {
     it(`makes "${name}" the same save every time [TECH-11.4]`, async () => {
-      const first = await prepareCheckpoint(name, content);
+      const first = await checkpoint(name);
       const second = await prepareCheckpoint(name, content);
       expect(second.envelope.checksum).toBe(first.envelope.checksum);
       expect(second.facts).toEqual(first.facts);
       expect(first.facts.paused).toBe(true);
-      expect(first.facts.siteId).toBe('site.borrell.verge');
-      expect(first.facts.opponentWithinLockRange).toBe(true);
-    });
+    }, GENERATION_TIMEOUT_MS);
   }
 
   it('leaves the scout unlocked and unfired on in range, and in a running fight', async () => {
-    const inRange = await prepareCheckpoint('scout-in-range', content);
+    const inRange = checkpointAt(await checkpoint('scout-in-range'), 'site');
+    expect(inRange.facts.siteId).toBe('site.borrell.verge');
+    expect(inRange.facts.opponentWithinLockRange).toBe(true);
     expect(inRange.facts.locks).toEqual([]);
     expect(inRange.facts.firingAt).toBeNull();
 
-    const fight = await prepareCheckpoint('scout-fight', content);
+    const fight = checkpointAt(await checkpoint('scout-fight'), 'site');
+    expect(fight.facts.siteId).toBe('site.borrell.verge');
     expect(fight.facts.locks).toEqual([{ targetId: fight.facts.opponentId, status: 'locked' }]);
     expect(fight.facts.firingAt).toBe(fight.facts.opponentId);
     expect(fight.facts.boosterActive).toBe(true);
   });
 
+  it('docks after the patrol with its bounty paid and the salvage in the hold [MVP-AC-06]', async () => {
+    const patrol = checkpointAt(await checkpoint('patrol-salvage'), 'station');
+    const { facts } = patrol;
+    expect(facts.stationId).toBe(content.rules.economy.startingStationId);
+    expect(facts.lastOutcome).toMatchObject({
+      encounterId: 'encounter.borrell.pirate-patrol',
+      status: 'completed',
+      npcsDestroyed: 3,
+      npcsTotal: 3,
+      bountyCreditsPaid: 13_000,
+    });
+    // The intermediate fit, bought with the starting credits.
+    const fitted = facts.fit.map((slot) => slot.moduleId).filter((id) => id !== null);
+    expect(fitted.filter((id) => id === 'module.turret.autocannon.small')).toHaveLength(2);
+    // Salvage to sell and an earned module to fit, as the Patrol-to-Base case finds.
+    expect(facts.hold.some((stack) => stack.kind === 'item')).toBe(true);
+    expect(facts.hold.some((stack) => stack.definitionId === 'module.plating.armor.small')).toBe(true);
+    expect(facts.fit.some((slot) => slot.moduleId === 'module.plating.armor.small')).toBe(false);
+    expect(facts.credits).toBeGreaterThan(13_000);
+  }, GENERATION_TIMEOUT_MS);
+
   it('refuses a save that no longer matches its content, checksum, format or projection', async () => {
-    const checkpoint = await prepareCheckpoint('scout-in-range', content);
+    const inRange = await checkpoint('scout-in-range');
+    const site = checkpointAt(inRange, 'site');
     const refused = async (changed: Checkpoint, reason: RegExp): Promise<void> => {
       const failure = await verifyCheckpoint(changed, content).then(() => null, (error: unknown) => error);
       expect(failure).toBeInstanceOf(CheckpointMismatch);
@@ -58,21 +97,30 @@ describe('browser checkpoints', () => {
     };
 
     await refused(
-      { ...checkpoint, envelope: resealed(checkpoint.envelope, { contentHash: '0'.repeat(64) }) },
+      { ...inRange, envelope: resealed(inRange.envelope, { contentHash: '0'.repeat(64) }) },
       /names content .* but it is used with/,
     );
     await refused(
-      { ...checkpoint, envelope: { ...checkpoint.envelope, revision: checkpoint.envelope.revision + 1 } },
+      { ...inRange, envelope: { ...inRange.envelope, revision: inRange.envelope.revision + 1 } },
       /checksum/,
     );
     await refused(
-      { ...checkpoint, envelope: resealed(checkpoint.envelope, { formatVersion: checkpoint.envelope.formatVersion - 1 }) },
+      { ...inRange, envelope: resealed(inRange.envelope, { formatVersion: inRange.envelope.formatVersion - 1 }) },
       /the save is format/,
     );
     await refused(
-      { ...checkpoint, facts: { ...checkpoint.facts, firingAt: checkpoint.facts.opponentId } },
+      { ...site, facts: { ...site.facts, firingAt: site.facts.opponentId } },
       /the resumed projection differs/,
     );
-    await expect(verifyCheckpoint(checkpoint, content)).resolves.toBeUndefined();
+    await expect(verifyCheckpoint(inRange, content)).resolves.toBeUndefined();
   });
+
+  it('refuses a docked checkpoint whose wallet or fit differs from the save', async () => {
+    const patrol = checkpointAt(await checkpoint('patrol-salvage'), 'station');
+    await expect(verifyCheckpoint({ ...patrol, facts: { ...patrol.facts, credits: patrol.facts.credits + 1 } }, content))
+      .rejects.toThrow(/the resumed projection differs/);
+    const emptied = patrol.facts.fit.map((slot) => (slot.slotKind === 'weapon' ? { ...slot, moduleId: null } : slot));
+    await expect(verifyCheckpoint({ ...patrol, facts: { ...patrol.facts, fit: emptied } }, content))
+      .rejects.toThrow(/the resumed projection differs/);
+  }, GENERATION_TIMEOUT_MS);
 });

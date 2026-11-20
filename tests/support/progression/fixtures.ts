@@ -1,4 +1,6 @@
-import scenarioFile from '../../fixtures/scenarios/progression.json';
+// The import attribute lets a Playwright worker load this module too, when a
+// browser checkpoint flies a progression scenario (Test Suite Optimization Plan phase 4).
+import scenarioFile from '../../fixtures/scenarios/progression.json' with { type: 'json' };
 
 /**
  * The representative fits and the encounters they are meant for

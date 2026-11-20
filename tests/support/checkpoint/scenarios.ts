@@ -6,33 +6,40 @@ import {
   isSealed,
   SAVE_FORMAT_VERSION,
   type ContentRepository,
-  type EngineHost,
   type SaveEnvelope,
   type SlotManifest,
 } from '@engine';
-import {
-  EMPTY_PAYLOAD,
-  PROTOCOL_VERSION,
-  type CombatData,
-  type EncounterData,
-  type EngineResponse,
-  type FrameData,
-  type SiteData,
-  type StateHashData,
+import type {
+  AssetsData,
+  CombatData,
+  EncounterData,
+  EngineResponse,
+  FrameData,
+  InventoryData,
+  MarketTransactionPreviewData,
+  ResupplyPreviewData,
+  ShipData,
+  SiteData,
+  StackData,
+  StateHashData,
 } from '@protocol';
+
+import { fixtureFit, fixtureScenario, type FixtureFit } from '../progression/fixtures.ts';
+import { attachSession, type ScenarioSession } from '../progression/session.ts';
+import { describeSortie, flySortie } from '../progression/sortie.ts';
 
 /**
  * Saved campaign checkpoints for browser tests (Test Suite Optimization Plan
- * phase 3; Technical Specification 11.2, 11.4, 15.1).
+ * phases 3 and 4; Technical Specification 11.2, 11.4, 15.1).
  *
  * A browser case that is about one moment of play - a command in a fight, an
- * audit of the combat surfaces - should not spend minutes of real time
- * flying there. A checkpoint reaches that moment headlessly, over the same
- * engine host and protocol requests the worker serves, the way the scenario
- * sessions and the golden campaign do, and keeps the save the engine wrote
- * when it closed the campaign. The browser test then seeds that save into a
- * fresh origin's IndexedDB and opens it through the real campaign interface
- * and worker.
+ * audit of the combat surfaces, what to do with a sortie's rewards - should
+ * not spend minutes of real time getting there. A checkpoint reaches that
+ * moment headlessly, over the same engine host and protocol requests the
+ * worker serves, the way the scenario sessions and the golden campaign do,
+ * and keeps the save the engine wrote when it closed the campaign. The browser
+ * test then seeds that save into a fresh origin's IndexedDB and opens it
+ * through the real campaign interface and worker.
  *
  * Nothing here depends on Playwright or on how the content arrives: the
  * caller passes the content repository. In the browser tests that is the
@@ -52,9 +59,12 @@ const CLOSED_AT_REAL_MS = 1_700_000_100_000;
 
 const SCOUT_ENCOUNTER = 'encounter.borrell.pirate-scout';
 const SCOUT_SITE = 'site.borrell.verge';
+/** The headless progression scenario the patrol checkpoint flies: the intermediate fit, cutters first. */
+const PATROL_SCENARIO = 'patrol.intermediate';
 const STEP_MS = 250;
+const LOCALE = 'en';
 
-export const CHECKPOINT_NAMES = ['scout-in-range', 'scout-fight'] as const;
+export const CHECKPOINT_NAMES = ['scout-in-range', 'scout-fight', 'patrol-salvage'] as const;
 export type CheckpointName = (typeof CHECKPOINT_NAMES)[number];
 
 export const CHECKPOINT_DESCRIPTIONS: Readonly<Record<CheckpointName, string>> = {
@@ -62,14 +72,17 @@ export const CHECKPOINT_DESCRIPTIONS: Readonly<Record<CheckpointName, string>> =
     'Paused at the Pirate Scout site with the starter ship orbiting the scout inside lock and weapon range; nothing locked, no weapon running.',
   'scout-fight':
     'Paused in a fight with the Pirate Scout: the scout locked, the autocannon firing at it, the shield booster running and hits recorded.',
+  'patrol-salvage':
+    'Docked and paused at Borrell Harbour after clearing the Pirate Patrol with the intermediate fit: the bounty paid, every wreck looted, the salvage and any earned module in the hold.',
 };
 
 /**
- * What the campaign shows once resumed, read through its projections. The
+ * What a campaign resumed in a site shows, read through its projections. The
  * browser test checks the interface against these, and the helper checks that
  * a save resumed headlessly answers with exactly these.
  */
-export interface CheckpointFacts {
+export interface SiteCheckpointFacts {
+  readonly kind: 'site';
   readonly stateHash: string;
   readonly simulationTimeMs: number;
   readonly paused: boolean;
@@ -83,14 +96,59 @@ export interface CheckpointFacts {
   readonly boosterActive: boolean;
 }
 
-export interface Checkpoint {
+/** One fitted slot: what occupies it and the charge it holds, by definition. */
+export interface FittedSlotFact {
+  readonly slotKind: string;
+  readonly slotIndex: number;
+  readonly moduleId: string | null;
+  readonly moduleName: string | null;
+  readonly chargeId: string | null;
+}
+
+/** One loose stack in an inventory, by definition, with its English name. */
+export interface StackFact {
+  readonly stackId: string;
+  readonly definitionId: string;
+  readonly kind: StackData['item']['kind'];
+  readonly name: string;
+  readonly quantity: number;
+}
+
+/** What a campaign resumed docked shows: wallet, fit, hold, hangar and the last sortie. */
+export interface StationCheckpointFacts {
+  readonly kind: 'station';
+  readonly stateHash: string;
+  readonly simulationTimeMs: number;
+  readonly paused: boolean;
+  readonly stationId: string;
+  readonly stationName: string;
+  readonly credits: number;
+  readonly activeShipId: string;
+  readonly fit: readonly FittedSlotFact[];
+  /** Plain stacks in the active ship's hold, in the order the station lists them. */
+  readonly hold: readonly StackFact[];
+  /** Plain stacks in the station hangar, in the order the station lists them. */
+  readonly hangar: readonly StackFact[];
+  readonly lastOutcome: {
+    readonly encounterId: string;
+    readonly name: string;
+    readonly status: string;
+    readonly npcsDestroyed: number;
+    readonly npcsTotal: number;
+    readonly bountyCreditsPaid: number;
+  } | null;
+}
+
+export type CheckpointFacts = SiteCheckpointFacts | StationCheckpointFacts;
+
+export interface Checkpoint<TFacts extends CheckpointFacts = CheckpointFacts> {
   readonly name: CheckpointName;
   readonly contentVersion: string;
   readonly contentHash: string;
   /** The manifest the IndexedDB store would hold with this save alone in the slot. */
   readonly manifest: SlotManifest;
   readonly envelope: SaveEnvelope;
-  readonly facts: CheckpointFacts;
+  readonly facts: TFacts;
 }
 
 /** A mismatch between a checkpoint and what it is about to be used with. */
@@ -98,48 +156,41 @@ export class CheckpointMismatch extends Error {
   override readonly name = 'CheckpointMismatch';
 }
 
-interface Driver {
-  ask<TData>(type: string, payload?: unknown): Promise<EngineResponse<TData>>;
-  data<TData>(type: string, payload?: unknown): Promise<TData>;
-  until(done: () => Promise<boolean>, budgetSeconds: number): Promise<boolean>;
+/** Narrows a checkpoint to the kind of place it was taken in, or says it is the other. */
+export function checkpointAt<TKind extends CheckpointFacts['kind']>(
+  checkpoint: Checkpoint,
+  kind: TKind,
+): Checkpoint<Extract<CheckpointFacts, { kind: TKind }>> {
+  if (checkpoint.facts.kind !== kind) {
+    throw new CheckpointMismatch(`Checkpoint "${checkpoint.name}" was taken in a ${checkpoint.facts.kind}, not a ${kind}.`);
+  }
+  return checkpoint as Checkpoint<Extract<CheckpointFacts, { kind: TKind }>>;
 }
 
-function driverFor(host: EngineHost, prefix: string): Driver {
-  let ordinal = 0;
-  const ask = async <TData>(type: string, payload: unknown = EMPTY_PAYLOAD): Promise<EngineResponse<TData>> => {
-    ordinal += 1;
-    return (await host.handle({
-      protocolVersion: PROTOCOL_VERSION,
-      requestId: `${prefix}-${String(ordinal)}`,
-      type,
-      payload,
-    })) as EngineResponse<TData>;
-  };
-  const data = async <TData>(type: string, payload?: unknown): Promise<TData> => {
-    const response = await ask<TData>(type, payload ?? EMPTY_PAYLOAD);
-    if (!response.ok) {
-      const params = response.error.params === undefined ? '' : ` ${JSON.stringify(response.error.params)}`;
-      throw new Error(`${type} failed: ${response.error.messageKey}${params}`);
-    }
-    return response.data;
-  };
-  const until = async (done: () => Promise<boolean>, budgetSeconds: number): Promise<boolean> => {
-    for (let step = 0; step < Math.ceil((budgetSeconds * 1000) / STEP_MS); step += 1) {
-      await data('time.advance', { elapsedRealMs: STEP_MS });
-      if (await done()) return true;
-    }
-    return false;
-  };
-  return { ask, data, until };
+/** Answers protocol requests; a scenario session is one. */
+type Asker = Pick<ScenarioSession, 'ask' | 'data'>;
+
+/** Advances real time in whole steps until `done`, or gives up after the budget. */
+async function until(session: ScenarioSession, done: () => Promise<boolean>, budgetSeconds: number): Promise<boolean> {
+  for (let step = 0; step < Math.ceil((budgetSeconds * 1000) / STEP_MS); step += 1) {
+    await session.advance(STEP_MS);
+    if (await done()) return true;
+  }
+  return false;
 }
 
-/** Reads the facts a checkpoint promises from an open campaign. */
-async function observe(driver: Driver): Promise<CheckpointFacts> {
-  const hash = await driver.data<StateHashData>('diagnostics.stateHash');
-  const frame = await driver.data<FrameData>('campaign.frame');
-  const site = await driver.data<SiteData>('navigation.site');
-  const encounter = await driver.data<EncounterData>('encounter.state');
-  const combat = await driver.data<CombatData>('combat.state');
+/** Reads the facts a checkpoint promises from an open campaign, for where it is. */
+async function observe(session: Asker, content: ContentRepository): Promise<CheckpointFacts> {
+  const assets = await session.data<AssetsData>('assets.list');
+  return assets.location.kind === 'station' ? observeStation(session, content, assets) : observeSite(session);
+}
+
+async function observeSite(session: Asker): Promise<SiteCheckpointFacts> {
+  const hash = await session.data<StateHashData>('diagnostics.stateHash');
+  const frame = await session.data<FrameData>('campaign.frame');
+  const site = await session.data<SiteData>('navigation.site');
+  const encounter = await session.data<EncounterData>('encounter.state');
+  const combat = await session.data<CombatData>('combat.state');
   const opponentId = encounter.instance?.npcs[0]?.shipId;
   if (site.location.kind !== 'site' || opponentId === undefined || hash.stateHash === null) {
     throw new CheckpointMismatch('The checkpoint campaign is not in a site with an opponent.');
@@ -147,6 +198,7 @@ async function observe(driver: Driver): Promise<CheckpointFacts> {
   const motion = combat.motion.find((entry) => entry.targetId === opponentId);
   const weapon = combat.weapons[0];
   return {
+    kind: 'site',
     stateHash: hash.stateHash,
     simulationTimeMs: frame.simulationTimeMs,
     paused: frame.paused,
@@ -160,18 +212,73 @@ async function observe(driver: Driver): Promise<CheckpointFacts> {
   };
 }
 
+async function observeStation(session: Asker, content: ContentRepository, assets: AssetsData): Promise<StationCheckpointFacts> {
+  const hash = await session.data<StateHashData>('diagnostics.stateHash');
+  const frame = await session.data<FrameData>('campaign.frame');
+  const encounter = await session.data<EncounterData>('encounter.state');
+  if (assets.location.kind !== 'station' || assets.activeShipId === null || hash.stateHash === null) {
+    throw new CheckpointMismatch('The checkpoint campaign is not docked with a ship.');
+  }
+  const stationId = assets.location.stationId;
+  const ship = await session.data<ShipData>('ship.get', { shipId: assets.activeShipId });
+  const hold = await session.data<InventoryData>('inventory.cargo', { shipId: assets.activeShipId });
+  const hangar = await session.data<InventoryData>('inventory.hangar', { stationId });
+  const name = (key: string): string => {
+    const text = content.message(LOCALE, key);
+    if (text === undefined) throw new CheckpointMismatch(`The content has no ${LOCALE} name for ${key}.`);
+    return text;
+  };
+  const loose = (inventory: InventoryData): StackFact[] => inventory.stacks
+    .filter((stack) => stack.state.kind === 'plain')
+    .map((stack) => ({
+      stackId: stack.id,
+      definitionId: stack.item.definitionId,
+      kind: stack.item.kind,
+      name: name(stack.item.nameKey),
+      quantity: stack.quantity,
+    }));
+  const outcome = encounter.lastOutcome;
+  return {
+    kind: 'station',
+    stateHash: hash.stateHash,
+    simulationTimeMs: frame.simulationTimeMs,
+    paused: frame.paused,
+    stationId,
+    stationName: name(content.requireStation(stationId as never).nameKey),
+    credits: assets.credits,
+    activeShipId: assets.activeShipId,
+    fit: ship.slots.map((slot) => ({
+      slotKind: slot.slot.kind,
+      slotIndex: slot.slot.index,
+      moduleId: slot.module?.definitionId ?? null,
+      moduleName: slot.module === null ? null : name(slot.module.nameKey),
+      chargeId: slot.charge?.item.definitionId ?? null,
+    })),
+    hold: loose(hold),
+    hangar: loose(hangar),
+    lastOutcome: outcome === null ? null : {
+      encounterId: outcome.encounterId,
+      name: name(outcome.nameKey),
+      status: outcome.status,
+      npcsDestroyed: outcome.npcsDestroyed,
+      npcsTotal: outcome.npcsTotal,
+      bountyCreditsPaid: outcome.bountyCreditsPaid,
+    },
+  };
+}
+
 /** Undocks, warps to the scout site at 10 km and waits for arrival; returns the scout's id. */
-async function arriveAtScout(driver: Driver): Promise<string> {
-  await driver.data('ship.undock');
-  await driver.data('navigation.selectDestination', { encounterId: SCOUT_ENCOUNTER });
-  await driver.data('navigation.warp', { destinationSiteId: SCOUT_SITE, arrivalDistanceKm: 10 });
-  await driver.data('time.set', { paused: false, rate: 1 });
-  const arrived = await driver.until(async () => {
-    const site = await driver.data<SiteData>('navigation.site');
+async function arriveAtScout(session: ScenarioSession): Promise<string> {
+  await session.data('ship.undock');
+  await session.data('navigation.selectDestination', { encounterId: SCOUT_ENCOUNTER });
+  await session.data('navigation.warp', { destinationSiteId: SCOUT_SITE, arrivalDistanceKm: 10 });
+  await session.data('time.set', { paused: false, rate: 1 });
+  const arrived = await until(session, async () => {
+    const site = await session.data<SiteData>('navigation.site');
     return site.location.kind === 'site' && site.location.siteId === SCOUT_SITE;
   }, 120);
   if (!arrived) throw new Error('The checkpoint ship never arrived at the scout site.');
-  const encounter = await driver.data<EncounterData>('encounter.state');
+  const encounter = await session.data<EncounterData>('encounter.state');
   const opponent = encounter.instance?.npcs[0]?.shipId;
   if (opponent === undefined) throw new Error('The scout site spawned no opponent.');
   return opponent;
@@ -181,10 +288,10 @@ async function arriveAtScout(driver: Driver): Promise<string> {
  * Orbits the scout at 1 km until it may be locked and the first weapon
  * reaches it, the moment a player would lock. The orbit order is kept.
  */
-async function closeToRange(driver: Driver, opponentId: string): Promise<void> {
-  await driver.data('movement.orbit', { targetId: opponentId, distanceKm: 1 });
-  const inRange = await driver.until(async () => {
-    const combat = await driver.data<CombatData>('combat.state');
+async function closeToRange(session: ScenarioSession, opponentId: string): Promise<void> {
+  await session.data('movement.orbit', { targetId: opponentId, distanceKm: 1 });
+  const inRange = await until(session, async () => {
+    const combat = await session.data<CombatData>('combat.state');
     const motion = combat.motion.find((entry) => entry.targetId === opponentId);
     const lockable = combat.lockCommands
       .find((entry) => entry.objectId === opponentId)
@@ -197,32 +304,143 @@ async function closeToRange(driver: Driver, opponentId: string): Promise<void> {
 }
 
 /** Locks the scout, opens fire, runs the booster and waits for the first exchanges. */
-async function engage(driver: Driver, opponentId: string): Promise<void> {
-  await driver.data('targeting.lock', { targetId: opponentId });
-  const locked = await driver.until(
-    async () => (await driver.data<CombatData>('combat.state')).locks.some((lock) => lock.status === 'locked'),
+async function engage(session: ScenarioSession, opponentId: string): Promise<void> {
+  await session.data('targeting.lock', { targetId: opponentId });
+  const locked = await until(
+    session,
+    async () => (await session.data<CombatData>('combat.state')).locks.some((lock) => lock.status === 'locked'),
     60,
   );
   if (!locked) throw new Error('The scout was never locked.');
-  await driver.data('weapon.activate', { slotKind: 'weapon', slotIndex: 0, targetId: opponentId });
-  await driver.data('module.activate', { slotKind: 'system', slotIndex: 0 });
-  const fighting = await driver.until(async () => {
-    const combat = await driver.data<CombatData>('combat.state');
+  await session.data('weapon.activate', { slotKind: 'weapon', slotIndex: 0, targetId: opponentId });
+  await session.data('module.activate', { slotKind: 'system', slotIndex: 0 });
+  const fighting = await until(session, async () => {
+    const combat = await session.data<CombatData>('combat.state');
     return combat.events.length >= 2 && combat.hostileLocks.length > 0 &&
       combat.weapons.some((weapon) => weapon.repeating && weapon.cycle !== null);
   }, 60);
   if (!fighting) throw new Error('The fight never started both ways.');
 }
 
-const SCRIPTS: Readonly<Record<CheckpointName, (driver: Driver) => Promise<void>>> = {
-  async 'scout-in-range'(driver) {
-    const opponent = await arriveAtScout(driver);
-    await closeToRange(driver, opponent);
+/** Total units of each definition the campaign owns anywhere, fitted and loaded included. */
+function ownedUnits(assets: AssetsData): Map<string, number> {
+  const owned = new Map<string, number>();
+  for (const inventory of assets.inventories) {
+    for (const stack of inventory.stacks) {
+      owned.set(stack.item.definitionId, (owned.get(stack.item.definitionId) ?? 0) + stack.quantity);
+    }
+  }
+  return owned;
+}
+
+/**
+ * Puts a representative fit on the starter ship through the station, over the
+ * protocol: buys what the campaign lacks at the market with its own credits,
+ * assembles the fit in one draft, fills the magazines and carries the reserve
+ * rounds. This is the station flow `progression/assemble.ts` performs on a
+ * campaign state, and the purchases the Patrol-to-Base browser case makes,
+ * but nothing is set directly - the wallet is what the purchases leave.
+ */
+async function fitThroughStation(session: ScenarioSession, fit: FixtureFit, content: ContentRepository): Promise<void> {
+  const stationId = content.rules.economy.startingStationId;
+  if (fit.hullId !== undefined && fit.hullId !== content.rules.economy.starterHullId) {
+    throw new Error(`Fit "${fit.id}" needs another hull; a checkpoint fits the starter ship only.`);
+  }
+  const assets = await session.data<AssetsData>('assets.list');
+  const ship = assets.ships.find((entry) => entry.id === assets.activeShipId);
+  if (ship === undefined) throw new Error('The checkpoint campaign has no active ship.');
+
+  const needed = new Map<string, number>();
+  const add = (definitionId: string, quantity: number): void => {
+    needed.set(definitionId, (needed.get(definitionId) ?? 0) + quantity);
+  };
+  for (const entry of fit.modules) {
+    add(entry.moduleId, 1);
+    if (entry.ammunitionId !== undefined) {
+      const module = content.requireModule(entry.moduleId as never);
+      add(entry.ammunitionId, module.category === 'turret' ? module.turret.magazineSize
+        : module.category === 'launcher' ? module.launcher.magazineSize : 0);
+    }
+  }
+  for (const entry of fit.cargo) add(entry.definitionId, entry.quantity);
+  const owned = ownedUnits(assets);
+  const shortfall = [...needed.entries()]
+    .map(([definitionId, quantity]): [string, number] => [definitionId, quantity - (owned.get(definitionId) ?? 0)])
+    .filter(([, quantity]) => quantity > 0)
+    .sort(([left], [right]) => left.localeCompare(right));
+  for (const [itemId, quantity] of shortfall) {
+    const preview = await session.data<MarketTransactionPreviewData>('market.previewBuy', { stationId, itemId, quantity });
+    if (!preview.available || preview.token === null) {
+      throw new Error(`Fit "${fit.id}" needs ${String(quantity)} ${itemId}, which the market refuses: ${String(preview.unavailableReason)}`);
+    }
+    await session.data('market.confirmBuy', { token: preview.token });
+  }
+
+  await session.data('fitting.begin', { shipId: ship.id });
+  const hull = content.requireHull(ship.hullId as never);
+  for (const [slotKind, count] of Object.entries(hull.slots)) {
+    for (let slotIndex = 0; slotIndex < count; slotIndex += 1) {
+      const wanted = fit.modules.find((entry) => entry.slot === slotKind && entry.index === slotIndex);
+      if (wanted === undefined) await session.data('fitting.clear', { slotKind, slotIndex });
+      else {
+        await session.data('fitting.set', {
+          slotKind,
+          slotIndex,
+          moduleId: wanted.moduleId,
+          online: true,
+          ...(wanted.ammunitionId === undefined ? {} : { ammunitionId: wanted.ammunitionId }),
+        });
+      }
+    }
+  }
+  await session.data('fitting.commit');
+
+  const resupply = await session.data<ResupplyPreviewData>('resupply.preview', { shipId: ship.id });
+  if (resupply.available && resupply.token !== null) await session.data('resupply.confirm', { token: resupply.token });
+
+  for (const entry of fit.cargo) {
+    let remaining = entry.quantity;
+    const hangar = await session.data<InventoryData>('inventory.hangar', { stationId });
+    const stacks = hangar.stacks
+      .filter((stack) => stack.item.definitionId === entry.definitionId && stack.state.kind === 'plain')
+      .sort((left, right) => left.id.localeCompare(right.id));
+    for (const stack of stacks) {
+      if (remaining === 0) break;
+      const quantity = Math.min(remaining, stack.quantity);
+      await session.data('inventory.transfer', { stackId: stack.id, destinationInventoryId: ship.cargoInventoryId, quantity });
+      remaining -= quantity;
+    }
+    if (remaining > 0) throw new Error(`Fit "${fit.id}" could not carry ${String(entry.quantity)} ${entry.definitionId}.`);
+  }
+}
+
+/**
+ * Flies the headless progression scenario's Pirate Patrol sortie with its fit
+ * and tactics, loots every wreck and docks: the moment the Patrol-to-Base
+ * browser case converts its rewards.
+ */
+async function clearPatrolAndDock(session: ScenarioSession, content: ContentRepository): Promise<void> {
+  const scenario = fixtureScenario(PATROL_SCENARIO);
+  await fitThroughStation(session, fixtureFit(scenario.fitId), content);
+  const record = await flySortie(session, scenario, content, CHECKPOINT_SEED, 1, { loot: true });
+  if (record.status !== 'completed') throw new Error(`The patrol checkpoint sortie did not clear: ${describeSortie(record)}`);
+  if (Object.keys(record.loot).length === 0) throw new Error('The patrol checkpoint sortie brought no salvage home.');
+  const assets = await session.data<AssetsData>('assets.list');
+  if (assets.location.kind !== 'station') throw new Error('The patrol checkpoint sortie did not dock.');
+}
+
+const SCRIPTS: Readonly<Record<CheckpointName, (session: ScenarioSession, content: ContentRepository) => Promise<void>>> = {
+  async 'scout-in-range'(session) {
+    const opponent = await arriveAtScout(session);
+    await closeToRange(session, opponent);
   },
-  async 'scout-fight'(driver) {
-    const opponent = await arriveAtScout(driver);
-    await closeToRange(driver, opponent);
-    await engage(driver, opponent);
+  async 'scout-fight'(session) {
+    const opponent = await arriveAtScout(session);
+    await closeToRange(session, opponent);
+    await engage(session, opponent);
+  },
+  async 'patrol-salvage'(session, content) {
+    await clearPatrolAndDock(session, content);
   },
 };
 
@@ -232,16 +450,16 @@ const SCRIPTS: Readonly<Record<CheckpointName, (driver: Driver) => Promise<void>
  */
 export async function prepareCheckpoint(name: CheckpointName, content: ContentRepository): Promise<Checkpoint> {
   const saves = createMemorySaveStore();
-  const driver = driverFor(createEngineHost({ content, saves }), `checkpoint-${name}`);
-  await driver.data('campaign.create', {
+  const session = attachSession(createEngineHost({ content, saves }), saves, 0, `checkpoint-${name}`);
+  await session.data('campaign.create', {
     displayName: CHECKPOINT_PILOT,
     seed: CHECKPOINT_SEED,
     createdAtRealMs: CREATED_AT_REAL_MS,
   });
-  await SCRIPTS[name](driver);
-  await driver.data('time.set', { paused: true, rate: 1 });
-  const facts = await observe(driver);
-  await driver.data('campaign.close', { savedAtRealMs: CLOSED_AT_REAL_MS });
+  await SCRIPTS[name](session, content);
+  await session.data('time.set', { paused: true, rate: 1 });
+  const facts = await observe(session, content);
+  await session.data('campaign.close', { savedAtRealMs: CLOSED_AT_REAL_MS });
 
   const written = await saves.readManifest(DEFAULT_SLOT_ID);
   const latest = written?.saves[0];
@@ -291,10 +509,10 @@ export async function verifyCheckpoint(checkpoint: Checkpoint, content: ContentR
 
   const store = createMemorySaveStore();
   await store.write({ envelope, retention: DEFAULT_SAVE_RETENTION });
-  const driver = driverFor(createEngineHost({ content, saves: store }), `checkpoint-verify-${name}`);
-  const resumed = await driver.ask('campaign.resume');
+  const session = attachSession(createEngineHost({ content, saves: store }), store, 0, `checkpoint-verify-${name}`);
+  const resumed: EngineResponse<unknown> = await session.ask('campaign.resume');
   if (!resumed.ok) fail(`the save does not resume: ${resumed.error.messageKey}`);
-  const facts = await observe(driver);
+  const facts = await observe(session, content);
   const expected = JSON.stringify(checkpoint.facts);
   const actual = JSON.stringify(facts);
   if (actual !== expected) fail(`the resumed projection differs.\n  expected ${expected}\n  resumed  ${actual}`);

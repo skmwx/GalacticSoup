@@ -4,8 +4,10 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { undock } from '../support/undock.ts';
 import { chooseDestination, destinationBriefing, destinationEntry, destinations, dockHome, warpHome } from '../support/destinations.ts';
 import { marketMode } from '../support/market.ts';
-import { applyFit, chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
+import { applyFit, chooseAmmunition, chooseModule, fittingSlots, slotRow } from '../support/fitting.ts';
 import { takeService } from '../support/services.ts';
+import { openCheckpoint, walletReadout } from '../support/checkpoint/browser.ts';
+import { checkpointAt } from '../support/checkpoint/scenarios.ts';
 
 /**
  * From the starting fit to the mastery site, in a real browser
@@ -503,6 +505,74 @@ test.describe('progression to the mastery site', () => {
     for (const site of ['Pirate Scout', 'Pirate Patrol']) {
       await chooseDestination(page, site);
       await expect(destinations(page).getByRole('button', { name: new RegExp(`^Warp to ${site}`) })).toBeEnabled();
+    }
+  });
+});
+
+/** "Engineering 1" for the first engineering slot, as the fitting screen names it. */
+function slotName(slotKind: string, slotIndex: number): string {
+  return `${slotKind.charAt(0).toUpperCase()}${slotKind.slice(1)} ${String(slotIndex + 1)}`;
+}
+
+/** The wallet readout as a number of credits. */
+async function credits(page: Page): Promise<number> {
+  const text = await walletReadout(page).innerText();
+  const match = /^([\d,]+) ISK$/.exec(text.trim());
+  if (match === null) throw new Error(`The wallet reads "${text}".`);
+  return Number((match[1] ?? '').replace(/,/g, ''));
+}
+
+/*
+ * The rewards half of the Patrol-to-Base case from a saved checkpoint
+ * (Test Suite Optimization Plan phase 4). The checkpoint is docked after the
+ * headless progression scenario's Pirate Patrol sortie - the same intermediate
+ * fit and cutters-first tactics - with the bounty paid and every wreck looted.
+ * Selling the salvage, fitting the module a wreck held and finding both after
+ * closing and resuming the campaign are done here through the interface and the
+ * worker; the long case above still earns them in real time.
+ */
+test.describe('progression rewards from a checkpoint', () => {
+  test('sells the patrol salvage, fits the earned plating and finds the wallet and fit after a reopen [MVP-AC-06, TECH-11.4]', async ({
+    page,
+    baseURL,
+  }) => {
+    const checkpoint = checkpointAt(await openCheckpoint(page, 'patrol-salvage', baseURL), 'station');
+    const { facts } = checkpoint;
+    const plating = facts.hold.find((stack) => stack.definitionId === 'module.plating.armor.small');
+    if (plating === undefined) throw new Error('The patrol checkpoint holds no earned plating.');
+    const salvage = [...new Set(facts.hold.filter((stack) => stack.kind === 'item').map((stack) => stack.name))];
+    expect(salvage.length).toBeGreaterThan(0);
+
+    // Convert the salvage: each stack sold whole, and the wallet rises.
+    for (const item of salvage) await sell(page, item);
+    await expect.poll(() => credits(page)).toBeGreaterThan(facts.credits);
+    const sold = await credits(page);
+
+    // Fit the earned plating into the first free engineering slot.
+    const free = facts.fit.find((slot) => slot.slotKind === 'engineering' && slot.moduleId === null);
+    if (free === undefined) throw new Error('The patrol checkpoint fit has no free engineering slot.');
+    const platingSlot = slotName(free.slotKind, free.slotIndex);
+    await refit(page, [[`Module in ${platingSlot}`, plating.definitionId]]);
+    await expect(fittingSlots(page).filter({ hasText: plating.name })).toBeVisible();
+    // Fitting is free, so the wallet is what the sales left.
+    expect(await credits(page)).toBe(sold);
+
+    // Close, load the page again and resume: the save holds the sales and the fit.
+    const shown = await walletReadout(page).innerText();
+    await reopen(page, facts.stationName);
+    await expect(walletReadout(page)).toHaveText(shown);
+    await page.getByRole('button', { name: 'Fitting', exact: true }).click();
+    for (const slot of facts.fit) {
+      const expected = slot.slotKind === free.slotKind && slot.slotIndex === free.slotIndex ? plating.definitionId : slot.moduleId;
+      const row = slotRow(page, slotName(slot.slotKind, slot.slotIndex));
+      if (expected === null) await expect(row).not.toHaveAttribute('data-module', /./);
+      else await expect(row).toHaveAttribute('data-module', expected);
+    }
+    // Nothing that was sold came back to sell again.
+    await page.getByRole('button', { name: 'Market', exact: true }).click();
+    await marketMode(page, 'Sell');
+    for (const item of salvage) {
+      await expect(page.getByRole('button', { name: `Sell ${item}` })).toHaveCount(0);
     }
   });
 });

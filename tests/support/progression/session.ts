@@ -1,5 +1,12 @@
 import { createMemorySaveStore, type MemorySaveStore } from '@adapters/persistence';
-import { createEngineHost, createSaveService, ENGINE_VERSION, type CampaignState, type ContentRepository } from '@engine';
+import {
+  createEngineHost,
+  createSaveService,
+  ENGINE_VERSION,
+  type CampaignState,
+  type ContentRepository,
+  type EngineHost,
+} from '@engine';
 import {
   EMPTY_PAYLOAD,
   PROTOCOL_VERSION,
@@ -49,16 +56,33 @@ export async function openSession(state: CampaignState, content: ContentReposito
   await service.save(state, 'auto', 1_700_000_000_000);
   await service.drain();
 
-  const host = createEngineHost({ content, saves });
+  const session = attachSession(createEngineHost({ content, saves }), saves, state.time.simulationTimeMs);
+  const resumed = await session.ask('campaign.resume');
+  if (!resumed.ok) throw new Error(`The scenario campaign did not resume: ${resumed.error.messageKey}`);
+  return session;
+}
+
+/**
+ * A session over a host that is already running, for a caller that opens the
+ * campaign itself - a browser checkpoint creates one through `campaign.create`
+ * (Test Suite Optimization Plan phase 4). `saves` is the store the host writes
+ * to, and `requestPrefix` names the requests in a failure.
+ */
+export function attachSession(
+  host: EngineHost,
+  saves: MemorySaveStore,
+  simulationTimeMs = 0,
+  requestPrefix = 'scenario',
+): ScenarioSession {
   let ordinal = 0;
-  let simulationTimeMs = state.time.simulationTimeMs;
+  let currentTimeMs = simulationTimeMs;
   const events: DomainEventData[] = [];
 
   const ask = async <TData>(type: string, payload: unknown = EMPTY_PAYLOAD): Promise<EngineResponse<TData>> => {
     ordinal += 1;
     return (await host.handle({
       protocolVersion: PROTOCOL_VERSION,
-      requestId: `scenario-${String(ordinal)}`,
+      requestId: `${requestPrefix}-${String(ordinal)}`,
       type,
       payload,
     })) as EngineResponse<TData>;
@@ -72,9 +96,6 @@ export async function openSession(state: CampaignState, content: ContentReposito
     return response.data;
   };
 
-  const resumed = await ask('campaign.resume');
-  if (!resumed.ok) throw new Error(`The scenario campaign did not resume: ${resumed.error.messageKey}`);
-
   return {
     ask,
     data,
@@ -84,14 +105,14 @@ export async function openSession(state: CampaignState, content: ContentReposito
         const result = await data<CommandResultData>('time.advance', {
           elapsedRealMs: Math.min(STEP_MS, elapsedRealMs - elapsed),
         });
-        simulationTimeMs = result.simulationTimeMs;
+        currentTimeMs = result.simulationTimeMs;
         produced.push(...result.events);
       }
       events.push(...produced);
       return produced;
     },
     get simulationTimeMs(): number {
-      return simulationTimeMs;
+      return currentTimeMs;
     },
     get events(): readonly DomainEventData[] {
       return events;

@@ -3,12 +3,18 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { SAVE_DATABASE_NAME, SAVE_DATABASE_VERSION } from '@adapters/persistence';
 import type { SaveEnvelope, SlotManifest } from '@engine';
 
-import { prepareCheckpoint, type Checkpoint, type CheckpointName } from './scenarios.ts';
+import {
+  prepareCheckpoint,
+  type Checkpoint,
+  type CheckpointName,
+  type SiteCheckpointFacts,
+  type StationCheckpointFacts,
+} from './scenarios.ts';
 import { servedContent } from './servedContent.ts';
 
 /**
  * Opens a browser test at a saved checkpoint (Test Suite Optimization Plan
- * phase 3; Technical Specification 11.1, 15.1).
+ * phases 3 and 4; Technical Specification 11.1, 15.1).
  *
  * 1. The checkpoint is generated headlessly from the content compiled into
  *    the served build, and verified: save format, content identity, checksum,
@@ -140,13 +146,28 @@ function region(page: Page, name: string): Locator {
   return page.getByRole('region', { name, exact: true });
 }
 
+/** The wallet readout in the campaign frame, as "<credits> ISK". */
+export function walletReadout(page: Page): Locator {
+  return page.locator('dt', { hasText: /^Wallet$/ }).locator('xpath=following-sibling::dd[1]');
+}
+
+/** Whole credits or units grouped the way the interface's English locale writes them. */
+export function grouped(value: number): string {
+  return new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(value);
+}
+
 /**
- * Checks that the interface shows what the checkpoint promised: the site,
- * the paused clock, the opponent, its lock state and whether the first weapon
- * is firing - in words, as a player or assistive technology reads them.
+ * Checks that the interface shows what the checkpoint promised, in words, as
+ * a player or assistive technology reads them.
  */
 export async function expectCheckpointShown(page: Page, checkpoint: Checkpoint, opponent = 'Pirate Scout'): Promise<void> {
   const { facts } = checkpoint;
+  if (facts.kind === 'site') await expectSiteShown(page, facts, opponent);
+  else await expectStationShown(page, facts);
+}
+
+/** In a site: the site, the paused clock, the opponent, its lock state and whether the first weapon is firing. */
+async function expectSiteShown(page: Page, facts: SiteCheckpointFacts, opponent: string): Promise<void> {
   const heading = SITE_HEADINGS[facts.siteId];
   if (heading === undefined) throw new Error(`No interface name is known for ${facts.siteId}.`);
   await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
@@ -163,6 +184,27 @@ export async function expectCheckpointShown(page: Page, checkpoint: Checkpoint, 
   } else {
     await expect(weapons.getByText(new RegExp(`^Firing at ${opponent}`))).toHaveCount(0);
   }
+}
+
+/**
+ * Docked: the station, the paused clock, the wallet, the last sortie's outcome
+ * and every loose stack the station lists in the hold.
+ */
+async function expectStationShown(page: Page, facts: StationCheckpointFacts): Promise<void> {
+  await expect(page.getByRole('heading', { level: 2, name: facts.stationName })).toBeVisible();
+  if (facts.paused) await expect(page.getByText('Paused', { exact: true })).toBeVisible();
+  await expect(walletReadout(page)).toHaveText(`${grouped(facts.credits)} ISK`);
+  const sortie = region(page, 'Last sortie');
+  const outcome = facts.lastOutcome;
+  if (outcome !== null) {
+    if (outcome.status !== 'completed') throw new Error(`No interface wording is checked for a ${outcome.status} sortie.`);
+    await expect(sortie.getByRole('status')).toHaveText(
+      `${outcome.name} cleared: ${String(outcome.npcsDestroyed)} of ${String(outcome.npcsTotal)} opponents destroyed, ` +
+        `${grouped(outcome.bountyCreditsPaid)} ISK in bounties.`,
+    );
+  }
+  const listed = sortie.locator('[data-hold-item]');
+  await expect(listed).toHaveText(facts.hold.map((stack) => `${grouped(stack.quantity)} x ${stack.name}`));
 }
 
 /**
