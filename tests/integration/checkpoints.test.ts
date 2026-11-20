@@ -42,7 +42,9 @@ function resealed(envelope: SaveEnvelope, change: Partial<SaveEnvelope>): SaveEn
 }
 
 describe('browser checkpoints', () => {
-  for (const name of CHECKPOINT_NAMES) {
+  // The mastery checkpoint is the longest to make; its cases are in
+  // checkpointsMastery.test.ts so they run beside these.
+  for (const name of CHECKPOINT_NAMES.filter((entry) => entry !== 'base-cleared')) {
     it(`makes "${name}" the same save every time [TECH-11.4]`, async () => {
       const first = await checkpoint(name);
       const second = await prepareCheckpoint(name, content);

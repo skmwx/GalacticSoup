@@ -6,9 +6,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   auditBuild,
+  checkPlaywrightEvidence,
   fingerprintBuild,
   isCandidateSource,
   judge,
+  readPlaywrightCases,
   readPlaywrightResult,
   readVitestResult,
   readVitestSelections,
@@ -16,6 +18,7 @@ import {
   sourceDigest,
 } from '../../../scripts/lib/release.mjs';
 import { isIntegrationReleaseFile } from '../../../config/testSelections.mjs';
+import { RELEASE_WITNESSES, stableTitle, witnessesFor } from '../../../config/releaseWitnesses.mjs';
 
 /**
  * The release gate's bookkeeping (MVP Implementation Plan phase 21).
@@ -269,6 +272,154 @@ describe('a test runner result', () => {
   });
 });
 
+describe('required browser evidence by case', () => {
+  /*
+   * Test Suite Optimization Plan phase 5: a Playwright step is release
+   * evidence only when its run accounts for the full intended discovery of its
+   * project, case by case, and every required witness - named apart from
+   * discovery - was discovered, ran and passed.
+   */
+  const root = path.join(os.tmpdir(), 'repo');
+  const JOURNEY = { id: 'journey', file: 'tests/browser/journey.spec.ts', title: 'the journey > flies there and back' };
+  const VARIANT = { id: 'variant', file: 'tests/browser/audit.spec.ts', title: 'audits > at doubled size' };
+  const witnesses = [JOURNEY, VARIANT];
+
+  interface Case {
+    readonly file: string;
+    readonly describe: string;
+    readonly title: string;
+    readonly line?: number;
+    readonly status?: 'expected' | 'unexpected' | 'flaky' | 'skipped';
+    readonly retries?: number;
+    readonly project?: string;
+  }
+  const ALL: readonly Case[] = [
+    { file: 'journey.spec.ts', describe: 'the journey', title: 'flies there and back [MVP-AC-01]', line: 10 },
+    { file: 'journey.spec.ts', describe: 'the journey', title: 'opens the station [MVP-AC-02]', line: 40 },
+    // One source line, two cases: identity needs the title.
+    { file: 'audit.spec.ts', describe: 'audits', title: 'at standard size [TECH-12.3]', line: 7 },
+    { file: 'audit.spec.ts', describe: 'audits', title: 'at doubled size [TECH-12.3]', line: 7 },
+  ];
+
+  /** A Playwright JSON report, as a run writes it or (with `listed`) as `--list` does. */
+  function report(cases: readonly Case[], listed = false, project = 'browser'): unknown {
+    const files = [...new Set(cases.map((entry) => entry.file))];
+    return {
+      config: { rootDir: path.join(root, 'tests', 'browser') },
+      suites: files.map((file) => ({
+        title: file,
+        file,
+        specs: [],
+        suites: [...new Set(cases.filter((entry) => entry.file === file).map((entry) => entry.describe))].map((describe) => ({
+          title: describe,
+          file,
+          specs: cases.filter((entry) => entry.file === file && entry.describe === describe).map((entry) => ({
+            title: entry.title,
+            file,
+            line: entry.line ?? 1,
+            tags: [],
+            tests: [{
+              projectName: entry.project ?? project,
+              ...(listed ? {} : {
+                status: entry.status ?? 'expected',
+                results: Array.from({ length: (entry.retries ?? 0) + 1 }, (_, retry) => ({ retry })),
+              }),
+            }],
+          })),
+        })),
+      })),
+    };
+  }
+
+  const check = (executed: readonly Case[], discovered: readonly Case[] = ALL) =>
+    checkPlaywrightEvidence({
+      project: 'browser',
+      discovered: readPlaywrightCases(report(discovered, true), root),
+      executed: readPlaywrightCases(report(executed), root),
+      witnesses,
+    });
+
+  it('reads every case by project, repository path and full title, two cases of one line apart [TECH-15.1]', () => {
+    const cases = readPlaywrightCases(report(ALL), root);
+
+    expect(cases.map((entry) => `${entry.project}|${entry.file}:${String(entry.line)}|${entry.title}|${entry.status}`)).toEqual([
+      'browser|tests/browser/audit.spec.ts:7|audits > at doubled size [TECH-12.3]|passed',
+      'browser|tests/browser/audit.spec.ts:7|audits > at standard size [TECH-12.3]|passed',
+      'browser|tests/browser/journey.spec.ts:10|the journey > flies there and back [MVP-AC-01]|passed',
+      'browser|tests/browser/journey.spec.ts:40|the journey > opens the station [MVP-AC-02]|passed',
+    ]);
+    expect(readPlaywrightCases(report(ALL, true), root).every((entry) => entry.status === 'listed')).toBe(true);
+  });
+
+  it('accepts a complete run, naming a case that passed only on a retry [TECH-15.1]', () => {
+    const evidence = check(ALL.map((entry, index) => (index === 1 ? { ...entry, status: 'flaky' as const, retries: 1 } : entry)));
+
+    expect(evidence.problems).toEqual([]);
+    expect(evidence.ok).toBe(true);
+    expect(evidence).toMatchObject({ discovered: 4, executed: 4, passed: 3 });
+    expect(evidence.flaky).toEqual(['tests/browser/journey.spec.ts > the journey > opens the station [MVP-AC-02]']);
+    expect(evidence.witnesses.map((witness) => `${witness.id}: ${witness.status}`)).toEqual(['journey: passed', 'variant: passed']);
+  });
+
+  it('refuses a partial report in which every case that ran passed [TECH-15.1]', () => {
+    const evidence = check(ALL.filter((entry) => entry.file === 'journey.spec.ts'));
+
+    expect(evidence.ok).toBe(false);
+    expect(evidence.problems).toContain(
+      '2 of 4 discovered case(s) did not run: tests/browser/audit.spec.ts > audits > at doubled size [TECH-12.3]; ' +
+        'tests/browser/audit.spec.ts > audits > at standard size [TECH-12.3]',
+    );
+    expect(evidence.problems).toContain('required witness variant was not run: tests/browser/audit.spec.ts > audits > at doubled size');
+  });
+
+  it('refuses a run whose discovery was narrowed to leave out a required witness [TECH-15.1]', () => {
+    const narrowed = ALL.filter((entry) => !entry.title.startsWith('flies there and back'));
+    const evidence = check(narrowed, narrowed);
+
+    expect(evidence.ok).toBe(false);
+    expect(evidence.problems).toEqual([
+      'required witness journey was not discovered: tests/browser/journey.spec.ts > the journey > flies there and back',
+    ]);
+  });
+
+  it('refuses a run in which a required witness was skipped [TECH-15.1]', () => {
+    const evidence = check(ALL.map((entry) => (entry.title.startsWith('at doubled') ? { ...entry, status: 'skipped' as const } : entry)));
+
+    expect(evidence.ok).toBe(false);
+    expect(evidence.problems).toEqual([
+      '1 case(s) were skipped: tests/browser/audit.spec.ts > audits > at doubled size [TECH-12.3]',
+      'required witness variant was skipped: tests/browser/audit.spec.ts > audits > at doubled size',
+    ]);
+  });
+
+  it('refuses a failed witness, a case discovery does not list and a case run in another project [TECH-15.1]', () => {
+    const failed = check(ALL.map((entry) => (entry.line === 10 ? { ...entry, status: 'unexpected' as const } : entry)));
+    expect(failed.problems).toContain('required witness journey was failed: tests/browser/journey.spec.ts > the journey > flies there and back');
+
+    const extra = check([...ALL, { file: 'journey.spec.ts', describe: 'the journey', title: 'a case added after listing' }]);
+    expect(extra.problems).toEqual([
+      '1 case(s) ran that discovery does not list: tests/browser/journey.spec.ts > the journey > a case added after listing',
+    ]);
+
+    const elsewhere = check(ALL.map((entry) => (entry.line === 40 ? { ...entry, project: 'browser-firefox' } : entry)));
+    expect(elsewhere.ok).toBe(false);
+    expect(elsewhere.problems[0]).toMatch(/^1 case\(s\) ran in another project than browser: .*opens the station.*\(browser-firefox\)$/);
+  });
+
+  it('requires the same witnesses in Chromium and Firefox, and none of the optional branded projects [TECH-15.1, V02-AC-14]', () => {
+    expect(witnessesFor('browser').length).toBeGreaterThan(0);
+    expect(witnessesFor('browser-firefox')).toEqual(witnessesFor('browser'));
+    expect(witnessesFor('accessibility-firefox')).toEqual(witnessesFor('accessibility'));
+    expect(witnessesFor('browser-chrome')).toEqual([]);
+    expect(witnessesFor('browser-edge')).toEqual([]);
+    for (const witness of RELEASE_WITNESSES) {
+      expect(stableTitle(witness.title), witness.id).toBe(witness.title);
+      expect(witness.file, witness.id).toMatch(new RegExp(`^tests/${witness.level}/[\\w-]+\\.spec\\.ts$`));
+    }
+    expect(stableTitle('a > b [V02-AC-14, TECH-12.3]')).toBe('a > b');
+  });
+});
+
 describe('the verdict', () => {
   const plan = [
     { id: 'unit', title: 'Unit suite' },
@@ -386,5 +537,35 @@ describe('the gate report', () => {
     expect(report).toContain('| Unit suite | passed | 3 passed | 32.0 s | 2026-10-08T10:00:00Z |');
     expect(report).toContain('| Browser suite | NOT RUN - not run | - | - | - |');
     expect(report).toContain('No candidate has been recorded yet');
+    expect(report).not.toContain('## Browser evidence by case');
+  });
+
+  it('shows each Playwright step against its discovery and every required witness by engine [TECH-15.1]', () => {
+    const witness = (id: string, status: string) => ({ id, file: 'f', title: 't', status });
+    const step = (id: string, status: string) => ({
+      id,
+      status: 'passed' as const,
+      sourceDigest: 's',
+      buildFingerprint: 'b',
+      evidence: { discovered: 37, executed: 37, passed: 36, flaky: ['x'], problems: [], ok: true, witnesses: [witness('journey', status)] },
+    });
+    const results = [step('browser', 'passed'), step('browser-firefox', 'flaky')];
+    const plan = results.map((result) => ({ id: result.id, title: result.id }));
+    const current = { sourceDigest: 's', buildFingerprint: 'b' };
+    const report = renderGateReport({
+      identity: { ...current, commit: 'abc', dirty: false, node: 'v24', contentHash: CONTENT_HASH },
+      judgement: judge(plan, results, current),
+      results,
+      build: null,
+      browsers: [],
+      traceability: null,
+      performance: null,
+      balance: null,
+      candidate: null,
+    });
+
+    expect(report).toContain('| browser | 37 | 37 | 36 | 1 | 1 of 1 |');
+    expect(report).toContain('| Required witness | browser | browser-firefox |');
+    expect(report).toContain('| journey | passed | flaky |');
   });
 });

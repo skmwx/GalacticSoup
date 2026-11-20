@@ -490,6 +490,14 @@ Every record names the sources and the bundle its step ran against. The verdict 
 bundle that are there now, so a result left over from an earlier state cannot pass for evidence.
 Documents are not part of the candidate; everything else in the repository is.
 
+A browser step is checked case by case. Before running, it lists its project's full discovery; it
+passes only when every discovered case ran in that project and passed, nothing else ran, and every
+required witness in `config/releaseWitnesses.mjs` - the played journeys and the accessibility
+variants the release rests on - was discovered, ran and passed in both Chromium and Firefox. A
+witness is named apart from discovery, so narrowing what Playwright finds cannot turn the gate
+green. A test focused with `.only` is refused. When a witness is renamed or replaced, update that
+file in the same change; `npm run test:discover` checks that each witness is found once per project.
+
 The browser suites play in real time, so the whole gate takes about an hour. `--only=<steps>`,
 `--from=<step>` and `--pending` run part of it; a browser test is retried once, and a test that
 needed the retry is named in the evidence.

@@ -12,6 +12,7 @@ import {
 import type {
   AssetsData,
   CombatData,
+  DestinationsData,
   EncounterData,
   EngineResponse,
   FrameData,
@@ -26,7 +27,7 @@ import type {
 
 import { fixtureFit, fixtureScenario, type FixtureFit } from '../progression/fixtures.ts';
 import { attachSession, type ScenarioSession } from '../progression/session.ts';
-import { describeSortie, flySortie } from '../progression/sortie.ts';
+import { describeSortie, flySortie, refit } from '../progression/sortie.ts';
 
 /**
  * Saved campaign checkpoints for browser tests (Test Suite Optimization Plan
@@ -61,10 +62,12 @@ const SCOUT_ENCOUNTER = 'encounter.borrell.pirate-scout';
 const SCOUT_SITE = 'site.borrell.verge';
 /** The headless progression scenario the patrol checkpoint flies: the intermediate fit, cutters first. */
 const PATROL_SCENARIO = 'patrol.intermediate';
+/** The scenario the mastery checkpoint flies next: the mastery fit, 10 km from the nearest brawler. */
+const BASE_SCENARIO = 'base.mastery';
 const STEP_MS = 250;
 const LOCALE = 'en';
 
-export const CHECKPOINT_NAMES = ['scout-in-range', 'scout-fight', 'patrol-salvage'] as const;
+export const CHECKPOINT_NAMES = ['scout-in-range', 'scout-fight', 'patrol-salvage', 'base-cleared'] as const;
 export type CheckpointName = (typeof CHECKPOINT_NAMES)[number];
 
 export const CHECKPOINT_DESCRIPTIONS: Readonly<Record<CheckpointName, string>> = {
@@ -74,6 +77,8 @@ export const CHECKPOINT_DESCRIPTIONS: Readonly<Record<CheckpointName, string>> =
     'Paused in a fight with the Pirate Scout: the scout locked, the autocannon firing at it, the shield booster running and hits recorded.',
   'patrol-salvage':
     'Docked and paused at Borrell Harbour after clearing the Pirate Patrol with the intermediate fit: the bounty paid, every wreck looted, the salvage and any earned module in the hold.',
+  'base-cleared':
+    'Docked and paused at Borrell Harbour after the patrol checkpoint, the salvage sold, the mastery fit bought and fitted with the earned plating, and the Pirate Base cleared with it: the Pirate Base still the chosen destination, each site completed once.',
 };
 
 /**
@@ -137,6 +142,10 @@ export interface StationCheckpointFacts {
     readonly npcsTotal: number;
     readonly bountyCreditsPaid: number;
   } | null;
+  /** The encounter chosen as the destination, which space navigation offers first. */
+  readonly selectedDestination: { readonly encounterId: string; readonly name: string } | null;
+  /** Every encounter completed at least once, with its completion count, in the order destinations are listed. */
+  readonly completions: readonly { readonly encounterId: string; readonly name: string; readonly count: number }[];
 }
 
 export type CheckpointFacts = SiteCheckpointFacts | StationCheckpointFacts;
@@ -238,6 +247,8 @@ async function observeStation(session: Asker, content: ContentRepository, assets
       quantity: stack.quantity,
     }));
   const outcome = encounter.lastOutcome;
+  const destinations = await session.data<DestinationsData>('navigation.destinations');
+  const selected = destinations.destinations.find((entry) => entry.encounterId === destinations.selectedEncounterId);
   return {
     kind: 'station',
     stateHash: hash.stateHash,
@@ -264,6 +275,10 @@ async function observeStation(session: Asker, content: ContentRepository, assets
       npcsTotal: outcome.npcsTotal,
       bountyCreditsPaid: outcome.bountyCreditsPaid,
     },
+    selectedDestination: selected === undefined ? null : { encounterId: selected.encounterId, name: name(selected.nameKey) },
+    completions: destinations.destinations
+      .filter((entry) => entry.completionCount > 0)
+      .map((entry) => ({ encounterId: entry.encounterId, name: name(entry.nameKey), count: entry.completionCount })),
   };
 }
 
@@ -399,7 +414,11 @@ async function fitThroughStation(session: ScenarioSession, fit: FixtureFit, cont
   if (resupply.available && resupply.token !== null) await session.data('resupply.confirm', { token: resupply.token });
 
   for (const entry of fit.cargo) {
-    let remaining = entry.quantity;
+    // A ship back from a sortie may still carry some of its reserve.
+    const carried = (await session.data<InventoryData>('inventory.cargo', { shipId: ship.id })).stacks
+      .filter((stack) => stack.item.definitionId === entry.definitionId)
+      .reduce((total, stack) => total + stack.quantity, 0);
+    let remaining = Math.max(0, entry.quantity - carried);
     const hangar = await session.data<InventoryData>('inventory.hangar', { stationId });
     const stacks = hangar.stacks
       .filter((stack) => stack.item.definitionId === entry.definitionId && stack.state.kind === 'plain')
@@ -429,6 +448,43 @@ async function clearPatrolAndDock(session: ScenarioSession, content: ContentRepo
   if (assets.location.kind !== 'station') throw new Error('The patrol checkpoint sortie did not dock.');
 }
 
+/** Sells every plain salvage stack in the active ship's hold, each whole, at the station it is docked at. */
+async function sellSalvage(session: ScenarioSession, content: ContentRepository): Promise<void> {
+  const stationId = content.rules.economy.startingStationId;
+  const assets = await session.data<AssetsData>('assets.list');
+  if (assets.activeShipId === null) throw new Error('No active ship to sell salvage from.');
+  const hold = await session.data<InventoryData>('inventory.cargo', { shipId: assets.activeShipId });
+  for (const stack of hold.stacks.filter((entry) => entry.state.kind === 'plain' && entry.item.kind === 'item')) {
+    const preview = await session.data<MarketTransactionPreviewData>('market.previewSell', {
+      stationId, stackId: stack.id, quantity: stack.quantity,
+    });
+    if (!preview.available || preview.token === null) {
+      throw new Error(`The market refuses to buy ${stack.item.definitionId}: ${String(preview.unavailableReason)}`);
+    }
+    await session.data('market.confirmSell', { token: preview.token });
+  }
+}
+
+/**
+ * After the patrol checkpoint: sells the salvage, buys what the mastery fit
+ * lacks and fits it with the earned plating, takes the station's repair and
+ * resupply, and flies the headless progression scenario's Pirate Base sortie
+ * home - the steps the Patrol-to-Base browser case once played at 1x after
+ * converting its rewards (Test Suite Optimization Plan phase 6).
+ */
+async function clearBaseAndDock(session: ScenarioSession, content: ContentRepository): Promise<void> {
+  await clearPatrolAndDock(session, content);
+  await sellSalvage(session, content);
+  const scenario = fixtureScenario(BASE_SCENARIO);
+  const fit = fixtureFit(scenario.fitId);
+  await fitThroughStation(session, fit, content);
+  await refit(session, fit, content);
+  const record = await flySortie(session, scenario, content, CHECKPOINT_SEED, 2);
+  if (record.status !== 'completed') throw new Error(`The mastery checkpoint sortie did not clear: ${describeSortie(record)}`);
+  const assets = await session.data<AssetsData>('assets.list');
+  if (assets.location.kind !== 'station') throw new Error('The mastery checkpoint sortie did not dock.');
+}
+
 const SCRIPTS: Readonly<Record<CheckpointName, (session: ScenarioSession, content: ContentRepository) => Promise<void>>> = {
   async 'scout-in-range'(session) {
     const opponent = await arriveAtScout(session);
@@ -441,6 +497,9 @@ const SCRIPTS: Readonly<Record<CheckpointName, (session: ScenarioSession, conten
   },
   async 'patrol-salvage'(session, content) {
     await clearPatrolAndDock(session, content);
+  },
+  async 'base-cleared'(session, content) {
+    await clearBaseAndDock(session, content);
   },
 };
 

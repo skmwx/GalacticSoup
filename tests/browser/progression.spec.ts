@@ -6,7 +6,7 @@ import { chooseDestination, destinationBriefing, destinationEntry, destinations,
 import { marketMode } from '../support/market.ts';
 import { applyFit, chooseAmmunition, chooseModule, fittingSlots, slotRow } from '../support/fitting.ts';
 import { takeService } from '../support/services.ts';
-import { openCheckpoint, walletReadout } from '../support/checkpoint/browser.ts';
+import { expectCheckpointShown, openCheckpoint, walletReadout } from '../support/checkpoint/browser.ts';
 import { checkpointAt } from '../support/checkpoint/scenarios.ts';
 
 /**
@@ -14,29 +14,32 @@ import { checkpointAt } from '../support/checkpoint/scenarios.ts';
  * (MVP Implementation Plan phases 16-17; MVP-AC-05, MVP-AC-06, MVP-AC-07,
  * MVP-AC-09).
  *
- * The run is the shipped build: the engine in its worker, saves in IndexedDB,
- * simulation time at 1x. A new pilot spends the starting credits on a second
- * autocannon and phased rounds, clears the multi-opponent Pirate Patrol by
- * killing its cutters before its marksman, loots the wrecks and sells the
- * salvage. The patrol's bounties and salvage buy an afterburner and a
- * capacitor battery; the armour plating one wreck held is fitted as well. The
- * pilot takes the station's repair, which recharges the capacitor with the
- * free shield repair, then holds 10 km from whichever of the Pirate
- * Base's brawlers is nearest, clears it and comes home, and every site is
- * still offered.
+ * The played case is the shipped build: the engine in its worker, saves in
+ * IndexedDB, simulation time at 1x. A new pilot spends the starting credits on
+ * a second autocannon and phased rounds, clears the multi-opponent Pirate
+ * Patrol by killing its cutters before its marksman, loots the wrecks and
+ * sells the salvage. The patrol's bounties and salvage buy an afterburner and
+ * a capacitor battery; the armour plating one wreck held is fitted as well.
+ * The pilot takes the station's repair, which recharges the capacitor with
+ * the free shield repair. Earning a reward and spending it is the point, so
+ * that segment is played.
  *
  * The campaign is closed, the page loaded again and the campaign resumed at
- * four checkpoints along the way (MVP Implementation Plan phase 21): prepared
- * at the station, in space beside the patrol's wrecks, after the rewards were
- * converted, and after the mastery site. Nothing is kept in memory across a
- * checkpoint, so each one continues from what the save holds.
+ * three moments along the way (MVP Implementation Plan phase 21): prepared at
+ * the station, in space beside the patrol's wrecks, and after the rewards were
+ * converted. Nothing is kept in memory across a reopen, so each one continues
+ * from what the save holds.
+ *
+ * The Pirate Base sortie that followed took most of the case's fourteen
+ * minutes. It is flown headlessly instead, with the same fit and tactics, and
+ * what the interface shows after it is checked from a saved checkpoint below
+ * (Test Suite Optimization Plan phase 6; the assertion map is in
+ * docs/test-suite-optimization/phase-5-6-release-evidence-and-patrol.md).
  *
  * The pilot here is a simple competent one: each opponent is selected,
  * ordered against, locked and fired on until it is destroyed, in a fixed
- * priority at the patrol and nearest first at the base. Modules are switched
- * on at the first lock and left running, except that at the base the shield
- * booster runs only while the shield is below 80%. The headless progression
- * scenarios hold the same fits and tactics to more seeds.
+ * priority. Modules are switched on at the first lock and left running. The
+ * headless progression scenarios hold the same fits and tactics to more seeds.
  *
  * The client supplies a campaign's seed, so the test fixes the sixteen random
  * bytes that become it. Wrecks are rolled from their own stream in the order
@@ -197,10 +200,6 @@ async function warp(page: Page, arriveAtKm: string, site: string): Promise<void>
 interface Engagement {
   /** Opponent names, engaged in this order. */
   readonly priority: readonly string[];
-  /** Engage whichever hostile ship is nearest instead of following the priority. */
-  readonly nearestFirst?: boolean;
-  /** Run the shield booster only while the shield is below this share, instead of leaving it on. */
-  readonly boosterBelowShield?: number;
   readonly rangeKm: string;
   readonly movement: RegExp;
   /** Modules switched on at the first lock and left running. */
@@ -212,40 +211,79 @@ function opponent(page: Page, name: string): Locator {
   return region(page, 'In this site').locator('[data-kind="ship"][data-attitude="hostile"]').filter({ hasText: name });
 }
 
-/** The hostile ship the object list shows nearest, by the distance each entry states. */
-async function nearestHostile(page: Page): Promise<string | null> {
-  const entries = await region(page, 'In this site')
-    .locator('[data-kind="ship"][data-attitude="hostile"]')
-    .evaluateAll((buttons) => buttons.map((button) => ({
-      id: button.getAttribute('data-object-entry') ?? '',
-      text: button.textContent ?? '',
-    })));
-  let best: { id: string; km: number } | null = null;
-  for (const entry of entries) {
-    const match = /([\d.,]+)\s*km/.exec(entry.text);
-    const km = match === null ? Infinity : Number((match[1] ?? '').replace(/,/g, ''));
-    if (best === null || km < best.km) best = { id: entry.id, km };
-  }
-  return best?.id ?? null;
-}
+/*
+ * The fight runs at 1x while the test reads the panels, so a control read a
+ * moment ago may legitimately be gone or disabled by the time it is used: the
+ * target dies, a lock breaks, a gun starts its reload. These helpers tolerate
+ * exactly that and nothing else. A control that fails while it is still there
+ * and enabled is a real failure and is thrown, and every tolerated miss is
+ * recorded for the diagnostics a stalled fight reports.
+ */
 
-/** Read the live ship-layer value, rather than the former duplicated header summary. */
-async function shieldShare(page: Page): Promise<number> {
-  const text = await page.locator('[data-panel="status"] [data-layer-name="shield"]').textContent();
-  const match = /\(([\d.]+)%\)/.exec(text ?? '');
-  if (match === null) throw new Error('The live shield percentage is missing.');
-  return Number(match[1]) / 100;
-}
-
-/** Clicks a control if it is there and enabled now; the fight moves on either way. */
-async function press(control: Locator): Promise<boolean> {
+/** Whether a control is there and enabled now. Only its disappearance mid-check is tolerated. */
+async function offered(control: Locator): Promise<boolean> {
+  if ((await control.count()) === 0) return false;
   try {
-    if ((await control.count()) === 0 || !(await control.first().isEnabled())) return false;
+    return await control.first().isEnabled({ timeout: 1_000 });
+  } catch (error) {
+    if ((await control.count()) === 0) return false;
+    throw error;
+  }
+}
+
+/** An attribute of an element that may have left the page, or `null` once it has. */
+async function attributeIfPresent(element: Locator, name: string): Promise<string | null> {
+  if ((await element.count()) === 0) return null;
+  try {
+    return await element.first().getAttribute(name, { timeout: 1_000 });
+  } catch (error) {
+    if ((await element.count()) === 0) return null;
+    throw error;
+  }
+}
+
+interface FightLog {
+  current: string | null;
+  lockStatus: string | null;
+  presses: number;
+  /** The most recent controls that were gone or disabled when clicked, newest last. */
+  readonly transient: string[];
+}
+
+/**
+ * Clicks a control if it is offered now. Returns false when it is not, or
+ * when it went between the check and the click; rethrows when it is still
+ * offered after a failed click.
+ */
+async function press(control: Locator, what: string, log: FightLog): Promise<boolean> {
+  if (!(await offered(control))) return false;
+  try {
     await control.first().click({ timeout: 2_000 });
+    log.presses += 1;
     return true;
-  } catch {
+  } catch (error) {
+    if (await offered(control)) throw error;
+    log.transient.push(`${what} went before it was clicked`);
+    if (log.transient.length > 10) log.transient.shift();
     return false;
   }
+}
+
+/** What the panels show now, and what the loop last saw: the report of a fight that did not end. */
+async function fightDiagnostics(page: Page, log: FightLog): Promise<string> {
+  const text = async (locator: Locator): Promise<string> =>
+    (await locator.count()) === 0 ? '(not shown)' : (await locator.first().innerText()).replace(/\s+/g, ' ').trim();
+  const target = log.current === null ? null : page.locator(`[data-object-entry="${log.current}"]`);
+  return [
+    `target: ${log.current ?? 'none'}${target === null ? '' : ` - ${await text(target)}`}`,
+    `last lock status seen: ${log.lockStatus ?? 'none'}; presses: ${String(log.presses)}`,
+    `In this site: ${await text(region(page, 'In this site'))}`,
+    `Weapons: ${await text(region(page, 'Weapons'))}`,
+    `Modules: ${await text(region(page, 'Modules'))}`,
+    `Encounter: ${await text(page.locator('[data-encounter-summary]'))}`,
+    `Clock: ${await text(page.getByText(/Running at|^Paused$/))}`,
+    `Recent transient misses: ${log.transient.join('; ') || 'none'}`,
+  ].join('\n  ');
 }
 
 /**
@@ -260,67 +298,55 @@ async function press(control: Locator): Promise<boolean> {
 async function fight(page: Page, engagement: Engagement): Promise<void> {
   const cleared = page.locator('[data-encounter-summary="complete"]', { hasText: `Cleared: ${engagement.bounty} ISK paid` });
   const fire = region(page, 'Weapons').getByRole('button', { name: /^Fire\s?E$/ });
-  const deadline = Date.now() + 12 * 60_000;
-  let current: string | null = null;
+  const deadline = Date.now() + 10 * 60_000;
+  const log: FightLog = { current: null, lockStatus: null, presses: 0, transient: [] };
   let modulesRunning = false;
 
   while (!(await cleared.isVisible())) {
-    expect(Date.now(), `${engagement.bounty} ISK site not cleared in time`).toBeLessThan(deadline);
+    if (Date.now() > deadline) {
+      throw new Error(`The ${engagement.bounty} ISK site was not cleared in time.\n  ${await fightDiagnostics(page, log)}`);
+    }
 
-    if (current === null || (await page.locator(`[data-object-entry="${current}"]`).count()) === 0) {
-      current = null;
-      if (engagement.nearestFirst === true) {
-        current = await nearestHostile(page);
-      } else {
-        for (const name of engagement.priority) {
-          const candidate = opponent(page, name).first();
-          if ((await candidate.count()) > 0) {
-            current = await candidate.getAttribute('data-object-entry');
-            break;
-          }
+    if (log.current === null || (await page.locator(`[data-object-entry="${log.current}"]`).count()) === 0) {
+      log.current = null;
+      log.lockStatus = null;
+      for (const name of engagement.priority) {
+        const id = await attributeIfPresent(opponent(page, name), 'data-object-entry');
+        if (id !== null) {
+          log.current = id;
+          break;
         }
       }
-      if (current === null) {
+      if (log.current === null) {
         await page.waitForTimeout(1_000);
         continue;
       }
-      await press(page.locator(`[data-object-entry="${current}"]`));
+      await press(page.locator(`[data-object-entry="${log.current}"]`), `the entry of ${log.current}`, log);
       await page.getByLabel('Range').selectOption(engagement.rangeKm);
-      await press(page.getByRole('button', { name: engagement.movement }));
+      await press(page.getByRole('button', { name: engagement.movement }), 'the movement order', log);
     }
 
-    const entry = page.locator(`[data-object-entry="${current}"]`);
-    const lock = region(page, 'In this site').locator(`[data-lock="${current}"]`);
-    if ((await lock.count()) === 0) {
-      if ((await entry.getAttribute('aria-pressed').catch(() => null)) !== 'true') await press(entry);
-      await press(region(page, 'Navigation').getByRole('button', { name: /^Lock target/ }));
-    } else if ((await lock.getAttribute('data-lock-status').catch(() => null)) === 'locked') {
-      await press(fire);
+    const entry = page.locator(`[data-object-entry="${log.current}"]`);
+    const lock = region(page, 'In this site').locator(`[data-lock="${log.current}"]`);
+    log.lockStatus = await attributeIfPresent(lock, 'data-lock-status');
+    if (log.lockStatus === null) {
+      if ((await attributeIfPresent(entry, 'aria-pressed')) !== 'true') await press(entry, `the entry of ${log.current}`, log);
+      await press(region(page, 'Navigation').getByRole('button', { name: /^Lock target/ }), 'Lock target', log);
+    } else if (log.lockStatus === 'locked') {
+      await press(fire, 'Fire', log);
       if (!modulesRunning) {
         for (const module of engagement.modules) {
-          await press(region(page, 'Modules').getByRole('button', { name: new RegExp(`^Activate ${module}`) }));
+          await press(region(page, 'Modules').getByRole('button', { name: new RegExp(`^Activate ${module}`) }), `Activate ${module}`, log);
         }
         modulesRunning = true;
-      }
-    }
-    if (modulesRunning && engagement.boosterBelowShield !== undefined) {
-      const shield = await shieldShare(page);
-      const modules = region(page, 'Modules');
-      if (shield < engagement.boosterBelowShield) {
-        await press(modules.getByRole('button', { name: new RegExp(`^Activate ${BOOSTER}`) }));
-      } else if (shield >= 0.999) {
-        await press(modules.getByRole('button', { name: new RegExp(`^Deactivate ${BOOSTER}`) }));
       }
     }
     await page.waitForTimeout(1_000);
   }
   for (const module of engagement.modules) {
-    if (engagement.boosterBelowShield !== undefined && module === BOOSTER) continue;
     await expect(region(page, 'Modules').getByRole('button', { name: new RegExp(`^Deactivate ${module}`) })).toBeVisible();
   }
 }
-
-const BOOSTER = 'Small Shield Booster';
 
 /**
  * Takes the station's repair, which recharges the capacitor with the free
@@ -369,18 +395,18 @@ async function returnAndDock(page: Page): Promise<void> {
   await ensurePaused(page);
 }
 
-test.describe('progression to the mastery site', () => {
+test.describe('progression through the multi-opponent site', () => {
   test.beforeEach(async ({ page }) => {
     await fixSeed(page);
     await freshCampaign(page);
   });
 
-  test('clears the multi-opponent site, converts its rewards and clears the mastery site, reopening along the way [MVP-AC-01, MVP-AC-05, MVP-AC-06, MVP-AC-07, MVP-AC-09, FUNC-9.10, FUNC-9.11, FUNC-18]', async ({
+  test('clears the multi-opponent site, loots its wrecks after a reopen beside them and spends its rewards on the mastery fit [MVP-AC-01, MVP-AC-05, MVP-AC-06, MVP-AC-07, FUNC-9.10, FUNC-9.11]', async ({
     page,
   }) => {
-    // Two sorties at 1x, each with warps, a fight of several minutes and a
-    // docking cycle, plus the wrecks of the first and four reopenings.
-    test.setTimeout(30 * 60_000);
+    // One sortie at 1x: warps, a fight of a few minutes, the wrecks and a
+    // docking cycle, and three reopenings.
+    test.setTimeout(15 * 60_000);
 
     // Undocking needs no destination: every site is chosen in space, where
     // all three are offered (see the end of this flow).
@@ -466,37 +492,43 @@ test.describe('progression to the mastery site', () => {
     await page.getByRole('button', { name: 'Fitting', exact: true }).click();
     await expect(fittingSlots(page).filter({ hasText: '1MN Afterburner' })).toBeVisible();
     await expect(fittingSlots(page).filter({ hasText: 'Small Armour Plating' })).toBeVisible();
+    // The Pirate Base fight with this fit is flown headlessly, by the
+    // progression scenarios over several seeds and by the `base-cleared`
+    // checkpoint below (Test Suite Optimization Plan phase 6).
+  });
+});
 
-    // The Pirate Base: arrive far off, burn and keep 10 km from whichever
-    // brawler is nearest, and boost the shield when it runs low.
-    await depart(page, 'Pirate Base');
-    await warp(page, '30', 'Outpost Cradle');
-    await expect(opponent(page, 'Pirate Gunner')).toHaveCount(2);
-    await fight(page, {
-      priority: ['Pirate Gunner', 'Pirate Warden', 'Pirate Marksman'],
-      nearestFirst: true,
-      boosterBelowShield: 0.8,
-      rangeKm: '10',
-      movement: /^Keep range/,
-      modules: ['1MN Afterburner', BOOSTER],
-      bounty: '26,000',
-    });
-    await returnAndDock(page);
+/*
+ * The end of the progression from a saved checkpoint (Test Suite Optimization
+ * Plan phase 6). The checkpoint continues the patrol checkpoint headlessly with
+ * the same steps the case above plays: the salvage sold, the mastery fit bought
+ * and fitted with the earned plating, then the headless progression scenario's
+ * Pirate Base sortie flown home - the mastery fit keeping 10 km from the nearest
+ * brawler. What the interface must show afterwards is checked here, through a
+ * real close, reload and resume.
+ */
+test.describe('the mastery site from a checkpoint', () => {
+  test('finds the mastery clear after a reopen, offers the mastery site first with its completion counted and keeps every site choosable [MVP-AC-01, MVP-AC-07, MVP-AC-09, FUNC-18]', async ({
+    page,
+    baseURL,
+  }) => {
+    test.setTimeout(CHECKPOINT_CASE_TIMEOUT_MS);
+    const checkpoint = checkpointAt(await openCheckpoint(page, 'base-cleared', baseURL), 'station');
+    const { facts } = checkpoint;
+    const cleared = 'Pirate Base cleared: 4 of 4 opponents destroyed, 26,000 ISK in bounties.';
+    await expect(region(page, 'Last sortie').getByText(cleared)).toBeVisible();
 
-    await expect(
-      region(page, 'Last sortie').getByText('Pirate Base cleared: 4 of 4 opponents destroyed, 26,000 ISK in bounties.'),
-    ).toBeVisible();
-
-    // Checkpoint: the mastery site is cleared. The reopened campaign still
-    // says so.
-    await reopen(page, 'Borrell Harbour');
-    await expect(
-      region(page, 'Last sortie').getByText('Pirate Base cleared: 4 of 4 opponents destroyed, 26,000 ISK in bounties.'),
-    ).toBeVisible();
+    // The mastery site is cleared, and the campaign closed, loaded again and
+    // resumed in this browser still says so, with the wallet and hold as they were.
+    await reopen(page, facts.stationName);
+    await expectCheckpointShown(page, checkpoint);
+    await expect(region(page, 'Last sortie').getByText(cleared)).toBeVisible();
 
     // Nothing ends here: the mastery site is still the chosen destination,
     // offered first in space with its completion counted, and every site -
     // tier is guidance, not a gate - can be chosen instead.
+    expect(facts.selectedDestination?.name).toBe('Pirate Base');
+    expect(facts.completions.find((entry) => entry.name === 'Pirate Base')?.count).toBe(1);
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await expect(page.getByText('Chosen destination: Pirate Base. Space navigation offers it first.')).toBeVisible();
     await undock(page);
@@ -508,6 +540,15 @@ test.describe('progression to the mastery site', () => {
     }
   });
 });
+
+/**
+ * The first case in a worker that opens a progression checkpoint also makes
+ * it: a headless sortie or two, which blocks the worker for about 3 s
+ * (`patrol-salvage`) or 9 s (`base-cleared`) on an idle machine and several
+ * times that beside seven other browser workers in the release gate. The
+ * default 30 s was too tight there.
+ */
+const CHECKPOINT_CASE_TIMEOUT_MS = 2 * 60_000;
 
 /** "Engineering 1" for the first engineering slot, as the fitting screen names it. */
 function slotName(slotKind: string, slotIndex: number): string {
@@ -536,6 +577,7 @@ test.describe('progression rewards from a checkpoint', () => {
     page,
     baseURL,
   }) => {
+    test.setTimeout(CHECKPOINT_CASE_TIMEOUT_MS);
     const checkpoint = checkpointAt(await openCheckpoint(page, 'patrol-salvage', baseURL), 'station');
     const { facts } = checkpoint;
     const plating = facts.hold.find((stack) => stack.definitionId === 'module.plating.armor.small');

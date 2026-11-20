@@ -17,7 +17,9 @@
  *     release-only selection is exactly the long simulations;
  *   - the Chromium feature smoke (phase 2): its cases are exactly the cases
  *     tagged `@feature`, each of them also runs exactly once in each release
- *     project of its level, and the release gate never runs the smoke project.
+ *     project of its level, and the release gate never runs the smoke project;
+ *   - the required release witnesses (phase 5, `config/releaseWitnesses.mjs`):
+ *     each is discovered exactly once in every required project of its level.
  *
  * Writes `reports/test-discovery.json` (or `--out=<file>`) and prints a
  * summary. Exits 1 when a check fails. Listing starts no browser and no
@@ -45,6 +47,8 @@ import {
   isIntegrationReleaseFile,
   REQUIRED_PLAYWRIGHT_PROJECTS,
 } from '../config/testSelections.mjs';
+import { RELEASE_WITNESSES, stableTitle, WITNESS_LEVEL_PROJECTS } from '../config/releaseWitnesses.mjs';
+import { readPlaywrightCases } from './lib/release.mjs';
 
 const VITEST = path.join(REPO_ROOT, 'node_modules', 'vitest', 'vitest.mjs');
 const PLAYWRIGHT = path.join(REPO_ROOT, 'node_modules', '@playwright', 'test', 'cli.js');
@@ -111,33 +115,11 @@ function listPlaywright(projectNames, specs = []) {
     throw new Error(`playwright --list failed:\n${result.stdout}\n${result.stderr}`);
   }
   const report = JSON.parse(result.stdout.slice(start));
-  const testDir = report.config?.rootDir ?? path.join(REPO_ROOT, 'tests');
-  /** @type {{ project: string, file: string, line: number, title: string, tags: string[] }[]} */
-  const cases = [];
-  const walk = (suite, trail) => {
-    for (const spec of suite.specs ?? []) {
-      for (const test of spec.tests ?? []) {
-        cases.push({
-          project: test.projectName,
-          file: relative(path.join(testDir, spec.file)),
-          line: spec.line,
-          title: [...trail, spec.title].join(' > '),
-          tags: spec.tags ?? [],
-        });
-      }
-    }
-    for (const child of suite.suites ?? []) walk(child, [...trail, child.title]);
-  };
-  // The outermost suite is the file; its title is the path, not a describe.
-  for (const file of report.suites ?? []) walk(file, []);
   for (const error of report.errors ?? []) throw new Error(`playwright --list: ${error.message ?? JSON.stringify(error)}`);
-  return cases.sort(
-    (left, right) =>
-      left.project.localeCompare(right.project) ||
-      left.file.localeCompare(right.file) ||
-      left.line - right.line ||
-      left.title.localeCompare(right.title),
-  );
+  // The release gate reads its results with the same reader, so a case has
+  // one identity in discovery and in the gate.
+  return readPlaywrightCases(report, REPO_ROOT)
+    .map(({ project, file, line, title, tags }) => ({ project, file, line, title, tags }));
 }
 
 const playwright = {
@@ -270,6 +252,24 @@ check('no Playwright case runs twice in a project', duplicates.length === 0, dup
   check('verify:feature runs the unit, fast integration and component files, each once',
     JSON.stringify(featureFiles) === JSON.stringify(expectedFiles) && !featureVitest.some((entry) => entry.project === INTEGRATION_RELEASE_PROJECT),
     `${String(featureFiles.length)} files, expected ${String(expectedFiles.length)}`);
+}
+
+// Required release witnesses (phase 5): each is discovered exactly once in
+// every required project of its level, and no two witnesses name one case.
+{
+  const wrong = [];
+  for (const witness of RELEASE_WITNESSES) {
+    for (const project of WITNESS_LEVEL_PROJECTS[witness.level]) {
+      const found = playwright.required.filter((entry) =>
+        entry.project === project && entry.file === witness.file && stableTitle(entry.title) === witness.title).length;
+      if (found !== 1) wrong.push(`${project}: ${witness.id} found ${String(found)} times`);
+    }
+  }
+  check('every required release witness is discovered once in each of its projects', wrong.length === 0, wrong.join('; '));
+  const keys = RELEASE_WITNESSES.map((witness) => `${witness.file} > ${witness.title}`);
+  const ids = RELEASE_WITNESSES.map((witness) => witness.id);
+  check('release witnesses have distinct ids and cases',
+    new Set(keys).size === keys.length && new Set(ids).size === ids.length);
 }
 
 /* -------------------------------------------------------------------------- */

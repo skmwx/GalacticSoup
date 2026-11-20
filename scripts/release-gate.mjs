@@ -17,7 +17,12 @@
  *     in it may be able to make a request;
  *   - the browser and accessibility suites, served exactly that bundle, in
  *     the Chromium and Firefox builds Playwright pins, and the start, save and
- *     offline flows in the Chrome and Edge installed on this machine.
+ *     offline flows in the Chrome and Edge installed on this machine. Each
+ *     Playwright step lists its project's full discovery first and passes
+ *     only when every discovered case ran there and passed, nothing else ran,
+ *     and every required witness of `config/releaseWitnesses.mjs` was
+ *     discovered, ran and passed (Test Suite Optimization Plan phase 5);
+ *     a test focused with `.only` is refused;
  *
  * Each step leaves a record in `reports/release/steps/` that names the sources
  * and the bundle it ran against. `reports/release-gate.md` is the evidence
@@ -53,6 +58,7 @@ import {
   INTEGRATION_RELEASE_PROJECT,
   isIntegrationReleaseFile,
 } from '../config/testSelections.mjs';
+import { witnessesFor } from '../config/releaseWitnesses.mjs';
 import { ENGINE_VERSION } from '../src/engine/application/version.ts';
 import { compileContent } from './lib/content/compile.mjs';
 import { readContentFiles } from './lib/content/read.mjs';
@@ -61,8 +67,10 @@ import {
   CANDIDATE_FILE,
   RELEASE_DIR,
   auditBuild,
+  checkPlaywrightEvidence,
   fingerprintBuild,
   judge,
+  readPlaywrightCases,
   readPlaywrightResult,
   readVitestResult,
   readVitestSelections,
@@ -385,28 +393,72 @@ function playwright(project, specs = [], channel) {
   if (fingerprintBuild(DIST).fingerprint === null) {
     return { status: 'failed', reason: 'there is no build to serve; run the build step first', browserVersion: version };
   }
+  // The full intended discovery of this project and spec filter, listed
+  // before the run: the run must account for every case in it.
+  const listing = path.join(RESULTS_DIR, `${project}.discovery.json`);
+  fs.rmSync(listing, { force: true });
+  let discovered;
+  try {
+    discovered = listPlaywright(project, specs, listing);
+  } catch (error) {
+    return { status: 'failed', reason: error instanceof Error ? error.message : String(error), browserVersion: version };
+  }
+
   const file = path.join(RESULTS_DIR, `${project}.json`);
   fs.rmSync(file, { force: true });
   const { exitCode, log } = node(
     `playwright-${project}`,
     // One retry: a browser now and then fails to close its own context after a
     // test has passed. A test that needed the retry is named in the evidence.
-    [PLAYWRIGHT, 'test', `--project=${project}`, '--retries=1', ...specs],
+    // A focused test (`.only`) would narrow the run, so it is refused.
+    [PLAYWRIGHT, 'test', `--project=${project}`, '--retries=1', '--forbid-only', ...specs],
     { RELEASE_GATE_RESULTS: file, RELEASE_GATE_SERVE_BUILT: '1' },
   );
   if (!fs.existsSync(file)) {
     return { status: 'failed', exitCode, log, reason: 'the suite wrote no result', browserVersion: version };
   }
-  const tests = readPlaywrightResult(JSON.parse(fs.readFileSync(file, 'utf8')));
-  const passed = exitCode === 0 && tests.failed === 0 && tests.passed + tests.flaky > 0;
+  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const tests = readPlaywrightResult(raw);
+  const evidence = checkPlaywrightEvidence({
+    project,
+    discovered,
+    executed: readPlaywrightCases(raw, REPO_ROOT),
+    witnesses: witnessesFor(project),
+  });
+  const passed = exitCode === 0 && tests.failed === 0 && tests.passed + tests.flaky > 0 && evidence.ok;
+  /** @type {string[]} */
+  const reasons = [];
+  if (!evidence.ok) reasons.push(...evidence.problems);
+  if (tests.flaky > 0) reasons.push(`${String(tests.flaky)} passed only on a retry`);
   return {
     status: passed ? 'passed' : 'failed',
     exitCode,
     log,
-    ...(passed && tests.flaky > 0 ? { reason: `${String(tests.flaky)} passed only on a retry` } : {}),
+    ...(reasons.length > 0 ? { reason: reasons.join('; ') } : {}),
     tests,
+    evidence,
     browserVersion: version,
   };
+}
+
+/**
+ * The cases `playwright test --list` finds for one project and spec filter,
+ * also kept beside the run's result. Listing starts no browser and no server.
+ */
+function listPlaywright(project, specs, keep) {
+  const result = spawnSync(
+    process.execPath,
+    [PLAYWRIGHT, 'test', '--list', '--reporter=json', '--forbid-only', `--project=${project}`, ...specs],
+    { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, RELEASE_GATE_SERVE_BUILT: '1' } },
+  );
+  const start = result.stdout.indexOf('{');
+  if (result.status !== 0 || start < 0) {
+    throw new Error(`discovery of ${project} failed: ${(result.stderr || result.stdout).trim().split('\n').slice(0, 5).join(' ')}`);
+  }
+  const report = JSON.parse(result.stdout.slice(start));
+  for (const error of report.errors ?? []) throw new Error(`discovery of ${project}: ${error.message ?? JSON.stringify(error)}`);
+  fs.writeFileSync(keep, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  return readPlaywrightCases(report, REPO_ROOT);
 }
 
 /** The version of the browser a project drives, or null when it is not installed. */

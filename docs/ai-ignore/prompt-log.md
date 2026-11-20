@@ -200,3 +200,5 @@ Here are the answers:
 
 Please implement phase 2 and phase 3 of test suite optimization.
 Please implement phase 3 and phase 4 of test suite optimization.
+Please implement phase 5 and phase 6 of test suite optimization.
+Please implement phase 7 and phase 8 of test suite optimization.

@@ -20,6 +20,8 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { stableTitle } from '../../config/releaseWitnesses.mjs';
+
 export const RELEASE_DIR = path.join('reports', 'release');
 export const CANDIDATE_FILE = path.join('config', 'release-candidate.json');
 
@@ -271,6 +273,146 @@ export function readPlaywrightResult(result) {
 }
 
 /**
+ * @typedef {object} PlaywrightCase
+ * @property {string} project
+ * @property {string} file repository-relative spec path
+ * @property {number} line
+ * @property {string} title describe blocks and the test title, joined with " > "
+ * @property {string[]} tags
+ * @property {'passed' | 'flaky' | 'failed' | 'skipped' | 'listed'} status `listed` in a `--list` report
+ * @property {number} retries the highest retry the case reached
+ */
+
+const CASE_STATUS = { expected: 'passed', flaky: 'flaky', unexpected: 'failed', skipped: 'skipped' };
+
+/**
+ * Every case of a Playwright JSON report - a run's result or a `--list`
+ * listing - by its stable identity: project, spec file and full title (Test
+ * Suite Optimization Plan phase 5). One source line can make several cases,
+ * so the title is part of the identity, not only the line.
+ *
+ * @param {any} result
+ * @param {string} root the repository root the files are made relative to
+ * @returns {PlaywrightCase[]}
+ */
+export function readPlaywrightCases(result, root) {
+  const testDir = result.config?.rootDir ?? path.join(root, 'tests');
+  /** @type {PlaywrightCase[]} */
+  const cases = [];
+  const walk = (suite, trail) => {
+    for (const spec of suite.specs ?? []) {
+      for (const test of spec.tests ?? []) {
+        cases.push({
+          project: String(test.projectName ?? ''),
+          file: path.relative(root, path.resolve(testDir, String(spec.file ?? suite.file ?? ''))).split(path.sep).join('/'),
+          line: Number(spec.line ?? 0),
+          title: [...trail, spec.title].join(' > '),
+          tags: spec.tags ?? [],
+          status: test.status === undefined ? 'listed' : (CASE_STATUS[test.status] ?? 'failed'),
+          retries: Math.max(0, ...(test.results ?? []).map((run) => Number(run.retry ?? 0))),
+        });
+      }
+    }
+    for (const child of suite.suites ?? []) walk(child, [...trail, child.title]);
+  };
+  // The outermost suite is the file; its title is the path, not a describe.
+  for (const file of result.suites ?? []) walk(file, []);
+  return cases.sort(
+    (left, right) =>
+      left.project.localeCompare(right.project) ||
+      left.file.localeCompare(right.file) ||
+      left.line - right.line ||
+      left.title.localeCompare(right.title),
+  );
+}
+
+/** How a list of case names reads in a problem: the first few, and how many more. */
+function some(names, limit = 5) {
+  const shown = names.slice(0, limit).join('; ');
+  return names.length > limit ? `${shown}; and ${String(names.length - limit)} more` : shown;
+}
+
+/**
+ * Whether one Playwright project's run is complete release evidence (Test
+ * Suite Optimization Plan phase 5): every case the full intended discovery
+ * lists ran in the expected project and passed, nothing ran that discovery
+ * does not list, and every required witness was discovered, ran and passed.
+ * The witnesses are named independently of discovery, so narrowing discovery
+ * cannot make a run look complete. A case that passed only on a retry counts,
+ * and is named.
+ *
+ * @param {object} input
+ * @param {string} input.project
+ * @param {readonly PlaywrightCase[]} input.discovered the `--list` of the same project and specs
+ * @param {readonly PlaywrightCase[]} input.executed the cases of the run's result
+ * @param {readonly { id: string, file: string, title: string }[]} input.witnesses
+ */
+export function checkPlaywrightEvidence({ project, discovered, executed, witnesses }) {
+  /** @type {string[]} */
+  const problems = [];
+  const identity = (entry) => `${entry.file} > ${entry.title}`;
+  const stable = (entry) => `${entry.file} > ${stableTitle(entry.title)}`;
+
+  const elsewhere = executed.filter((entry) => entry.project !== project);
+  if (elsewhere.length > 0) {
+    problems.push(`${String(elsewhere.length)} case(s) ran in another project than ${project}: ` +
+      some(elsewhere.map((entry) => `${identity(entry)} (${entry.project})`)));
+  }
+  const ran = executed.filter((entry) => entry.project === project);
+  const listed = discovered.filter((entry) => entry.project === project);
+  if (listed.length === 0) problems.push(`discovery lists no case for ${project}`);
+
+  const byIdentity = new Map();
+  /** @type {string[]} */
+  const twice = [];
+  for (const entry of ran) {
+    if (byIdentity.has(identity(entry))) twice.push(identity(entry));
+    byIdentity.set(identity(entry), entry);
+  }
+  if (twice.length > 0) problems.push(`${String(twice.length)} case(s) ran twice: ${some(twice)}`);
+
+  const listedIds = new Set(listed.map(identity));
+  const notRun = listed.filter((entry) => !byIdentity.has(identity(entry))).map(identity);
+  if (notRun.length > 0) {
+    problems.push(`${String(notRun.length)} of ${String(listed.length)} discovered case(s) did not run: ${some(notRun)}`);
+  }
+  const unlisted = ran.filter((entry) => !listedIds.has(identity(entry))).map(identity);
+  if (unlisted.length > 0) {
+    problems.push(`${String(unlisted.length)} case(s) ran that discovery does not list: ${some(unlisted)}`);
+  }
+  const skipped = ran.filter((entry) => entry.status === 'skipped').map(identity);
+  if (skipped.length > 0) problems.push(`${String(skipped.length)} case(s) were skipped: ${some(skipped)}`);
+  const failed = ran.filter((entry) => entry.status === 'failed' || entry.status === 'listed').map(identity);
+  if (failed.length > 0) problems.push(`${String(failed.length)} case(s) did not pass: ${some(failed)}`);
+
+  const witnessed = witnesses.map((witness) => {
+    const key = `${witness.file} > ${witness.title}`;
+    const inDiscovery = listed.filter((entry) => stable(entry) === key);
+    const inRun = ran.filter((entry) => stable(entry) === key);
+    /** @type {'passed' | 'flaky' | 'failed' | 'skipped' | 'not run' | 'not discovered' | 'ambiguous'} */
+    let status;
+    if (inDiscovery.length === 0) status = 'not discovered';
+    else if (inDiscovery.length > 1 || inRun.length > 1) status = 'ambiguous';
+    else if (inRun.length === 0) status = 'not run';
+    else status = inRun[0].status === 'listed' ? 'failed' : inRun[0].status;
+    if (status !== 'passed' && status !== 'flaky') {
+      problems.push(`required witness ${witness.id} ${status === 'ambiguous' ? 'matches more than one case' : `was ${status}`}: ${key}`);
+    }
+    return { id: witness.id, file: witness.file, title: witness.title, status };
+  });
+
+  return {
+    ok: problems.length === 0,
+    problems,
+    discovered: listed.length,
+    executed: ran.length,
+    passed: ran.filter((entry) => entry.status === 'passed').length,
+    flaky: ran.filter((entry) => entry.status === 'flaky').map(identity),
+    witnesses: witnessed,
+  };
+}
+
+/**
  * @typedef {object} StepPlan
  * @property {string} id
  * @property {string} title
@@ -432,6 +574,41 @@ export function renderGateReport(evidence) {
       for (const name of result.tests.failures) lines.push(`- ${result.id}: ${name}`);
     }
     lines.push('');
+  }
+
+  const evidenced = results.filter((result) => result.evidence !== undefined);
+  if (evidenced.length > 0) {
+    lines.push(
+      '## Browser evidence by case',
+      '',
+      'Each Playwright step is compared case by case with the full discovery of its project, and the required witnesses ' +
+        '(`config/releaseWitnesses.mjs`) are checked by name in every required project.',
+      '',
+      '| Step | Discovered | Ran | Passed | On a retry | Witnesses |',
+      '|---|---|---|---|---|---|',
+    );
+    for (const result of evidenced) {
+      const { evidence } = result;
+      const good = evidence.witnesses.filter((witness) => witness.status === 'passed' || witness.status === 'flaky').length;
+      lines.push(
+        `| ${result.id} | ${String(evidence.discovered)} | ${String(evidence.executed)} | ${String(evidence.passed)} | ` +
+          `${String(evidence.flaky.length)} | ${evidence.witnesses.length === 0 ? '-' : `${String(good)} of ${String(evidence.witnesses.length)}`} |`,
+      );
+    }
+    lines.push('');
+    const witnessIds = [...new Set(evidenced.flatMap((result) => result.evidence.witnesses.map((witness) => witness.id)))];
+    if (witnessIds.length > 0) {
+      const columns = evidenced.filter((result) => result.evidence.witnesses.length > 0);
+      lines.push(
+        `| Required witness | ${columns.map((result) => result.id).join(' | ')} |`,
+        `|---|${columns.map(() => '---|').join('')}`,
+      );
+      for (const id of witnessIds) {
+        const cells = columns.map((result) => result.evidence.witnesses.find((witness) => witness.id === id)?.status ?? '-');
+        lines.push(`| ${id} | ${cells.join(' | ')} |`);
+      }
+      lines.push('');
+    }
   }
 
   lines.push('## The bundle', '');
