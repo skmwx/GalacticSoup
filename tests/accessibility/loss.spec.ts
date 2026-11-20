@@ -1,62 +1,28 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-import { undock } from '../support/undock.ts';
-import { warpTo } from '../support/destinations.ts';
-import { marketMode } from '../support/market.ts';
-import { chooseModule } from '../support/fitting.ts';
+import { openCheckpoint } from '../support/checkpoint/browser.ts';
 
 /**
  * The loss report and the shipless station under automated audit
  * (Technical Specification 12.3; Functional Specification 9.12, 19.6, 20).
  *
- * A pilot sells the starter ship's autocannon and loses what is left at the
- * hard site. The sale and the payout leave them above the reference value of a
- * starter ship with its original fit, so the recovery service supplies nothing
- * and they are docked without a ship. The report that explains the loss and
- * the station that tells them how to fly again must pass the same audit as
- * every other surface, and the way back - buying a hull - must work from there.
+ * A pilot has sold the starter ship's autocannon and lost what was left at
+ * the hard site. The sale and the payout leave them above the reference value
+ * of a starter ship with its original fit, so the recovery service supplied
+ * nothing and they are docked without a ship. The report that explains the
+ * loss and the station that tells them how to fly again must pass the same
+ * audit as every other surface, and the way back - buying a hull - must work
+ * from there.
  *
- * The client supplies a campaign's seed, so the test fixes the sixteen random
- * bytes that become it: the one survival roll then always loses the shield
- * booster, and nothing else about the game is changed.
+ * The case begins after the loss (Test Suite Optimization Plan phase 8): the
+ * campaign was played to the destruction headlessly, saved, and is opened
+ * through the start screen and the worker. The helper first checks what the
+ * station shows: the wallet, the lost sortie and the report's every lost and
+ * surviving item. Playing the destruction itself in the browser, and the
+ * reload that only its autosave survives, are `tests/browser/loss.spec.ts`'s
+ * evidence.
  */
-
-const PILOT = 'Audited Pilot';
-const SEED = 'bb22cc33dd44ee55ff6677889900aa11';
-
-async function fixSeed(page: Page): Promise<void> {
-  await page.addInitScript((seed: string) => {
-    const original = crypto.getRandomValues.bind(crypto);
-    crypto.getRandomValues = (<T extends ArrayBufferView | null>(array: T): T => {
-      if (array instanceof Uint8Array && array.length === 16) {
-        for (let index = 0; index < 16; index += 1) {
-          array[index] = Number.parseInt(seed.slice(index * 2, index * 2 + 2), 16);
-        }
-        return array;
-      }
-      return original(array as never) as T;
-    }) as typeof crypto.getRandomValues;
-  }, SEED);
-}
-
-async function freshCampaign(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.evaluate(
-    async () =>
-      new Promise<void>((resolve) => {
-        const request = indexedDB.deleteDatabase('galactic-soup');
-        request.onsuccess = () => resolve();
-        request.onerror = () => resolve();
-        request.onblocked = () => resolve();
-      }),
-  );
-  await page.goto('/');
-  await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
-  await page.getByLabel('Pilot name').fill(PILOT);
-  await page.getByRole('button', { name: 'Start campaign' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
-}
 
 async function audit(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page })
@@ -68,33 +34,10 @@ async function audit(page: Page): Promise<void> {
 test.describe('loss accessibility', () => {
   test('audits the loss report and the shipless station, then buys a way back [FUNC-9.12, FUNC-19.6, FUNC-20, FUNC-22.1, TECH-12.3, MVP-AC-10]', async ({
     page,
+    baseURL,
   }) => {
-    test.setTimeout(6 * 60_000);
-    await fixSeed(page);
-    await freshCampaign(page);
-
-    // Take the autocannon off and sell it.
-    await page.getByRole('button', { name: 'Fitting', exact: true }).click();
-    await chooseModule(page, 'Weapon 1', '');
-    await page.getByRole('button', { name: 'Apply fit' }).click();
-    await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
-    await page.getByRole('button', { name: 'Market', exact: true }).click();
-    await marketMode(page, 'Sell');
-    await page.getByRole('button', { name: 'Sell 200mm Autocannon' }).click();
-    const sale = page.getByRole('dialog', { name: 'Confirm sale' });
-    await expect(sale.getByText('Calculating…')).toBeHidden();
-    await sale.getByRole('button', { name: 'Confirm' }).click();
-    await expect(sale).toBeHidden();
-
-    await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await undock(page);
-    await warpTo(page, 'Pirate Base', 10);
-    await page.getByRole('button', { name: /^Resume/ }).click();
-
+    await openCheckpoint(page, 'loss-shipless', baseURL);
     const report = page.getByRole('region', { name: 'Ship lost', exact: true });
-    await expect(report).toBeVisible({ timeout: 4 * 60_000 });
-    await page.getByRole('button', { name: /^Pause/ }).click();
-    await expect(page.getByText('Paused', { exact: true })).toBeVisible();
 
     // The report explains in words: attackers, what was lost, the payout and
     // why no ship was supplied.

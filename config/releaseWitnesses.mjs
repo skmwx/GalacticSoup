@@ -94,10 +94,17 @@ export const RELEASE_WITNESSES = [
   },
   {
     id: 'loss-recovery',
-    evidence: 'Real destruction, reload, recovery and a clear',
+    evidence: 'Real destruction, loss report, saved shipless reload, recovery purchase and relaunch to a fight',
     level: 'browser',
     file: 'tests/browser/loss.spec.ts',
-    title: 'losing a ship > is destroyed, reloads, recovers and clears the easiest site again',
+    title: 'losing a ship > is destroyed with nothing supplied, reloads the shipless station, buys a hull and flies it to a fight',
+  },
+  {
+    id: 'loss-wreck',
+    evidence: 'Granted replacement, wreck chosen and looted, survivors refitted (from a loss checkpoint)',
+    level: 'browser',
+    file: 'tests/browser/loss.spec.ts',
+    title: 'recovering from a checkpoint after a loss > flies the granted replacement to its wreck, brings the survivors home and refits with them',
   },
   {
     id: 'full-offline',

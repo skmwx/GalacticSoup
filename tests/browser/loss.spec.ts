@@ -2,26 +2,37 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
 import { destinationEntry, dockHome, warpHome, warpTo } from '../support/destinations.ts';
+import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
+import { openCheckpoint } from '../support/checkpoint/browser.ts';
 
 /**
  * Losing a ship and coming back from it, in a real browser
  * (MVP Implementation Plan phase 15; MVP-AC-08, FUNC-9.12).
  *
  * The run is the shipped build: the engine in its worker, saves in IndexedDB,
- * simulation time at 1x. A pilot spends most of their credits on a spare gun,
- * flies the starter ship to the hard site and lets it be destroyed. The loss
- * report explains what happened, the insurance pays, and - with too little
- * left to buy the starter ship back - the recovery service supplies a
- * restricted one. The page is then reloaded without closing the campaign, so only the
- * autosave taken at the destruction can bring the post-loss station back. The
- * pilot recovers what survived from the wreck, refits with the spare gun and
- * clears the easiest site again.
+ * simulation time at 1x.
  *
- * The client supplies a campaign's seed, so the test fixes the sixteen random
- * bytes that become it. The survival rolls are therefore the same every run -
- * the fitted autocannon is lost and the shield booster survives - and nothing
- * else about the game is changed.
+ * One case plays the destruction itself (Test Suite Optimization Plan phase
+ * 8). The pilot takes the starter ship's autocannon off and sells it, flies
+ * what is left to the hard site and lets it be destroyed. The payout leaves
+ * enough to buy a starter ship back, so the recovery service supplies none:
+ * the loss report explains why, the page is reloaded without closing the
+ * campaign - so only the autosave taken at the destruction can bring the
+ * shipless station back - and the pilot buys a hull, fits a gun to it, and
+ * flies it to the easiest site and locks the scout there.
+ *
+ * The other recovery - a granted replacement, and the survivors brought home
+ * from the wreck - begins after a loss the campaign has already had. It opens
+ * a checkpoint reached headlessly: the same starter ship, with a spare gun in
+ * the hangar, destroyed idling at the hard site. Clearing the easiest site
+ * again with the recovered ship is the headless loss case's evidence
+ * (`tests/integration/loss.test.ts`).
+ *
+ * The client supplies a campaign's seed, so the played case fixes the sixteen
+ * random bytes that become it; the checkpoint campaign is made from the same
+ * bytes. The survival rolls are therefore the same every run, and nothing else
+ * about the game is changed.
  */
 
 const PILOT = 'Loss Pilot';
@@ -86,8 +97,10 @@ async function saved(page: Page): Promise<void> {
   await expect(status).toHaveText(/^Saved at revision [\d,]+\.$/, { timeout: 30_000 });
 }
 
+/** Buys one of an item at the market, delivered where the dialog suggests. */
 async function buy(page: Page, item: string): Promise<void> {
   await page.getByRole('button', { name: 'Market', exact: true }).click();
+  await marketMode(page, 'Buy');
   await page.getByRole('button', { name: `Buy ${item}` }).click();
   const purchase = page.getByRole('dialog', { name: 'Confirm purchase' });
   await expect(purchase.getByText('Calculating…')).toBeHidden();
@@ -124,23 +137,29 @@ async function returnAndDock(page: Page): Promise<void> {
 }
 
 test.describe('losing a ship', () => {
-  test.beforeEach(async ({ page }) => {
-    await fixSeed(page);
-    await freshCampaign(page);
-  });
-
-  test('is destroyed, reloads, recovers and clears the easiest site again [MVP-AC-08, FUNC-9.12, FUNC-5.4, FUNC-3.4, FUNC-22.1, MVP-AC-01]', async ({
+  test('is destroyed with nothing supplied, reloads the shipless station, buys a hull and flies it to a fight [MVP-AC-08, FUNC-9.12, FUNC-3.4, FUNC-22.1, MVP-AC-01]', async ({
     page,
   }) => {
-    // Three sorties at 1x: the loss, the wreck and the easiest site.
-    test.setTimeout(15 * 60_000);
+    // One sortie at 1x to the loss, then a warp out in the bought ship.
+    test.setTimeout(8 * 60_000);
+    await fixSeed(page);
+    await freshCampaign(page);
 
-    // A spare gun leaves 8,000 ISK: after the payout, still far below the value
-    // of a starter ship with its original fit.
-    await buy(page, '200mm Autocannon');
-    await expect(page.getByText('8,000 ISK', { exact: true })).toBeVisible();
+    // Take the autocannon off and sell it: after the payout the pilot can
+    // afford a starter ship, so none is supplied.
+    await page.getByRole('button', { name: 'Fitting', exact: true }).click();
+    await chooseModule(page, 'Weapon 1', '');
+    await page.getByRole('button', { name: 'Apply fit' }).click();
+    await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
+    await page.getByRole('button', { name: 'Market', exact: true }).click();
+    await marketMode(page, 'Sell');
+    await page.getByRole('button', { name: 'Sell 200mm Autocannon' }).click();
+    const sale = page.getByRole('dialog', { name: 'Confirm sale' });
+    await expect(sale.getByText('Calculating…')).toBeHidden();
+    await sale.getByRole('button', { name: 'Confirm' }).click();
+    await expect(sale).toBeHidden();
 
-    // Fly the starter ship to the hard site and do nothing there.
+    // Fly what is left to the hard site and do nothing there.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await undock(page);
     await warp(page, '10', 'Outpost Cradle', 'Pirate Base');
@@ -154,28 +173,73 @@ test.describe('losing a ship', () => {
     ).toBeVisible();
     await expect(report.getByRole('rowheader', { name: 'Pirate Gunner' }).first()).toBeVisible();
     await expect(
-      report.getByRole('list', { name: 'Lost items' }).getByText('1 x 200mm Autocannon (fitted)'),
+      report.getByRole('list', { name: 'Lost items' }).getByText('1 x Small Shield Booster (fitted)'),
     ).toBeVisible();
     await expect(
-      report.getByRole('list', { name: 'Lost items' }).getByText('20 x Fusion S (loaded ammunition)'),
+      report.getByText("Basic insurance paid 3,600 ISK: 30% of the hull's 12,000 ISK reference value."),
     ).toBeVisible();
-    await expect(
-      report.getByRole('list', { name: 'Surviving items' }).getByText('1 x Small Shield Booster (fitted)'),
-    ).toBeVisible();
+    await expect(report.getByText(/^You have no ship\. With 33,822 ISK/)).toBeVisible();
+    await expect(page.getByText('33,822 ISK', { exact: true })).toBeVisible();
+
+    // Reload without closing: only the autosave taken at the destruction can
+    // bring the shipless station back.
+    await saved(page);
+    await page.reload();
+    await page.getByRole('button', { name: 'Resume campaign' }).click();
+    await expect(region(page, 'Ship lost')).toBeVisible();
+    await expect(region(page, 'Ship lost').getByText(/^You have no ship\. With 33,822 ISK/)).toBeVisible();
+    await expect(page.getByText('33,822 ISK', { exact: true })).toBeVisible();
+    await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible();
+    await expect(region(page, 'No ship')).toBeVisible();
+    await page.getByRole('button', { name: 'Departure', exact: true }).click();
+    await expect(page.getByRole('button', { name: /^Undock/ })).toBeDisabled();
+
+    // The recovery purchase: a bought hull becomes the active ship at once.
+    await buy(page, 'Wayfarer');
+    await expect(region(page, 'No ship')).toBeHidden();
+
+    // It arrives empty: give it a gun and its rounds, and fly it to a fight.
+    await buy(page, '200mm Autocannon');
+    await page.getByRole('button', { name: 'Fitting', exact: true }).click();
+    await chooseModule(page, 'Weapon 1', 'module.turret.autocannon.small');
+    await chooseAmmunition(page, 'Weapon 1', 'ammo.projectile.small.fusion');
+    await page.getByRole('button', { name: 'Apply fit' }).click();
+    await expect(page.getByText('This is the fit your ship is wearing.', { exact: false })).toBeVisible();
+    await expect(fittingSlots(page).filter({ hasText: '200mm Autocannon' })).toHaveCount(1);
+
+    await page.getByRole('button', { name: 'Departure', exact: true }).click();
+    await expect(page.getByRole('button', { name: /^Undock/ })).toBeEnabled();
+    await undock(page);
+    await warp(page, '10', 'Verge Belt', 'Pirate Scout');
+    await ensurePaused(page);
+    await region(page, 'In this site').getByRole('button', { name: /Pirate Scout/ }).click();
+    const lock = region(page, 'Navigation').getByRole('button', { name: /^Lock target/ });
+    await expect(lock).toBeEnabled({ timeout: 30_000 });
+    await lock.click();
+    await ensureRunning(page);
+    await expect(region(page, 'In this site').getByText('Locked', { exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(region(page, 'Weapons').getByText('Aimed at Pirate Scout')).toBeVisible();
+  });
+});
+
+test.describe('recovering from a checkpoint after a loss', () => {
+  test('flies the granted replacement to its wreck, brings the survivors home and refits with them [MVP-AC-08, FUNC-9.12, FUNC-5.4, FUNC-22.1]', async ({
+    page,
+    baseURL,
+  }) => {
+    test.setTimeout(4 * 60_000);
+    // The helper checks the station, the paused clock, the wallet, the lost
+    // sortie and the open report's every lost and surviving item line.
+    await openCheckpoint(page, 'loss-granted', baseURL);
+    const report = region(page, 'Ship lost');
+    await expect(report.getByRole('rowheader', { name: 'Pirate Gunner' }).first()).toBeVisible();
     await expect(
       report.getByText("Basic insurance paid 3,600 ISK: 30% of the hull's 12,000 ISK reference value."),
     ).toBeVisible();
     await expect(report.getByText(/the recovery service supplied a replacement Wayfarer/)).toBeVisible();
     await expect(page.getByText('11,600 ISK', { exact: true })).toBeVisible();
-
-    // Reload without closing: only the autosave taken at the destruction can
-    // bring this station back.
-    await saved(page);
-    await page.reload();
-    await page.getByRole('button', { name: 'Resume campaign' }).click();
-    await expect(region(page, 'Ship lost')).toBeVisible();
-    await expect(page.getByText('11,600 ISK', { exact: true })).toBeVisible();
-    await expect(page.getByText('Docked at Borrell Harbour')).toBeVisible();
 
     // The replacement is a recovery grant: flown freely, never sold or insured.
     await page.getByRole('button', { name: 'Ships', exact: true }).click();
@@ -183,10 +247,8 @@ test.describe('losing a ship', () => {
 
     // Recover the wreck through the ordinary destination flow, without a map.
     await page.getByRole('button', { name: 'Overview', exact: true }).click();
-    await region(page, 'Ship lost').getByRole('button', { name: /^Choose your wreck as the destination/ }).click();
-    await expect(
-      region(page, 'Ship lost').getByRole('button', { name: /^Your wreck is the destination/ }),
-    ).toBeVisible();
+    await report.getByRole('button', { name: /^Choose your wreck as the destination/ }).click();
+    await expect(report.getByRole('button', { name: /^Your wreck is the destination/ })).toBeVisible();
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
     await expect(page.getByText('Chosen destination: your wreck at Outpost Cradle. Space navigation offers it first.')).toBeVisible();
     await undock(page);
@@ -224,37 +286,7 @@ test.describe('losing a ship', () => {
     await expect(
       page.getByRole('table', { name: 'Ship cargo hold' }).getByRole('rowheader', { name: 'Fusion S' }),
     ).toBeVisible();
-
-    // The easiest site, again, with the recovered ship.
     await page.getByRole('button', { name: 'Departure', exact: true }).click();
-    await undock(page);
-    await warp(page, '10', 'Verge Belt', 'Pirate Scout');
-
-    await region(page, 'In this site').getByRole('button', { name: /Pirate Scout/ }).click();
-    await page.getByLabel('Range').selectOption('1');
-    await page.getByRole('button', { name: /^Orbit/ }).click();
-    const lock = region(page, 'Navigation').getByRole('button', { name: /^Lock target/ });
-    await expect(lock).toBeEnabled({ timeout: 60_000 });
-    await lock.click();
-    await expect(region(page, 'In this site').getByText('Locked', { exact: true })).toBeVisible({
-      timeout: 30_000,
-    });
-    const weapons = region(page, 'Weapons');
-    await weapons.getByRole('button', { name: /^Fire\s?E$/ }).click();
-    await expect(weapons.getByText(/^Firing at Pirate Scout/)).toHaveCount(2);
-    await region(page, 'Modules')
-      .getByRole('button', { name: /^Activate Small Shield Booster/ })
-      .click();
-    await expect(page.locator('[data-encounter-summary="complete"]', { hasText: 'Cleared: 3,000 ISK paid' })).toBeVisible({
-      timeout: 6 * 60_000,
-    });
-    await returnAndDock(page);
-
-    const sortie = region(page, 'Last sortie');
-    await expect(
-      sortie.getByText('Pirate Scout cleared: 1 of 1 opponents destroyed, 3,000 ISK in bounties.'),
-    ).toBeVisible();
-    // The loss report stays reachable once a later sortie has resolved.
-    await expect(region(page, 'Last ship lost')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Undock/ })).toBeEnabled();
   });
 });

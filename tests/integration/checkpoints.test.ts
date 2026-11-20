@@ -14,7 +14,7 @@ import {
 import { shippedContent } from '../support/content.ts';
 
 /**
- * The browser checkpoints (Test Suite Optimization Plan phases 3 and 4): each
+ * The browser checkpoints (Test Suite Optimization Plan phases 3, 4, 7 and 8): each
  * one is reached through the protocol, is the same save every time it is made,
  * says what it promises, and is refused when its save no longer matches.
  */
@@ -54,6 +54,16 @@ describe('browser checkpoints', () => {
     }, GENERATION_TIMEOUT_MS);
   }
 
+  it('arrives at the scout site with nothing ordered, locked or running', async () => {
+    const arrived = checkpointAt(await checkpoint('scout-arrived'), 'site');
+    expect(arrived.facts.siteId).toBe('site.borrell.verge');
+    expect(arrived.facts.locks).toEqual([]);
+    expect(arrived.facts.firingAt).toBeNull();
+    expect(arrived.facts.boosterActive).toBe(false);
+    // Where the warp put the ship, far from the 1 km orbit the commands cases order themselves.
+    expect(arrived.facts.opponentRangeKm).toBeGreaterThan(5);
+  });
+
   it('leaves the scout unlocked and unfired on in range, and in a running fight', async () => {
     const inRange = checkpointAt(await checkpoint('scout-in-range'), 'site');
     expect(inRange.facts.siteId).toBe('site.borrell.verge');
@@ -87,6 +97,50 @@ describe('browser checkpoints', () => {
     expect(facts.hold.some((stack) => stack.definitionId === 'module.plating.armor.small')).toBe(true);
     expect(facts.fit.some((slot) => slot.moduleId === 'module.plating.armor.small')).toBe(false);
     expect(facts.credits).toBeGreaterThan(13_000);
+  }, GENERATION_TIMEOUT_MS);
+
+  it('docks after a loss with a recovery grant and the survivors in the wreck [MVP-AC-08, FUNC-9.12]', async () => {
+    const { facts } = checkpointAt(await checkpoint('loss-granted'), 'station');
+    expect(facts.stationId).toBe(content.rules.economy.startingStationId);
+    expect(facts.activeShipId).not.toBeNull();
+    expect(facts.lastOutcome).toMatchObject({ encounterId: 'encounter.borrell.pirate-base', status: 'lost' });
+    expect(facts.loss).toMatchObject({
+      hullName: 'Wayfarer',
+      siteName: 'Outpost Cradle',
+      encounterName: 'Pirate Base',
+      recovery: 'granted',
+      payoutCredits: 3_600,
+      creditsAfter: 11_600,
+      wreckPresent: true,
+      wreckItemCount: 2,
+    });
+    expect(facts.credits).toBe(11_600);
+    expect(facts.loss?.items).toEqual([
+      { name: '200mm Autocannon', quantity: 1, origin: 'fitted', survived: false },
+      { name: 'Fusion S', quantity: 20, origin: 'loaded', survived: false },
+      { name: 'Small Shield Booster', quantity: 1, origin: 'fitted', survived: true },
+      { name: 'Fusion S', quantity: expect.any(Number) as number, origin: 'cargo', survived: true },
+    ]);
+    // The spare gun waits in the hangar for the refit.
+    expect(facts.hangar.some((stack) => stack.definitionId === 'module.turret.autocannon.small')).toBe(true);
+  }, GENERATION_TIMEOUT_MS);
+
+  it('docks after a loss without a ship when the payout buys one back [FUNC-9.12, FUNC-22.1]', async () => {
+    const { facts } = checkpointAt(await checkpoint('loss-shipless'), 'station');
+    expect(facts.activeShipId).toBeNull();
+    expect(facts.fit).toEqual([]);
+    expect(facts.hold).toEqual([]);
+    expect(facts.lastOutcome).toMatchObject({ encounterId: 'encounter.borrell.pirate-base', status: 'lost' });
+    expect(facts.loss).toMatchObject({ recovery: 'noShip', siteName: 'Outpost Cradle', encounterName: 'Pirate Base' });
+    expect(facts.credits).toBe(facts.loss?.creditsAfter);
+  }, GENERATION_TIMEOUT_MS);
+
+  it('refuses a loss checkpoint whose report differs from the save', async () => {
+    const lost = checkpointAt(await checkpoint('loss-shipless'), 'station');
+    const loss = lost.facts.loss;
+    if (loss === null) throw new Error('The shipless checkpoint has no loss.');
+    await expect(verifyCheckpoint({ ...lost, facts: { ...lost.facts, loss: { ...loss, recovery: 'granted' } } }, content))
+      .rejects.toThrow(/the resumed projection differs/);
   }, GENERATION_TIMEOUT_MS);
 
   it('refuses a save that no longer matches its content, checksum, format or projection', async () => {

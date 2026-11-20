@@ -17,6 +17,7 @@ import type {
   EngineResponse,
   FrameData,
   InventoryData,
+  LossReportData,
   MarketTransactionPreviewData,
   ResupplyPreviewData,
   ShipData,
@@ -31,10 +32,11 @@ import { describeSortie, flySortie, refit } from '../progression/sortie.ts';
 
 /**
  * Saved campaign checkpoints for browser tests (Test Suite Optimization Plan
- * phases 3 and 4; Technical Specification 11.2, 11.4, 15.1).
+ * phases 3, 4, 7 and 8; Technical Specification 11.2, 11.4, 15.1).
  *
  * A browser case that is about one moment of play - a command in a fight, an
- * audit of the combat surfaces, what to do with a sortie's rewards - should
+ * audit of the combat surfaces, what to do with a sortie's rewards or after a
+ * lost ship - should
  * not spend minutes of real time getting there. A checkpoint reaches that
  * moment headlessly, over the same engine host and protocol requests the
  * worker serves, the way the scenario sessions and the golden campaign do,
@@ -60,6 +62,9 @@ const CLOSED_AT_REAL_MS = 1_700_000_100_000;
 
 const SCOUT_ENCOUNTER = 'encounter.borrell.pirate-scout';
 const SCOUT_SITE = 'site.borrell.verge';
+/** The hard site the loss checkpoints leave the starter ship idle at until it is destroyed. */
+const BASE_SITE = 'site.borrell.outpost-cradle';
+const AUTOCANNON = 'module.turret.autocannon.small';
 /** The headless progression scenario the patrol checkpoint flies: the intermediate fit, cutters first. */
 const PATROL_SCENARIO = 'patrol.intermediate';
 /** The scenario the mastery checkpoint flies next: the mastery fit, 10 km from the nearest brawler. */
@@ -67,10 +72,20 @@ const BASE_SCENARIO = 'base.mastery';
 const STEP_MS = 250;
 const LOCALE = 'en';
 
-export const CHECKPOINT_NAMES = ['scout-in-range', 'scout-fight', 'patrol-salvage', 'base-cleared'] as const;
+export const CHECKPOINT_NAMES = [
+  'scout-arrived',
+  'scout-in-range',
+  'scout-fight',
+  'patrol-salvage',
+  'base-cleared',
+  'loss-granted',
+  'loss-shipless',
+] as const;
 export type CheckpointName = (typeof CHECKPOINT_NAMES)[number];
 
 export const CHECKPOINT_DESCRIPTIONS: Readonly<Record<CheckpointName, string>> = {
+  'scout-arrived':
+    'Paused at the Pirate Scout site the moment the starter ship arrives from a warp 10 km out; nothing selected, ordered or locked.',
   'scout-in-range':
     'Paused at the Pirate Scout site with the starter ship orbiting the scout inside lock and weapon range; nothing locked, no weapon running.',
   'scout-fight':
@@ -79,6 +94,10 @@ export const CHECKPOINT_DESCRIPTIONS: Readonly<Record<CheckpointName, string>> =
     'Docked and paused at Borrell Harbour after clearing the Pirate Patrol with the intermediate fit: the bounty paid, every wreck looted, the salvage and any earned module in the hold.',
   'base-cleared':
     'Docked and paused at Borrell Harbour after the patrol checkpoint, the salvage sold, the mastery fit bought and fitted with the earned plating, and the Pirate Base cleared with it: the Pirate Base still the chosen destination, each site completed once.',
+  'loss-granted':
+    'Docked and paused at Borrell Harbour after the starter ship, with a spare autocannon bought for the hangar, was destroyed idling at the Pirate Base: the loss reported and insured, a recovery-grant Wayfarer supplied, and what survived waiting in the wreck.',
+  'loss-shipless':
+    "Docked and paused at Borrell Harbour without a ship after the starter ship's autocannon was taken off and sold and the rest destroyed idling at the Pirate Base: the payout leaves enough to buy a starter ship, so the recovery service supplied none.",
 };
 
 /**
@@ -119,7 +138,30 @@ export interface StackFact {
   readonly quantity: number;
 }
 
-/** What a campaign resumed docked shows: wallet, fit, hold, hangar and the last sortie. */
+/** One line of a loss report's lost or surviving items. */
+export interface LossItemFact {
+  readonly name: string;
+  readonly quantity: number;
+  readonly origin: 'fitted' | 'cargo' | 'loaded';
+  readonly survived: boolean;
+}
+
+/** The most recent loss, as its report explains it. */
+export interface LossFact {
+  readonly lossId: string;
+  readonly hullName: string;
+  readonly siteName: string;
+  readonly encounterName: string | null;
+  readonly recovery: 'granted' | 'otherShip' | 'noShip';
+  readonly creditsAfter: number;
+  readonly payoutCredits: number;
+  readonly wreckPresent: boolean;
+  readonly wreckItemCount: number;
+  /** In the report's order. */
+  readonly items: readonly LossItemFact[];
+}
+
+/** What a campaign resumed docked shows: wallet, fit, hold, hangar, the last sortie and the last loss. */
 export interface StationCheckpointFacts {
   readonly kind: 'station';
   readonly stateHash: string;
@@ -128,7 +170,8 @@ export interface StationCheckpointFacts {
   readonly stationId: string;
   readonly stationName: string;
   readonly credits: number;
-  readonly activeShipId: string;
+  /** `null` for a pilot left without a ship, who has no fit and no hold. */
+  readonly activeShipId: string | null;
   readonly fit: readonly FittedSlotFact[];
   /** Plain stacks in the active ship's hold, in the order the station lists them. */
   readonly hold: readonly StackFact[];
@@ -146,6 +189,8 @@ export interface StationCheckpointFacts {
   readonly selectedDestination: { readonly encounterId: string; readonly name: string } | null;
   /** Every encounter completed at least once, with its completion count, in the order destinations are listed. */
   readonly completions: readonly { readonly encounterId: string; readonly name: string; readonly count: number }[];
+  /** The campaign's most recent ship loss, or `null` if no ship has been lost. */
+  readonly loss: LossFact | null;
 }
 
 export type CheckpointFacts = SiteCheckpointFacts | StationCheckpointFacts;
@@ -225,19 +270,20 @@ async function observeStation(session: Asker, content: ContentRepository, assets
   const hash = await session.data<StateHashData>('diagnostics.stateHash');
   const frame = await session.data<FrameData>('campaign.frame');
   const encounter = await session.data<EncounterData>('encounter.state');
-  if (assets.location.kind !== 'station' || assets.activeShipId === null || hash.stateHash === null) {
-    throw new CheckpointMismatch('The checkpoint campaign is not docked with a ship.');
+  if (assets.location.kind !== 'station' || hash.stateHash === null) {
+    throw new CheckpointMismatch('The checkpoint campaign is not docked.');
   }
   const stationId = assets.location.stationId;
-  const ship = await session.data<ShipData>('ship.get', { shipId: assets.activeShipId });
-  const hold = await session.data<InventoryData>('inventory.cargo', { shipId: assets.activeShipId });
+  const shipId = assets.activeShipId;
+  const ship = shipId === null ? null : await session.data<ShipData>('ship.get', { shipId });
+  const hold = shipId === null ? null : await session.data<InventoryData>('inventory.cargo', { shipId });
   const hangar = await session.data<InventoryData>('inventory.hangar', { stationId });
   const name = (key: string): string => {
     const text = content.message(LOCALE, key);
     if (text === undefined) throw new CheckpointMismatch(`The content has no ${LOCALE} name for ${key}.`);
     return text;
   };
-  const loose = (inventory: InventoryData): StackFact[] => inventory.stacks
+  const loose = (inventory: InventoryData | null): StackFact[] => (inventory?.stacks ?? [])
     .filter((stack) => stack.state.kind === 'plain')
     .map((stack) => ({
       stackId: stack.id,
@@ -248,6 +294,7 @@ async function observeStation(session: Asker, content: ContentRepository, assets
     }));
   const outcome = encounter.lastOutcome;
   const destinations = await session.data<DestinationsData>('navigation.destinations');
+  const loss = (await session.data<LossReportData>('loss.report')).report;
   const selected = destinations.destinations.find((entry) => entry.encounterId === destinations.selectedEncounterId);
   return {
     kind: 'station',
@@ -257,8 +304,8 @@ async function observeStation(session: Asker, content: ContentRepository, assets
     stationId,
     stationName: name(content.requireStation(stationId as never).nameKey),
     credits: assets.credits,
-    activeShipId: assets.activeShipId,
-    fit: ship.slots.map((slot) => ({
+    activeShipId: shipId,
+    fit: (ship?.slots ?? []).map((slot) => ({
       slotKind: slot.slot.kind,
       slotIndex: slot.slot.index,
       moduleId: slot.module?.definitionId ?? null,
@@ -279,6 +326,23 @@ async function observeStation(session: Asker, content: ContentRepository, assets
     completions: destinations.destinations
       .filter((entry) => entry.completionCount > 0)
       .map((entry) => ({ encounterId: entry.encounterId, name: name(entry.nameKey), count: entry.completionCount })),
+    loss: loss === null ? null : {
+      lossId: loss.lossId,
+      hullName: name(loss.hullNameKey),
+      siteName: name(loss.siteNameKey),
+      encounterName: loss.encounterNameKey === null ? null : name(loss.encounterNameKey),
+      recovery: loss.recovery.outcome,
+      creditsAfter: loss.recovery.creditsAfter,
+      payoutCredits: loss.insurance.payoutCredits,
+      wreckPresent: loss.wreck.present,
+      wreckItemCount: loss.wreck.itemCount,
+      items: loss.items.map((item) => ({
+        name: name(item.nameKey),
+        quantity: item.quantity,
+        origin: item.origin,
+        survived: item.survived,
+      })),
+    },
   };
 }
 
@@ -485,7 +549,67 @@ async function clearBaseAndDock(session: ScenarioSession, content: ContentReposi
   if (assets.location.kind !== 'station') throw new Error('The mastery checkpoint sortie did not dock.');
 }
 
+/** Buys one item at the starting station's market with the campaign's own credits. */
+async function buyOne(session: ScenarioSession, itemId: string, content: ContentRepository): Promise<void> {
+  const stationId = content.rules.economy.startingStationId;
+  const preview = await session.data<MarketTransactionPreviewData>('market.previewBuy', { stationId, itemId, quantity: 1 });
+  if (!preview.available || preview.token === null) {
+    throw new Error(`The market refuses to sell ${itemId}: ${String(preview.unavailableReason)}`);
+  }
+  await session.data('market.confirmBuy', { token: preview.token });
+}
+
+/**
+ * Takes the starter ship's autocannon off and sells it at the station, as the
+ * loss audit's pilot once did in the browser, so the payout after a loss
+ * leaves enough to buy a starter ship back.
+ */
+async function sellFittedAutocannon(session: ScenarioSession, content: ContentRepository): Promise<void> {
+  const stationId = content.rules.economy.startingStationId;
+  const assets = await session.data<AssetsData>('assets.list');
+  if (assets.activeShipId === null) throw new Error('The checkpoint campaign has no active ship.');
+  await session.data('fitting.begin', { shipId: assets.activeShipId });
+  await session.data('fitting.clear', { slotKind: 'weapon', slotIndex: 0 });
+  await session.data('fitting.commit');
+  const hangar = await session.data<InventoryData>('inventory.hangar', { stationId });
+  const gun = hangar.stacks.find((stack) => stack.item.definitionId === AUTOCANNON && stack.state.kind === 'plain');
+  if (gun === undefined) throw new Error('The autocannon taken off the starter ship is not in the hangar.');
+  const preview = await session.data<MarketTransactionPreviewData>('market.previewSell', {
+    stationId, stackId: gun.id, quantity: gun.quantity,
+  });
+  if (!preview.available || preview.token === null) {
+    throw new Error(`The market refuses to buy the autocannon: ${String(preview.unavailableReason)}`);
+  }
+  await session.data('market.confirmSell', { token: preview.token });
+}
+
+/**
+ * Undocks the starter ship, warps it to the Pirate Base 10 km out and leaves
+ * it idle there until it is destroyed and the pilot is recovered at the
+ * station - the transition the loss browser case plays at 1x. Refuses a
+ * recovery other than the one expected.
+ */
+async function loseShipAtBase(session: ScenarioSession, expected: 'granted' | 'noShip'): Promise<void> {
+  await session.data('ship.undock');
+  await session.data('navigation.warp', { destinationSiteId: BASE_SITE, arrivalDistanceKm: 10 });
+  await session.data('time.set', { paused: false, rate: 1 });
+  const recovered = await until(
+    session,
+    async () => (await session.data<SiteData>('navigation.site')).location.kind === 'station',
+    300,
+  );
+  if (!recovered) throw new Error('The checkpoint ship was never destroyed at the Pirate Base.');
+  const report = (await session.data<LossReportData>('loss.report')).report;
+  if (report === null) throw new Error('The checkpoint ship came home without a loss.');
+  if (report.recovery.outcome !== expected) {
+    throw new Error(`The checkpoint loss was recovered as "${report.recovery.outcome}", not "${expected}".`);
+  }
+}
+
 const SCRIPTS: Readonly<Record<CheckpointName, (session: ScenarioSession, content: ContentRepository) => Promise<void>>> = {
+  async 'scout-arrived'(session) {
+    await arriveAtScout(session);
+  },
   async 'scout-in-range'(session) {
     const opponent = await arriveAtScout(session);
     await closeToRange(session, opponent);
@@ -500,6 +624,15 @@ const SCRIPTS: Readonly<Record<CheckpointName, (session: ScenarioSession, conten
   },
   async 'base-cleared'(session, content) {
     await clearBaseAndDock(session, content);
+  },
+  async 'loss-granted'(session, content) {
+    // A spare gun in the hangar leaves too little, after the payout, to buy the starter ship back.
+    await buyOne(session, AUTOCANNON, content);
+    await loseShipAtBase(session, 'granted');
+  },
+  async 'loss-shipless'(session, content) {
+    await sellFittedAutocannon(session, content);
+    await loseShipAtBase(session, 'noShip');
   },
 };
 

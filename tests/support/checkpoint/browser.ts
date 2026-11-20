@@ -7,6 +7,8 @@ import {
   prepareCheckpoint,
   type Checkpoint,
   type CheckpointName,
+  type LossFact,
+  type LossItemFact,
   type SiteCheckpointFacts,
   type StationCheckpointFacts,
 } from './scenarios.ts';
@@ -14,7 +16,7 @@ import { servedContent } from './servedContent.ts';
 
 /**
  * Opens a browser test at a saved checkpoint (Test Suite Optimization Plan
- * phases 3 and 4; Technical Specification 11.1, 15.1).
+ * phases 3, 4, 7 and 8; Technical Specification 11.1, 15.1).
  *
  * 1. The checkpoint is generated headlessly from the content compiled into
  *    the served build, and verified: save format, content identity, checksum,
@@ -187,8 +189,8 @@ async function expectSiteShown(page: Page, facts: SiteCheckpointFacts, opponent:
 }
 
 /**
- * Docked: the station, the paused clock, the wallet, the last sortie's outcome
- * and every loose stack the station lists in the hold.
+ * Docked: the station, the paused clock, the wallet, the last sortie's outcome,
+ * every loose stack the station lists in the hold and, after a loss, its report.
  */
 async function expectStationShown(page: Page, facts: StationCheckpointFacts): Promise<void> {
   await expect(page.getByRole('heading', { level: 2, name: facts.stationName })).toBeVisible();
@@ -197,14 +199,48 @@ async function expectStationShown(page: Page, facts: StationCheckpointFacts): Pr
   const sortie = region(page, 'Last sortie');
   const outcome = facts.lastOutcome;
   if (outcome !== null) {
-    if (outcome.status !== 'completed') throw new Error(`No interface wording is checked for a ${outcome.status} sortie.`);
-    await expect(sortie.getByRole('status')).toHaveText(
-      `${outcome.name} cleared: ${String(outcome.npcsDestroyed)} of ${String(outcome.npcsTotal)} opponents destroyed, ` +
-        `${grouped(outcome.bountyCreditsPaid)} ISK in bounties.`,
-    );
+    const opponents = `${String(outcome.npcsDestroyed)} of ${String(outcome.npcsTotal)} opponents`;
+    const bounty = `${grouped(outcome.bountyCreditsPaid)} ISK in bounties.`;
+    const wording: Readonly<Record<string, string>> = {
+      completed: `${outcome.name} cleared: ${opponents} destroyed, ${bounty}`,
+      lost: `${outcome.name}: your ship was destroyed after ${opponents}, ${bounty}`,
+    };
+    const expected = wording[outcome.status];
+    if (expected === undefined) throw new Error(`No interface wording is checked for a ${outcome.status} sortie.`);
+    await expect(sortie.getByRole('status')).toHaveText(expected);
   }
   const listed = sortie.locator('[data-hold-item]');
   await expect(listed).toHaveText(facts.hold.map((stack) => `${grouped(stack.quantity)} x ${stack.name}`));
+  if (facts.loss !== null) await expectLossShown(page, facts.loss);
+}
+
+/** How the loss report names where a lost or surviving item was. */
+const LOSS_ORIGINS: Readonly<Record<LossItemFact['origin'], string>> = {
+  fitted: 'fitted',
+  cargo: 'in the hold',
+  loaded: 'loaded ammunition',
+};
+
+/** A loss report line as the interface writes it, such as "1 x 200mm Autocannon (fitted)". */
+export function lossItemLine(item: LossItemFact): string {
+  return `${grouped(item.quantity)} x ${item.name} (${LOSS_ORIGINS[item.origin]})`;
+}
+
+/**
+ * The open loss report: where the ship was lost and how the pilot was
+ * recovered, and every lost and surviving item line, in the report's order.
+ */
+async function expectLossShown(page: Page, loss: LossFact): Promise<void> {
+  const report = region(page, 'Ship lost');
+  await expect(report).toHaveAttribute('data-recovery', loss.recovery);
+  const where = loss.encounterName === null
+    ? `Your ${loss.hullName} was destroyed at ${loss.siteName} at`
+    : `Your ${loss.hullName} was destroyed at ${loss.siteName} fighting ${loss.encounterName}, at`;
+  await expect(report.getByText(where, { exact: false })).toBeVisible();
+  await expect(report.getByRole('list', { name: 'Lost items' }).getByRole('listitem'))
+    .toHaveText(loss.items.filter((item) => !item.survived).map(lossItemLine));
+  await expect(report.getByRole('list', { name: 'Surviving items' }).getByRole('listitem'))
+    .toHaveText(loss.items.filter((item) => item.survived).map(lossItemLine));
 }
 
 /**

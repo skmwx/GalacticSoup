@@ -2,7 +2,7 @@ import { openGameMenu } from '../support/cockpit.ts';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { undock } from '../support/undock.ts';
-import { chooseDestination, dockHome, warpHome, warpTo } from '../support/destinations.ts';
+import { chooseDestination, destinationEntry, dockHome, warpHome, warpTo } from '../support/destinations.ts';
 import { marketMode } from '../support/market.ts';
 import { chooseAmmunition, chooseModule, fittingSlots } from '../support/fitting.ts';
 import { takeService } from '../support/services.ts';
@@ -289,16 +289,22 @@ test.describe('the first vertical slice', () => {
   });
 });
 
+/**
+ * The fight commanded with one input device alone (Test Suite Optimization
+ * Plan phase 7). Both cases begin where a warp to the scout site ends: a
+ * campaign reached headlessly and saved paused the moment the starter ship
+ * arrived 10 km from the scout, with nothing selected, ordered or locked,
+ * then opened through the start screen and the worker. Every order after that
+ * - the orbit, the lock, fire, the booster, cease fire, the unlock and the
+ * warp home - is the player's, by mouse or by key. Undocking and the warp out
+ * through the interface are the starter journey's and the navigation case's
+ * evidence (`real-clock-navigation`); the keyboard case still sends a warp
+ * with its own keys once it is home.
+ */
 test.describe('combat commands', () => {
-  test.beforeEach(async ({ page }) => {
-    await fixSeed(page);
-    await freshCampaign(page);
-    await prepareAndUndock(page);
-  });
-
-  test('commands a fight with the mouse alone [MVP-AC-03, FUNC-19.2, FUNC-20]', async ({ page }) => {
+  test('commands a fight with the mouse alone [MVP-AC-03, FUNC-19.2, FUNC-20]', async ({ page, baseURL }) => {
     test.setTimeout(4 * 60_000);
-    await flyToScout(page);
+    await openCheckpoint(page, 'scout-arrived', baseURL);
 
     // Paused, the drawing holds still, and orders can still be given.
     await ensurePaused(page);
@@ -353,19 +359,13 @@ test.describe('combat commands', () => {
     });
   });
 
-  test('commands a fight from the keyboard alone [MVP-AC-03, FUNC-20, TECH-12.3]', async ({ page }) => {
+  test('commands a fight from the keyboard alone [MVP-AC-03, FUNC-20, TECH-12.3]', async ({ page, baseURL }) => {
     test.setTimeout(4 * 60_000);
+    await openCheckpoint(page, 'scout-arrived', baseURL);
 
-    // Arrive close, then warp and start the clock with shortcuts.
-    await page.getByLabel('Arrive at').focus();
-    await page.keyboard.type('1');
-    await expect(page.getByLabel('Arrive at')).toHaveValue('10');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('w');
+    // p starts the clock the arrival was saved with stopped.
     await page.keyboard.press('p');
-    await expect(page.getByRole('heading', { level: 2, name: 'Verge Belt' })).toBeVisible({
-      timeout: 60_000,
-    });
+    await expect(page.getByText(/Running at 1x/)).toBeVisible();
 
     // ] steps through the site until the scout is selected.
     await expect(async () => {
@@ -421,6 +421,18 @@ test.describe('combat commands', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible({
       timeout: 60_000,
     });
+
+    // Home, choose the scout again, arrive close and warp, all with keys.
+    const scoutSite = destinationEntry(page, 'Pirate Scout');
+    await scoutSite.focus();
+    await page.keyboard.press('Enter');
+    await expect(scoutSite).toHaveAttribute('aria-pressed', 'true');
+    await page.getByLabel('Arrive at').focus();
+    await page.keyboard.type('1');
+    await expect(page.getByLabel('Arrive at')).toHaveValue('10');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('w');
+    await expect(page.getByText(/Aligning for warp/).first()).toBeVisible();
   });
 });
 

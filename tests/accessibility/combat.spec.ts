@@ -1,8 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-import { undock } from '../support/undock.ts';
-import { warpTo } from '../support/destinations.ts';
 import { openCheckpoint } from '../support/checkpoint/browser.ts';
 
 /**
@@ -13,27 +11,16 @@ import { openCheckpoint } from '../support/checkpoint/browser.ts';
  * encounter roster and the log, and a secondary click adds a menu over the
  * drawing. Each of those must pass the same audit as the station, carry its
  * states in words as well as colour, and stay usable at a doubled scale.
+ *
+ * Every case begins in the middle of a fight, so each opens the same saved
+ * fight (Test Suite Optimization Plan phases 3 and 7): the scout locked, the
+ * autocannon firing at it and the booster running, paused. It was reached
+ * headlessly and is opened through the start screen and the worker; the
+ * helper first checks the fight's status is shown in words - the site, the
+ * paused clock, the lock and the weapon firing at the scout. Flying there and
+ * locking through the interface are the command cases' evidence
+ * (`tests/browser/combat.spec.ts`).
  */
-
-const PILOT = 'Audited Pilot';
-
-async function freshCampaign(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.evaluate(
-    async () =>
-      new Promise<void>((resolve) => {
-        const request = indexedDB.deleteDatabase('galactic-soup');
-        request.onsuccess = () => resolve();
-        request.onerror = () => resolve();
-        request.onblocked = () => resolve();
-      }),
-  );
-  await page.goto('/');
-  await expect(page.getByRole('status', { name: 'Engine status' })).toHaveText(/Engine ready/);
-  await page.getByLabel('Pilot name').fill(PILOT);
-  await page.getByRole('button', { name: 'Start campaign' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Borrell Harbour' })).toBeVisible();
-}
 
 async function audit(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page })
@@ -42,40 +29,14 @@ async function audit(page: Page): Promise<void> {
   expect(results.violations).toEqual([]);
 }
 
-/**
- * Starts a campaign, flies to the scout site, locks the scout and opens fire,
- * then pauses. The ship already carries its spare rounds.
- */
-async function inAFight(page: Page): Promise<void> {
-  await freshCampaign(page);
-  await page.getByRole('button', { name: 'Departure', exact: true }).click();
-  await undock(page);
-  await warpTo(page, 'Pirate Scout', 10);
-  await page.getByRole('button', { name: /^Resume/ }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Verge Belt' })).toBeVisible({ timeout: 60_000 });
-
-  await page
-    .getByRole('region', { name: 'In this site' })
-    .getByRole('button', { name: /Pirate Scout/ })
-    .click();
-  const lock = page.getByRole('region', { name: 'Navigation' }).getByRole('button', { name: /^Lock target/ });
-  await expect(lock).toBeEnabled({ timeout: 60_000 });
-  await lock.click();
-  const weapons = page.getByRole('region', { name: 'Weapons' });
-  await expect(weapons.getByRole('button', { name: /^Fire\s?E$/ })).toBeEnabled({ timeout: 30_000 });
-  await weapons.getByRole('button', { name: /^Fire\s?E$/ }).click();
-  await expect(weapons.getByText(/^Firing at Pirate Scout/)).toBeVisible();
-  await page.getByRole('button', { name: /^Pause/ }).click();
-  await expect(page.getByText('Paused', { exact: true })).toBeVisible();
+/** Opens the saved fight with the scout, paused. */
+async function inAFight(page: Page, baseURL: string | undefined): Promise<void> {
+  await openCheckpoint(page, 'scout-fight', baseURL);
 }
 
 test.describe('combat accessibility', () => {
   test('passes an automated audit in the middle of a fight [TECH-12.3, FUNC-19.3]', async ({ page, baseURL }) => {
-    // A fight saved headlessly - the scout locked, the autocannon firing, the
-    // booster running - opened through the start screen and the worker. The
-    // helper first checks the fight's status is shown in words: the site, the
-    // paused clock, the lock and the weapon firing at the scout.
-    await openCheckpoint(page, 'scout-fight', baseURL);
+    await inAFight(page, baseURL);
 
     // Open every weapon and module entry, then every explanation, so their contents are audited too.
     const closed = page.locator('[data-panel="equipment"] button[aria-expanded="false"]');
@@ -92,9 +53,9 @@ test.describe('combat accessibility', () => {
 
   test('passes an audit with the context menu open, and closes it with Escape [TECH-12.3, FUNC-20]', async ({
     page,
+    baseURL,
   }) => {
-    test.setTimeout(3 * 60_000);
-    await inAFight(page);
+    await inAFight(page, baseURL);
 
     const entry = page.getByRole('region', { name: 'In this site' }).getByRole('button', { name: /Pirate Scout/ });
     await entry.focus();
@@ -108,9 +69,8 @@ test.describe('combat accessibility', () => {
     await expect(entry).toBeFocused();
   });
 
-  test('names hostility, locks and threats in words, not only colour [TECH-12.2, FUNC-9.1]', async ({ page }) => {
-    test.setTimeout(3 * 60_000);
-    await inAFight(page);
+  test('names hostility, locks and threats in words, not only colour [TECH-12.2, FUNC-9.1]', async ({ page, baseURL }) => {
+    await inAFight(page, baseURL);
 
     const entry = page.getByRole('region', { name: 'In this site' }).getByRole('button', { name: /Pirate Scout/ });
     await expect(entry).toContainText('Hostile');
@@ -120,9 +80,8 @@ test.describe('combat accessibility', () => {
     await expect(page.locator('[data-layer="objects"] [data-lock-marker="locked"]')).toHaveCount(1);
   });
 
-  test('stays usable at a doubled interface scale in a fight [TECH-12.3]', async ({ page }) => {
-    test.setTimeout(3 * 60_000);
-    await inAFight(page);
+  test('stays usable at a doubled interface scale in a fight [TECH-12.3]', async ({ page, baseURL }) => {
+    await inAFight(page, baseURL);
     await page.evaluate(() => {
       document.documentElement.style.setProperty('--gs-ui-scale', '2');
       document.documentElement.style.setProperty('--gs-text-scale', '2');
